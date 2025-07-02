@@ -479,7 +479,7 @@ make run
       </div>
 
       {/* Conteúdo colapsável */}
-      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+      <div className={`overflow-hidden transition-all duration-500 ease-in-out p-6 ${
         isInputCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'
       }`}>
         {/* Inputs editáveis */}
