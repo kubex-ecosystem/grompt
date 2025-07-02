@@ -34,7 +34,10 @@
     "save": "Save",
     "cancel": "Cancel",
     "generateButton": "Help me, engineer?!",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "clearAll": "Clear All",
+    "clearConfirm": "Are you sure? This will delete all your ideas and generated prompt.",
+    "cleared": "Interface cleared! Ready to start."
   },
   "config": {
     "purpose": "Prompt Purpose",

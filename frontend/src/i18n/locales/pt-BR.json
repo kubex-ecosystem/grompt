@@ -34,7 +34,10 @@
     "save": "Salvar",
     "cancel": "Cancelar",
     "generateButton": "Me ajude, engenheiro?!",
-    "generating": "Gerando..."
+    "generating": "Gerando...",
+    "clearAll": "Limpar Tudo",
+    "clearConfirm": "Tem certeza? Isso apagará todas as suas ideias e prompt gerado.",
+    "cleared": "Interface limpa! Pronto para começar."
   },
   "config": {
     "purpose": "Propósito do Prompt",
