@@ -29,9 +29,9 @@ func (m *Grompt) Usage() string {
 }
 func (m *Grompt) Examples() []string {
 	return []string{
-		"grompt server start",
-		"grompt server stop",
-		"grompt server status",
+		"grompt start",
+		"grompt stop",
+		"grompt status",
 	}
 }
 func (m *Grompt) Active() bool {

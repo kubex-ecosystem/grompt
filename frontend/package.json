@@ -8,9 +8,12 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.5.2",
+    "i18next": "^25.3.0",
+    "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-i18next": "^15.5.3",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -20,8 +23,7 @@
     "post-build": "bash ../support/post_build.sh",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:go": "npm run build && echo '📦 Optimized build created successfully!'",
-    "analyze": "npm run build && npx bundle-analyzer build/static/js/*.js"
+    "build:go": "npm run build && echo '📦 Optimized build created successfully!'"
   },
   "eslintConfig": {
     "extends": [
@@ -40,9 +42,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "bundle-analyzer": "^0.1.0"
   },
   "engines": {
     "node": ">=16.0.0",

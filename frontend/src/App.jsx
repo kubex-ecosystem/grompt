@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Edit3, Plus, Wand2, Sun, Moon, Copy, Check, AlertCircle } from 'lucide-react';
+import { Trash2, Edit3, Plus, Wand2, Sun, Moon, Copy, Check, AlertCircle, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './components/LanguageSelector';
 
 const PromptCrafter = () => {
+  const { t } = useTranslation();
   const [darkMode, setDarkMode] = useState(true);
   const [currentInput, setCurrentInput] = useState('');
   const [ideas, setIdeas] = useState([]);
@@ -30,6 +33,22 @@ const PromptCrafter = () => {
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
   const [serverInfo, setServerInfo] = useState(null);
+
+  const [isOutputCollapsed, setIsOutputCollapsed] = useState(true);
+  const [isInputCollapsed, setIsInputCollapsed] = useState(false);
+
+  // Controlar collapse automático e reativo de input/output
+  useEffect(() => {
+    if (generatedPrompt) {
+      // Quando há prompt gerado: minimizar input, expandir output
+      setIsInputCollapsed(true);
+      setIsOutputCollapsed(false);
+    } else {
+      // Quando não há prompt: expandir input, minimizar output
+      setIsInputCollapsed(false);
+      setIsOutputCollapsed(true);
+    }
+  }, [generatedPrompt]);
 
   // =========================================
   // CONFIGURAÇÃO DE URL BASE
@@ -139,6 +158,14 @@ const PromptCrafter = () => {
 
   const removeIdea = (id) => {
     setIdeas(ideas.filter(idea => idea.id !== id));
+    if (editingId === id) {
+      setEditingId(null);
+      setEditingText('');
+    }
+    if (ideas.length === 0) {
+      setIsInputCollapsed(false); // Expandir input se não houver ideias
+      setIsOutputCollapsed(true); // Colapsar output se não houver ideias
+    }
   };
 
   const startEditing = (id, text) => {
@@ -154,6 +181,9 @@ const PromptCrafter = () => {
     ));
     setEditingId(null);
     setEditingText('');
+
+    setIsInputCollapsed(false); // Expandir input ao salvar edição (A ideia foi alterada)
+    setIsOutputCollapsed(true); // Colapsar output ao salvar edição (O prompt gerado será alterado)
   };
 
   const cancelEdit = () => {
@@ -166,37 +196,44 @@ const PromptCrafter = () => {
       ? customPurpose 
       : purpose;
 
-    return `# Prompt Estruturado - ${purposeText}
+    if (ideas.length === 0) {
+      return `# ${t('output.title')} - ${purposeText}
+        ## 🎯 ${t('demo.context')}
+        ${t('demo.contextDesc', { purpose: purposeText.toLowerCase() })}
+      `;
+    }
 
-## 🎯 Contexto
-Você é um assistente especializado em **${purposeText.toLowerCase()}** com conhecimento profundo na área.
+    return `# ${t('output.title')} - ${purposeText}
 
-## 📝 Ideias do Usuário Organizadas:
-${ideas.map((idea, index) => `**${index + 1}.** ${idea.text}`).join('\n')}
+      ## 🎯 ${t('demo.context')}
 
-## 🔧 Instruções Específicas
-- Analise cuidadosamente todas as ideias apresentadas acima
-- Identifique o objetivo principal e objetivos secundários
-- Forneça uma resposta estruturada e bem organizada
-- Mantenha o foco no propósito definido: **${purposeText}**
-- Use exemplos práticos quando apropriado
-- Seja específico e actionável
+      ${t('demo.contextDesc', { purpose: purposeText.toLowerCase() })}
 
-## 📋 Formato de Resposta Esperado
-1. **Análise Inicial**: Resumo do que foi solicitado
-2. **Desenvolvimento**: Resposta detalhada seguindo as ideias
-3. **Conclusão**: Próximos passos ou considerações finais
+      ## 📝 ${t('demo.ideasTitle')}
 
-## ⚙️ Configurações Técnicas
-- Máximo de caracteres: ${maxLength.toLocaleString()}
-- Propósito: ${purposeText}
-- Total de ideias processadas: ${ideas.length}
-- Modo: ${ connectionStatus === 'connected' ? 'Demo (servidor Go conectado)' : 'Demo (modo offline)'}
+      ${ideas.map((idea, index) => `**${index + 1}.** ${idea.text}`).join('\n')}
 
----
-*Prompt gerado automaticamente pelo Prompt Crafter v1.0*
-*${connectionStatus === 'connected' ? 'Configure uma API key para funcionalidade completa' : 'Servidor Go offline - usando modo demo'}*`;
-  };
+      ## 🔧 ${t('demo.instructions')}
+
+      ${t('demo.instructionsList', { returnObjects: true }).map(instruction => `- ${instruction}`).join('\n')}
+
+      ## 📋 ${t('demo.responseFormat')}
+
+      ${t('demo.responseSteps', { returnObjects: true }).map((step, index) => `${index + 1}. ${step}`).join('\n')}
+
+      ## ⚙️ ${t('demo.technicalConfig')}
+
+      - ${t('demo.maxChars')}: ${maxLength.toLocaleString()}
+      - ${t('demo.purpose')}: ${purposeText}
+      - ${t('demo.totalIdeas')}: ${ideas.length}
+      - ${t('demo.mode')}: ${ connectionStatus === 'connected' ? t('demo.modeConnected') : t('demo.modeOffline')}
+
+      ---
+
+      *${t('demo.footer')}*
+      *${connectionStatus === 'connected' ? t('demo.footerConnected') : t('demo.footerOffline')}*`
+        .replaceAll('      ', '')
+    };
 
   const generatePrompt = async () => {
     if (ideas.length === 0) return;
@@ -406,28 +443,245 @@ make run
 
   const getConnectionStatusText = () => {
     switch (connectionStatus) {
-      case 'connected': return 'Conectado ao Go Server';
-      case 'offline': return process.env.NODE_ENV === 'development' ? 'Servidor Go Offline' : 'Modo Offline';
-      default: return 'Verificando conexão...';
+      case 'connected': return t('connection.connected');
+      case 'offline': return process.env.NODE_ENV === 'development' ? t('connection.offline') : t('connection.offlineProduction');
+      default: return t('connection.checking');
     }
   };
 
+  const inputDiv = (
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out ${
+      isInputCollapsed  ? 'h-20' : 'h-auto'
+    } ${!isInputCollapsed ? 'lg:col-span-1' : ''}`}>
+
+      <div className="items-center p-6 pb-0 gap-4">
+        <div className="text-xl font-semibold mb-4 flex items-center">
+          <h2>
+            📝 {t('input.title')}
+          </h2>
+          <div className="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent ml-4 "></div>
+          <div className="flex items-center gap-2">
+            {/* Botão de collapse/expand */}
+            <button
+              onClick={() => {
+                setIsInputCollapsed(!isInputCollapsed)
+                setIsOutputCollapsed(!isOutputCollapsed); // Colapsar output ao colapsar input
+              }}
+              className={`p-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-200 ${
+                isInputCollapsed || !isOutputCollapsed ? 'hover:scale-105' : ''
+              }`}
+              title={isInputCollapsed ? t('input.expand') : t('input.collapse')}
+            >
+              {isInputCollapsed ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo colapsável */}
+      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+        isInputCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'
+      }`}>
+        {/* Inputs editáveis */}
+        <div className="space-y-4">
+          <textarea
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            placeholder={t('input.placeholder')}
+            className={`w-full h-32 px-4 py-3 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500 resize-none`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                addIdea();
+              }
+            }}
+          />
+          <button
+            onClick={addIdea}
+            disabled={!currentInput.trim()}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${currentTheme.button} disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
+          >
+            <Plus size={20} />
+            {t('input.addButton')}
+          </button>
+        </div>
+
+        {/* Configuration */}
+        <div className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('config.purpose')}</label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                {[
+                  { key: 'purposeCode', value: 'Código' },
+                  { key: 'purposeImage', value: 'Imagem' },
+                  { key: 'purposeOthers', value: 'Outros' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setPurpose(option.value)}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      purpose === option.value 
+                        ? 'bg-blue-600 text-white border-blue-600' 
+                        : `${currentTheme.buttonSecondary} ${currentTheme.border}`
+                    }`}
+                  >
+                    {t(`config.${option.key}`)}
+                  </button>
+                ))}
+              </div>
+              {purpose === 'Outros' && (
+                <input
+                  type="text"
+                  value={customPurpose}
+                  onChange={(e) => setCustomPurpose(e.target.value)}
+                  placeholder={t('config.customPurpose')}
+                  className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+                />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              {t('config.maxLength')}: {maxLength.toLocaleString()} {t('config.characters')}
+            </label>
+            <input
+              type="range"
+              min="500"
+              max="130000"
+              step="500"
+              value={maxLength}
+              onChange={(e) => setMaxLength(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const outputDiv = (
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out ${
+      isOutputCollapsed ? 'h-20' : 'h-auto'
+    } ${!isOutputCollapsed ? 'lg:col-span-1' : ''}`}>
+      
+      {/* Header sempre visível */}
+      <div className="flex justify-between items-center p-6 pb-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold">🚀 {t('output.title')}</h2>
+          {generatedPrompt && (
+            <div className={`px-2 py-1 rounded-full text-xs ${currentTheme.textSecondary} bg-opacity-50 ${currentTheme.cardBg}`}>
+              {generatedPrompt.length.toLocaleString()} chars
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Botão de copiar quando há conteúdo */}
+          {generatedPrompt && !isOutputCollapsed && (
+            <button
+              onClick={copyToClipboard}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-colors`}
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              {copied ? t('output.copied') : t('output.copy')}
+            </button>
+          )}
+          
+          {/* Botão de collapse/expand */}
+          <button
+            onClick={() => {
+              setIsOutputCollapsed(!isOutputCollapsed)
+              setIsInputCollapsed(!isInputCollapsed); // Colapsar input ao colapsar output
+            }}
+            className={`p-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-200 ${
+              isOutputCollapsed ? 'hover:scale-105' : ''
+            }`}
+            title={isOutputCollapsed ? t('output.expand') : t('output.collapse')}
+          >
+            {isOutputCollapsed ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+          </button>
+        </div>
+      </div>
+      
+      {/* Conteúdo colapsável */}
+      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
+        isOutputCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'
+      }`}>
+        <div className="p-6 pt-4">
+          {generatedPrompt ? (
+            <div className="space-y-4">
+              <div className={`text-xs ${currentTheme.textSecondary} flex justify-between items-center`}>
+                <span>{t('output.characters')}: {generatedPrompt.length.toLocaleString()}</span>
+                <span>{t('output.limit')}: {maxLength.toLocaleString()}</span>
+                <div className={`w-24 h-1 rounded-full ${currentTheme.border} overflow-hidden`}>
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                    style={{ width: `${Math.min((generatedPrompt.length / maxLength) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div className={`max-h-96 overflow-y-auto p-4 rounded-lg border ${currentTheme.border} bg-opacity-50 ${currentTheme.cardBg}`}>
+                <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">{generatedPrompt}</pre>
+              </div>
+            </div>
+          ) : (
+            <div className={`${currentTheme.textSecondary} text-center py-16`}>
+              <div className="flex flex-col items-center space-y-4">
+                <Wand2 size={64} className="opacity-30 animate-pulse" />
+                <div>
+                  <p className="text-lg font-medium">{t('output.emptyTitle')}</p>
+                  <p className="text-sm mt-2 opacity-75">{t('output.emptySubtitle')}</p>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-xs opacity-50">
+                  <ChevronUp size={16} />
+                  <span>Clique no ícone acima para minimizar esta seção</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Indicador visual quando colapsado */}
+      {isOutputCollapsed && (
+        <div className="px-6 pb-3">
+          <div className={`text-center ${currentTheme.textSecondary}`}>
+            <div className="flex items-center justify-center gap-2 text-sm opacity-60">
+              {generatedPrompt ? (
+                <>
+                  <span>{t('output.ready')} ({generatedPrompt.length.toLocaleString()} chars)</span>
+                  <ChevronDown size={16} className="animate-bounce" />
+                </>
+              ) : (
+                <>
+                  <span>{t('output.minimized')}</span>
+                  <ChevronDown size={16} className="animate-bounce" />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4 transition-colors duration-300`}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[90%] mx-auto">{/* Expandido de max-w-7xl para 90% */}
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold mb-2">
-              <span className={currentTheme.accent}>Prompt</span> Crafter
+              <span className={currentTheme.accent}>{t('header.title')}</span>
             </h1>
             <p className={currentTheme.textSecondary}>
-              Transforme suas ideias brutas em prompts estruturados e profissionais
+              {t('header.subtitle')}
             </p>
             {/* Debug info em desenvolvimento */}
             {process.env.NODE_ENV === 'development' && (
               <p className="text-xs text-yellow-400 mt-1">
-                🔧 Modo desenvolvimento | Base URL: {getBaseURL()} | Status: {connectionStatus}
+                🔧 {t('header.debugMode')} | {t('header.baseUrl')}: {getBaseURL()} | {t('header.status')}: {connectionStatus}
               </p>
             )}
           </div>
@@ -447,18 +701,18 @@ make run
               className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500`}
             >
               {availableAPIs.claude_available && (
-                <option value="claude">Claude API</option>
+                <option value="claude">{t('providers.claude')}</option>
               )}
               {availableAPIs.openai_available && (
-                <option value="openai">OpenAI API</option>
+                <option value="openai">{t('providers.openai')}</option>
               )}
               {availableAPIs.deepseek_available && (
-                <option value="deepseek">DeepSeek API</option>
+                <option value="deepseek">{t('providers.deepseek')}</option>
               )}
               {availableAPIs.ollama_available && (
-                <option value="ollama">Ollama Local</option>
+                <option value="ollama">{t('providers.ollama')}</option>
               )}
-              <option value="demo">Modo Demo</option>
+              <option value="demo">{t('providers.demo')}</option>
             </select>
             
             {/* Model Selection */}
@@ -468,12 +722,15 @@ make run
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500`}
               >
-                <option value="">Modelo padrão</option>
+                <option value="">{t('providers.defaultModel')}</option>
                 {availableAPIs.available_models[apiProvider].map((model) => (
                   <option key={model} value={model}>{model}</option>
                 ))}
               </select>
             )}
+            
+            <LanguageSelector currentTheme={currentTheme} />
+            
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -488,10 +745,10 @@ make run
           <div className="mb-6 p-4 bg-yellow-900 border border-yellow-600 rounded-lg flex items-center gap-3">
             <AlertCircle className="text-yellow-400" size={20} />
             <div className="text-yellow-100">
-              <strong>Modo Offline:</strong> 
+              <strong>{t('alerts.offlineTitle')}</strong> 
               {process.env.NODE_ENV === 'development' 
-                ? ' Servidor Go não está respondendo. Certifique-se de executar "go run ." ou "make run"' 
-                : ' Executando em modo demo. Configure APIs para funcionalidade completa.'
+                ? t('alerts.offlineDev')
+                : t('alerts.offlineProduction')
               }
             </div>
           </div>
@@ -501,94 +758,40 @@ make run
         {process.env.NODE_ENV === 'development' && serverInfo && (
           <div className="mb-6 p-4 bg-blue-900 border border-blue-600 rounded-lg">
             <p className="text-blue-100">
-              <strong>🔧 Info do Servidor:</strong> v{serverInfo.version} | 
+              <strong>🔧 {t('alerts.serverInfo')}:</strong> v{serverInfo.version} | 
               APIs: {serverInfo.apis?.claude ? '✅' : '❌'} Claude, {serverInfo.apis?.ollama ? '✅' : '❌'} Ollama
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 transition-all duration-500 ease-in-out grid-cols-1 lg:grid-cols-2`}>
+
           {/* Input Section */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg`}>
-            <h2 className="text-xl font-semibold mb-4">📝 Adicionar Ideias</h2>
-            <div className="space-y-4">
-              <textarea
-                value={currentInput}
-                onChange={(e) => setCurrentInput(e.target.value)}
-                placeholder="Cole suas notas, ideias brutas ou pensamentos desorganizados aqui..."
-                className={`w-full h-32 px-4 py-3 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500 resize-none`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey) {
-                    addIdea();
-                  }
-                }}
-              />
-              <button
-                onClick={addIdea}
-                disabled={!currentInput.trim()}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${currentTheme.button} disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
-              >
-                <Plus size={20} />
-                Incluir (Ctrl+Enter)
-              </button>
+          {/* Input Section - Seção de Ideias Empilhadas */}
+          {isInputCollapsed ? (
+            <div className="lg:col-span-1 hidden">
+              {inputDiv}
             </div>
-
-            {/* Configuration */}
-            <div className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Propósito do Prompt</label>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    {['Código', 'Imagem', 'Outros'].map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          purpose === option 
-                            ? 'bg-blue-600 text-white border-blue-600' 
-                            : `${currentTheme.buttonSecondary} ${currentTheme.border}`
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  {purpose === 'Outros' && (
-                    <input
-                      type="text"
-                      value={customPurpose}
-                      onChange={(e) => setCustomPurpose(e.target.value)}
-                      placeholder="Descreva o objetivo do prompt..."
-                      className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Tamanho Máximo: {maxLength.toLocaleString()} caracteres
-                </label>
-                <input
-                  type="range"
-                  min="500"
-                  max="130000"
-                  step="500"
-                  value={maxLength}
-                  onChange={(e) => setMaxLength(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
-                />
-              </div>
+          ) : (
+            <div className="lg:col-span-1">
+              {inputDiv}
             </div>
-          </div>
+          )}
 
           {/* Ideas List */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg`}>
-            <h2 className="text-xl font-semibold mb-4">💡 Suas Ideias ({ideas.length})</h2>
+          {/* Ideas List - Seção de Ideias Empilhadas */}
+          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-300 h-auto justify-between`}>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              💡 {t('ideas.title')} 
+              <span className={`px-2 py-1 rounded-full text-sm ${currentTheme.textSecondary} bg-blue-500/10 border border-blue-500/20`}>
+                {ideas.length}
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent ml-4"></div>
+            </h2>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {ideas.length === 0 ? (
                 <p className={`${currentTheme.textSecondary} text-center py-8`}>
-                  Adicione suas primeiras ideias ao lado ←
+                  {t('input.emptyState')}
                 </p>
               ) : (
                 ideas.map((idea) => (
@@ -606,13 +809,13 @@ make run
                             onClick={saveEdit}
                             className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
                           >
-                            Salvar
+                            {t('ideas.save')}
                           </button>
                           <button
                             onClick={cancelEdit}
                             className={`px-2 py-1 rounded text-xs ${currentTheme.buttonSecondary}`}
                           >
-                            Cancelar
+                            {t('ideas.cancel')}
                           </button>
                         </div>
                       </div>
@@ -623,12 +826,14 @@ make run
                           <button
                             onClick={() => startEditing(idea.id, idea.text)}
                             className={`p-1 rounded ${currentTheme.buttonSecondary} hover:bg-opacity-80`}
+                            title={t('ideas.edit')}
                           >
                             <Edit3 size={14} />
                           </button>
                           <button
                             onClick={() => removeIdea(idea.id)}
                             className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
+                            title={t('ideas.delete')}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -641,50 +846,72 @@ make run
             </div>
             
             {ideas.length > 0 && (
-              <button
-                onClick={generatePrompt}
-                disabled={isGenerating}
-                className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105`}
-              >
-                <Wand2 size={20} className={isGenerating ? 'animate-spin' : ''} />
-                {isGenerating ? 'Gerando...' : 'Me ajude, engenheiro?!'}
-              </button>
+              <div className="items-bottom justify-between border-opacity-0 h-auto">
+                <div className="mt-6 pt-4 border-t border-opacity-20 border-gradient-to-r from-purple-500 to-blue-500">
+                  <button
+                    onClick={generatePrompt}
+                    disabled={isGenerating}
+                    className={`
+                      w-full 
+                      flex 
+                      items-center 
+                      justify-center 
+                      gap-3 
+                      px-6 
+                      py-4 
+                      rounded-xl 
+                      bg-gradient-to-r 
+                      from-purple-600 
+                      via-blue-600 
+                      to-indigo-600 
+                      text-white 
+                      hover:from-purple-700 
+                      hover:via-blue-700 
+                      hover:to-indigo-700 
+                      disabled:opacity-50 
+                      disabled:cursor-not-allowed 
+                      transition-all 
+                      duration-300 
+                      transform 
+                      hover:scale-105 
+                      hover:shadow-lg 
+                      font-medium 
+                      text-lg 
+                      relative 
+                      overflow-hidden 
+                      group
+                    `}
+                  >
+                    {/* Efeito de brilho no hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    
+                    <Wand2 size={24} className={isGenerating ? 'animate-spin' : 'group-hover:animate-pulse'} />
+                    <span className="relative z-10">
+                      {isGenerating ? t('ideas.generating') : t('ideas.generateButton')}
+                    </span>
+                    
+                    {!isGenerating && (
+                      <div className="absolute right-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                        ✨
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
           {/* Generated Prompt */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg ${generatedPrompt ? 'lg:col-span-1' : ''}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">🚀 Prompt Estruturado</h2>
-              {generatedPrompt && (
-                <button
-                  onClick={copyToClipboard}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-colors`}
-                >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                  {copied ? 'Copiado!' : 'Copiar'}
-                </button>
-              )}
+          {/* Generated Prompt - Seção com Collapse Inteligente */}
+          {isOutputCollapsed ? (
+            <div className="lg:col-span-1 hidden">
+              {outputDiv}
             </div>
-            
-            {generatedPrompt ? (
-              <div className="space-y-4">
-                <div className={`text-xs ${currentTheme.textSecondary} flex justify-between`}>
-                  <span>Caracteres: {generatedPrompt.length}</span>
-                  <span>Limite: {maxLength.toLocaleString()}</span>
-                </div>
-                <div className={`max-h-96 overflow-y-auto p-4 rounded-lg border ${currentTheme.border} bg-opacity-50`}>
-                  <pre className="whitespace-pre-wrap text-sm font-mono">{generatedPrompt}</pre>
-                </div>
-              </div>
-            ) : (
-              <div className={`${currentTheme.textSecondary} text-center py-12`}>
-                <Wand2 size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Seu prompt estruturado aparecerá aqui</p>
-                <p className="text-sm mt-2">Adicione ideias e clique em "Me ajude, engenheiro?!"</p>
-              </div>
-            )}
-          </div>
+          ) : (
+            <div className="lg:col-span-1">
+              {outputDiv}
+            </div>
+          )}
         </div>
       </div>
     </div>
