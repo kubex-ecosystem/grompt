@@ -67,6 +67,38 @@ __first(){
   fi
 }
 
+run_custom_scripts() {
+  local _STAGE="${1:-post}"
+
+  if test -d "${_SCRIPT_DIR}/${_STAGE}.d/"; then
+    log info "Diretório de scripts personalizados encontrado: ${_SCRIPT_DIR}/${_STAGE}.d/"
+    if ls -1A "${_SCRIPT_DIR}/${_STAGE}.d/" >/dev/null 2>&1; then
+      log info "Executando scripts personalizados..."
+
+      local _CUSTOM_SCRIPTS=()
+      _CUSTOM_SCRIPTS=( "$(ls -1A "${_SCRIPT_DIR}/${_STAGE}.d/" || true)" )
+
+      for _CUSTOM_SCRIPT in "${_CUSTOM_SCRIPTS[@]}"; do
+        if [[ -f "${_SCRIPT_DIR}/${_STAGE}.d/${_CUSTOM_SCRIPT}" ]]; then
+          log info "Executando script: ${_CUSTOM_SCRIPT}"
+
+          chmod +x "${_SCRIPT_DIR}/${_STAGE}.d/${_CUSTOM_SCRIPT}" || log error "Erro ao definir permissão de execução para o script: ${_CUSTOM_SCRIPT}"
+
+          "${_SCRIPT_DIR}/${_STAGE}.d/${_CUSTOM_SCRIPT}" || log error "Erro ao executar o script: ${_CUSTOM_SCRIPT}"
+        else
+          log warn "Script não encontrado: ${_CUSTOM_SCRIPT}"
+        fi
+      done  
+    else
+      log warn "Nenhum script personalizado encontrado no diretório: ${_SCRIPT_DIR}/${_STAGE}.d/"
+      return 0
+    fi
+  else
+    log warn "Diretório de scripts personalizados não encontrado: ${_SCRIPT_DIR}/${_STAGE}.d/"
+    return 0
+  fi
+}
+
 _DEBUG=${DEBUG:-false}
 _HIDE_ABOUT=${HIDE_ABOUT:-false}
 
@@ -196,6 +228,10 @@ __secure_logic_main() {
   fi
 }
 
+run_custom_scripts "pre" "$@" || log error "Erro ao executar scripts pré-instalação."
+
+__secure_logic_init_timestamp="$(date +%s)"
+
 # echo "MAKE ARGS: ${ARGS[*]:-}"
 log info "Starting installation script..."
 __secure_logic_main "$@"
@@ -205,5 +241,7 @@ __secure_logic_elapsed_time="$(($(date +%s) - __secure_logic_init_timestamp))"
 if [[ "${MYNAME_VERBOSE:-false}" == "true" || "${_DEBUG:-false}" == "true" ]]; then
   log info "Script executed in ${__secure_logic_elapsed_time} seconds."
 fi
+
+run_custom_scripts "post" "$@" || log error "Erro ao executar scripts pós-instalação."
 
 # End of script logic

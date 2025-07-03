@@ -12,6 +12,25 @@
 
 ---
 
+## **Table of Contents**
+
+1. [🎯 Why Grompt?](#-why-grompt)
+2. [✨ Key Features](#-key-features)
+3. [🚀 Quick Start](#-quick-start)
+4. [💡 Usage Examples](#-usage-examples)
+5. [🎪 Use Cases](#-use-cases)
+6. [⚙️ Configuration & API Support](#️-configuration--api-support)
+7. [🔗 Custom Build Hooks](#-custom-build-hooks-modular-build-steps-with-pred-and-posd)
+8. [🛡️ Security & Best Practices](#️-security--best-practices)
+9. [🏗️ Performance & Specifications](#-performance--specifications)
+10. [🛣️ Roadmap](#️-roadmap)
+11. [🤝 Contributing](#-contributing)
+12. [🙏 Acknowledgments](#-acknowledgments)
+13. [📄 License](#-license)
+14. [🌎 Documentation](#-documentation)
+
+---
+
 ## 🎯 **Why Grompt?**
 
 **Before Grompt:**
@@ -93,7 +112,7 @@ make build-all
 **Input Ideas:**
 
 - "Make a REST API"
-- "User authentication" 
+- "User authentication"
 - "Database with PostgreSQL"
 - "Rate limiting"
 
@@ -270,6 +289,124 @@ GET  /api/test       # Test API provider availability
 
 ---
 
+## 🔗 **Custom Build Hooks: Modular Build Steps with `pre.d` and `pos.d`**
+
+Grompt supports **user-customizable build hooks** that run before and after the main build process.
+This provides maximum flexibility for teams and advanced users who need to automate steps, integrate with other tools, or adapt builds for different environments — **all without changing core scripts.**
+
+### 📂 **How It Works**
+
+- **Scripts in `support/pre.d/`** are executed **before** the main build (pre-build).
+- **Scripts in `support/pos.d/`** run **after** the main build (post-build).
+- All scripts are executed in **lexicographic order** (`01-init.sh`, `10-db-migrate.sh`, etc).
+- Each script runs in its own subshell for safety.
+
+**Perfect for:**
+
+- Setting up environment variables before building
+- Running migrations or checks
+- Cleaning up files or sending notifications after build
+
+### 📝 **Example Hook Script**
+
+- **support/pre.d/10-setup-env.sh**
+
+```bash
+#!/usr/bin/env bash
+# Example pre-build hook
+
+echo "🔧 [pre.d] Setting up environment..."
+export GROMPT_ENV="dev"
+```
+
+- **support/pos.d/10-notify.sh**
+
+```bash
+#!/usr/bin/env bash
+# Example post-build hook
+
+echo "✅ [pos.d] Build completed! Sending notification..."
+# your notification code here
+```
+
+---
+
+## ⚠️ **Security & Best Practices**
+
+- **Scripts are run with the current user’s permissions.**
+  **DO NOT** add untrusted code to these folders!
+- Keep hooks small, modular, and easy to review.
+- Always set execute permission: `chmod +x script.sh`
+- Use ordered prefixes (`01-`, `02-`, etc) for predictable execution.
+- If a script fails, the error is logged but the process continues (you can tune this as needed).
+- Full execution log is available for troubleshooting.
+
+### 🛡️ **Sandboxing Tips (Bash Shell Level)**
+
+While bash has limited sandboxing, these measures help mitigate risk:
+
+- **Run each script in a subshell:**
+  Prevents variable/function leakage.
+
+  ```bash
+  ( bash "$SCRIPT" )
+  ```
+
+- **Restrict permissions:**
+  Set `chmod 500` on scripts, and limit writable locations.
+- **Resource limits:**
+  Use `ulimit` for memory/CPU protection (Linux).
+
+  ```bash
+  ulimit -v 1048576  # Limit to 1GB RAM
+  ```
+
+- **Use containers or chroot for critical tasks** (advanced).
+- **Review every script before use**; never add code you don't trust.
+
+### 📄 **Template: Default Hook Script**
+
+- **support/pre.d/10-example.sh**
+
+```bash
+#!/usr/bin/env bash
+# Pre-build hook example for Grompt/GoForge template
+
+echo "🔧 Running $(basename "$0")"
+# Put your custom commands below
+```
+
+- **support/pos.d/10-example.sh**
+
+```bash
+#!/usr/bin/env bash
+# Post-build hook example for Grompt/GoForge template
+
+echo "✅ Finished $(basename "$0")"
+# Put your custom cleanup, notification, or deployment steps here
+```
+
+### 💡 **Why Use This System?**
+
+- **No need to fork or patch main build scripts for local/company tweaks**
+- Keeps project clean, modular, and easy to maintain
+- Encourages community contributions and custom workflows
+- Great for CI/CD, advanced automation, or onboarding new team members
+
+---
+
+## 🏆 **Summary**
+
+> Create or drop scripts into `support/pre.d/` and `support/pos.d/`, make them executable, and Grompt (or any GoForge-based project) will run them for you at the right time.
+> This makes your automation as extensible as your imagination — no more “hacking” core scripts.
+
+---
+
+**Pro Tip:**
+When you migrate this to GoForge, já pode chamar de
+**“Zero-Fragile Build System™”** — porque toda extensão agora é plugável e reversível.
+Quem mexe, entende, quem não mexe, nem percebe!
+
 ## 🛣️ **Roadmap**
 
 ### 🚧 Current Development
@@ -373,7 +510,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🌎 **Documentation**
 
 - **[English Documentation](README.md)** (this file)
-- **[Documentação em Português](docs/README.pt-BR.md)** 
+- **[Documentação em Português](docs/README.pt-BR.md)**
 - **[Contributing Guidelines](CONTRIBUTING.md)**
 - **[API Documentation](docs/API.md)**
 - **[Developer Guide](docs/DEVELOPMENT.md)**
