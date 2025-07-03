@@ -511,18 +511,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **[English Documentation](README.md)** (this file)
 - **[Documentação em Português](docs/README.pt-BR.md)**
-- **[Contributing Guidelines](CONTRIBUTING.md)**
-- **[API Documentation](docs/API.md)**
-- **[Developer Guide](docs/DEVELOPMENT.md)**
+- **[Contributing Guidelines](docs/CONTRIBUTING.md)**
+<!-- - **[API Documentation](docs/API.md)**
+- **[Developer Guide](docs/DEVELOPMENT.md)** -->
 
 ---
-
-<div align="center">
 
 **Made with ❤️ by Mori family, using Go + React!**
 
 [⭐ Star this project](https://github.com/rafa-mori/grompt/stargazers) • [🐛 Report Bug](https://github.com/rafa-mori/grompt/issues) • [✨ Request Feature](https://github.com/rafa-mori/grompt/issues)
 
 *Transform your ideas into powerful prompts today!*
-
-</div>
