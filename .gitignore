@@ -58,3 +58,4 @@ temp/
 .env.local
 *_linux_amd64
 *_linux_amd64*
+bkp/

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Edit3, Plus, Wand2, Sun, Moon, Copy, Check, AlertCircle, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
+import { Trash2, Edit3, Plus, Wand2, Sun, Moon, Copy, Check, AlertCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 
@@ -91,6 +91,7 @@ const PromptCrafter = () => {
   // Verificar configuração e APIs disponíveis na inicialização
   useEffect(() => {
     checkAPIAvailability();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAPIAvailability = async () => {
@@ -189,6 +190,28 @@ const PromptCrafter = () => {
   const cancelEdit = () => {
     setEditingId(null);
     setEditingText('');
+  };
+
+  // Função para limpar tudo e reiniciar
+  const clearAll = () => {
+    // Limpar todas as ideias
+    setIdeas([]);
+    // Limpar input atual
+    setCurrentInput('');
+    // Limpar prompt gerado
+    setGeneratedPrompt('');
+    // Cancelar qualquer edição em andamento
+    setEditingId(null);
+    setEditingText('');
+    // Resetar estados de collapse para o inicial
+    setIsInputCollapsed(false);
+    setIsOutputCollapsed(true);
+    // Resetar configurações para padrão
+    setPurpose('Outros');
+    setCustomPurpose('');
+    setMaxLength(5000);
+    // Feedback visual
+    console.log('🧹 Interface limpa - pronto para começar!');
   };
 
   const generateDemoPrompt = () => {
@@ -450,38 +473,30 @@ make run
   };
 
   const inputDiv = (
-    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out ${
-      isInputCollapsed  ? 'h-20' : 'h-auto'
-    } ${!isInputCollapsed ? 'lg:col-span-1' : ''}`}>
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${
+      isInputCollapsed ? 'h-20' : 'h-auto'
+    }`}>
 
       <div className="items-center p-6 pb-0 gap-4">
         <div className="text-xl font-semibold mb-4 flex items-center">
           <h2>
             📝 {t('input.title')}
           </h2>
-          <div className="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent ml-4 "></div>
-          <div className="flex items-center gap-2">
-            {/* Botão de collapse/expand */}
-            <button
-              onClick={() => {
-                setIsInputCollapsed(!isInputCollapsed)
-                setIsOutputCollapsed(!isOutputCollapsed); // Colapsar output ao colapsar input
-              }}
-              className={`p-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-200 ${
-                isInputCollapsed || !isOutputCollapsed ? 'hover:scale-105' : ''
-              }`}
-              title={isInputCollapsed ? t('input.expand') : t('input.collapse')}
-            >
-              {isInputCollapsed ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-            </button>
-          </div>
+          <div className={`h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent ml-4 transition-all duration-300 ${
+            isInputCollapsed ? 'opacity-0' : 'opacity-100'
+          }`}></div>
         </div>
       </div>
 
-      {/* Conteúdo colapsável */}
-      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
-        isInputCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'
+      {/* Conteúdo colapsável com animação super suave */}
+      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top p-6 ${
+        isInputCollapsed 
+          ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none' 
+          : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
       }`}>
+        <div className={`transition-all duration-500 delay-100 ${
+          isInputCollapsed ? 'opacity-0' : 'opacity-100'
+        }`}>
         {/* Inputs editáveis */}
         <div className="space-y-4">
           <textarea
@@ -556,59 +571,54 @@ make run
             />
           </div>
         </div>
+        </div>
       </div>
     </div>
   );
 
   const outputDiv = (
-    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out ${
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${
       isOutputCollapsed ? 'h-20' : 'h-auto'
-    } ${!isOutputCollapsed ? 'lg:col-span-1' : ''}`}>
+    }`}>
       
       {/* Header sempre visível */}
       <div className="flex justify-between items-center p-6 pb-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold">🚀 {t('output.title')}</h2>
           {generatedPrompt && (
-            <div className={`px-2 py-1 rounded-full text-xs ${currentTheme.textSecondary} bg-opacity-50 ${currentTheme.cardBg}`}>
+            <div className={`px-2 py-1 rounded-full text-xs ${currentTheme.textSecondary} bg-opacity-50 ${currentTheme.cardBg} transition-all duration-300 ${
+              isOutputCollapsed ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+            }`}>
               {generatedPrompt.length.toLocaleString()} chars
             </div>
           )}
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Botão de copiar quando há conteúdo */}
+          {/* Botão de copiar quando há conteúdo - com animação suave */}
           {generatedPrompt && !isOutputCollapsed && (
             <button
               onClick={copyToClipboard}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-colors`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-300 transform hover:scale-105 active:scale-95`}
             >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
+              <div className="transition-all duration-200">
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </div>
               {copied ? t('output.copied') : t('output.copy')}
             </button>
           )}
-          
-          {/* Botão de collapse/expand */}
-          <button
-            onClick={() => {
-              setIsOutputCollapsed(!isOutputCollapsed)
-              setIsInputCollapsed(!isInputCollapsed); // Colapsar input ao colapsar output
-            }}
-            className={`p-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-200 ${
-              isOutputCollapsed ? 'hover:scale-105' : ''
-            }`}
-            title={isOutputCollapsed ? t('output.expand') : t('output.collapse')}
-          >
-            {isOutputCollapsed ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-          </button>
         </div>
       </div>
       
-      {/* Conteúdo colapsável */}
-      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
-        isOutputCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'
+      {/* Conteúdo colapsável com animação super suave */}
+      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top ${
+        isOutputCollapsed 
+          ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none' 
+          : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
       }`}>
-        <div className="p-6 pt-4">
+        <div className={`p-6 pt-4 transition-all duration-500 delay-100 ${
+          isOutputCollapsed ? 'opacity-0' : 'opacity-100'
+        }`}>
           {generatedPrompt ? (
             <div className="space-y-4">
               <div className={`text-xs ${currentTheme.textSecondary} flex justify-between items-center`}>
@@ -664,7 +674,7 @@ make run
         </div>
       )}
     </div>
-  )
+  );
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4 transition-colors duration-300`}>
@@ -764,29 +774,53 @@ make run
           </div>
         )}
 
-        <div className={`grid gap-6 transition-all duration-500 ease-in-out grid-cols-1 lg:grid-cols-2`}>
+        <div className={`grid gap-6 transition-all duration-700 ease-in-out ${
+          // Grid que se adapta fluida e dinamicamente
+          isInputCollapsed && isOutputCollapsed
+            ? 'grid-cols-1' // Apenas Ideas quando ambos colapsados
+            : isInputCollapsed && !isOutputCollapsed 
+            ? 'grid-cols-1 lg:grid-cols-2' // Ideas + Output
+            : !isInputCollapsed && isOutputCollapsed
+            ? 'grid-cols-1 lg:grid-cols-2' // Input + Ideas
+            : 'grid-cols-1 lg:grid-cols-3' // Todos expandidos: Input + Ideas + Output
+        }`}>
 
-          {/* Input Section */}
-          {/* Input Section - Seção de Ideias Empilhadas */}
-          {isInputCollapsed ? (
-            <div className="lg:col-span-1 hidden">
-              {inputDiv}
-            </div>
-          ) : (
-            <div className="lg:col-span-1">
-              {inputDiv}
-            </div>
-          )}
+          {/* Input Section - Sempre no DOM, mas com transições ultra-fluidas */}
+          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${
+            isInputCollapsed 
+              ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm' 
+              : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
+          } ${isInputCollapsed ? 'lg:hidden' : ''}`}>
+            {inputDiv}
+          </div>
 
-          {/* Ideas List */}
-          {/* Ideas List - Seção de Ideias Empilhadas */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-300 h-auto justify-between`}>
+          {/* Ideas List - Sempre visível e responsivo */}
+          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] ${
+            // Expande quando é o único card visível
+            isInputCollapsed && isOutputCollapsed ? 'lg:col-span-1' : ''
+          }`}>
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               💡 {t('ideas.title')} 
               <span className={`px-2 py-1 rounded-full text-sm ${currentTheme.textSecondary} bg-blue-500/10 border border-blue-500/20`}>
                 {ideas.length}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent ml-4"></div>
+              
+              {/* Botão Limpar Tudo - aparece quando há conteúdo */}
+              {(ideas.length > 0 || generatedPrompt || currentInput.trim()) && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(t('ideas.clearConfirm'))) {
+                      clearAll();
+                    }
+                  }}
+                  className={`group flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-300 transform hover:scale-105 active:scale-95 hover:bg-red-600 hover:text-white`}
+                  title={t('ideas.clearAll')}
+                >
+                  <RefreshCw size={16} className="transition-transform duration-300 group-hover:rotate-180" />
+                  <span className="text-sm font-medium">{t('ideas.clearAll')}</span>
+                </button>
+              )}
             </h2>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {ideas.length === 0 ? (
@@ -794,8 +828,12 @@ make run
                   {t('input.emptyState')}
                 </p>
               ) : (
-                ideas.map((idea) => (
-                  <div key={idea.id} className={`p-3 rounded-lg border ${currentTheme.border} bg-opacity-50`}>
+                ideas.map((idea, index) => (
+                  <div 
+                    key={idea.id} 
+                    className={`p-3 rounded-lg border ${currentTheme.border} bg-opacity-50 transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-md animate-in slide-in-from-bottom-4 fade-in duration-500`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
                     {editingId === idea.id ? (
                       <div className="space-y-2">
                         <textarea
@@ -807,13 +845,13 @@ make run
                         <div className="flex gap-1">
                           <button
                             onClick={saveEdit}
-                            className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                            className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-all duration-200 transform hover:scale-105 active:scale-95"
                           >
                             {t('ideas.save')}
                           </button>
                           <button
                             onClick={cancelEdit}
-                            className={`px-2 py-1 rounded text-xs ${currentTheme.buttonSecondary}`}
+                            className={`px-2 py-1 rounded text-xs ${currentTheme.buttonSecondary} transition-all duration-200 transform hover:scale-105 active:scale-95`}
                           >
                             {t('ideas.cancel')}
                           </button>
@@ -825,14 +863,14 @@ make run
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => startEditing(idea.id, idea.text)}
-                            className={`p-1 rounded ${currentTheme.buttonSecondary} hover:bg-opacity-80`}
+                            className={`p-1 rounded ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-all duration-200 transform hover:scale-110 active:scale-90`}
                             title={t('ideas.edit')}
                           >
                             <Edit3 size={14} />
                           </button>
                           <button
                             onClick={() => removeIdea(idea.id)}
-                            className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
+                            className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition-all duration-200 transform hover:scale-110 active:scale-90"
                             title={t('ideas.delete')}
                           >
                             <Trash2 size={14} />
@@ -871,27 +909,32 @@ make run
                       disabled:opacity-50 
                       disabled:cursor-not-allowed 
                       transition-all 
-                      duration-300 
+                      duration-500
                       transform 
                       hover:scale-105 
-                      hover:shadow-lg 
+                      active:scale-95
+                      hover:shadow-xl
+                      hover:shadow-purple-500/25
                       font-medium 
                       text-lg 
                       relative 
                       overflow-hidden 
                       group
+                      ${isGenerating ? 'animate-pulse' : ''}
                     `}
                   >
-                    {/* Efeito de brilho no hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                    {/* Efeito de brilho no hover mais suave */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1500 ease-in-out"></div>
                     
-                    <Wand2 size={24} className={isGenerating ? 'animate-spin' : 'group-hover:animate-pulse'} />
-                    <span className="relative z-10">
+                    <div className={`transition-transform duration-300 ${isGenerating ? 'animate-spin' : 'group-hover:animate-pulse'}`}>
+                      <Wand2 size={24} />
+                    </div>
+                    <span className="relative z-10 transition-all duration-300">
                       {isGenerating ? t('ideas.generating') : t('ideas.generateButton')}
                     </span>
                     
                     {!isGenerating && (
-                      <div className="absolute right-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute right-4 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:animate-bounce">
                         ✨
                       </div>
                     )}
@@ -901,17 +944,14 @@ make run
             )}
           </div>
 
-          {/* Generated Prompt */}
-          {/* Generated Prompt - Seção com Collapse Inteligente */}
-          {isOutputCollapsed ? (
-            <div className="lg:col-span-1 hidden">
-              {outputDiv}
-            </div>
-          ) : (
-            <div className="lg:col-span-1">
-              {outputDiv}
-            </div>
-          )}
+          {/* Generated Prompt - Sempre no DOM, mas com transições ultra-fluidas */}
+          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${
+            isOutputCollapsed 
+              ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm' 
+              : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
+          } ${isOutputCollapsed ? 'lg:hidden' : ''}`}>
+            {outputDiv}
+          </div>
         </div>
       </div>
     </div>
