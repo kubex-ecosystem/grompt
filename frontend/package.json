@@ -1,0 +1,61 @@
+{
+  "name": "krompt",
+  "version": "1.0.0",
+  "description": "Krompt: A React-based Prompt Engineering Tool for AI Models",
+  "private": true,
+  "homepage": "./",
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.2",
+    "i18next": "^25.3.0",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^15.5.3",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build && npm run post-build || echo '⚠️ Build error! Check the logs above.'",
+    "post-build": "bash ../support/post_build.sh",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "build:go": "npm run build && echo '📦 Optimized build created successfully!'"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "prompt-engineering",
+    "ai",
+    "claude",
+    "react",
+    "golang",
+    "embedded"
+  ],
+  "author": "Rafael Mori",
+  "license": "MIT",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

@@ -1,0 +1,127 @@
+{
+  "header": {
+    "title": "Prompt Crafter",
+    "subtitle": "Transforme suas ideias brutas em prompts estruturados e profissionais",
+    "debugMode": "Modo desenvolvimento",
+    "baseUrl": "Base URL",
+    "status": "Status"
+  },
+  "connection": {
+    "connected": "Conectado ao Go Server",
+    "offline": "Servidor Go Offline",
+    "offlineProduction": "Modo Offline",
+    "checking": "Verificando conexão..."
+  },
+  "alerts": {
+    "offlineTitle": "Modo Offline:",
+    "offlineDev": "Servidor Go não está respondendo. Certifique-se de executar \"go run .\" ou \"make run\"",
+    "offlineProduction": "Executando em modo demo. Configure APIs para funcionalidade completa.",
+    "serverInfo": "Info do Servidor"
+  },
+  "input": {
+    "title": "Adicionar Ideias",
+    "placeholder": "Cole suas notas, ideias brutas ou pensamentos desorganizados aqui...",
+    "addButton": "Incluir (Ctrl+Enter)",
+    "emptyState": "Adicione suas primeiras ideias ao lado ←",
+    "expand": "Expandir entrada",
+    "collapse": "Minimizar entrada", 
+    "minimized": "Formulário de entrada minimizado"
+  },
+  "ideas": {
+    "title": "Suas Ideias",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "generateButton": "Me ajude, engenheiro?!",
+    "generating": "Gerando...",
+    "clearAll": "Limpar Tudo",
+    "clearConfirm": "Tem certeza? Isso apagará todas as suas ideias e prompt gerado.",
+    "cleared": "Interface limpa! Pronto para começar."
+  },
+  "config": {
+    "purpose": "Propósito do Prompt",
+    "purposeCode": "Código",
+    "purposeImage": "Imagem", 
+    "purposeOthers": "Outros",
+    "customPurpose": "Descreva o objetivo do prompt...",
+    "maxLength": "Tamanho Máximo",
+    "characters": "caracteres"
+  },
+  "providers": {
+    "claude": "Claude API",
+    "openai": "OpenAI API",
+    "deepseek": "DeepSeek API",
+    "ollama": "Ollama Local",
+    "demo": "Modo Demo",
+    "defaultModel": "Modelo padrão"
+  },
+  "output": {
+    "title": "Prompt Estruturado",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "characters": "Caracteres",
+    "limit": "Limite",
+    "emptyTitle": "Seu prompt estruturado aparecerá aqui",
+    "emptySubtitle": "Adicione ideias e clique em \"Me ajude, engenheiro?!\"",
+    "expand": "Expandir seção",
+    "collapse": "Minimizar seção",
+    "ready": "Prompt pronto",
+    "minimized": "Seção de output minimizada"
+  },
+  "demo": {
+    "context": "Contexto",
+    "contextDesc": "Você é um assistente especializado em **{{purpose}}** com conhecimento profundo na área.",
+    "ideasTitle": "Ideias do Usuário Organizadas:",
+    "instructions": "Instruções Específicas",
+    "instructionsList": [
+      "Analise cuidadosamente todas as ideias apresentadas acima",
+      "Identifique o objetivo principal e objetivos secundários", 
+      "Forneça uma resposta estruturada e bem organizada",
+      "Mantenha o foco no propósito definido: **{{purpose}}**",
+      "Use exemplos práticos quando apropriado",
+      "Seja específico e actionável"
+    ],
+    "responseFormat": "Formato de Resposta Esperado",
+    "responseSteps": [
+      "**Análise Inicial**: Resumo do que foi solicitado",
+      "**Desenvolvimento**: Resposta detalhada seguindo as ideias", 
+      "**Conclusão**: Próximos passos ou considerações finais"
+    ],
+    "technicalConfig": "Configurações Técnicas",
+    "maxChars": "Máximo de caracteres",
+    "purpose": "Propósito",
+    "totalIdeas": "Total de ideias processadas",
+    "mode": "Modo",
+    "modeConnected": "Demo (servidor Go conectado)",
+    "modeOffline": "Demo (modo offline)",
+    "footer": "Prompt gerado automaticamente pelo Prompt Crafter v1.0",
+    "footerConnected": "Configure uma API key para funcionalidade completa",
+    "footerOffline": "Servidor Go offline - usando modo demo"
+  },
+  "errors": {
+    "generateTitle": "Erro ao Gerar Prompt",
+    "errorLabel": "Erro:",
+    "detailsLabel": "Detalhes:",
+    "connectionFailed": "Não foi possível conectar com a API selecionada.",
+    "checksTitle": "Verificações:",
+    "serverStatus": "Status do servidor:",
+    "currentMode": "Modo atual:",
+    "selectedProvider": "Provider selecionado:",
+    "baseUrl": "Base URL:",
+    "solutionsTitle": "Soluções:",
+    "solutionDev": "Se em desenvolvimento: Certifique-se de que o servidor Go está rodando na porta 8080",
+    "solutionProd": "Se em produção: Verifique se as APIs estão configuradas corretamente",
+    "solutionDemo": "Tente usar o modo demo como alternativa",
+    "goCommand": "Comando para iniciar servidor Go:"
+  },
+  "api": {
+    "sendingToClaude": "Enviando para Claude API...",
+    "sendingToOpenAI": "Enviando para OpenAI API...",
+    "sendingToDeepSeek": "Enviando para DeepSeek API...",
+    "sendingToOllama": "Enviando para Ollama...",
+    "responseReceived": "Resposta recebida",
+    "emptyResponse": "Resposta vazia do servidor",
+    "httpError": "Erro HTTP"
+  }
+}
