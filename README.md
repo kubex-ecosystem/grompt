@@ -103,6 +103,16 @@ make build-all
 
 **That's it!** No Docker, no complex setup, no cloud accounts needed.
 
+### CLI: Generate AI Squad
+
+Use the `squad` command to generate an `AGENTS.md` with recommended AI agents based on your project requirements:
+
+```bash
+./grompt squad "Quero um microserviço de backend para pagamentos, com autenticação, integração com Stripe, testes automatizados, e deploy em Docker. Prefiro Go ou Python, sem Java."
+```
+
+This will create an `AGENTS.md` file in the current directory.
+
 ---
 
 ## 💡 **Usage Examples**
