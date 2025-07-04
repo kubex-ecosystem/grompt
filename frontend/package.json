@@ -19,8 +19,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && npm run post-build || echo '⚠️ Build error! Check the logs above.'",
-    "post-build": "bash ../support/post_build.sh",
+    "build": "react-scripts build",
+    "post-build": "bash ../support/pre.d/pre_build.sh",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "build:go": "npm run build && echo '📦 Optimized build created successfully!'"
