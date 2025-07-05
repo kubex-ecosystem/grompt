@@ -19,30 +19,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y upx zip tar curl gzip
           sudo apt-get install -y "$(sudo apt-cache show 'libzmq[1-9]-dev' | grep '^Package: ' | uniq | head -n1 | awk '{print $2}')"
-        
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts/*'  # Use this if you want the latest LTS version
-          cache: 'npm'  # Habilita cache para dependências do Node.js
-          cache-dependency-path: 'frontend/package-lock.json'  # Caminho para o arquivo de bloqueio do npm
-        env:
-          NPM_CONFIG_LOGLEVEL: error  # Reduz a verbosidade dos logs do npm
-          NODE_ENV: production  # Define o ambiente como produção
-          CI: true  # Indica que está em um ambiente de integração contínua
-
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Garante acesso às tags
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'  # Use this if you want the latest LTS version
+          cache: 'npm'  # Habilita o cache do npm
+          cache-dependency-path: 'frontend/package-lock.json'  # Caminho para o arquivo de bloqueio do npm
+        env:
+          NPM_CONFIG_LOGLEVEL: error  # Reduz a verbosidade dos logs do npm
+          NODE_ENV: production  # Define o ambiente como produção
+          CI: true  # Indica que está em um ambiente de integração contínua
 
       - name: Cache Go
         uses: actions/cache@v3
