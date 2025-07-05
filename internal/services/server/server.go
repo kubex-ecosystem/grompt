@@ -156,6 +156,9 @@ func (s *Server) setupRoutes() {
 	http.HandleFunc("/api/ollama", s.handlers.HandleOllama)
 	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
 	http.HandleFunc("/api/models", s.handlers.HandleModels)
+	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
+	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// This route handles the configuration API endpoint
 	// It returns the server's configuration, such as API keys and endpoints.
@@ -288,6 +291,9 @@ cd ..</code></pre>
 	http.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
 	http.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
 	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
+	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
+	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.
