@@ -40,7 +40,7 @@ func init() {
 var moduleAlias = "Grompt" // Default module alias, can be overridden by environment variable
 var moduleName = "grompt"  // Default module name, can be overridden by environment variable
 
-const currentVersionFallback = "v0.0.1"
+const currentVersionFallback = "v1.0.0"
 
 //go:embed CLI_VERSION
 var cliVersion string
