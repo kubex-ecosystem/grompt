@@ -23,12 +23,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          # Use the latest LTS version of Node.js
-          # node-version: 'lts/*'  # Use this if you want the latest LTS version
-          # Use a specific version of Node.js
           node-version: 'lts/*'  # Use this if you want the latest LTS version
           cache: 'npm'  # Habilita cache para dependências do Node.js
           cache-dependency-path: 'frontend/package-lock.json'  # Caminho para o arquivo de bloqueio do npm
+        env:
+          NPM_CONFIG_LOGLEVEL: error  # Reduz a verbosidade dos logs do npm
+          NODE_ENV: production  # Define o ambiente como produção
+          CI: true  # Indica que está em um ambiente de integração contínua
 
       - name: Cache Node.js modules
         uses: actions/cache@v3
