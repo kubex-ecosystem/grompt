@@ -19,6 +19,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y upx zip tar curl gzip
           sudo apt-get install -y "$(sudo apt-cache show 'libzmq[1-9]-dev' | grep '^Package: ' | uniq | head -n1 | awk '{print $2}')"
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'npm'
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,6 +82,16 @@ jobs:
         run: |
           MOD_NAME=$(awk '/^module /{print $2}' go.mod | awk -F'/' '{print $NF}')
           BIN_NAME="${MOD_NAME}_linux_amd64"
+          ROOT_DIR=$(realpath ./)
+          cd frontend
+          npm i -f && npm run build
+          if [ -d "$ROOT_DIR/frontend/build" ]; then
+            mv -r "$ROOT_DIR/frontend/build" "$ROOT_DIR/internal/services/server/build"
+          else
+            echo "Frontend build directory not found. Skipping frontend build step."
+            exit 1
+          fi
+          cd "$ROOT_DIR"
           go build -ldflags "-s -w -X main.version=${GITHUB_REF#refs/tags/} -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)" -trimpath -o "$BIN_NAME" "$(dirname $(grep -risn '^package main' $(realpath ./) | head -n1 | awk -F ':' '{print $1}'))"
 
       - name: Compress with UPX
