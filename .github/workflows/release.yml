@@ -23,8 +23,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22'
-          cache: 'npm'
+          # Use the latest LTS version of Node.js
+          # node-version: 'lts/*'  # Use this if you want the latest LTS version
+          # Use a specific version of Node.js
+          node-version: 'lts/*'  # Use this if you want the latest LTS version
+          cache: 'npm'  # Habilita cache para dependências do Node.js
+          cache-dependency-path: 'frontend/package-lock.json'  # Caminho para o arquivo de bloqueio do npm
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
       - name: Checkout
         uses: actions/checkout@v4
