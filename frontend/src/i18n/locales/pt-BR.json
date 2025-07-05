@@ -6,6 +6,97 @@
     "baseUrl": "Base URL",
     "status": "Status"
   },
+  "nav": {
+    "promptCrafter": "Gerador de Prompts",
+    "agents": "Agentes"
+  },
+  "theme": {
+    "light": "Tema claro",
+    "dark": "Tema escuro"
+  },
+  "agents": {
+    "title": "Agentes",
+    "new": "Novo Agente",
+    "edit": "Editar Agente",
+    "generateSquad": "Gerar Squad",
+    "search": "Buscar agentes...",
+    "all": "Todos",
+    "exportButton": "Exportar AGENTS.md",
+    "empty": {
+      "title": "Nenhum agente encontrado",
+      "description": "Comece criando seu primeiro agente ou gerando um squad completo."
+    },
+    "createFirst": "Criar Primeiro Agente",
+    "confirmDelete": "Tem certeza que deseja excluir este agente?",
+    "backToList": "Voltar para lista",
+    "notFound": "Agente não encontrado",
+    "form": {
+      "basic": "Informações Básicas",
+      "title": "Título",
+      "titlePlaceholder": "Ex: Desenvolvedor Backend Python",
+      "role": "Função",
+      "rolePlaceholder": "Ex: Implementar APIs REST escaláveis",
+      "skills": "Habilidades",
+      "skillPlaceholder": "Ex: Python, FastAPI, PostgreSQL",
+      "restrictions": "Restrições",
+      "restrictionPlaceholder": "Ex: Evitar Java, usar apenas código assíncrono",
+      "promptExample": "Exemplo de Prompt",
+      "promptExamplePlaceholder": "Descreva como este agente deve ser usado em prompts..."
+    },
+    "import": {
+      "title": "Importar AGENTS.md",
+      "upload": "Carregar Arquivo",
+      "paste": "Colar Conteúdo",
+      "content": "Conteúdo do Arquivo",
+      "preview": "Pré-visualização",
+      "options": "Opções",
+      "merge": "Mesclar com agentes existentes",
+      "replace": "Substituir todos os agentes",
+      "validate": "Validar antes de importar",
+      "parsing": "Analisando arquivo...",
+      "validating": "Validando agentes...",
+      "importing": "Importando agentes...",
+      "success": "Importação concluída com sucesso!",
+      "errors": "Erros encontrados:",
+      "warnings": "Avisos:",
+      "agentsFound": "agentes encontrados",
+      "confirmReplace": "Isso substituirá todos os agentes existentes. Continuar?",
+      "supportedFormats": "Formatos suportados: .md, .markdown, .txt"
+    },
+    "export": {
+      "title": "Exportar Agentes",
+      "selectAgents": "Selecionar Agentes",
+      "selectAll": "Selecionar Todos",
+      "deselectAll": "Desmarcar Todos",
+      "format": "Formato",
+      "filename": "Nome do Arquivo",
+      "download": "Baixar",
+      "allAgents": "Todos os Agentes",
+      "selectedAgents": "Agentes Selecionados",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "json": "JSON (.json)",
+        "yaml": "YAML (.yaml)"
+      }
+    },
+    "validation": {
+      "title": "Validar AGENTS.md",
+      "content": "Conteúdo para Validar",
+      "validate": "Validar",
+      "validating": "Validando...",
+      "valid": "Arquivo válido!",
+      "invalid": "Arquivo inválido",
+      "errors": "Erros",
+      "warnings": "Avisos",
+      "summary": "Resumo da Validação"
+    },
+    "generate": {
+      "title": "Gerar Squad de Agentes",
+      "requirements": "Requisitos do Projeto",
+      "placeholder": "Descreva o projeto que você quer desenvolver. Ex: 'Quero criar uma API REST em Python com FastAPI, banco PostgreSQL, testes automatizados e deploy com Docker. Evitar Java.'",
+      "result": "Squad Gerado"
+    }
+  },
   "connection": {
     "connected": "Conectado ao Go Server",
     "offline": "Servidor Go Offline",
@@ -123,5 +214,19 @@
     "responseReceived": "Resposta recebida",
     "emptyResponse": "Resposta vazia do servidor",
     "httpError": "Erro HTTP"
-  }
+  },
+  "loading": "Carregando",
+  "saving": "Salvando",
+  "generating": "Gerando",
+  "cancel": "Cancelar",
+  "create": "Criar",
+  "update": "Atualizar",
+  "save": "Salvar",
+  "edit": "Editar",
+  "delete": "Excluir",
+  "view": "Visualizar",
+  "export": "Exportar",
+  "copy": "Copiar",
+  "copied": "Copiado",
+  "generate": "Gerar"
 }

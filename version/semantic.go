@@ -1,3 +1,5 @@
+// Package version provides functionality to manage and check the version of the Grompt CLI tool.
+// It includes methods to get the current version, check for the latest version, and compare versions
 package version
 
 import (

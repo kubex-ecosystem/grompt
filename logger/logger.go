@@ -1,3 +1,4 @@
+// Package logger provides a simple logging interface for Go applications.
 package logger
 
 import (

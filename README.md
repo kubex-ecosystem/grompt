@@ -8,6 +8,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/rafa-mori/grompt?style=social)](https://github.com/rafa-mori/grompt/stargazers)
 
+---
+
 **Grompt** is a modern prompt engineering tool that applies real engineering practices to transform messy, unstructured thoughts into clean, effective prompts for AI models. Built with Go and React, it runs as a single binary with zero dependencies.
 
 ---

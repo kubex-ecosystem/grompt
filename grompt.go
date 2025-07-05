@@ -1,3 +1,4 @@
+// Package grompt provides an interface for modules that can be used with the grompt command-line tool.
 package grompt
 
 import "github.com/spf13/cobra"

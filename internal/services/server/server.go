@@ -1,3 +1,4 @@
+// Package server implements the HTTP server for the Prompt Crafter application.
 package server
 
 import (
@@ -157,6 +158,10 @@ func (s *Server) setupRoutes() {
 	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
 	http.HandleFunc("/api/models", s.handlers.HandleModels)
 	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	http.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
+	http.HandleFunc("/api/agents/import", s.handlers.HandleAgentsImport)
+	http.HandleFunc("/api/agents/export-advanced", s.handlers.HandleAgentsExportAdvanced)
+	http.HandleFunc("/api/agents/validate", s.handlers.HandleAgentsValidate)
 	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
 	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
@@ -292,6 +297,7 @@ cd ..</code></pre>
 	http.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
 	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
 	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	http.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
 	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
 	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
