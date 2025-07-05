@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rafa-mori/grompt/internal/services/agents"
 	ii "github.com/rafa-mori/grompt/internal/types"
 )
 
@@ -16,6 +17,7 @@ type Handlers struct {
 	deepseekAPI *ii.DeepSeekAPI
 	chatGPTAPI  *ii.ChatGPTAPI
 	ollamaAPI   *ii.OllamaAPI
+	agentStore  *agents.Store
 }
 
 // Unified request structure
@@ -48,6 +50,7 @@ func NewHandlers(cfg *ii.Config) *Handlers {
 		chatGPTAPI:  ii.NewChatGPTAPI(cfg.ChatGPTAPIKey),
 		deepseekAPI: ii.NewDeepSeekAPI(cfg.DeepSeekAPIKey),
 		ollamaAPI:   ii.NewOllamaAPI(cfg.OllamaEndpoint),
+		agentStore:  agents.NewStore("agents.json"),
 	}
 }
 
