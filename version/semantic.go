@@ -44,7 +44,7 @@ const currentVersionFallback = "v1.0.0"
 
 //go:embed CLI_VERSION
 var cliVersion string
-var projectOwner = "faelmori" // Default project owner, can be overridden by environment variable
+var projectOwner = "rafa-mori" // Default project owner, can be overridden by environment variable
 var gitModelUrl = "https://github.com/" + projectOwner + "/" + moduleName + ".git"
 
 type Service interface {

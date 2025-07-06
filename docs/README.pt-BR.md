@@ -237,7 +237,7 @@ Recebemos contribuições! Veja como você pode ajudar:
 ### 💻 **Contribuições de Código**
 ```bash
 # 1. Fork e clone
-git clone https://github.com/seu-usuario/grompt
+git clone https://github.com/rafa-mori/grompt
 cd grompt
 
 # 2. Criar branch de funcionalidade
