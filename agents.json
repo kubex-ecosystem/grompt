@@ -1,0 +1,14 @@
+[
+  {
+    "id": 0,
+    "Title": "Desenvolvedor Full-Stack",
+    "Role": "Implementar API's REST",
+    "Skills": [
+      "Python",
+      "Go",
+      "NodeJS"
+    ],
+    "Restrictions": [],
+    "PromptExample": "Criar um backend para embarcar React em Go e Python."
+  }
+]
