@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, Edit3, Plus, Wand2, Sun, Moon, Copy, Check, AlertCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, ChevronUp, Copy, Edit3, Moon, Plus, RefreshCw, Sun, Trash2, Wand2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 
@@ -23,12 +23,16 @@ const PromptCrafter = () => {
     openai_available: false,
     deepseek_available: false,
     ollama_available: false,
+    gemini_available: false,
+    chatgpt_available: false,
     demo_mode: true,
     available_models: {
       openai: [],
       deepseek: [],
       claude: [],
-      ollama: []
+      ollama: [],
+      gemini: [],
+      chatgpt: []
     }
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
@@ -65,9 +69,9 @@ const PromptCrafter = () => {
   const apiCall = async (endpoint, options = {}) => {
     const baseURL = getBaseURL();
     const url = `${baseURL}${endpoint}`;
-    
+
     console.log(`🔗 Fazendo requisição para: ${url}`);
-    
+
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',
@@ -91,16 +95,16 @@ const PromptCrafter = () => {
   // Verificar configuração e APIs disponíveis na inicialização
   useEffect(() => {
     checkAPIAvailability();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAPIAvailability = async () => {
     try {
       console.log('🔍 Verificando disponibilidade das APIs...');
-      
+
       // Primeiro, verificar se o servidor Go está rodando
       const healthResponse = await apiCall('/api/health');
-      
+
       if (healthResponse.ok) {
         const healthData = await healthResponse.json();
         setServerInfo(healthData);
@@ -109,14 +113,14 @@ const PromptCrafter = () => {
 
       // Verificar configuração das APIs
       const configResponse = await apiCall('/api/config');
-      
+
       if (configResponse.ok) {
         const config = await configResponse.json();
         setAvailableAPIs(config);
         setConnectionStatus('connected');
-        
+
         console.log('📋 Configuração recebida:', config);
-        
+
         // Definir provider padrão baseado na disponibilidade
         if (config.claude_available) {
           setApiProvider('claude');
@@ -126,6 +130,10 @@ const PromptCrafter = () => {
           setApiProvider('deepseek');
         } else if (config.ollama_available) {
           setApiProvider('ollama');
+        } else if (config.gemini_available) {
+          setApiProvider('gemini');
+        } else if (config.chatgpt_available) {
+          setApiProvider('chatgpt');
         } else {
           setApiProvider('demo');
         }
@@ -137,7 +145,7 @@ const PromptCrafter = () => {
       setConnectionStatus('offline');
       setAvailableAPIs({ demo_mode: true });
       setApiProvider('demo');
-      
+
       // Se estivermos em desenvolvimento, mostrar dica
       if (process.env.NODE_ENV === 'development') {
         console.log('💡 Dica: Certifique-se de que o servidor Go está rodando na porta 8080');
@@ -175,8 +183,8 @@ const PromptCrafter = () => {
   };
 
   const saveEdit = () => {
-    setIdeas(ideas.map(idea => 
-      idea.id === editingId 
+    setIdeas(ideas.map(idea =>
+      idea.id === editingId
         ? { ...idea, text: editingText }
         : idea
     ));
@@ -215,8 +223,8 @@ const PromptCrafter = () => {
   };
 
   const generateDemoPrompt = () => {
-    const purposeText = purpose === 'Outros' && customPurpose 
-      ? customPurpose 
+    const purposeText = purpose === 'Outros' && customPurpose
+      ? customPurpose
       : purpose;
 
     if (ideas.length === 0) {
@@ -249,24 +257,24 @@ const PromptCrafter = () => {
       - ${t('demo.maxChars')}: ${maxLength.toLocaleString()}
       - ${t('demo.purpose')}: ${purposeText}
       - ${t('demo.totalIdeas')}: ${ideas.length}
-      - ${t('demo.mode')}: ${ connectionStatus === 'connected' ? t('demo.modeConnected') : t('demo.modeOffline')}
+      - ${t('demo.mode')}: ${connectionStatus === 'connected' ? t('demo.modeConnected') : t('demo.modeOffline')}
 
       ---
 
       *${t('demo.footer')}*
       *${connectionStatus === 'connected' ? t('demo.footerConnected') : t('demo.footerOffline')}*`
-        .replaceAll('      ', '')
-    };
+      .replaceAll('      ', '')
+  };
 
   const generatePrompt = async () => {
     if (ideas.length === 0) return;
-    
+
     setIsGenerating(true);
-    
-    const purposeText = purpose === 'Outros' && customPurpose 
-      ? customPurpose 
+
+    const purposeText = purpose === 'Outros' && customPurpose
+      ? customPurpose
       : purpose;
-    
+
     const engineeringPrompt = `
 Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
 
@@ -294,7 +302,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
     try {
       let response;
-      
+
       if (apiProvider === 'demo' || connectionStatus === 'offline') {
         // Simular delay para parecer real
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -308,16 +316,16 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
             max_tokens: maxLength
           })
         });
-        
+
         if (!result.ok) {
           const errorText = await result.text();
           throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
         }
-        
+
         const data = await result.json();
         response = data.response || data.content || 'Resposta vazia do servidor';
         console.log('✅ Resposta recebida do Claude');
-        
+
       } else if (apiProvider === 'openai') {
         console.log('🧠 Enviando para OpenAI API...');
         const result = await apiCall('/api/openai', {
@@ -328,16 +336,16 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
             model: selectedModel || 'gpt-3.5-turbo'
           })
         });
-        
+
         if (!result.ok) {
           const errorText = await result.text();
           throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
         }
-        
+
         const data = await result.json();
         response = data.response || 'Resposta vazia do OpenAI';
         console.log('✅ Resposta recebida do OpenAI');
-        
+
       } else if (apiProvider === 'deepseek') {
         console.log('🔍 Enviando para DeepSeek API...');
         const result = await apiCall('/api/deepseek', {
@@ -348,12 +356,12 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
             model: selectedModel || 'deepseek-chat'
           })
         });
-        
+
         if (!result.ok) {
           const errorText = await result.text();
           throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
         }
-        
+
         const data = await result.json();
         response = data.response || 'Resposta vazia do DeepSeek';
         console.log('✅ Resposta recebida do DeepSeek');
@@ -367,17 +375,57 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
             stream: false
           })
         });
-        
+
         if (!result.ok) {
           const errorText = await result.text();
           throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
         }
-        
+
         const data = await result.json();
         response = data.response || 'Resposta vazia do Ollama';
         console.log('✅ Resposta recebida do Ollama');
+
+      } else if (apiProvider === 'gemini') {
+        console.log('🔶 Enviando para Gemini...');
+        const result = await apiCall('/api/gemini', {
+          method: 'POST',
+          body: JSON.stringify({
+            prompt: engineeringPrompt,
+            max_tokens: maxLength,
+            model: selectedModel || 'gemini-1.5-pro'
+          })
+        });
+
+        if (!result.ok) {
+          const errorText = await result.text();
+          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+        }
+
+        const data = await result.json();
+        response = data.response || 'Resposta vazia do Gemini';
+        console.log('✅ Resposta recebida do Gemini');
+      } else if (apiProvider === 'chatgpt') {
+        console.log('🤖 Enviando para ChatGPT...');
+        const result = await apiCall('/api/chatgpt', {
+          method: 'POST',
+          body: JSON.stringify({
+            prompt: engineeringPrompt,
+            max_tokens: maxLength,
+            model: selectedModel || 'gpt-4'
+          })
+        });
+
+        if (!result.ok) {
+          const errorText = await result.text();
+          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+        }
+
+        const data = await result.json();
+        response = data.response || 'Resposta vazia do ChatGPT';
+        console.log('✅ Resposta recebida do ChatGPT');
+
       }
-      
+
       setGeneratedPrompt(response);
     } catch (error) {
       console.error('❌ Erro ao gerar prompt:', error);
@@ -406,7 +454,7 @@ make run
 \`\`\`
 `);
     }
-    
+
     setIsGenerating(false);
   };
 
@@ -473,127 +521,120 @@ make run
   };
 
   const inputDiv = (
-    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${
-      isInputCollapsed ? 'h-20' : 'h-auto'
-    }`}>
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${isInputCollapsed ? 'h-20' : 'h-auto'
+      }`}>
 
       <div className="items-center p-6 pb-0 gap-4">
         <div className="text-xl font-semibold mb-4 flex items-center">
           <h2>
             📝 {t('input.title')}
           </h2>
-          <div className={`h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent ml-4 transition-all duration-300 ${
-            isInputCollapsed ? 'opacity-0' : 'opacity-100'
-          }`}></div>
+          <div className={`h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent ml-4 transition-all duration-300 ${isInputCollapsed ? 'opacity-0' : 'opacity-100'
+            }`}></div>
         </div>
       </div>
 
       {/* Conteúdo colapsável com animação super suave */}
-      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top p-6 ${
-        isInputCollapsed 
-          ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none' 
-          : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
-      }`}>
-        <div className={`transition-all duration-500 delay-100 ${
-          isInputCollapsed ? 'opacity-0' : 'opacity-100'
+      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top p-6 ${isInputCollapsed
+        ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none'
+        : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
         }`}>
-        {/* Inputs editáveis */}
-        <div className="space-y-4">
-          <textarea
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            placeholder={t('input.placeholder')}
-            className={`w-full h-32 px-4 py-3 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500 resize-none`}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.ctrlKey) {
-                addIdea();
-              }
-            }}
-          />
-          <button
-            onClick={addIdea}
-            disabled={!currentInput.trim()}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${currentTheme.button} disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
-          >
-            <Plus size={20} />
-            {t('input.addButton')}
-          </button>
-        </div>
+        <div className={`transition-all duration-500 delay-100 ${isInputCollapsed ? 'opacity-0' : 'opacity-100'
+          }`}>
+          {/* Inputs editáveis */}
+          <div className="space-y-4">
+            <textarea
+              value={currentInput}
+              onChange={(e) => setCurrentInput(e.target.value)}
+              placeholder={t('input.placeholder')}
+              className={`w-full h-32 px-4 py-3 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500 resize-none`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  addIdea();
+                }
+              }}
+            />
+            <button
+              onClick={addIdea}
+              disabled={!currentInput.trim()}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg ${currentTheme.button} disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
+            >
+              <Plus size={20} />
+              {t('input.addButton')}
+            </button>
+          </div>
 
-        {/* Configuration */}
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">{t('config.purpose')}</label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                {[
-                  { key: 'purposeCode', value: 'Código' },
-                  { key: 'purposeImage', value: 'Imagem' },
-                  { key: 'purposeOthers', value: 'Outros' }
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPurpose(option.value)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      purpose === option.value 
-                        ? 'bg-blue-600 text-white border-blue-600' 
+          {/* Configuration */}
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">{t('config.purpose')}</label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  {[
+                    { key: 'purposeCode', value: 'Código' },
+                    { key: 'purposeImage', value: 'Imagem' },
+                    { key: 'purposeOthers', value: 'Outros' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setPurpose(option.value)}
+                      className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option.value
+                        ? 'bg-blue-600 text-white border-blue-600'
                         : `${currentTheme.buttonSecondary} ${currentTheme.border}`
-                    }`}
-                  >
-                    {t(`config.${option.key}`)}
-                  </button>
-                ))}
+                        }`}
+                    >
+                      {t(`config.${option.key}`)}
+                    </button>
+                  ))}
+                </div>
+                {purpose === 'Outros' && (
+                  <input
+                    type="text"
+                    value={customPurpose}
+                    onChange={(e) => setCustomPurpose(e.target.value)}
+                    placeholder={t('config.customPurpose')}
+                    className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+                  />
+                )}
               </div>
-              {purpose === 'Outros' && (
-                <input
-                  type="text"
-                  value={customPurpose}
-                  onChange={(e) => setCustomPurpose(e.target.value)}
-                  placeholder={t('config.customPurpose')}
-                  className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
-                />
-              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {t('config.maxLength')}: {maxLength.toLocaleString()} {t('config.characters')}
+              </label>
+              <input
+                type="range"
+                min="500"
+                max="130000"
+                step="500"
+                value={maxLength}
+                onChange={(e) => setMaxLength(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
+              />
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              {t('config.maxLength')}: {maxLength.toLocaleString()} {t('config.characters')}
-            </label>
-            <input
-              type="range"
-              min="500"
-              max="130000"
-              step="500"
-              value={maxLength}
-              onChange={(e) => setMaxLength(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-        </div>
         </div>
       </div>
     </div>
   );
 
   const outputDiv = (
-    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${
-      isOutputCollapsed ? 'h-20' : 'h-auto'
-    }`}>
-      
+    <div className={`${currentTheme.cardBg} rounded-xl border ${currentTheme.border} shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl transform hover:scale-[1.02] will-change-transform ${isOutputCollapsed ? 'h-20' : 'h-auto'
+      }`}>
+
       {/* Header sempre visível */}
       <div className="flex justify-between items-center p-6 pb-0">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold">🚀 {t('output.title')}</h2>
           {generatedPrompt && (
-            <div className={`px-2 py-1 rounded-full text-xs ${currentTheme.textSecondary} bg-opacity-50 ${currentTheme.cardBg} transition-all duration-300 ${
-              isOutputCollapsed ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
-            }`}>
+            <div className={`px-2 py-1 rounded-full text-xs ${currentTheme.textSecondary} bg-opacity-50 ${currentTheme.cardBg} transition-all duration-300 ${isOutputCollapsed ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+              }`}>
               {generatedPrompt.length.toLocaleString()} chars
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Botão de copiar quando há conteúdo - com animação suave */}
           {generatedPrompt && !isOutputCollapsed && (
@@ -609,23 +650,21 @@ make run
           )}
         </div>
       </div>
-      
+
       {/* Conteúdo colapsável com animação super suave */}
-      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top ${
-        isOutputCollapsed 
-          ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none' 
-          : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
-      }`}>
-        <div className={`p-6 pt-4 transition-all duration-500 delay-100 ${
-          isOutputCollapsed ? 'opacity-0' : 'opacity-100'
+      <div className={`overflow-hidden transition-all duration-700 ease-in-out transform origin-top ${isOutputCollapsed
+        ? 'max-h-0 opacity-0 scale-y-0 -translate-y-4 pointer-events-none'
+        : 'max-h-[800px] opacity-100 scale-y-100 translate-y-0 pointer-events-auto'
         }`}>
+        <div className={`p-6 pt-4 transition-all duration-500 delay-100 ${isOutputCollapsed ? 'opacity-0' : 'opacity-100'
+          }`}>
           {generatedPrompt ? (
             <div className="space-y-4">
               <div className={`text-xs ${currentTheme.textSecondary} flex justify-between items-center`}>
                 <span>{t('output.characters')}: {generatedPrompt.length.toLocaleString()}</span>
                 <span>{t('output.limit')}: {maxLength.toLocaleString()}</span>
                 <div className={`w-24 h-1 rounded-full ${currentTheme.border} overflow-hidden`}>
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
                     style={{ width: `${Math.min((generatedPrompt.length / maxLength) * 100, 100)}%` }}
                   />
@@ -652,7 +691,7 @@ make run
           )}
         </div>
       </div>
-      
+
       {/* Indicador visual quando colapsado */}
       {isOutputCollapsed && (
         <div className="px-6 pb-3">
@@ -702,7 +741,7 @@ make run
                 {getConnectionStatusText()}
               </span>
             </div>
-            <select 
+            <select
               value={apiProvider}
               onChange={(e) => {
                 setApiProvider(e.target.value);
@@ -722,9 +761,15 @@ make run
               {availableAPIs.ollama_available && (
                 <option value="ollama">{t('providers.ollama')}</option>
               )}
+              {availableAPIs.gemini_available && (
+                <option value="gemini">{t('providers.gemini')}</option>
+              )}
+              {availableAPIs.chatgpt_available && (
+                <option value="chatgpt">{t('providers.chatgpt')}</option>
+              )}
               <option value="demo">{t('providers.demo')}</option>
             </select>
-            
+
             {/* Model Selection */}
             {apiProvider !== 'demo' && availableAPIs.available_models && availableAPIs.available_models[apiProvider] && (
               <select
@@ -738,9 +783,9 @@ make run
                 ))}
               </select>
             )}
-            
+
             <LanguageSelector currentTheme={currentTheme} />
-            
+
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -755,8 +800,8 @@ make run
           <div className="mb-6 p-4 bg-yellow-900 border border-yellow-600 rounded-lg flex items-center gap-3">
             <AlertCircle className="text-yellow-400" size={20} />
             <div className="text-yellow-100">
-              <strong>{t('alerts.offlineTitle')}</strong> 
-              {process.env.NODE_ENV === 'development' 
+              <strong>{t('alerts.offlineTitle')}</strong>
+              {process.env.NODE_ENV === 'development'
                 ? t('alerts.offlineDev')
                 : t('alerts.offlineProduction')
               }
@@ -768,8 +813,20 @@ make run
         {process.env.NODE_ENV === 'development' && serverInfo && (
           <div className="mb-6 p-4 bg-blue-900 border border-blue-600 rounded-lg">
             <p className="text-blue-100">
-              <strong>🔧 {t('alerts.serverInfo')}:</strong> v{serverInfo.version} | 
-              APIs: {serverInfo.apis?.claude ? '✅' : '❌'} Claude, {serverInfo.apis?.ollama ? '✅' : '❌'} Ollama
+              <strong>🔧 {t('alerts.serverInfo')}:</strong> v{serverInfo.version} |
+              APIs: {
+                serverInfo.apis?.claude ? '✅' : '❌'
+              } Claude, {
+                serverInfo.apis?.ollama ? '✅' : '❌'
+              } Ollama, {
+                serverInfo.apis?.openai ? '✅' : '❌'
+              } OpenAI, {
+                serverInfo.apis?.deepseek ? '✅' : '❌'
+              } DeepSeek, {
+                serverInfo.apis?.gemini ? '✅' : '❌'
+              } Gemini, {
+                serverInfo.apis?.chatgpt ? '✅' : '❌'
+              } ChatGPT
             </p>
           </div>
         )}
@@ -778,19 +835,18 @@ make run
           // Grid que se adapta fluida e dinamicamente
           isInputCollapsed && isOutputCollapsed
             ? 'grid-cols-1' // Apenas Ideas quando ambos colapsados
-            : isInputCollapsed && !isOutputCollapsed 
-            ? 'grid-cols-1 lg:grid-cols-2' // Ideas + Output
-            : !isInputCollapsed && isOutputCollapsed
-            ? 'grid-cols-1 lg:grid-cols-2' // Input + Ideas
-            : 'grid-cols-1 lg:grid-cols-3' // Todos expandidos: Input + Ideas + Output
-        }`}>
+            : isInputCollapsed && !isOutputCollapsed
+              ? 'grid-cols-1 lg:grid-cols-2' // Ideas + Output
+              : !isInputCollapsed && isOutputCollapsed
+                ? 'grid-cols-1 lg:grid-cols-2' // Input + Ideas
+                : 'grid-cols-1 lg:grid-cols-3' // Todos expandidos: Input + Ideas + Output
+          }`}>
 
           {/* Input Section - Sempre no DOM, mas com transições ultra-fluidas */}
-          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${
-            isInputCollapsed 
-              ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm' 
-              : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
-          } ${isInputCollapsed ? 'lg:hidden' : ''}`}>
+          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${isInputCollapsed
+            ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm'
+            : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
+            } ${isInputCollapsed ? 'lg:hidden' : ''}`}>
             {inputDiv}
           </div>
 
@@ -798,14 +854,14 @@ make run
           <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] ${
             // Expande quando é o único card visível
             isInputCollapsed && isOutputCollapsed ? 'lg:col-span-1' : ''
-          }`}>
+            }`}>
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              💡 {t('ideas.title')} 
+              💡 {t('ideas.title')}
               <span className={`px-2 py-1 rounded-full text-sm ${currentTheme.textSecondary} bg-blue-500/10 border border-blue-500/20`}>
                 {ideas.length}
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent ml-4"></div>
-              
+
               {/* Botão Limpar Tudo - aparece quando há conteúdo */}
               {(ideas.length > 0 || generatedPrompt || currentInput.trim()) && (
                 <button
@@ -829,8 +885,8 @@ make run
                 </p>
               ) : (
                 ideas.map((idea, index) => (
-                  <div 
-                    key={idea.id} 
+                  <div
+                    key={idea.id}
                     className={`p-3 rounded-lg border ${currentTheme.border} bg-opacity-50 transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-md animate-in slide-in-from-bottom-4 fade-in duration-500`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -882,7 +938,7 @@ make run
                 ))
               )}
             </div>
-            
+
             {ideas.length > 0 && (
               <div className="items-bottom justify-between border-opacity-0 h-auto">
                 <div className="mt-6 pt-4 border-t border-opacity-20 border-gradient-to-r from-purple-500 to-blue-500">
@@ -890,49 +946,49 @@ make run
                     onClick={generatePrompt}
                     disabled={isGenerating}
                     className={`
-                      w-full 
-                      flex 
-                      items-center 
-                      justify-center 
-                      gap-3 
-                      px-6 
-                      py-4 
-                      rounded-xl 
-                      bg-gradient-to-r 
-                      from-purple-600 
-                      via-blue-600 
-                      to-indigo-600 
-                      text-white 
-                      hover:from-purple-700 
-                      hover:via-blue-700 
-                      hover:to-indigo-700 
-                      disabled:opacity-50 
-                      disabled:cursor-not-allowed 
-                      transition-all 
+                      w-full
+                      flex
+                      items-center
+                      justify-center
+                      gap-3
+                      px-6
+                      py-4
+                      rounded-xl
+                      bg-gradient-to-r
+                      from-purple-600
+                      via-blue-600
+                      to-indigo-600
+                      text-white
+                      hover:from-purple-700
+                      hover:via-blue-700
+                      hover:to-indigo-700
+                      disabled:opacity-50
+                      disabled:cursor-not-allowed
+                      transition-all
                       duration-500
-                      transform 
-                      hover:scale-105 
+                      transform
+                      hover:scale-105
                       active:scale-95
                       hover:shadow-xl
                       hover:shadow-purple-500/25
-                      font-medium 
-                      text-lg 
-                      relative 
-                      overflow-hidden 
+                      font-medium
+                      text-lg
+                      relative
+                      overflow-hidden
                       group
                       ${isGenerating ? 'animate-pulse' : ''}
                     `}
                   >
                     {/* Efeito de brilho no hover mais suave */}
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1500 ease-in-out"></div>
-                    
+
                     <div className={`transition-transform duration-300 ${isGenerating ? 'animate-spin' : 'group-hover:animate-pulse'}`}>
                       <Wand2 size={24} />
                     </div>
                     <span className="relative z-10 transition-all duration-300">
                       {isGenerating ? t('ideas.generating') : t('ideas.generateButton')}
                     </span>
-                    
+
                     {!isGenerating && (
                       <div className="absolute right-4 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:animate-bounce">
                         ✨
@@ -945,11 +1001,10 @@ make run
           </div>
 
           {/* Generated Prompt - Sempre no DOM, mas com transições ultra-fluidas */}
-          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${
-            isOutputCollapsed 
-              ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm' 
-              : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
-          } ${isOutputCollapsed ? 'lg:hidden' : ''}`}>
+          <div className={`transition-all duration-700 ease-out transform origin-center will-change-transform ${isOutputCollapsed
+            ? 'opacity-0 scale-95 translate-y-4 pointer-events-none filter blur-sm'
+            : 'opacity-100 scale-100 translate-y-0 pointer-events-auto filter blur-0'
+            } ${isOutputCollapsed ? 'lg:hidden' : ''}`}>
             {outputDiv}
           </div>
         </div>

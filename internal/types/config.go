@@ -93,6 +93,7 @@ type Config struct {
 	DeepSeekAPIKey string `json:"deepseek_api_key" gorm:"default:''"`
 	OllamaEndpoint string `json:"ollama_endpoint" gorm:"default:'http://localhost:11434'"`
 	ClaudeAPIKey   string `json:"claude_api_key" gorm:"default:''"`
+	GeminiAPIKey   string `json:"gemini_api_key" gorm:"default:''"`
 	ChatGPTAPIKey  string `json:"chatgpt_api_key" gorm:"default:''"`
 	Debug          bool   `json:"debug" gorm:"default:false"`
 }
@@ -107,6 +108,8 @@ func (c *Config) GetAPIConfig(provider string) IAPIConfig {
 		return NewOllamaAPI(c.OllamaEndpoint)
 	case "claude":
 		return NewClaudeAPI(c.ClaudeAPIKey)
+	case "gemini":
+		return NewGeminiAPI(c.GeminiAPIKey)
 	default:
 		return nil
 	}
@@ -129,6 +132,8 @@ func (c *Config) GetAPIKey(provider string) string {
 		return c.OllamaEndpoint
 	case "claude":
 		return c.ClaudeAPIKey
+	case "gemini":
+		return c.GeminiAPIKey
 	default:
 		return ""
 	}
@@ -144,6 +149,8 @@ func (c *Config) SetAPIKey(provider string, key string) error {
 		c.OllamaEndpoint = key
 	case "claude":
 		c.ClaudeAPIKey = key
+	case "gemini":
+		c.GeminiAPIKey = key
 	default:
 		return fmt.Errorf("unknown provider: %s", provider)
 	}

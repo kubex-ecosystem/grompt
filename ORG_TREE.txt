@@ -1,0 +1,31 @@
+./
+├── .github
+│   └── ... # GitHub related files like workflows and AI instructions
+├── cmd
+│   ├── cli
+│   │   └── ... # CLI/Program access points to central logic execution
+│   └── main.go # CLI/Program wrapped entrypoint
+│
+├── dist
+│   └── ... # Binaries
+│
+├── docs
+│   ├── assets # Docs assets
+│   └── ... # Docs files
+│
+├── go.mod            # Go module definition and dependency management
+├── grompt.go         # Main module file for the project to act like a lib, with code-API logic in a kind of 'interface-first' strategy
+│
+├── internal
+│   ├── ...           # Internal packages for core logic
+│   └── module        # Kubex common implementation like modules interfaces, global logger, module manifest info and version
+│
+├── CODE_OF_CONDUCT.md # Open source community conformity docs
+├── LICENSE            # Open source community conformity docs
+├── NOTICE.md          # Open source community conformity docs
+├── README.md          # Open source community conformity docs
+├── SECURITY.md        # Open source community conformity docs
+│
+├── Makefile           # Distribution flow entrypoint
+└── support
+    └── ...            # Distribution support files and some others if needed

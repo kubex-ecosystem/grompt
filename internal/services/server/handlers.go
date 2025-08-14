@@ -16,6 +16,7 @@ type Handlers struct {
 	openaiAPI   ii.IAPIConfig
 	deepseekAPI ii.IAPIConfig
 	chatGPTAPI  ii.IAPIConfig
+	geminiAPI   ii.IAPIConfig
 	ollamaAPI   ii.IAPIConfig
 	agentStore  *agents.Store
 }
@@ -249,6 +250,96 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 	result := UnifiedResponse{
 		Response: response,
 		Provider: "deepseek",
+		Model:    model,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
+	h.setCORSHeaders(w)
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req UnifiedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if key := h.config.GetAPIKey("gemini"); key == "" {
+		http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Use default model if not specified
+	model := req.Model
+	if model == "" {
+		model = "gemini-1"
+	}
+
+	response, err := h.geminiAPI.Complete(req.Prompt, req.MaxTokens, model)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error in Gemini API: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	result := UnifiedResponse{
+		Response: response,
+		Provider: "gemini",
+		Model:    model,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
+	h.setCORSHeaders(w)
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req UnifiedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if key := h.config.GetAPIKey("chatgpt"); key == "" {
+		http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Use default model if not specified
+	model := req.Model
+	if model == "" {
+		model = "gpt-4o-mini"
+	}
+
+	response, err := h.chatGPTAPI.Complete(req.Prompt, req.MaxTokens, model)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error in ChatGPT API: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	result := UnifiedResponse{
+		Response: response,
+		Provider: "chatgpt",
 		Model:    model,
 	}
 

@@ -34,9 +34,8 @@ type Pricing struct {
 
 // Initialize creates and returns all available providers
 func Initialize(claudeKey, openaiKey, deepseekKey, ollamaEndpoint string) []Provider {
-	var providers []Provider
-
-	// This will be implemented in internal/providers with concrete implementations
-	// For now, return empty slice to avoid compilation errors
-	return providers
+	// This function signature is kept for backwards compatibility
+	// The actual implementation is done in internal/engine which calls internal/providers
+	// For now, return empty slice - the real initialization happens in the engine
+	return []Provider{}
 }

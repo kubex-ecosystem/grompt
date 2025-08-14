@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Sun, 
-  Moon, 
-  User, 
+import {
+  ArrowLeft,
   Code,
-  Shield,
-  FileText,
   Copy,
-  Download
+  Download,
+  Edit,
+  FileText,
+  Moon,
+  Shield,
+  Sun,
+  Trash2,
+  User
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 
 const AgentView = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get('view') || searchParams.get('id');
 
   // Estados
   const [darkMode, setDarkMode] = useState(true);
@@ -78,11 +78,11 @@ const AgentView = () => {
   // Deletar agent
   const deleteAgent = async () => {
     if (!window.confirm(t('agents.confirmDelete'))) return;
-    
+
     try {
       const response = await fetch(`/api/agents/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete agent');
-      navigate('/agents');
+      router.push('/agents');
     } catch (err) {
       setError(err.message);
     }
@@ -117,7 +117,7 @@ ${agent.Restrictions?.map(restriction => `- ${restriction}`).join('\n') || 'No r
 ${agent.PromptExample || 'No prompt example provided'}
 \`\`\`
 `;
-    
+
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -144,7 +144,7 @@ ${agent.PromptExample || 'No prompt example provided'}
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => navigate('/agents')}
+            onClick={() => router.push('/agents')}
             className={`px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
           >
             {t('agents.backToList')}
@@ -160,7 +160,7 @@ ${agent.PromptExample || 'No prompt example provided'}
         <div className="text-center">
           <p className="mb-4">{t('agents.notFound')}</p>
           <button
-            onClick={() => navigate('/agents')}
+            onClick={() => router.push('/agents')}
             className={`px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
           >
             {t('agents.backToList')}
@@ -178,7 +178,7 @@ ${agent.PromptExample || 'No prompt example provided'}
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/agents')}
+                onClick={() => router.push('/agents')}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -186,25 +186,25 @@ ${agent.PromptExample || 'No prompt example provided'}
               <User className="h-8 w-8 text-blue-500" />
               <h1 className="text-2xl font-bold">{agent.Title}</h1>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <LanguageSelector currentTheme={currentTheme} />
-              
+
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              
+
               <button
-                onClick={() => navigate(`/agents/${id}/edit`)}
+                onClick={() => router.push(`/agents/new?id=${id}`)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
               >
                 <Edit size={16} />
                 {t('edit')}
               </button>
-              
+
               <button
                 onClick={deleteAgent}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
@@ -224,7 +224,7 @@ ${agent.PromptExample || 'No prompt example provided'}
             <User size={20} className="text-blue-500" />
             {t('agents.form.basic')}
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -232,7 +232,7 @@ ${agent.PromptExample || 'No prompt example provided'}
               </label>
               <p className={`${currentTheme.textSecondary} text-lg`}>{agent.Title}</p>
             </div>
-            
+
             {agent.Role && (
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -251,7 +251,7 @@ ${agent.PromptExample || 'No prompt example provided'}
               <Code size={20} className="text-green-500" />
               {t('agents.form.skills')}
             </h2>
-            
+
             <div className="flex flex-wrap gap-2">
               {agent.Skills.map((skill, index) => (
                 <span
@@ -272,7 +272,7 @@ ${agent.PromptExample || 'No prompt example provided'}
               <Shield size={20} className="text-red-500" />
               {t('agents.form.restrictions')}
             </h2>
-            
+
             <div className="flex flex-wrap gap-2">
               {agent.Restrictions.map((restriction, index) => (
                 <span
@@ -294,7 +294,7 @@ ${agent.PromptExample || 'No prompt example provided'}
                 <FileText size={20} className="text-purple-500" />
                 {t('agents.form.promptExample')}
               </h2>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={copyPromptExample}
@@ -303,7 +303,7 @@ ${agent.PromptExample || 'No prompt example provided'}
                   <Copy size={16} />
                   {copied ? t('copied') : t('copy')}
                 </button>
-                
+
                 <button
                   onClick={exportAsMarkdown}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -313,7 +313,7 @@ ${agent.PromptExample || 'No prompt example provided'}
                 </button>
               </div>
             </div>
-            
+
             <pre className={`${currentTheme.input} ${currentTheme.border} border rounded-lg p-4 whitespace-pre-wrap text-sm overflow-auto max-h-96`}>
               {agent.PromptExample}
             </pre>

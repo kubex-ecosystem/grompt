@@ -1,32 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Download, 
+import {
+  CheckSquare,
+  Copy,
+  Download,
+  Edit,
+  Eye,
   FileText,
-  Search,
   Grid,
   List,
-  Sun,
   Moon,
-  Copy,
-  Eye,
+  Plus,
+  Search,
+  Sun,
+  Trash2,
   Upload,
-  CheckSquare
+  Users
 } from 'lucide-react';
-import LanguageSelector from './LanguageSelector';
-import ImportAgentsModal from './ImportAgentsModal';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ExportAgentsModal from './ExportAgentsModal';
+import ImportAgentsModal from './ImportAgentsModal';
+import LanguageSelector from './LanguageSelector';
 import ValidationAgentsModal from './ValidationAgentsModal';
 
 const AgentsDashboard = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  
+  const router = useRouter();
+
   // Estados
   const [agents, setAgents] = useState([]);
   const [darkMode, setDarkMode] = useState(true);
@@ -42,7 +42,7 @@ const AgentsDashboard = () => {
   const [requirements, setRequirements] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMarkdown, setGeneratedMarkdown] = useState('');
-  
+
   // Temas
   const theme = {
     dark: {
@@ -93,9 +93,9 @@ const AgentsDashboard = () => {
   // Filtrar agents
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.Title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         agent.Role?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterCategory === 'all' || 
-                         agent.Skills?.some(skill => skill.toLowerCase().includes(filterCategory.toLowerCase()));
+      agent.Role?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterCategory === 'all' ||
+      agent.Skills?.some(skill => skill.toLowerCase().includes(filterCategory.toLowerCase()));
     return matchesSearch && matchesFilter;
   });
 
@@ -119,7 +119,7 @@ const AgentsDashboard = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requirements })
       });
-      
+
       if (!response.ok) throw new Error('Failed to generate agents');
       const data = await response.json();
       setGeneratedMarkdown(data.markdown);
@@ -136,7 +136,7 @@ const AgentsDashboard = () => {
       const response = await fetch('/api/agents/markdown');
       if (!response.ok) throw new Error('Failed to export markdown');
       const markdown = await response.text();
-      
+
       const blob = new Blob([markdown], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -200,10 +200,10 @@ const AgentsDashboard = () => {
               <Users className="h-8 w-8 text-blue-500" />
               <h1 className="text-2xl font-bold">{t('agents.title')}</h1>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <LanguageSelector currentTheme={currentTheme} />
-              
+
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -231,7 +231,7 @@ const AgentsDashboard = () => {
                   className={`pl-10 pr-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64`}
                 />
               </div>
-              
+
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
@@ -271,7 +271,7 @@ const AgentsDashboard = () => {
               </button>
 
               <button
-                onClick={() => navigate('/agents/new')}
+                onClick={() => router.push('/agents/new')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
               >
                 <Plus size={16} />
@@ -346,14 +346,13 @@ const AgentsDashboard = () => {
             {filteredAgents.map((agent) => (
               <div
                 key={agent.ID}
-                className={`${currentTheme.cardBg} ${currentTheme.border} border rounded-lg p-6 transition-all hover:shadow-lg ${
-                  viewMode === 'list' ? 'flex items-center justify-between' : ''
-                }`}
+                className={`${currentTheme.cardBg} ${currentTheme.border} border rounded-lg p-6 transition-all hover:shadow-lg ${viewMode === 'list' ? 'flex items-center justify-between' : ''
+                  }`}
               >
                 <div className={viewMode === 'list' ? 'flex-1' : ''}>
                   <h3 className="text-xl font-semibold mb-2">{agent.Title}</h3>
                   <p className={`${currentTheme.textSecondary} mb-3`}>{agent.Role}</p>
-                  
+
                   {agent.Skills && agent.Skills.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {agent.Skills.map((skill, index) => (
@@ -370,14 +369,14 @@ const AgentsDashboard = () => {
 
                 <div className={`flex gap-2 ${viewMode === 'list' ? 'ml-4' : 'mt-4'}`}>
                   <button
-                    onClick={() => navigate(`/agents/${agent.ID}`)}
+                    onClick={() => router.push(`/agents?view=${agent.ID}`)}
                     className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
                     title={t('view')}
                   >
                     <Eye size={16} />
                   </button>
                   <button
-                    onClick={() => navigate(`/agents/${agent.ID}/edit`)}
+                    onClick={() => router.push(`/agents/new?id=${agent.ID}`)}
                     className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
                     title={t('edit')}
                   >
@@ -402,7 +401,7 @@ const AgentsDashboard = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className={`${currentTheme.cardBg} rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto`}>
             <h2 className="text-2xl font-bold mb-4">{t('agents.generate.title')}</h2>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
                 {t('agents.generate.requirements')}
@@ -450,21 +449,21 @@ const AgentsDashboard = () => {
       )}
 
       {/* Modais */}
-      <ImportAgentsModal 
+      <ImportAgentsModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImportSuccess}
         darkMode={darkMode}
       />
-      
-      <ExportAgentsModal 
+
+      <ExportAgentsModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         agents={agents}
         darkMode={darkMode}
       />
-      
-      <ValidationAgentsModal 
+
+      <ValidationAgentsModal
         isOpen={showValidationModal}
         onClose={() => setShowValidationModal(false)}
         darkMode={darkMode}

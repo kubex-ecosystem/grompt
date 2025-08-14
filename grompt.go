@@ -39,19 +39,19 @@ type Grompt interface {
 // PromptEngine exposes the core prompt engineering functionality
 type PromptEngine interface {
 	// ProcessPrompt processes a prompt with variables and returns the result
-	ProcessPrompt(template string, vars map[string]interface{}) (engine.Result, error)
+	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
 
 	// GetProviders returns available AI providers
-	GetProviders() []providers.Provider
+	GetProviders() []Provider
 
 	// GetHistory returns the prompt history
-	GetHistory() []engine.Result
+	GetHistory() []Result
 
 	// SaveToHistory saves a prompt/response pair to history
 	SaveToHistory(prompt, response string) error
 
 	// BatchProcess processes multiple prompts concurrently
-	BatchProcess(prompts []string, vars map[string]interface{}) ([]engine.Result, error)
+	BatchProcess(prompts []string, vars map[string]interface{}) ([]Result, error)
 }
 
 // NewGrompt creates a new Grompt CLI instance
@@ -60,19 +60,29 @@ func NewGrompt() Grompt {
 }
 
 // NewPromptEngine creates a new prompt engineering engine for library use
-func NewPromptEngine(config types.IConfig) engine.IEngine { //PromptEngine {
+func NewPromptEngine(config Config) PromptEngine {
 	return engine.NewEngine(config)
 }
 
 // DefaultConfig returns a default configuration for the prompt engine
-func DefaultConfig() engine.Config {
-	return engine.Config{
+func DefaultConfig() Config {
+	return &types.Config{
 		Port:           "8080",
 		ClaudeAPIKey:   "",
 		OpenAIAPIKey:   "",
 		DeepSeekAPIKey: "",
 		OllamaEndpoint: "http://localhost:11434",
-		HistoryPath:    "./grompt_history",
-		TemplatesPath:  "./grompt_templates",
+		Debug:          false,
 	}
 }
+
+// Exposed types for external use - avoid interface{} in consumer code
+
+// Result exposes the engine.Result type
+type Result = engine.Result
+
+// Config exposes the types.Config interface
+type Config = types.IConfig
+
+// Provider exposes the providers.Provider interface
+type Provider = providers.Provider

@@ -7,6 +7,7 @@ import (
 
 	"github.com/rafa-mori/grompt/factory/providers"
 	"github.com/rafa-mori/grompt/factory/templates"
+	concreteProviders "github.com/rafa-mori/grompt/internal/providers"
 	"github.com/rafa-mori/grompt/internal/types"
 )
 
@@ -35,13 +36,49 @@ type Engine struct {
 	config    types.IConfig
 }
 
-// NewEngine creates a new prompt engineering engine
+// NewEngine creates a new IEngine instance with initialized providers
 func NewEngine(config types.IConfig) IEngine {
-	return &Engine{
-		providers: providers.Initialize(config.GetAPIKey("claude"), config.GetAPIKey("openai"), config.GetAPIKey("deepseek"), config.GetAPIEndpoint("ollama")),
-		templates: templates.NewManager(config.GetAPIEndpoint("templates_path")),
-		history:   NewHistoryManager(100), // Max 100 entries by default
+	engine := &Engine{
+		providers: make([]providers.Provider, 0),
+		templates: templates.NewManager("./templates"), // Default templates path
+		history:   NewHistoryManager(100),              // Default to 100 entries
 		config:    config,
+	}
+
+	// Initialize concrete providers
+	engine.initializeProviders()
+
+	return engine
+}
+
+// initializeProviders initializes all available concrete providers
+func (e *Engine) initializeProviders() {
+	// Initialize OpenAI provider
+	if apiKey := e.config.GetAPIKey("openai"); apiKey != "" {
+		provider := concreteProviders.NewOpenAIProvider(apiKey)
+		e.providers = append(e.providers, provider)
+	}
+
+	// Initialize Claude provider
+	if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
+		provider := concreteProviders.NewClaudeProvider(apiKey)
+		e.providers = append(e.providers, provider)
+	}
+
+	// Initialize DeepSeek provider
+	if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
+		provider := concreteProviders.NewDeepSeekProvider(apiKey)
+		e.providers = append(e.providers, provider)
+	}
+
+	// Initialize Ollama provider (local - no API key needed)
+	provider := concreteProviders.NewOllamaProvider()
+	e.providers = append(e.providers, provider)
+
+	// Initialize Gemini provider
+	if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
+		provider := concreteProviders.NewGeminiProvider(apiKey)
+		e.providers = append(e.providers, provider)
 	}
 }
 

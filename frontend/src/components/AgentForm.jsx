@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { 
-  Save, 
-  ArrowLeft, 
-  Plus, 
-  X, 
-  Sun, 
-  Moon, 
-  User, 
+import {
+  ArrowLeft,
   Code,
+  FileText,
+  Moon,
+  Plus,
+  Save,
   Shield,
-  FileText
+  Sun,
+  User,
+  X
 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 
 const AgentForm = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
   const isEdit = Boolean(id);
 
   // Estados
@@ -26,7 +27,7 @@ const AgentForm = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     Title: '',
@@ -35,7 +36,7 @@ const AgentForm = () => {
     Restrictions: [],
     PromptExample: ''
   });
-  
+
   const [currentSkill, setCurrentSkill] = useState('');
   const [currentRestriction, setCurrentRestriction] = useState('');
 
@@ -143,7 +144,7 @@ const AgentForm = () => {
   // Submeter formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.Title.trim()) {
       setError('Title is required');
       return;
@@ -152,19 +153,19 @@ const AgentForm = () => {
     try {
       setSaving(true);
       setError(null);
-      
+
       const url = isEdit ? `/api/agents/${id}` : '/api/agents';
       const method = isEdit ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      
+
       if (!response.ok) throw new Error('Failed to save agent');
-      
-      navigate('/agents');
+
+      router.push('/agents');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -191,7 +192,7 @@ const AgentForm = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/agents')}
+                onClick={() => router.push('/agents')}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -201,10 +202,10 @@ const AgentForm = () => {
                 {isEdit ? t('agents.edit') : t('agents.new')}
               </h1>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <LanguageSelector currentTheme={currentTheme} />
-              
+
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -230,7 +231,7 @@ const AgentForm = () => {
               <User size={20} className="text-blue-500" />
               {t('agents.form.basic')}
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -245,7 +246,7 @@ const AgentForm = () => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('agents.form.role')}
@@ -267,7 +268,7 @@ const AgentForm = () => {
               <Code size={20} className="text-green-500" />
               {t('agents.form.skills')}
             </h2>
-            
+
             <div className="space-y-4">
               <div className="flex gap-2">
                 <input
@@ -286,7 +287,7 @@ const AgentForm = () => {
                   <Plus size={16} />
                 </button>
               </div>
-              
+
               {formData.Skills.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {formData.Skills.map((skill, index) => (
@@ -315,7 +316,7 @@ const AgentForm = () => {
               <Shield size={20} className="text-red-500" />
               {t('agents.form.restrictions')}
             </h2>
-            
+
             <div className="space-y-4">
               <div className="flex gap-2">
                 <input
@@ -334,7 +335,7 @@ const AgentForm = () => {
                   <Plus size={16} />
                 </button>
               </div>
-              
+
               {formData.Restrictions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {formData.Restrictions.map((restriction, index) => (
@@ -363,7 +364,7 @@ const AgentForm = () => {
               <FileText size={20} className="text-purple-500" />
               {t('agents.form.promptExample')}
             </h2>
-            
+
             <textarea
               value={formData.PromptExample}
               onChange={(e) => handleInputChange('PromptExample', e.target.value)}
