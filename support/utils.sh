@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lib/utils.sh – Funções utilitárias
+# lib/utils.sh – Utility functions
 
 set -euo pipefail
 set -o errtrace
@@ -7,11 +7,12 @@ set -o functrace
 set -o posix
 IFS=$'\n\t'
 
-# Códigos de cor para logs
+# Color codes for logs
 _SUCCESS="\033[0;32m"
 _WARN="\033[0;33m"
 _ERROR="\033[0;31m"
 _INFO="\033[0;36m"
+_NOTICE="\033[0;35m"
 _NC="\033[0m"
 
 log() {
@@ -20,6 +21,16 @@ log() {
   local debug=${3:-${DEBUG:-false}}
 
   case $type in
+    question|_QUESTION|-q|-Q)
+      if [[ "$debug" == true ]]; then
+        printf '%b[_QUESTION]%b ❓  %s: ' "$_NOTICE" "$_NC" "$message"
+      fi
+      ;;
+    notice|_NOTICE|-n|-N)
+      if [[ "$debug" == true ]]; then
+        printf '%b[_NOTICE]%b 📝  %s\n' "$_NOTICE" "$_NC" "$message"
+      fi
+      ;;
     info|_INFO|-i|-I)
       if [[ "$debug" == true ]]; then
         printf '%b[_INFO]%b ℹ️  %s\n' "$_INFO" "$_NC" "$message"
@@ -36,12 +47,21 @@ log() {
     success|_SUCCESS|-s|-S)
       printf '%b[_SUCCESS]%b ✅  %s\n' "$_SUCCESS" "$_NC" "$message"
       ;;
+    fatal|_FATAL|-f|-F)
+      printf '%b[_FATAL]%b 💀  %s\n' "$_FATAL" "$_NC" "$message"
+      if [[ "$debug" == true ]]; then
+        printf '%b[_FATAL]%b 💀  %s\n' "$_FATAL" "$_NC" "Exiting due to fatal error."
+      fi
+      clear_build_artifacts
+      exit 1
+      ;;
     *)
       if [[ "$debug" == true ]]; then
         log "info" "$message" "$debug"
       fi
       ;;
   esac
+  return 0
 }
 
 clear_screen() {
@@ -63,29 +83,45 @@ get_current_shell() {
   esac
 }
 
-# Cria um diretório temporário para cache
+# Creates a temporary directory for cache
 _TEMP_DIR="${_TEMP_DIR:-$(mktemp -d)}"
 if [[ -d "${_TEMP_DIR}" ]]; then
-    log info "Diretório temporário criado: ${_TEMP_DIR}"
+    log info "Temporary directory created: ${_TEMP_DIR}"
 else
-    log error "Falha ao criar o diretório temporário."
+    log error "Failed to create the temporary directory."
 fi
 
 clear_script_cache() {
   trap - EXIT HUP INT QUIT ABRT ALRM TERM
   if [[ ! -d "${_TEMP_DIR}" ]]; then
-    exit 0
+    return 0
   fi
   rm -rf "${_TEMP_DIR}" || true
   if [[ -d "${_TEMP_DIR}" ]] && sudo -v 2>/dev/null; then
     sudo rm -rf "${_TEMP_DIR}"
     if [[ -d "${_TEMP_DIR}" ]]; then
-      printf '%b[_ERROR]%b ❌  %s\n' "$_ERROR" "$_NC" "Falha ao remover o diretório temporário: ${_TEMP_DIR}"
+      printf '%b[_ERROR]%b ❌  %s\n' "$_ERROR" "$_NC" "Failed to remove the temporary directory: ${_TEMP_DIR}"
     else
-      printf '%b[_SUCCESS]%b ✅  %s\n' "$_SUCCESS" "$_NC" "Diretório temporário removido: ${_TEMP_DIR}"
+      printf '%b[_SUCCESS]%b ✅  %s\n' "$_SUCCESS" "$_NC" "Temporary directory removed: ${_TEMP_DIR}"
     fi
   fi
-  exit 0
+  return 0
+}
+
+
+clear_build_artifacts() {
+  clear_script_cache
+  local build_dir="${_ROOT_DIR:-$(realpath '../')}/dist"
+  if [[ -d "${build_dir}" ]]; then
+    rm -rf "${build_dir}" || true
+    if [[ -d "${build_dir}" ]]; then
+      log error "Failed to remove build artifacts in ${build_dir}."
+    else
+      log success "Build artifacts removed from ${build_dir}."
+    fi
+  else
+    log notice "No build artifacts found in ${build_dir}."
+  fi
 }
 
 set_trap() {
@@ -94,7 +130,7 @@ set_trap() {
   case "${current_shell}" in
     *ksh|*zsh|*bash)
       declare -a FULL_SCRIPT_ARGS=("$@")
-      if [[ "${FULL_SCRIPT_ARGS[*]}" =~ -d ]]; then
+      if [[ "${FULL_SCRIPT_ARGS[*]}" == *--debug* ]]; then
           set -x
       fi
       if [[ "${current_shell}" == "bash" ]]; then

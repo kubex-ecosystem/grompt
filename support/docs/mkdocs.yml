@@ -1,0 +1,119 @@
+site_name: LookAtni File Markers
+site_url: https://rafa-mori.github.io/lookatni-file-markers/
+site_description: "Meta-framework for building and managing file markers"
+site_author: "Rafael Mori"
+
+repo_name: "rafa-mori/lookatni-file-markers"
+repo_url: https://github.com/rafa-mori/lookatni-file-markers
+
+theme:
+  name: material
+  palette:
+    primary: "indigo"
+    accent: "indigo"
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.instant
+    - navigation.expand
+    - navigation.sections
+    - navigation.tracking
+    - navigation.tabs.sticky
+    - navigation.tabs.sticky.scroll
+    - navigation.tabs.sticky.scroll.offset: 64
+    - navigation.tabs.sticky.scroll.offset.mobile: 0
+    - navigation.tabs.sticky.scroll.offset.desktop: 64
+    - navigation.tabs.sticky.scroll.offset.tablet: 64
+    - search.highlight
+    - search.share
+    - search.suggest
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      linenums: true
+  - toc:
+      permalink: True
+      title: On this page
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - smarty
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: rafa-mori
+      repo: lookatni-file-markers
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Home: index.md
+  - Documentation:
+      - Getting Started:
+          - README: README.en.md
+          - Installation: INSTALL.md
+          - AI Integration: INSTALL_AI.md
+      - User Guide:
+          - README (Portuguese): README.pt-BR.md
+  - Community:
+      - Contributing: CONTRIBUTING.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Support: SUPPORT.md
+      - Authors: AUTHORS.md
+  - Project Info:
+      - License: LICENSE
+      - Notice: NOTICE.md
+      - Security Policy: SECURITY.md
+      - Changelog: CHANGELOG.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rafa-mori/lookatni-file-markers
+      name: LookAtni File Markers on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/rafa-mori/
+      name: Rafael Mori on LinkedIn
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/faelOmori
+      name: Rafael Mori on Twitter
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: ${G-7HLY17F3DK}
+# plugins:
+#   - search:
+#       lang: en
+#   - git-revision-date-localized:
+#       type: datetime
+#       timezone: America/Sao_Paulo
+#       locale: en
+#       fallback_to_build_date: true

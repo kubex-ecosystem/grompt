@@ -1,4 +1,4 @@
-package main
+package module
 
 import (
 	"github.com/fatih/color"

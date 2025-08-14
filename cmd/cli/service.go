@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	gl "github.com/rafa-mori/grompt/logger"
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
 	"github.com/rafa-mori/grompt/utils"
 
 	s "github.com/rafa-mori/grompt/internal/services/server"

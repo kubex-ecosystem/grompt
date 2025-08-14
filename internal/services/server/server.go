@@ -25,10 +25,10 @@ type Server struct {
 	handlers *Handlers
 }
 
-func NewServer(cfg *t.Config) *Server {
+func NewServer(cfg t.IConfig) *Server {
 	handlers := NewHandlers(cfg)
 	return &Server{
-		config:   cfg,
+		config:   cfg.(*t.Config),
 		handlers: handlers,
 	}
 }
@@ -202,42 +202,42 @@ func (s *Server) setupFallbackRoutes() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prompt Crafter - Setup Necessário</title>
     <style>
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 800px; 
-            margin: 50px auto; 
+            max-width: 800px;
+            margin: 50px auto;
             padding: 20px;
             background: #1a1a1a;
             color: #ffffff;
         }
-        .container { 
-            background: #2d2d2d; 
-            padding: 30px; 
-            border-radius: 12px; 
+        .container {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 12px;
             border: 1px solid #404040;
         }
         h1 { color: #60a5fa; margin-bottom: 20px; }
         h2 { color: #34d399; margin-top: 30px; }
-        pre { 
-            background: #1a1a1a; 
-            padding: 15px; 
-            border-radius: 8px; 
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
             overflow-x: auto;
             border: 1px solid #404040;
         }
         code { color: #fbbf24; }
-        .warning { 
-            background: #451a03; 
-            border: 1px solid #f59e0b; 
-            padding: 15px; 
-            border-radius: 8px; 
+        .warning {
+            background: #451a03;
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
             margin: 20px 0;
         }
-        .step { 
-            background: #1e3a8a; 
-            border: 1px solid #3b82f6; 
-            padding: 15px; 
-            border-radius: 8px; 
+        .step {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
             margin: 15px 0;
         }
     </style>
@@ -245,14 +245,14 @@ func (s *Server) setupFallbackRoutes() {
 <body>
     <div class="container">
         <h1>🚀 Prompt Crafter</h1>
-        
+
         <div class="warning">
             <strong>⚠️ Frontend React não encontrado!</strong><br>
             O servidor Go está rodando, mas o frontend React não foi embarcado no binário.
         </div>
 
         <h2>🔧 Como corrigir:</h2>
-        
+
         <div class="step">
             <strong>Passo 1:</strong> Build do Frontend React
             <pre><code>cd frontend

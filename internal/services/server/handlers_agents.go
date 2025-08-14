@@ -131,13 +131,13 @@ func (h *Handlers) HandleAgentsGenerate(w http.ResponseWriter, r *http.Request) 
 	// Create LLM function based on available APIs
 	llmFunc := func(prompt string) (string, error) {
 		// Try different providers in order of preference
-		if h.config.ClaudeAPIKey != "" {
-			return h.claudeAPI.Complete(prompt, 4000)
+		if h.config.GetAPIKey("claude") != "" {
+			return h.claudeAPI.Complete(prompt, 4000, "claude-2")
 		}
-		if h.config.OpenAIAPIKey != "" {
+		if h.config.GetAPIKey("openai") != "" {
 			return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
 		}
-		if h.config.DeepSeekAPIKey != "" {
+		if h.config.GetAPIKey("deepseek") != "" {
 			return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
 		}
 		return "", fmt.Errorf("no LLM API available")

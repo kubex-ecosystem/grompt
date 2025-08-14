@@ -1,9 +1,10 @@
-package main
+// Package module provides internal types and functions for the Grompt application.
+package module
 
 import (
 	cc "github.com/rafa-mori/grompt/cmd/cli"
-	gl "github.com/rafa-mori/grompt/logger"
-	vs "github.com/rafa-mori/grompt/version"
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
+	vs "github.com/rafa-mori/grompt/internal/module/version"
 	"github.com/spf13/cobra"
 
 	"os"
@@ -12,7 +13,7 @@ import (
 
 type Grompt struct {
 	parentCmdName string
-	printBanner   bool
+	PrintBanner   bool
 }
 
 func (m *Grompt) Alias() string {
@@ -54,7 +55,7 @@ func (m *Grompt) Command() *cobra.Command {
 		Annotations: cc.GetDescriptions([]string{
 			m.LongDescription(),
 			m.ShortDescription(),
-		}, m.printBanner),
+		}, m.PrintBanner),
 	}
 
 	rtCmd.AddCommand(cc.ServerCmdList()...)
@@ -87,14 +88,4 @@ func (m *Grompt) concatenateExamples() string {
 		examples += rtCmd + example + "\n  "
 	}
 	return examples
-}
-func RegX() *Grompt {
-	var printBannerV = os.Getenv("GROMPT_PRINT_BANNER")
-	if printBannerV == "" {
-		printBannerV = "true"
-	}
-
-	return &Grompt{
-		printBanner: strings.ToLower(printBannerV) == "true",
-	}
 }
