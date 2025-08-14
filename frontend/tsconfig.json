@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "esnext",
     "useDefineForClassFields": true,
     "useUnknownInCatchVariables": false,
     "lib": [
@@ -13,19 +13,18 @@
     "strict": true,
     "noEmit": true,
     "incremental": true,
-    "module": "NodeNext",
+    "module": "ESNext",
     "esModuleInterop": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
     "jsx": "preserve",
     "plugins": [
       {
         "name": "next"
       }
-    ]
+    ],
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",
@@ -38,8 +37,7 @@
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "build/types/**/*.ts",
-    "build/types/**/*.d.ts"
+    "build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -47,6 +45,7 @@
     "dist",
     "out",
     "coverage",
+    "public",
     "next.config.js"
   ]
 }

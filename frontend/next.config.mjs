@@ -16,9 +16,12 @@ export default {
   images: {
     unoptimized: true, // Required for static export
   },
-  pageExtensions: ['jsx', 'ts', 'tsx', 'md', 'mdx'],
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   staticPageGenerationTimeout: 60,
   // Configure for static export to work with Go server
   assetPrefix: '',
   basePath: '',
+  experimental: {
+    inlineCss: true,
+  },
 };

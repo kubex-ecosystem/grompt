@@ -1,17 +1,8 @@
-/* @import 'tailwindcss';
-
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-@import 'tailwindcss/screens'; */
-/* @tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
-@tailwind screens; */
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/postcss';
-
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
