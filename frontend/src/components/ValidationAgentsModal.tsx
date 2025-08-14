@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  X, 
-  FileText, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  FileText,
   Loader,
-  AlertTriangle
+  X
 } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
+const ValidationAgentsModal = ({ isOpen, onClose, darkMode }: { isOpen: boolean; onClose: () => void; darkMode: boolean; }) => {
   const { t } = useTranslation();
-  
+
   const [content, setContent] = useState('');
-  const [validationResult, setValidationResult] = useState(null);
+  const [validationResult, setValidationResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const theme = {
     dark: {
       bg: 'bg-gray-900',
@@ -49,10 +49,10 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
 
   const handleValidate = async () => {
     if (!content.trim()) return;
-    
+
     setLoading(true);
     setValidationResult(null);
-    
+
     try {
       const response = await fetch('/api/agents/validate', {
         method: 'POST',
@@ -61,9 +61,9 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
         },
         body: JSON.stringify({ content: content.trim() })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setValidationResult(data);
       } else {
@@ -104,6 +104,7 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
             {t('agents.validation.title')}
           </h2>
           <button
+            title={t('common.close')}
             onClick={handleClose}
             className={`p-2 rounded-lg ${currentTheme.buttonSecondary}`}
           >
@@ -139,9 +140,8 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
             {validationResult && !loading && (
               <div className="space-y-4">
                 {/* Summary */}
-                <div className={`flex items-center space-x-2 p-4 rounded-lg ${
-                  validationResult.valid ? currentTheme.success : currentTheme.error
-                }`}>
+                <div className={`flex items-center space-x-2 p-4 rounded-lg ${validationResult.valid ? currentTheme.success : currentTheme.error
+                  }`}>
                   {validationResult.valid ? (
                     <CheckCircle size={20} />
                   ) : (
@@ -167,7 +167,7 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
                       {t('agents.validation.errors')} ({validationResult.errors.length})
                     </h4>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {validationResult.errors.map((error, index) => (
+                      {validationResult.errors.map((error: { section?: string; message: string; line?: number }, index: number) => (
                         <div key={index} className={`flex items-start space-x-2 p-3 rounded ${currentTheme.error}`}>
                           <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                           <div>
@@ -190,7 +190,7 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
                       Valid Agents ({validationResult.agents.length})
                     </h4>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {validationResult.agents.map((agent, index) => (
+                      {validationResult.agents.map((agent: { Title: string; Role?: string; Skills?: string[] }, index: number) => (
                         <div key={index} className={`p-3 rounded border ${currentTheme.border} ${currentTheme.modal}`}>
                           <h5 className={`font-medium ${currentTheme.text}`}>{agent.Title}</h5>
                           {agent.Role && (
@@ -229,7 +229,7 @@ const ValidationAgentsModal = ({ isOpen, onClose, darkMode }) => {
           >
             {t('ideas.cancel')}
           </button>
-          
+
           <button
             onClick={handleValidate}
             disabled={!content.trim() || loading}

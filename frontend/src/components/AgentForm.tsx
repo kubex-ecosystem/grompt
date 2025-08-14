@@ -15,6 +15,15 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 
+export interface Agent {
+  ID: string;
+  Title: string;
+  Role: string;
+  Skills: string[];
+  Restrictions: string[];
+  PromptExample: string;
+}
+
 const AgentForm = () => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -26,10 +35,11 @@ const AgentForm = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Form data
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Agent>({
+    ID: '',
     Title: '',
     Role: '',
     Skills: [],
@@ -37,8 +47,8 @@ const AgentForm = () => {
     PromptExample: ''
   });
 
-  const [currentSkill, setCurrentSkill] = useState('');
-  const [currentRestriction, setCurrentRestriction] = useState('');
+  const [currentSkill, setCurrentSkill] = useState<string>('');
+  const [currentRestriction, setCurrentRestriction] = useState<string>('');
 
   // Temas
   const theme = {
@@ -77,6 +87,7 @@ const AgentForm = () => {
         if (!response.ok) throw new Error('Failed to load agent');
         const agent = await response.json();
         setFormData({
+          ID: agent.ID || '',
           Title: agent.Title || '',
           Role: agent.Role || '',
           Skills: agent.Skills || [],
@@ -96,7 +107,7 @@ const AgentForm = () => {
   }, [id, isEdit]);
 
   // Manipular campos do formulário
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -115,7 +126,7 @@ const AgentForm = () => {
   };
 
   // Remover skill
-  const removeSkill = (skill) => {
+  const removeSkill = (skill: string) => {
     setFormData(prev => ({
       ...prev,
       Skills: prev.Skills.filter(s => s !== skill)
@@ -134,7 +145,7 @@ const AgentForm = () => {
   };
 
   // Remover restriction
-  const removeRestriction = (restriction) => {
+  const removeRestriction = (restriction: string) => {
     setFormData(prev => ({
       ...prev,
       Restrictions: prev.Restrictions.filter(r => r !== restriction)
@@ -142,7 +153,7 @@ const AgentForm = () => {
   };
 
   // Submeter formulário
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!formData.Title.trim()) {
@@ -192,6 +203,7 @@ const AgentForm = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <button
+                title={t('agents.back')}
                 onClick={() => router.push('/agents')}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
@@ -207,6 +219,7 @@ const AgentForm = () => {
               <LanguageSelector currentTheme={currentTheme} />
 
               <button
+                title={t('agents.toggleDarkMode')}
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
@@ -238,6 +251,7 @@ const AgentForm = () => {
                   {t('agents.form.title')} *
                 </label>
                 <input
+                  title={t('agents.form.title')}
                   type="text"
                   value={formData.Title}
                   onChange={(e) => handleInputChange('Title', e.target.value)}
@@ -252,6 +266,7 @@ const AgentForm = () => {
                   {t('agents.form.role')}
                 </label>
                 <input
+                  title={t('agents.form.role')}
                   type="text"
                   value={formData.Role}
                   onChange={(e) => handleInputChange('Role', e.target.value)}
@@ -272,6 +287,7 @@ const AgentForm = () => {
             <div className="space-y-4">
               <div className="flex gap-2">
                 <input
+                  title={t('agents.form.skill')}
                   type="text"
                   value={currentSkill}
                   onChange={(e) => setCurrentSkill(e.target.value)}
@@ -280,6 +296,7 @@ const AgentForm = () => {
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
                 />
                 <button
+                  title={t('agents.form.addSkill')}
                   type="button"
                   onClick={addSkill}
                   className={`px-4 py-3 rounded-lg ${currentTheme.button} transition-colors`}
@@ -297,6 +314,7 @@ const AgentForm = () => {
                     >
                       {skill}
                       <button
+                        title={t('agents.form.removeSkill')}
                         type="button"
                         onClick={() => removeSkill(skill)}
                         className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-1"
@@ -320,6 +338,7 @@ const AgentForm = () => {
             <div className="space-y-4">
               <div className="flex gap-2">
                 <input
+                  title={t('agents.form.restriction')}
                   type="text"
                   value={currentRestriction}
                   onChange={(e) => setCurrentRestriction(e.target.value)}
@@ -328,6 +347,7 @@ const AgentForm = () => {
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRestriction())}
                 />
                 <button
+                  title={t('agents.form.addRestriction')}
                   type="button"
                   onClick={addRestriction}
                   className={`px-4 py-3 rounded-lg ${currentTheme.button} transition-colors`}
@@ -345,6 +365,7 @@ const AgentForm = () => {
                     >
                       {restriction}
                       <button
+                        title={t('agents.form.removeRestriction')}
                         type="button"
                         onClick={() => removeRestriction(restriction)}
                         className="hover:bg-red-200 dark:hover:bg-red-800 rounded-full p-1"
@@ -366,6 +387,7 @@ const AgentForm = () => {
             </h2>
 
             <textarea
+              title={t('agents.form.promptExample')}
               value={formData.PromptExample}
               onChange={(e) => handleInputChange('PromptExample', e.target.value)}
               placeholder={t('agents.form.promptExamplePlaceholder')}
@@ -377,13 +399,18 @@ const AgentForm = () => {
           {/* Actions */}
           <div className="flex justify-end gap-4">
             <button
+              title={t('agents.back')}
               type="button"
-              onClick={() => navigate('/agents')}
+              onClick={() => {
+                router.push('/agents');
+              }}
+              disabled={saving}
               className={`px-6 py-3 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
             >
               {t('cancel')}
             </button>
             <button
+              title={t('agents.form.save')}
               type="submit"
               disabled={saving || !formData.Title.trim()}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg ${currentTheme.button} transition-colors disabled:opacity-50`}

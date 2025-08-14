@@ -7,7 +7,7 @@ const PromptCrafter = () => {
   const { t } = useTranslation();
   const [darkMode, setDarkMode] = useState(true);
   const [currentInput, setCurrentInput] = useState('');
-  const [ideas, setIdeas] = useState([]);
+  const [ideas, setIdeas] = useState<{ id: number; text: string }[]>([]);
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
   const [purpose, setPurpose] = useState('Outros');
@@ -36,7 +36,20 @@ const PromptCrafter = () => {
     }
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
-  const [serverInfo, setServerInfo] = useState(null);
+  type ServerInfo = {
+    version?: string;
+    apis?: {
+      claude?: boolean;
+      ollama?: boolean;
+      openai?: boolean;
+      deepseek?: boolean;
+      gemini?: boolean;
+      chatgpt?: boolean;
+      [key: string]: boolean | undefined;
+    };
+    [key: string]: any;
+  };
+  const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
 
   const [isOutputCollapsed, setIsOutputCollapsed] = useState(true);
   const [isInputCollapsed, setIsInputCollapsed] = useState(false);
@@ -66,8 +79,8 @@ const PromptCrafter = () => {
     return '';
   };
 
-  const apiCall = async (endpoint, options = {}) => {
-    const baseURL = getBaseURL();
+  const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+    const baseURL: string = getBaseURL();
     const url = `${baseURL}${endpoint}`;
 
     console.log(`🔗 Fazendo requisição para: ${url}`);
@@ -143,7 +156,7 @@ const PromptCrafter = () => {
     } catch (error) {
       console.error('❌ Erro ao verificar APIs:', error);
       setConnectionStatus('offline');
-      setAvailableAPIs({ demo_mode: true });
+      setAvailableAPIs({ demo_mode: true } as any);
       setApiProvider('demo');
 
       // Se estivermos em desenvolvimento, mostrar dica
@@ -165,7 +178,7 @@ const PromptCrafter = () => {
     }
   };
 
-  const removeIdea = (id) => {
+  const removeIdea = (id: number) => {
     setIdeas(ideas.filter(idea => idea.id !== id));
     if (editingId === id) {
       setEditingId(null);
@@ -177,8 +190,8 @@ const PromptCrafter = () => {
     }
   };
 
-  const startEditing = (id, text) => {
-    setEditingId(id);
+  const startEditing = (id: number | null, text: string) => {
+    setEditingId(null);
     setEditingText(text);
   };
 
@@ -246,11 +259,11 @@ const PromptCrafter = () => {
 
       ## 🔧 ${t('demo.instructions')}
 
-      ${t('demo.instructionsList', { returnObjects: true }).map(instruction => `- ${instruction}`).join('\n')}
+      ${(t('demo.instructionsList', { returnObjects: true }) as string[]).map(instruction => `- ${instruction}`).join('\n')}
 
       ## 📋 ${t('demo.responseFormat')}
 
-      ${t('demo.responseSteps', { returnObjects: true }).map((step, index) => `${index + 1}. ${step}`).join('\n')}
+      ${(t('demo.responseSteps', { returnObjects: true }) as string[]).map((step, index) => `${index + 1}. ${step}`).join('\n')}
 
       ## ⚙️ ${t('demo.technicalConfig')}
 
@@ -604,6 +617,7 @@ make run
                 {t('config.maxLength')}: {maxLength.toLocaleString()} {t('config.characters')}
               </label>
               <input
+                title={t('config.maxLength')}
                 type="range"
                 min="500"
                 max="130000"
@@ -742,6 +756,7 @@ make run
               </span>
             </div>
             <select
+              title={t('providers.select')}
               value={apiProvider}
               onChange={(e) => {
                 setApiProvider(e.target.value);
@@ -771,14 +786,15 @@ make run
             </select>
 
             {/* Model Selection */}
-            {apiProvider !== 'demo' && availableAPIs.available_models && availableAPIs.available_models[apiProvider] && (
+            {apiProvider !== 'demo' && availableAPIs.available_models && ((availableAPIs as typeof availableAPIs).available_models as Record<string, string[]>)[apiProvider] && (
               <select
+                title={t('providers.selectModel')}
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500`}
               >
                 <option value="">{t('providers.defaultModel')}</option>
-                {availableAPIs.available_models[apiProvider].map((model) => (
+                {((availableAPIs as typeof availableAPIs).available_models as Record<string, string[]>)[apiProvider].map((model) => (
                   <option key={model} value={model}>{model}</option>
                 ))}
               </select>
@@ -810,10 +826,10 @@ make run
         )}
 
         {/* Server Info (em desenvolvimento) */}
-        {process.env.NODE_ENV === 'development' && serverInfo && (
+        {process.env.NODE_ENV === 'development' && serverInfo && typeof serverInfo === 'object' && (
           <div className="mb-6 p-4 bg-blue-900 border border-blue-600 rounded-lg">
             <p className="text-blue-100">
-              <strong>🔧 {t('alerts.serverInfo')}:</strong> v{serverInfo.version} |
+              <strong>🔧 {t('alerts.serverInfo')}:</strong> v{serverInfo.version || 'unknown'}
               APIs: {
                 serverInfo.apis?.claude ? '✅' : '❌'
               } Claude, {
@@ -893,10 +909,11 @@ make run
                     {editingId === idea.id ? (
                       <div className="space-y-2">
                         <textarea
+                          title={t('ideas.edit')}
                           value={editingText}
                           onChange={(e) => setEditingText(e.target.value)}
                           className={`w-full px-2 py-1 rounded border ${currentTheme.input} text-sm`}
-                          rows="2"
+                          rows={2}
                         />
                         <div className="flex gap-1">
                           <button

@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  X, 
-  Download, 
-  Loader,
+import {
   CheckSquare,
-  Square
+  Download,
+  Loader,
+  Square,
+  X
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
+const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }: { isOpen: boolean; onClose: () => void; agents: any[]; darkMode: boolean; }) => {
   const { t } = useTranslation();
-  
+
   const [selectedAgents, setSelectedAgents] = useState(new Set());
   const [format, setFormat] = useState('markdown');
   const [filename, setFilename] = useState('agents');
   const [loading, setLoading] = useState(false);
-  
+
   const theme = {
     dark: {
       bg: 'bg-gray-900',
@@ -58,7 +58,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
     setSelectedAgents(new Set());
   };
 
-  const handleToggleAgent = (agentId) => {
+  const handleToggleAgent = (agentId: string) => {
     const newSelected = new Set(selectedAgents);
     if (newSelected.has(agentId)) {
       newSelected.delete(agentId);
@@ -81,9 +81,9 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
 
   const handleExport = async () => {
     if (selectedAgents.size === 0) return;
-    
+
     setLoading(true);
-    
+
     try {
       const response = await fetch('/api/agents/export-advanced', {
         method: 'POST',
@@ -96,7 +96,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
           filename: filename
         })
       });
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -108,7 +108,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         // Close modal after successful export
         handleClose();
       } else {
@@ -141,6 +141,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
             {t('agents.export.title')}
           </h2>
           <button
+            title={t('common.close')}
             onClick={handleClose}
             className={`p-2 rounded-lg ${currentTheme.buttonSecondary}`}
           >
@@ -191,7 +192,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
                       )}
                       {agent.Skills && agent.Skills.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {agent.Skills.slice(0, 3).map((skill, index) => (
+                          {agent.Skills.slice(0, 3).map((skill: string, index: number) => (
                             <span key={index} className={`px-2 py-0.5 text-xs rounded ${currentTheme.buttonSecondary}`}>
                               {skill}
                             </span>
@@ -218,7 +219,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
               <h3 className={`text-lg font-semibold ${currentTheme.text}`}>
                 {t('agents.export.format')}
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {Object.entries({
                   markdown: t('agents.export.formats.markdown'),
@@ -270,7 +271,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }) => {
           >
             {t('ideas.cancel')}
           </button>
-          
+
           <button
             onClick={handleExport}
             disabled={selectedAgents.size === 0 || loading || !filename.trim()}

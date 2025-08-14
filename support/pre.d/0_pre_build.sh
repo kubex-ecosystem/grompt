@@ -30,10 +30,10 @@ build_frontend() {
           exit 1
       }
 
-      if [[ -d './out' ]]; then
+      if [[ -d './build' ]]; then
           echo "Frontend assets built successfully."
       else
-          echo "Out directory does not exist."
+          echo "Build directory does not exist."
           exit 1
       fi
 
@@ -42,8 +42,8 @@ build_frontend() {
           rm -rf "${_ROOT_DIR}/internal/services/server/build"
       fi
 
-      mv './out' "${_ROOT_DIR}/internal/services/server/build" || {
-          echo "Failed to move out directory to server."
+      mv './build' "${_ROOT_DIR}/internal/services/server/build" || {
+          echo "Failed to move build directory to server."
           exit 1
       }
 

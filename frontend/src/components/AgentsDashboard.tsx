@@ -18,6 +18,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Agent } from './AgentForm';
 import ExportAgentsModal from './ExportAgentsModal';
 import ImportAgentsModal from './ImportAgentsModal';
 import LanguageSelector from './LanguageSelector';
@@ -28,7 +29,7 @@ const AgentsDashboard = () => {
   const router = useRouter();
 
   // Estados
-  const [agents, setAgents] = useState([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [darkMode, setDarkMode] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,7 +101,7 @@ const AgentsDashboard = () => {
   });
 
   // Deletar agent
-  const deleteAgent = async (id) => {
+  const deleteAgent = async (id: string) => {
     try {
       const response = await fetch(`/api/agents/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete agent');
@@ -150,7 +151,7 @@ const AgentsDashboard = () => {
   };
 
   // Handlers para os novos modais
-  const handleImportSuccess = (result) => {
+  const handleImportSuccess = (result: Agent[]) => {
     // Recarregar a lista de agents após importação bem-sucedida
     loadAgents();
   };
@@ -233,6 +234,7 @@ const AgentsDashboard = () => {
               </div>
 
               <select
+                title={t('agents.filterByCategory')}
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className={`px-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
@@ -249,12 +251,14 @@ const AgentsDashboard = () => {
             <div className="flex gap-2">
               <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
                 <button
+                  title={t('agents.viewAsGrid')}
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-500 text-white' : currentTheme.buttonSecondary}`}
                 >
                   <Grid size={16} />
                 </button>
                 <button
+                  title={t('agents.viewAsList')}
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-500 text-white' : currentTheme.buttonSecondary}`}
                 >
@@ -334,7 +338,9 @@ const AgentsDashboard = () => {
             <h3 className="text-xl font-semibold mb-2">{t('agents.empty.title')}</h3>
             <p className={`${currentTheme.textSecondary} mb-6`}>{t('agents.empty.description')}</p>
             <button
-              onClick={() => navigate('/agents/new')}
+              onClick={() => {
+                router.push('/agents/new');
+              }}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg ${currentTheme.button} transition-colors mx-auto`}
             >
               <Plus size={20} />

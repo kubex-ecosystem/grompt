@@ -6,6 +6,8 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "@tailwindcss/postcss": "^4.1.11",
     "clsx": "^2.1.1",
     "erro": "^2.1.0",
     "error": "^10.4.0",
@@ -80,5 +82,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "resolutions": {
+    "next": "15.3.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

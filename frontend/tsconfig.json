@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2017",
     "useDefineForClassFields": true,
     "useUnknownInCatchVariables": false,
     "lib": [
@@ -13,9 +13,9 @@
     "strict": true,
     "noEmit": true,
     "incremental": true,
-    "module": "esnext",
+    "module": "NodeNext",
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
@@ -25,21 +25,28 @@
       {
         "name": "next"
       }
-    ],
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next-env.d.ts",
+    "out/types/**/*.ts",
     "src/**/*.js",
     "src/**/*.json",
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "out/types/**/*.ts"
+    "build/types/**/*.ts",
+    "build/types/**/*.d.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "build",
+    "dist",
+    "out",
+    "coverage",
+    "next.config.js"
   ]
 }

@@ -36,7 +36,7 @@ export default function Home() {
 
   const currentTheme = darkMode ? theme.dark : theme.light;
 
-  const isActive = (path) => pathname === path;
+  const isActive = (path: string) => pathname === path;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${currentTheme.bg} ${currentTheme.text}`}>

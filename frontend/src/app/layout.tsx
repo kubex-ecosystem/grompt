@@ -1,5 +1,5 @@
 import { Inter } from 'next/font/google';
-import '../index.css';
+import { ReactNode } from 'react';
 import ClientProvider from './client-provider';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -9,7 +9,7 @@ export const metadata = {
   description: 'A powerful tool for building prompts with AI assistance using real engineering practices.',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-gray-900 text-white`}>

@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Moon, Sparkles, Sun, Users } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, Users, Sun, Moon } from 'lucide-react';
-import PromptCrafter from './PromptCrafter';
-import AgentsDashboard from './components/AgentsDashboard';
+import { Link, Route, useLocation } from 'react-router-dom';
 import AgentForm from './components/AgentForm';
 import AgentView from './components/AgentView';
+import AgentsDashboard from './components/AgentsDashboard';
 import LanguageSelector from './components/LanguageSelector';
 
 const App = () => {
@@ -39,16 +38,16 @@ const App = () => {
 
   const currentTheme = darkMode ? theme.dark : theme.light;
 
-  const isActivePath = (path) => {
+  const isActivePath = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
-  const getNavLinkClass = (path) => {
+  const getNavLinkClass = (path: string) => {
     const baseClass = 'flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 font-medium';
     const activeClass = 'bg-blue-600 text-white shadow-lg';
     const inactiveClass = `${currentTheme.textSecondary} hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400`;
-    
+
     return `${baseClass} ${isActivePath(path) ? activeClass : inactiveClass}`;
   };
 
@@ -68,13 +67,13 @@ const App = () => {
                   Grompt
                 </h1>
               </div>
-              
+
               <div className="hidden md:flex items-center gap-2">
                 <Link to="/" className={getNavLinkClass('/')}>
                   <Sparkles size={18} />
                   {t('nav.promptCrafter')}
                 </Link>
-                
+
                 <Link to="/agents" className={getNavLinkClass('/agents')}>
                   <Users size={18} />
                   {t('nav.agents')}
@@ -85,7 +84,7 @@ const App = () => {
             {/* Controls */}
             <div className="flex items-center gap-4">
               <LanguageSelector currentTheme={currentTheme} />
-              
+
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
@@ -95,7 +94,7 @@ const App = () => {
               </button>
             </div>
           </div>
-          
+
           {/* Mobile Navigation */}
           <div className="md:hidden pb-4">
             <div className="flex flex-col gap-2">
@@ -103,7 +102,7 @@ const App = () => {
                 <Sparkles size={18} />
                 {t('nav.promptCrafter')}
               </Link>
-              
+
               <Link to="/agents" className={getNavLinkClass('/agents')}>
                 <Users size={18} />
                 {t('nav.agents')}
@@ -115,16 +114,16 @@ const App = () => {
 
       {/* Main Content */}
       <main>
-        <Routes>
-          <Route path="/" element={<PromptCrafter />} />
-          <Route path="/agents" element={<AgentsDashboard />} />
-          <Route path="/agents/new" element={<AgentForm />} />
-          <Route path="/agents/:id" element={<AgentView />} />
-          <Route path="/agents/:id/edit" element={<AgentForm />} />
-        </Routes>
+        {/* Define routes */}
+        <Route path="/">{<AgentForm />}</Route>
+        <Route path="/agents" >{<AgentsDashboard />}</Route>
+        <Route path="/agents/new" >{<AgentForm />}</Route>
+        <Route path="/agents/:id" >{<AgentView />}</Route>
+        <Route path="/agents/:id/edit" >{<AgentForm />}</Route>
       </main>
     </div>
   );
 };
+
 
 export default App;

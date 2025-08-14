@@ -11,6 +11,7 @@ import {
   Trash2,
   User
 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/dist/client/components/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
@@ -22,11 +23,11 @@ const AgentView = () => {
   const id = searchParams.get('view') || searchParams.get('id');
 
   // Estados
-  const [darkMode, setDarkMode] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [agent, setAgent] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [agent, setAgent] = useState<any | null>(null);
+  const [copied, setCopied] = useState<boolean>(false);
 
   // Temas
   const theme = {
@@ -91,7 +92,7 @@ const AgentView = () => {
   // Copiar prompt example
   const copyPromptExample = async () => {
     try {
-      await navigator.clipboard.writeText(agent.PromptExample);
+      await navigator.clipboard.writeText(agent.PromptExample || "");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -107,10 +108,10 @@ const AgentView = () => {
 ${agent.Role || 'No role specified'}
 
 ## Skills
-${agent.Skills?.map(skill => `- ${skill}`).join('\n') || 'No skills specified'}
+${agent.Skills?.map((skill: string) => `- ${skill}`).join('\n') || 'No skills specified'}
 
 ## Restrictions
-${agent.Restrictions?.map(restriction => `- ${restriction}`).join('\n') || 'No restrictions specified'}
+${agent.Restrictions?.map((restriction: string) => `- ${restriction}`).join('\n') || 'No restrictions specified'}
 
 ## Prompt Example
 \`\`\`
@@ -178,6 +179,7 @@ ${agent.PromptExample || 'No prompt example provided'}
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <button
+                title={t('common.back')}
                 onClick={() => router.push('/agents')}
                 className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
               >
@@ -253,7 +255,7 @@ ${agent.PromptExample || 'No prompt example provided'}
             </h2>
 
             <div className="flex flex-wrap gap-2">
-              {agent.Skills.map((skill, index) => (
+              {agent.Skills.map((skill: string, index: number) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm"
@@ -274,7 +276,7 @@ ${agent.PromptExample || 'No prompt example provided'}
             </h2>
 
             <div className="flex flex-wrap gap-2">
-              {agent.Restrictions.map((restriction, index) => (
+              {agent.Restrictions.map((restriction: string, index: number) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full text-sm"

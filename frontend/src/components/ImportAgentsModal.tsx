@@ -1,30 +1,47 @@
-import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { 
-  X, 
-  Upload, 
-  FileText, 
-  AlertCircle, 
-  CheckCircle, 
-  Loader,
-  AlertTriangle
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  FileText,
+  Upload,
+  X
 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
+const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }: { isOpen: boolean; onClose: () => void; onImport: (data: any) => void; darkMode: boolean; }) => {
   const { t } = useTranslation();
-  const fileInputRef = useRef(null);
-  
-  const [content, setContent] = useState('');
-  const [mode, setMode] = useState('upload'); // 'upload' or 'paste'
-  const [options, setOptions] = useState({
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [content, setContent] = useState<string>('');
+  const [mode, setMode] = useState<'upload' | 'paste'>('upload');
+  const [options, setOptions] = useState<{
+    merge: boolean;
+    validate: boolean;
+  }>({
     merge: false,
     validate: true
   });
-  const [previewData, setPreviewData] = useState(null);
-  const [errors, setErrors] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState('input'); // 'input', 'preview', 'importing'
-  
+  type PreviewAgent = {
+    Title: string;
+    Role?: string;
+    Skills?: string[];
+    [key: string]: any;
+  };
+
+  type PreviewData = {
+    valid: boolean;
+    agents_found: number;
+    agents: PreviewAgent[];
+    errors?: { type: string; message: string; section?: string; line?: number }[];
+    [key: string]: any;
+  };
+
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [errors, setErrors] = useState<{ type: string; message: string }[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [step, setStep] = useState<'input' | 'preview' | 'importing'>('input');
+
   const theme = {
     dark: {
       bg: 'bg-gray-900',
@@ -56,12 +73,12 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
 
   const currentTheme = darkMode ? theme.dark : theme.light;
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setContent(e.target.result);
+        setContent((e.target as { result: '' }).result);
       };
       reader.readAsText(file);
     }
@@ -69,10 +86,10 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
 
   const validateContent = async () => {
     if (!content.trim()) return;
-    
+
     setLoading(true);
     setErrors([]);
-    
+
     try {
       const response = await fetch('/api/agents/validate', {
         method: 'POST',
@@ -81,9 +98,9 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
         },
         body: JSON.stringify({ content: content.trim() })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setPreviewData(data);
         setErrors(data.errors || []);
@@ -100,17 +117,17 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
 
   const handleImport = async () => {
     if (!content.trim()) return;
-    
+
     // Confirm replacement if not merging
     if (!options.merge) {
       if (!window.confirm(t('agents.import.confirmReplace'))) {
         return;
       }
     }
-    
+
     setLoading(true);
     setStep('importing');
-    
+
     try {
       const response = await fetch('/api/agents/import', {
         method: 'POST',
@@ -123,9 +140,9 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
           validate: options.validate
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         // Success - close modal and refresh agents list
         onImport(data);
@@ -163,6 +180,7 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
             {t('agents.import.title')}
           </h2>
           <button
+            title='Close'
             onClick={handleClose}
             className={`p-2 rounded-lg ${currentTheme.buttonSecondary}`}
           >
@@ -177,18 +195,16 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
               <div className="flex space-x-4">
                 <button
                   onClick={() => setMode('upload')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                    mode === 'upload' ? currentTheme.button : currentTheme.buttonSecondary
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${mode === 'upload' ? currentTheme.button : currentTheme.buttonSecondary
+                    }`}
                 >
                   <Upload size={20} />
                   <span>{t('agents.import.upload')}</span>
                 </button>
                 <button
                   onClick={() => setMode('paste')}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                    mode === 'paste' ? currentTheme.button : currentTheme.buttonSecondary
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${mode === 'paste' ? currentTheme.button : currentTheme.buttonSecondary
+                    }`}
                 >
                   <FileText size={20} />
                   <span>{t('agents.import.paste')}</span>
@@ -199,6 +215,7 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
               {mode === 'upload' && (
                 <div className="space-y-4">
                   <input
+                    title='Upload a file'
                     ref={fileInputRef}
                     type="file"
                     accept=".md,.markdown,.txt"
@@ -275,145 +292,93 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }) => {
                       className="w-4 h-4"
                     />
                     <span className={currentTheme.text}>{t('agents.import.replace')}</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={options.validate}
-                      onChange={(e) => setOptions(prev => ({ ...prev, validate: e.target.checked }))}
-                      className="w-4 h-4"
-                    />
-                    <span className={currentTheme.text}>{t('agents.import.validate')}</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 'preview' && previewData && (
-            <div className="p-6 space-y-6">
-              {/* Validation Results */}
-              <div className="space-y-4">
-                <div className={`flex items-center space-x-2 p-4 rounded-lg ${
-                  previewData.valid ? currentTheme.success : currentTheme.error
-                }`}>
-                  {previewData.valid ? (
-                    <CheckCircle size={20} />
-                  ) : (
-                    <AlertCircle size={20} />
-                  )}
-                  <span className="font-medium">
-                    {previewData.valid ? t('agents.validation.valid') : t('agents.validation.invalid')}
-                  </span>
-                  <span>
-                    {previewData.agents_found} {t('agents.import.agentsFound')}
-                  </span>
-                </div>
-
-                {/* Errors */}
-                {errors.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className={`font-semibold ${currentTheme.text}`}>
-                      {t('agents.import.errors')} ({errors.length})
-                    </h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {errors.map((error, index) => (
-                        <div key={index} className={`flex items-start space-x-2 p-3 rounded ${currentTheme.error}`}>
-                          <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="font-medium">{error.section || 'General'}</p>
-                            <p className="text-sm">{error.message}</p>
-                            {error.line && (
-                              <p className="text-xs opacity-75">Line {error.line}</p>
+                    {step && typeof step === 'string' && step as string === "preview" && previewData && (
+                      <div className="p-6 space-y-6">
+                        {/* Validation Results */}
+                        <div className="space-y-4">
+                          <div className={`flex items-center space-x-2 p-4 rounded-lg ${previewData.valid ? currentTheme.success : currentTheme.error
+                            }`}>
+                            {previewData.valid ? (
+                              <CheckCircle size={20} />
+                            ) : (
+                              <AlertCircle size={20} />
                             )}
+                            <span className="font-medium">
+                              {previewData.valid ? t('agents.validation.valid') : t('agents.validation.invalid')}
+                            </span>
+                            <span>
+                              {previewData.agents_found} {t('agents.import.agentsFound')}
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {/* Agents Preview */}
-                {previewData.agents && previewData.agents.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className={`font-semibold ${currentTheme.text}`}>
-                      {t('agents.import.preview')} ({previewData.agents.length})
-                    </h4>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {previewData.agents.map((agent, index) => (
-                        <div key={index} className={`p-3 rounded border ${currentTheme.border} ${currentTheme.modal}`}>
-                          <h5 className={`font-medium ${currentTheme.text}`}>{agent.Title}</h5>
-                          {agent.Role && (
-                            <p className={`text-sm ${currentTheme.textSecondary}`}>{agent.Role}</p>
+                          {/* Errors */}
+                          {errors.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className={`font-semibold ${currentTheme.text}`}>
+                                {t('agents.import.errors')} ({errors.length})
+                              </h4>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {errors.map((error, index) => (
+                                  <div key={index} className={`flex items-start space-x-2 p-3 rounded ${currentTheme.error}`}>
+                                    <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <p className="font-medium">{(error as any).section || 'General'}</p>
+                                      <p className="text-sm">{error.message}</p>
+                                      {(error as any).line && (
+                                        <p className="text-xs opacity-75">Line {(error as any).line}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
-                          {agent.Skills && agent.Skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {agent.Skills.slice(0, 3).map((skill, skillIndex) => (
-                                <span key={skillIndex} className={`px-2 py-1 text-xs rounded ${currentTheme.buttonSecondary}`}>
-                                  {skill}
-                                </span>
-                              ))}
-                              {agent.Skills.length > 3 && (
-                                <span className={`px-2 py-1 text-xs rounded ${currentTheme.textSecondary}`}>
-                                  +{agent.Skills.length - 3} more
-                                </span>
-                              )}
+
+                          {/* Agents Preview */}
+                          {previewData.agents && previewData.agents.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className={`font-semibold ${currentTheme.text}`}>
+                                {t('agents.import.preview')} ({previewData.agents.length})
+                              </h4>
+                              <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {previewData.agents.map((agent, index) => (
+                                  <div key={index} className={`p-3 rounded border ${currentTheme.border} ${currentTheme.modal}`}>
+                                    <h5 className={`font-medium ${currentTheme.text}`}>{agent.Title}</h5>
+                                    {agent.Role && (
+                                      <p className={`text-sm ${currentTheme.textSecondary}`}>{agent.Role}</p>
+                                    )}
+                                    {agent.Skills && agent.Skills.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {agent.Skills.slice(0, 3).map((skill, skillIndex) => (
+                                          <span key={skillIndex} className={`px-2 py-1 text-xs rounded ${currentTheme.buttonSecondary}`}>
+                                            {skill}
+                                          </span>
+                                        ))}
+                                        {agent.Skills.length > 3 && (
+                                          <span className={`px-2 py-1 text-xs rounded ${currentTheme.textSecondary}`}>
+                                            +{agent.Skills.length - 3} more
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    )}
+                  </label>
+                </div>
               </div>
             </div>
-          )}
-
-          {step === 'importing' && (
-            <div className="p-12 text-center">
-              <Loader size={48} className={`mx-auto mb-4 animate-spin ${currentTheme.text}`} />
-              <p className={`text-lg ${currentTheme.text}`}>
-                {t('agents.import.importing')}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className={`flex justify-end space-x-3 p-6 ${currentTheme.border} border-t`}>
-          <button
-            onClick={handleClose}
-            className={`px-4 py-2 rounded-lg ${currentTheme.buttonSecondary}`}
-            disabled={loading}
-          >
-            {t('ideas.cancel')}
-          </button>
-          
-          {step === 'input' && (
-            <button
-              onClick={validateContent}
-              disabled={!content.trim() || loading}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${currentTheme.button} disabled:opacity-50`}
-            >
-              {loading && <Loader size={16} className="animate-spin" />}
-              <span>{t('agents.import.validate')}</span>
-            </button>
-          )}
-          
-          {step === 'preview' && (
-            <button
-              onClick={handleImport}
-              disabled={loading || (options.validate && errors.length > 0)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${currentTheme.button} disabled:opacity-50`}
-            >
-              {loading && <Loader size={16} className="animate-spin" />}
-              <span>{t('agents.import.title')}</span>
-            </button>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 };
+
 
 export default ImportAgentsModal;
