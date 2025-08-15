@@ -59,6 +59,7 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	hndr.chatGPTAPI = ii.NewChatGPTAPI(llmKeyMap["chatgpt"])
 	hndr.deepseekAPI = ii.NewDeepSeekAPI(llmKeyMap["deepseek"])
 	hndr.ollamaAPI = ii.NewOllamaAPI(llmKeyMap["ollama"])
+	hndr.geminiAPI = ii.NewGeminiAPI(llmKeyMap["gemini"])
 	hndr.agentStore = agents.NewStore("agents.json")
 
 	return hndr
@@ -71,7 +72,7 @@ func (h *Handlers) getLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
 	if h.config == nil && cfg != nil {
 		h.config = cfg
 	}
-	for _, provider := range []string{"claude", "openai", "chatgpt", "deepseek", "ollama"} {
+	for _, provider := range []string{"claude", "openai", "chatgpt", "deepseek", "ollama", "gemini"} {
 		providerAPIKey := cfg.GetAPIKey(provider)
 		llmKeyMap[provider] = providerAPIKey
 	}
@@ -91,6 +92,8 @@ func (h *Handlers) isAPIEnabled(provider string) bool {
 		return llmKeyMap["deepseek"] != ""
 	case "ollama":
 		return llmKeyMap["ollama"] != ""
+	case "gemini":
+		return llmKeyMap["gemini"] != ""
 	default:
 		return false
 	}
@@ -123,9 +126,60 @@ func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method == "POST" {
+		// Handle POST request to update config
+		var updateReq map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		// Update configuration
+		for key, value := range updateReq {
+			if strValue, ok := value.(string); ok {
+				switch key {
+				case "gemini_api_key":
+					h.config.SetAPIKey("gemini", strValue)
+				case "openai_api_key":
+					h.config.SetAPIKey("openai", strValue)
+				case "claude_api_key":
+					h.config.SetAPIKey("claude", strValue)
+				case "deepseek_api_key":
+					h.config.SetAPIKey("deepseek", strValue)
+				case "chatgpt_api_key":
+					h.config.SetAPIKey("chatgpt", strValue)
+				case "ollama_endpoint":
+					h.config.SetAPIKey("ollama", strValue)
+				}
+			}
+		}
+
+		// Refresh the API map
+		h.getLLMAPIKeyMap(h.config)
+	}
+
+	// Prepare response with both raw config and availability flags
 	config := h.config
+	response := map[string]interface{}{
+		"port":             "8080",
+		"openai_api_key":   config.GetAPIKey("openai"),
+		"deepseek_api_key": config.GetAPIKey("deepseek"),
+		"ollama_endpoint":  config.GetAPIKey("ollama"),
+		"claude_api_key":   config.GetAPIKey("claude"),
+		"gemini_api_key":   config.GetAPIKey("gemini"),
+		"chatgpt_api_key":  config.GetAPIKey("chatgpt"),
+		"debug":            false,
+		// Availability flags for frontend
+		"openai_available":   h.isAPIEnabled("openai"),
+		"deepseek_available": h.isAPIEnabled("deepseek"),
+		"ollama_available":   h.isAPIEnabled("ollama"),
+		"claude_available":   h.isAPIEnabled("claude"),
+		"gemini_available":   h.isAPIEnabled("gemini"),
+		"chatgpt_available":  h.isAPIEnabled("chatgpt"),
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(config)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {

@@ -1,16 +1,18 @@
 'use client';
 
-import { Moon, Sparkles, Sun, Users } from 'lucide-react';
+import { Moon, Settings, Sparkles, Sun, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ConfigModal from './ConfigModal';
 import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [showConfigModal, setShowConfigModal] = useState<boolean>(false);
 
   // Temas
   const theme = {
@@ -90,6 +92,14 @@ export default function Header() {
             <LanguageSelector currentTheme={currentTheme} />
 
             <button
+              onClick={() => setShowConfigModal(true)}
+              className={`p-2 rounded-md ${currentTheme.buttonSecondary} transition-colors`}
+              title="Configurações"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+
+            <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-2 rounded-md ${currentTheme.button} transition-colors`}
               title={darkMode ? t('common.light_mode') : t('common.dark_mode')}
@@ -99,6 +109,16 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Config Modal */}
+      <ConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        onSave={() => {
+          // Reload page to refresh API configuration
+          window.location.reload();
+        }}
+      />
     </header>
   );
 }
