@@ -21,7 +21,7 @@ type Handlers struct {
 	agentStore  *agents.Store
 }
 
-// Unified request structure
+// UnifiedRequest request structure
 type UnifiedRequest struct {
 	Prompt    string `json:"prompt"`
 	MaxTokens int    `json:"max_tokens"`
@@ -337,7 +337,7 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 	// Use default model if not specified
 	model := req.Model
 	if model == "" {
-		model = "gemini-1"
+		model = "gemini-2.5-flash"
 	}
 
 	response, err := h.geminiAPI.Complete(req.Prompt, req.MaxTokens, model)
@@ -1007,7 +1007,7 @@ func (h *Handlers) HandleBadRequest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(badRequestInfo)
 }
 
-// HadleUnauthorized returns a 401 unauthorized error_count
+// HandleUnauthorized returns a 401 unauthorized error
 func (h *Handlers) HandleUnauthorized(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 

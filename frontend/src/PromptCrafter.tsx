@@ -150,6 +150,8 @@ const PromptCrafter = () => {
         } else {
           setApiProvider('demo');
         }
+
+        console.log('✅ APIs disponíveis:', config);
       } else {
         throw new Error(`Servidor retornou status ${configResponse.status}`);
       }
@@ -1024,6 +1026,11 @@ make run
             } ${isOutputCollapsed ? 'lg:hidden' : ''}`}>
             {outputDiv}
           </div>
+
+          {/* LookAtni Generator
+          <div className="mt-6">
+            <LookatniGenerator darkMode={darkMode} currentTheme={currentTheme} />
+          </div> */}
         </div>
       </div>
     </div>

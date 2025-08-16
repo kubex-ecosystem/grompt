@@ -86,3 +86,5 @@ type Config = types.IConfig
 
 // Provider exposes the providers.Provider interface
 type Provider = providers.Provider
+
+type APIConfig = types.IAPIConfig

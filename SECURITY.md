@@ -18,7 +18,7 @@ If you discover a security vulnerability in Grompt:
 - **Do NOT disclose it publicly** or via any public forum (including Discord).
 - Please report it through one of these private channels:
   - [GitHub Security Advisories](https://github.com/rafa-mori/grompt/security/advisories)
-  - Or email: [maintainer@example.com] (replace this with your actual security contact email)
+  - Or email: [maintainer@github.com/rafa-mori/ghbex] (replace this with your actual security contact email)
 
 Include as much detail as possible, such as:
 
