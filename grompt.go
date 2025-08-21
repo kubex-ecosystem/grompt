@@ -65,7 +65,7 @@ func NewPromptEngine(config Config) PromptEngine {
 }
 
 // DefaultConfig returns a default configuration for the prompt engine
-func DefaultConfig() Config {
+func DefaultConfig(configFilePath string) Config {
 	return &types.Config{
 		Port:           "8080",
 		ClaudeAPIKey:   "",

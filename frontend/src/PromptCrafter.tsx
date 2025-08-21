@@ -291,7 +291,7 @@ const PromptCrafter = () => {
       : purpose;
 
     const engineeringPrompt = `
-Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
+Você é um eintelligencea em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
 
 CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
 ${ideas.map((idea, index) => `${index + 1}. "${idea.text}"`).join('\n')}

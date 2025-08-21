@@ -98,6 +98,17 @@ type Config struct {
 	Debug          bool   `json:"debug" gorm:"default:false"`
 }
 
+func NewConfig(port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey string) *Config {
+	return &Config{
+		Port:           port,
+		OpenAIAPIKey:   openAIKey,
+		DeepSeekAPIKey: deepSeekKey,
+		OllamaEndpoint: ollamaEndpoint,
+		ClaudeAPIKey:   claudeKey,
+		GeminiAPIKey:   geminiKey,
+	}
+}
+
 func (c *Config) GetAPIConfig(provider string) IAPIConfig {
 	switch provider {
 	case "openai":
