@@ -1,7 +1,7 @@
 {
   "name": "Kubex - Grompt",
   "application": "grompt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "published": true,
   "aliases": [
