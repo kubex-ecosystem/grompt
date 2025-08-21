@@ -18,6 +18,8 @@ type Provider interface {
 	GetCapabilities() *types.Capabilities
 }
 
+type Capabilities = types.Capabilities
+
 func NewProvider(name, apiKey string, cfg types.IConfig) Provider {
 	return &types.ProviderImpl{
 		VName:   name,
