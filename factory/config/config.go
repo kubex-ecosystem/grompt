@@ -66,7 +66,7 @@ func readYAMLFile(filePath string, cfg *types.Config) error {
 	return decoder.Decode(cfg)
 }
 
-func NewProvider(name, apiKey string) providersPkg.Provider {
+func NewProvider(name, apiKey, version string) providersPkg.Provider {
 	cfg := types.NewConfig("", "", "", "", "", "")
-	return providersPkg.NewProvider(name, apiKey, cfg)
+	return providersPkg.NewProvider(name, apiKey, version, cfg)
 }

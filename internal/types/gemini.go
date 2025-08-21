@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
 )
 
 type GeminiAPI struct{ *APIConfig }
@@ -63,7 +65,8 @@ func NewGeminiAPI(apiKey string) IAPIConfig {
 // Complete sends a completion request to the Gemini API
 func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
 	if g.apiKey == "" {
-		return "", fmt.Errorf("Gemini API key not configured")
+		gl.Log("debug", "Gemini API key not configured")
+		return "", fmt.Errorf("gemini API key not configured")
 	}
 
 	// Define default model if not specified
@@ -98,6 +101,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
+		gl.Log("error", "Failed to serialize Gemini request: %v", err)
 		return "", fmt.Errorf("error serializing request: %v", err)
 	}
 
@@ -105,6 +109,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 	requestURL := fmt.Sprintf("%s?key=%s", baseURL, g.apiKey)
 	req, err := http.NewRequest("POST", requestURL, bytes.NewBuffer(jsonData))
 	if err != nil {
+		gl.Log("error", "Failed to create Gemini request: %v", err)
 		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
@@ -112,12 +117,14 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
+		gl.Log("error", "Gemini API request error: %v", err)
 		return "", fmt.Errorf("request error: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		gl.Log("error", "Failed to read Gemini response: %v", err)
 		return "", fmt.Errorf("error reading response: %v", err)
 	}
 
@@ -125,17 +132,21 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 		// Try to parse Gemini error response
 		var errorResp GeminiErrorResponse
 		if err := json.Unmarshal(body, &errorResp); err == nil {
+			gl.Log("error", "Gemini API error: %s (code: %d)", errorResp.Error.Message, errorResp.Error.Code)
 			return "", fmt.Errorf("gemini API error: %s (code: %d)", errorResp.Error.Message, errorResp.Error.Code)
 		}
+		gl.Log("error", "API returned status %d: %s", resp.StatusCode, string(body))
 		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var response GeminiResponse
 	if err := json.Unmarshal(body, &response); err != nil {
+		gl.Log("error", "Failed to parse Gemini response: %v", err)
 		return "", fmt.Errorf("error parsing response: %v", err)
 	}
 
 	if len(response.Candidates) == 0 || len(response.Candidates[0].Content.Parts) == 0 {
+		gl.Log("error", "No response generated from Gemini API")
 		return "", fmt.Errorf("no response generated from Gemini API")
 	}
 
@@ -144,7 +155,10 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 // IsAvailable checks if the Gemini API is available
 func (g *GeminiAPI) IsAvailable() bool {
+	return true
+
 	if g.apiKey == "" {
+		gl.Log("notice", "Gemini API key not configured, assuming not available")
 		return false
 	}
 
@@ -173,12 +187,14 @@ func (g *GeminiAPI) IsAvailable() bool {
 
 	jsonData, err := json.Marshal(testReq)
 	if err != nil {
+		gl.Log("error", "Failed to serialize Gemini test request: %v", err)
 		return false
 	}
 
 	requestURL := fmt.Sprintf("%s?key=%s", g.baseURL, g.apiKey)
 	req, err := http.NewRequest("POST", requestURL, bytes.NewBuffer(jsonData))
 	if err != nil {
+		gl.Log("error", "Failed to create Gemini test request: %v", err)
 		return false
 	}
 
@@ -187,19 +203,22 @@ func (g *GeminiAPI) IsAvailable() bool {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
+		gl.Log("error", "Gemini test request error: %v", err)
 		return false
 	}
 	defer resp.Body.Close()
 
+	gl.Log("debug", "Gemini API test request status: %d", resp.StatusCode)
 	return resp.StatusCode == http.StatusOK
 }
 
 // GetCommonModels returns a list of common Gemini models
 func (g *GeminiAPI) GetCommonModels() []string {
 	return []string{
+		//"gemini-2.5-flash",
 		"gemini-1.5-flash",
-		"gemini-1.5-pro",
-		"gemini-1.0-pro",
+		// "gemini-1.5-pro",
+		// "gemini-1.0-pro",
 	}
 }
 
