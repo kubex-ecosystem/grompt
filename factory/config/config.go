@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	providersPkg "github.com/rafa-mori/grompt/internal/providers"
 	"github.com/rafa-mori/grompt/internal/types"
 	"gopkg.in/yaml.v3"
 )
@@ -63,4 +64,9 @@ func readYAMLFile(filePath string, cfg *types.Config) error {
 
 	decoder := yaml.NewDecoder(file)
 	return decoder.Decode(cfg)
+}
+
+func NewProvider(name, apiKey string) providersPkg.Provider {
+	cfg := types.NewConfig("", "", "", "", "", "")
+	return providersPkg.NewProvider(name, apiKey, cfg)
 }

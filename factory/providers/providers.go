@@ -1,6 +1,8 @@
 // Package providers defines interfaces for AI providers.
 package providers
 
+import "github.com/rafa-mori/grompt/internal/types"
+
 // Provider represents an AI provider interface
 type Provider interface {
 	// Name returns the provider name (e.g., "openai", "claude", "ollama")
@@ -13,23 +15,15 @@ type Provider interface {
 	IsAvailable() bool
 
 	// GetCapabilities returns provider-specific capabilities
-	GetCapabilities() Capabilities
+	GetCapabilities() *types.Capabilities
 }
 
-// Capabilities describes what a provider can do
-type Capabilities struct {
-	MaxTokens         int      `json:"max_tokens"`
-	SupportsBatch     bool     `json:"supports_batch"`
-	SupportsStreaming bool     `json:"supports_streaming"`
-	Models            []string `json:"models"`
-	Pricing           *Pricing `json:"pricing,omitempty"`
-}
-
-// Pricing information for the provider
-type Pricing struct {
-	InputCostPer1K  float64 `json:"input_cost_per_1k"`
-	OutputCostPer1K float64 `json:"output_cost_per_1k"`
-	Currency        string  `json:"currency"`
+func NewProvider(name, apiKey string, cfg types.IConfig) Provider {
+	return &types.ProviderImpl{
+		VName:   name,
+		VAPI:    cfg.GetAPIConfig(name),
+		VConfig: cfg,
+	}
 }
 
 // Initialize creates and returns all available providers
