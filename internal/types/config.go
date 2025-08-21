@@ -3,9 +3,11 @@ package types
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"time"
 
-	vs "github.com/rafa-mori/grompt/version"
+	vs "github.com/rafa-mori/grompt/internal/module/version"
 )
 
 var (
@@ -60,36 +62,117 @@ const (
 	DefaultPort = "8080"
 )
 
-type Config struct {
-	Port           string
-	OpenAIAPIKey   string
-	DeepSeekAPIKey string
-	ClaudeAPIKey   string
-	OllamaEndpoint string
-	ChatGPTAPIKey  string
-	Debug          bool
+type IAPIConfig interface {
+	IsAvailable() bool
+	IsDemoMode() bool
+	GetVersion() string
+	ListModels() ([]string, error)
+	GetCommonModels() []string
+	Complete(prompt string, maxTokens int, model string) (string, error)
 }
 
 type APIConfig struct {
-	OpenAIAvailable   bool   `json:"openai_available"`
-	DeepSeekAvailable bool   `json:"deepseek_available"`
-	ClaudeAvailable   bool   `json:"claude_available"`
-	OllamaAvailable   bool   `json:"ollama_available"`
-	ChatGPTAvailable  bool   `json:"chatgpt_available"`
-	DemoMode          bool   `json:"demo_mode"`
-	Version           string `json:"version"`
+	apiKey     string
+	baseURL    string
+	version    string
+	httpClient *http.Client
+	demoMode   bool
 }
 
-func (c *Config) GetAPIConfig() *APIConfig {
-	return &APIConfig{
-		OpenAIAvailable:   c.OpenAIAPIKey != "",
-		DeepSeekAvailable: c.DeepSeekAPIKey != "",
-		ClaudeAvailable:   c.ClaudeAPIKey != "",
-		OllamaAvailable:   c.checkOllamaConnection(),
-		ChatGPTAvailable:  c.ChatGPTAPIKey != "",
-		DemoMode:          false,
-		Version:           AppVersion,
+type IConfig interface {
+	GetAPIConfig(provider string) IAPIConfig
+	GetPort() string
+	GetAPIKey(provider string) string
+	SetAPIKey(provider string, key string) error
+	GetAPIEndpoint(provider string) string
+}
+
+type Config struct {
+	Port           string `json:"port" gorm:"default:8080"`
+	OpenAIAPIKey   string `json:"openai_api_key" gorm:"default:''"`
+	DeepSeekAPIKey string `json:"deepseek_api_key" gorm:"default:''"`
+	OllamaEndpoint string `json:"ollama_endpoint" gorm:"default:'http://localhost:11434'"`
+	ClaudeAPIKey   string `json:"claude_api_key" gorm:"default:''"`
+	GeminiAPIKey   string `json:"gemini_api_key" gorm:"default:''"`
+	ChatGPTAPIKey  string `json:"chatgpt_api_key" gorm:"default:''"`
+	Debug          bool   `json:"debug" gorm:"default:false"`
+}
+
+func NewConfig(port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey string) *Config {
+	return &Config{
+		Port:           port,
+		OpenAIAPIKey:   openAIKey,
+		DeepSeekAPIKey: deepSeekKey,
+		OllamaEndpoint: ollamaEndpoint,
+		ClaudeAPIKey:   claudeKey,
+		GeminiAPIKey:   geminiKey,
 	}
+}
+
+func (c *Config) GetAPIConfig(provider string) IAPIConfig {
+	switch provider {
+	case "openai":
+		return NewOpenAIAPI(c.OpenAIAPIKey)
+	case "deepseek":
+		return NewDeepSeekAPI(c.DeepSeekAPIKey)
+	case "ollama":
+		return NewOllamaAPI(c.OllamaEndpoint)
+	case "claude":
+		return NewClaudeAPI(c.ClaudeAPIKey)
+	case "gemini":
+		return NewGeminiAPI(c.GeminiAPIKey)
+	default:
+		return nil
+	}
+}
+
+func (c *Config) GetPort() string {
+	if c.Port == "" {
+		return DefaultPort
+	}
+	return c.Port
+}
+
+func (c *Config) GetAPIKey(provider string) string {
+	switch provider {
+	case "openai":
+		return c.OpenAIAPIKey
+	case "deepseek":
+		return c.DeepSeekAPIKey
+	case "ollama":
+		return c.OllamaEndpoint
+	case "claude":
+		return c.ClaudeAPIKey
+	case "gemini":
+		return c.GeminiAPIKey
+	default:
+		return ""
+	}
+}
+
+func (c *Config) SetAPIKey(provider string, key string) error {
+	switch provider {
+	case "openai":
+		c.OpenAIAPIKey = key
+	case "deepseek":
+		c.DeepSeekAPIKey = key
+	case "ollama":
+		c.OllamaEndpoint = key
+	case "claude":
+		c.ClaudeAPIKey = key
+	case "gemini":
+		c.GeminiAPIKey = key
+	default:
+		return fmt.Errorf("unknown provider: %s", provider)
+	}
+	return nil
+}
+
+func (c *Config) GetAPIEndpoint(provider string) string {
+	if provider == "ollama" {
+		return c.OllamaEndpoint
+	}
+	return ""
 }
 
 func (c *Config) checkOllamaConnection() bool {

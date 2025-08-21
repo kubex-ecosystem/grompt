@@ -1,12 +1,20 @@
 // Package grompt provides an interface for modules that can be used with the grompt command-line tool.
+// It also exposes prompt engineering capabilities for use as a library.
 package grompt
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/rafa-mori/grompt/factory/providers"
+	"github.com/rafa-mori/grompt/internal/engine"
+	m "github.com/rafa-mori/grompt/internal/module"
+	"github.com/rafa-mori/grompt/internal/types"
+	"github.com/spf13/cobra"
+)
 
 // This file/package allows the grompt module to be used as a library.
 // It defines the Grompt interface which can be implemented by any module
 // that wants to be part of the grompt ecosystem.
 
+// Grompt represents the main CLI interface
 type Grompt interface {
 	// Alias returns the alias for the command.
 	Alias() string
@@ -27,3 +35,56 @@ type Grompt interface {
 	// Command returns the cobra.Command associated with this module.
 	Command() *cobra.Command
 }
+
+// PromptEngine exposes the core prompt engineering functionality
+type PromptEngine interface {
+	// ProcessPrompt processes a prompt with variables and returns the result
+	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
+
+	// GetProviders returns available AI providers
+	GetProviders() []Provider
+
+	// GetHistory returns the prompt history
+	GetHistory() []Result
+
+	// SaveToHistory saves a prompt/response pair to history
+	SaveToHistory(prompt, response string) error
+
+	// BatchProcess processes multiple prompts concurrently
+	BatchProcess(prompts []string, vars map[string]interface{}) ([]Result, error)
+}
+
+// NewGrompt creates a new Grompt CLI instance
+func NewGrompt() Grompt {
+	return m.RegX()
+}
+
+// NewPromptEngine creates a new prompt engineering engine for library use
+func NewPromptEngine(config Config) PromptEngine {
+	return engine.NewEngine(config)
+}
+
+// DefaultConfig returns a default configuration for the prompt engine
+func DefaultConfig(configFilePath string) Config {
+	return &types.Config{
+		Port:           "8080",
+		ClaudeAPIKey:   "",
+		OpenAIAPIKey:   "",
+		DeepSeekAPIKey: "",
+		OllamaEndpoint: "http://localhost:11434",
+		Debug:          false,
+	}
+}
+
+// Exposed types for external use - avoid interface{} in consumer code
+
+// Result exposes the engine.Result type
+type Result = engine.Result
+
+// Config exposes the types.Config interface
+type Config = types.IConfig
+
+// Provider exposes the providers.Provider interface
+type Provider = providers.Provider
+
+type APIConfig = types.IAPIConfig

@@ -115,7 +115,7 @@
     "addButton": "Incluir (Ctrl+Enter)",
     "emptyState": "Adicione suas primeiras ideias ao lado ←",
     "expand": "Expandir entrada",
-    "collapse": "Minimizar entrada", 
+    "collapse": "Minimizar entrada",
     "minimized": "Formulário de entrada minimizado"
   },
   "ideas": {
@@ -133,7 +133,7 @@
   "config": {
     "purpose": "Propósito do Prompt",
     "purposeCode": "Código",
-    "purposeImage": "Imagem", 
+    "purposeImage": "Imagem",
     "purposeOthers": "Outros",
     "customPurpose": "Descreva o objetivo do prompt...",
     "maxLength": "Tamanho Máximo",
@@ -144,6 +144,8 @@
     "openai": "OpenAI API",
     "deepseek": "DeepSeek API",
     "ollama": "Ollama Local",
+    "gemini": "Gemini API",
+    "chatgpt": "ChatGPT API",
     "demo": "Modo Demo",
     "defaultModel": "Modelo padrão"
   },
@@ -167,7 +169,7 @@
     "instructions": "Instruções Específicas",
     "instructionsList": [
       "Analise cuidadosamente todas as ideias apresentadas acima",
-      "Identifique o objetivo principal e objetivos secundários", 
+      "Identifique o objetivo principal e objetivos secundários",
       "Forneça uma resposta estruturada e bem organizada",
       "Mantenha o foco no propósito definido: **{{purpose}}**",
       "Use exemplos práticos quando apropriado",
@@ -176,7 +178,7 @@
     "responseFormat": "Formato de Resposta Esperado",
     "responseSteps": [
       "**Análise Inicial**: Resumo do que foi solicitado",
-      "**Desenvolvimento**: Resposta detalhada seguindo as ideias", 
+      "**Desenvolvimento**: Resposta detalhada seguindo as ideias",
       "**Conclusão**: Próximos passos ou considerações finais"
     ],
     "technicalConfig": "Configurações Técnicas",

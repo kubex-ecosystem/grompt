@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	gl "github.com/rafa-mori/grompt/logger"
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
 	"github.com/rafa-mori/grompt/utils"
 
 	s "github.com/rafa-mori/grompt/internal/services/server"
@@ -39,7 +39,11 @@ func startServer() *cobra.Command {
 
 			cfg := &t.Config{
 				Port:           utils.GetEnvOr("PORT", t.DefaultPort),
+				OpenAIAPIKey:   utils.GetEnvOr("OPENAI_API_KEY", ""),
 				ClaudeAPIKey:   utils.GetEnvOr("CLAUDE_API_KEY", ""),
+				DeepSeekAPIKey: utils.GetEnvOr("DEEPSEEK_API_KEY", ""),
+				GeminiAPIKey:   utils.GetEnvOr("GEMINI_API_KEY", ""),
+				ChatGPTAPIKey:  utils.GetEnvOr("CHATGPT_API_KEY", ""),
 				OllamaEndpoint: utils.GetEnvOr("OLLAMA_ENDPOINT", "http://localhost:11434"),
 			}
 

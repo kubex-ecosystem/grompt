@@ -14,14 +14,16 @@
 ## 🎯 **Por que o Grompt?**
 
 **Antes do Grompt:**
-```
-oi, pode me ajudar a fazer uma função que pega uma lista e ordena mas também 
-remove duplicatas e talvez retorna a contagem também? ah e deveria funcionar 
+
+```plaintext
+oi, pode me ajudar a fazer uma função que pega uma lista e ordena mas também
+remove duplicatas e talvez retorna a contagem também? ah e deveria funcionar
 com strings e números...
 ```
 
 **Depois do Grompt:**
-```
+
+```plaintext
 Crie uma função TypeScript genérica que:
 
 **Objetivo Principal:** Processar arrays com funcionalidade dupla - ordenação e deduplicação
@@ -86,14 +88,17 @@ make build-all
 ## 💡 **Exemplos de Uso**
 
 ### Exemplo 1: Prompt de Geração de Código
+
 **Ideias de Entrada:**
+
 - "Fazer uma API REST"
 - "Autenticação de usuário"
 - "Banco de dados com PostgreSQL"
 - "Limitação de taxa"
 
 **Prompt Gerado:**
-```
+
+```plaintext
 Crie um servidor de API RESTful com as seguintes especificações:
 
 **Requisitos Principais:**
@@ -171,7 +176,8 @@ export OLLAMA_ENDPOINT=http://localhost:11434  # Modelos locais Ollama
 ## 🏗️ **Arquitetura e Desenvolvimento**
 
 ### Estrutura do Projeto
-```
+
+```plaintext
 grompt/
 ├── 📁 frontend/              # Aplicação React
 │   ├── src/
@@ -211,11 +217,13 @@ make test
 ## 🛣️ **Roadmap**
 
 ### 🚧 Desenvolvimento Atual
+
 - [ ] **Biblioteca de Templates de Prompts** - Templates pré-construídos para casos de uso comuns
 - [ ] **Histórico e Versionamento de Prompts** - Salvar e rastrear iterações de prompts
 - [ ] **Processamento em Lote** - Processar múltiplas ideias simultaneamente
 
 ### 🔮 Funcionalidades Futuras
+
 - [ ] **Analytics de Prompts** - Rastrear efetividade e padrões de uso
 - [ ] **Colaboração em Equipe** - Compartilhar prompts e colaborar na engenharia de prompts
 - [ ] **Sistema de Plugins** - Estender funcionalidade com processadores de prompt customizados
@@ -230,11 +238,13 @@ make test
 Recebemos contribuições! Veja como você pode ajudar:
 
 ### 🐛 **Relatórios de Bug e Solicitações de Funcionalidades**
+
 - Abra uma issue com descrição detalhada
 - Inclua passos para reproduzir para bugs
 - Use templates de issue quando disponíveis
 
 ### 💻 **Contribuições de Código**
+
 ```bash
 # 1. Fork e clone
 git clone https://github.com/rafa-mori/grompt
@@ -255,6 +265,7 @@ git push origin feature/funcionalidade-incrivel
 ```
 
 ### 🎯 **Boas Primeiras Issues**
+
 Procure por issues marcadas com `good-first-issue` ou `help-wanted` para começar!
 
 ---
@@ -275,6 +286,7 @@ Procure por issues marcadas com `good-first-issue` ou `help-wanted` para começa
 ## 🙏 **Agradecimentos**
 
 Agradecimentos especiais para:
+
 - **[Anthropic](https://anthropic.com)** pela API Claude e por avançar a segurança da IA
 - **[OpenAI](https://openai.com)** por pioneirar modelos de IA acessíveis
 - **[Ollama](https://ollama.ai)** por tornar LLMs locais acessíveis para todos
@@ -312,7 +324,7 @@ Este projeto é licenciado sob a Licença MIT - veja o arquivo [LICENSE](../LICE
 
 ## 🚀 Sobre o Grompt
 
-Grompt é uma ferramenta COMPLETA para construção de prompts com assistência de IA, utilizando práticas reais de engenharia. Com o Grompt, você pode criar prompts melhores e obter resultados incríveis. Ele é **100% gratuito e de código aberto**! Totalmente autônomo, sem necessidade de instalação de dependências, funciona em linha de comando e web com uma interface amigável, intuitiva e fácil de usar para iniciantes e especialistas.
+Grompt é uma ferramenta COMPLETA para construção de prompts com assistência de IA, utilizando práticas reais de engenharia. Com o Grompt, você pode criar prompts melhores e obter resultados incríveis. Ele é **100% gratuito e de código aberto**! Totalmente autônomo, sem necessidade de instalação de dependências, funciona em linha de comando e web com uma interface amigável, intuitiva e fácil de usar para iniciantes e eintelligenceas.
 
 ## 📦 Instalação
 
