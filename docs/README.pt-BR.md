@@ -15,7 +15,7 @@
 
 **Antes do Grompt:**
 
-```
+```plaintext
 oi, pode me ajudar a fazer uma função que pega uma lista e ordena mas também
 remove duplicatas e talvez retorna a contagem também? ah e deveria funcionar
 com strings e números...
@@ -23,7 +23,7 @@ com strings e números...
 
 **Depois do Grompt:**
 
-```
+```plaintext
 Crie uma função TypeScript genérica que:
 
 **Objetivo Principal:** Processar arrays com funcionalidade dupla - ordenação e deduplicação
@@ -98,7 +98,7 @@ make build-all
 
 **Prompt Gerado:**
 
-```
+```plaintext
 Crie um servidor de API RESTful com as seguintes especificações:
 
 **Requisitos Principais:**
@@ -177,7 +177,7 @@ export OLLAMA_ENDPOINT=http://localhost:11434  # Modelos locais Ollama
 
 ### Estrutura do Projeto
 
-```
+```plaintext
 grompt/
 ├── 📁 frontend/              # Aplicação React
 │   ├── src/

@@ -62,6 +62,10 @@ const (
 	LogTypePanic LogType = "panic"
 	// LogTypeSuccess is the log type for success messages.
 	LogTypeSuccess LogType = "success"
+	// LogTypeAnswer is the log type for answer messages.
+	LogTypeAnswer LogType = "answer"
+	// LogTypeSilent is the log type for silent messages.
+	LogTypeSilent LogType = "silent"
 )
 
 const (
@@ -81,6 +85,10 @@ const (
 	LogLevelFatal
 	// LogLevelPanic 7
 	LogLevelPanic
+	// LogLevelAnswer 8
+	LogLevelAnswer
+	// LogLevelSilent 9
+	LogLevelSilent
 )
 
 func getEnvOrDefault[T string | int | bool](key string, defaultValue T) T {
@@ -149,6 +157,12 @@ func setLogLevel(logLevel string) {
 	case "success":
 		g.gLogLevel = LogLevelSuccess
 		g.SetLevel("success")
+	case "silent":
+		g.gLogLevel = LogLevelSilent
+		g.SetLevel("silent")
+	case "answer":
+		g.gLogLevel = LogLevelAnswer
+		g.SetLevel("answer")
 	default:
 		// logLevel = "error"
 		// g.gLogLevel = LogLevelError
@@ -190,6 +204,10 @@ func willPrintLog(logType string) bool {
 			lTypeInt = LogLevelFatal
 		case "panic":
 			lTypeInt = LogLevelPanic
+		case "silent":
+			lTypeInt = LogLevelSilent
+		case "answer":
+			lTypeInt = LogLevelAnswer
 		default:
 			lTypeInt = LogLevelError
 		}
@@ -251,7 +269,13 @@ func getFullMessage(messages ...any) string {
 			}
 		}
 	}
-	return strings.TrimSpace(fullMessage)
+	return strings.TrimSuffix(
+		strings.TrimPrefix(
+			strings.TrimSpace(fullMessage),
+			" ",
+		),
+		" ",
+	)
 }
 
 func SetDebug(d bool) {
@@ -279,6 +303,10 @@ func SetDebug(d bool) {
 			g.SetLevel("notice")
 		case LogLevelSuccess:
 			g.SetLevel("success")
+		case LogLevelSilent:
+			g.SetLevel("silent")
+		case LogLevelAnswer:
+			g.SetLevel("answer")
 		default:
 			g.SetLevel("info")
 		}
@@ -406,6 +434,10 @@ func logging(lgr l.Logger, lType LogType, fullMessage string, ctxMessageMap map[
 			lgr.FatalCtx(fullMessage, ctxMessageMap)
 		case LogTypePanic:
 			lgr.FatalCtx(fullMessage, ctxMessageMap)
+		case LogTypeSilent:
+			lgr.SilentCtx(fullMessage, ctxMessageMap)
+		case LogTypeAnswer:
+			lgr.AnswerCtx(fullMessage, ctxMessageMap)
 		default:
 			lgr.InfoCtx(fullMessage, ctxMessageMap)
 		}
@@ -475,6 +507,18 @@ func (g *gLog[T]) Success(m ...any) {
 		_ = GetLogger[l.Logger](nil)
 	}
 	g.Log("success", m...)
+}
+func (g *gLog[T]) Silent(m ...any) {
+	if g == nil {
+		_ = GetLogger[l.Logger](nil)
+	}
+	g.Log("silent", m...)
+}
+func (g *gLog[T]) Answer(m ...any) {
+	if g == nil {
+		_ = GetLogger[l.Logger](nil)
+	}
+	g.Log("answer", m...)
 }
 
 func NewLogger[T any](prefix string) GLog[T] {
