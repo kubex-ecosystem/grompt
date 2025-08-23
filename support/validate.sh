@@ -27,7 +27,7 @@ validate_versions() {
           return 1
       fi
     fi
-    local _DEPENDENCIES=( $(cat "${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/internal/module/info/manifest.json" | jq -r '.dependencies[]?') )
+    local _DEPENDENCIES=( $(cat "${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-/internal/module/info/manifest.json}" | jq -r '.dependencies[]?') )
     check_dependencies "${_DEPENDENCIES[@]}" || return 1
     return 0
 }

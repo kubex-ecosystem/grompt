@@ -8,6 +8,8 @@ set -o posix
 
 IFS=$'\n\t'
 
+_MANIFEST_SUBPATH='internal/module/info/manifest.json'
+
 # Define environment variables for the current platform and architecture
 # Converts to lowercase for compatibility
 _CURRENT_PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -15,19 +17,19 @@ _CURRENT_ARCH="$(uname -m | tr '[:upper:]' '[:lower:]')"
 
 # Define the root directory (assuming this script is in lib/ under the root)
 _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-_APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")"
-_DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "No description provided.")"
-_OWNER="$(jq -r '.organization' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "rafa-mori")"
+_APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")"
+_DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")"
+_OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")"
 _OWNER="${_OWNER,,}"  # Converts to lowercase
 _BINARY_NAME="${_APP_NAME}"
-_PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "$_APP_NAME")"
-_AUTHOR="$(jq -r '.author' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "Rafa Mori")"
-_VERSION=$(jq -r '.version' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "v0.0.0")
-_LICENSE="$(jq -r '.license' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "MIT")"
-_REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
-_PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "false")"
+_PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")"
+_AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")"
+_VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0")
+_LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")"
+_REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
+_PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
 _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
-_PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "Linux, MacOS, Windows")"
+_PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Linux, MacOS, Windows")"
 _FORCE="${FORCE:-${_FORCE:-n}}"
 _DEBUG="${DEBUG:-${_DEBUG:-n}}"
 _DRY_RUN="${DRY_RUN:-${_DRY_RUN:-n}}"
