@@ -1,7 +1,10 @@
 // Package providers defines interfaces for AI providers.
 package providers
 
-import "github.com/rafa-mori/grompt/internal/types"
+import (
+	"github.com/rafa-mori/grompt/internal/types"
+	"github.com/rafa-mori/logz"
+)
 
 // Provider represents an AI provider interface
 type Provider interface {
@@ -33,23 +36,62 @@ func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
 }
 
 // Initialize creates and returns all available providers
-func Initialize(claudeKey, openaiKey, deepseekKey, ollamaEndpoint string) []Provider {
-	if claudeKey == "" && openaiKey == "" && deepseekKey == "" && ollamaEndpoint == "" {
+func Initialize(
+	bindAddr,
+	port,
+	openAIKey,
+	deepSeekKey,
+	ollamaEndpoint,
+	claudeKey,
+	geminiKey,
+	chatGPTKey string,
+	logger logz.Logger,
+) []Provider {
+
+	if bindAddr == "" &&
+		port == "" &&
+		openAIKey == "" &&
+		deepSeekKey == "" &&
+		ollamaEndpoint == "" &&
+		claudeKey == "" &&
+		geminiKey == "" &&
+		chatGPTKey == "" {
 		return []Provider{}
 	}
-	var cfg types.IConfig = types.NewConfig("8080", openaiKey, deepseekKey, ollamaEndpoint, claudeKey, "")
+
+	var cfg = types.NewConfig(
+		bindAddr,
+		"8080",
+		openAIKey,
+		deepSeekKey,
+		ollamaEndpoint,
+		claudeKey,
+		geminiKey,
+		chatGPTKey,
+		nil,
+	)
+
+	cfg.Logger = logger
+
 	var providers []Provider
 	if claudeKey != "" {
 		providers = append(providers, NewProvider("claude", claudeKey, "v1", cfg))
 	}
-	if openaiKey != "" {
-		providers = append(providers, NewProvider("openai", openaiKey, "v1", cfg))
+	if openAIKey != "" {
+		providers = append(providers, NewProvider("openai", openAIKey, "v1", cfg))
 	}
-	if deepseekKey != "" {
-		providers = append(providers, NewProvider("deepseek", deepseekKey, "v1", cfg))
+	if deepSeekKey != "" {
+		providers = append(providers, NewProvider("deepseek", deepSeekKey, "v1", cfg))
 	}
 	if ollamaEndpoint != "" {
 		providers = append(providers, NewProvider("ollama", ollamaEndpoint, "v1", cfg))
 	}
+	if geminiKey != "" {
+		providers = append(providers, NewProvider("gemini", geminiKey, "v1", cfg))
+	}
+	if chatGPTKey != "" {
+		providers = append(providers, NewProvider("chatgpt", chatGPTKey, "v1", cfg))
+	}
+
 	return providers
 }
