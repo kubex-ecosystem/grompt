@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Agent } from './AgentForm';
+import BackButton from './BackButton';
 import ExportAgentsModal from './ExportAgentsModal';
 import ImportAgentsModal from './ImportAgentsModal';
 import LanguageSelector from './LanguageSelector';
@@ -198,6 +199,7 @@ const AgentsDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
+              <BackButton to="/" currentTheme={currentTheme} label="Home" />
               <Users className="h-8 w-8 text-blue-500" />
               <h1 className="text-2xl font-bold">{t('agents.title')}</h1>
             </div>
@@ -219,17 +221,17 @@ const AgentsDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Controles */}
         <div className={`${currentTheme.cardBg} ${currentTheme.border} border rounded-lg p-6 mb-8`}>
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="flex flex-col gap-4">
             {/* Busca e Filtros */}
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder={t('agents.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`pl-10 pr-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64`}
+                  className={`pl-10 pr-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full`}
                 />
               </div>
 
@@ -237,7 +239,7 @@ const AgentsDashboard = () => {
                 title={t('agents.filterByCategory')}
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className={`px-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                className={`px-4 py-2 rounded-lg ${currentTheme.input} ${currentTheme.border} border focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0`}
               >
                 <option value="all">{t('agents.all')}</option>
                 <option value="backend">Backend</option>
@@ -245,10 +247,8 @@ const AgentsDashboard = () => {
                 <option value="devops">DevOps</option>
                 <option value="qa">QA</option>
               </select>
-            </div>
 
-            {/* Ações */}
-            <div className="flex gap-2">
+              {/* View Mode Toggle */}
               <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
                 <button
                   title={t('agents.viewAsGrid')}
@@ -265,61 +265,71 @@ const AgentsDashboard = () => {
                   <List size={16} />
                 </button>
               </div>
+            </div>
 
+            {/* Ações - Responsivas com quebra de linha */}
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setShowGenerateModal(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.button} transition-colors text-sm`}
               >
                 <FileText size={16} />
-                {t('agents.generateSquad')}
+                <span className="hidden sm:inline">{t('agents.generateSquad')}</span>
+                <span className="sm:hidden">Squad</span>
               </button>
 
               <button
                 onClick={() => router.push('/agents/new')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.button} transition-colors text-sm`}
               >
                 <Plus size={16} />
-                {t('agents.new')}
+                <span className="hidden sm:inline">{t('agents.new')}</span>
+                <span className="sm:hidden">Novo</span>
               </button>
 
               <button
                 onClick={handleImportAgents}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors text-sm`}
               >
                 <Upload size={16} />
-                {t('agents.import.title')}
+                <span className="hidden md:inline">{t('agents.import.title')}</span>
+                <span className="md:hidden">Import</span>
               </button>
 
               <button
                 onClick={handleExportAgents}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors text-sm`}
               >
                 <Download size={16} />
-                {t('agents.export.title')}
+                <span className="hidden md:inline">{t('agents.export.title')}</span>
+                <span className="md:hidden">Export</span>
               </button>
 
               <button
                 onClick={handleValidateAgents}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors text-sm`}
               >
                 <CheckSquare size={16} />
-                {t('agents.validation.title')}
+                <span className="hidden lg:inline">{t('agents.validation.title')}</span>
+                <span className="lg:hidden">Valid</span>
               </button>
 
               <button
                 onClick={exportAgentsMarkdown}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors text-sm`}
               >
                 <Download size={16} />
-                {t('agents.exportButton')}
+                <span className="hidden lg:inline">{t('agents.exportButton')}</span>
+                <span className="lg:hidden">MD</span>
               </button>
 
               <button
                 onClick={copyMarkdownToClipboard}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors text-sm`}
               >
                 <Copy size={16} />
-                {t('copy')}
+                <span className="hidden lg:inline">{t('copy')}</span>
+                <span className="lg:hidden">Copy</span>
               </button>
             </div>
           </div>

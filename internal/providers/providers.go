@@ -8,6 +8,7 @@ import (
 // Provider defines the interface for AI providers.
 type Provider interface {
 	Name() string
+	Version() string
 	Execute(prompt string) (string, error)
 	IsAvailable() bool
 	GetCapabilities() *types.Capabilities
@@ -68,10 +69,11 @@ func NewChatGPTProvider(apiKey string) Provider {
 	}
 }
 
-func NewProvider(name, apiKey string, cfg types.IConfig) Provider {
+func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
 	return &types.ProviderImpl{
-		VName:   name,
-		VAPI:    cfg.GetAPIConfig(name),
-		VConfig: cfg,
+		VName:    name,
+		VVersion: version,
+		VAPI:     cfg.GetAPIConfig(name),
+		VConfig:  cfg,
 	}
 }

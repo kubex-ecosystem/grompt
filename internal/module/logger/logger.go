@@ -14,6 +14,7 @@ import (
 )
 
 type GLog[T any] interface {
+	l.Logger
 	GetLogger() l.Logger
 	GetLogLevel() LogLevel
 	GetShowTrace() bool

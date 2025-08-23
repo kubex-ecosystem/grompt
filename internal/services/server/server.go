@@ -76,11 +76,13 @@ func (s *Server) Start() error {
 	fmt.Printf("   • /api/health - Status do servidor\n")
 	fmt.Printf("💡 Pressione Ctrl+C para parar\n\n")
 
+	// Detecta se há a página aberta em algum lugar
+
 	// Abrir navegador após delay
-	// go func() {
-	// 	time.Sleep(1 * time.Second)
-	// 	openBrowser(url)
-	// }()
+	go func() {
+		time.Sleep(1 * time.Second)
+		openBrowser(url)
+	}()
 
 	return http.ListenAndServe(":"+s.config.Port, nil)
 }

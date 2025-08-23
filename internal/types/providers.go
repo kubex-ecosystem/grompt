@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // Capabilities describes what a provider can do
 type Capabilities struct {
 	MaxTokens         int      `json:"max_tokens"`
@@ -18,9 +20,10 @@ type Pricing struct {
 
 // ProviderImpl wraps the types.IAPIConfig to implement providers.Provider
 type ProviderImpl struct {
-	VName   string
-	VAPI    IAPIConfig
-	VConfig IConfig
+	VName    string
+	VVersion string
+	VAPI     IAPIConfig
+	VConfig  IConfig
 }
 
 // Name returns the provider name
@@ -28,13 +31,24 @@ func (cp *ProviderImpl) Name() string {
 	return cp.VName
 }
 
+// Version returns the provider version
+func (cp *ProviderImpl) Version() string {
+	return cp.VVersion
+}
+
 // Execute sends a prompt to the provider and returns the response
 func (cp *ProviderImpl) Execute(prompt string) (string, error) {
+	if cp == nil || cp.VAPI == nil {
+		return "", fmt.Errorf("provider is not available")
+	}
 	return cp.VAPI.Complete(prompt, 2048, "") // Default max tokens
 }
 
 // IsAvailable checks if the provider is configured and ready
 func (cp *ProviderImpl) IsAvailable() bool {
+	if cp == nil || cp.VAPI == nil {
+		return false
+	}
 	return cp.VAPI.IsAvailable()
 }
 
