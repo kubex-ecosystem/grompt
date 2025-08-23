@@ -1,10 +1,10 @@
-site_name: LookAtni File Markers
-site_url: https://rafa-mori.github.io/lookatni-file-markers/
-site_description: "Meta-framework for building and managing file markers"
+site_name: Grompt
+site_url: https://rafa-mori.github.io/grompt/
+site_description: "A powerful CLI tool for managing and transforming prompts with advanced features and dynamic notifications"
 site_author: "Rafael Mori"
 
-repo_name: "rafa-mori/lookatni-file-markers"
-repo_url: https://github.com/rafa-mori/lookatni-file-markers
+repo_name: "rafa-mori/grompt"
+repo_url: https://github.com/rafa-mori/grompt
 
 theme:
   name: material
@@ -59,7 +59,7 @@ markdown_extensions:
   - pymdownx.magiclink:
       repo_url_shorthand: true
       user: rafa-mori
-      repo: lookatni-file-markers
+      repo: grompt
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.superfences:
@@ -79,7 +79,6 @@ nav:
       - Getting Started:
           - README: README.en.md
           - Installation: INSTALL.md
-          - AI Integration: INSTALL_AI.md
       - User Guide:
           - README (Portuguese): README.pt-BR.md
   - Community:
@@ -96,8 +95,8 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/rafa-mori/lookatni-file-markers
-      name: LookAtni File Markers on GitHub
+      link: https://github.com/rafa-mori/grompt
+      name: Grompt on GitHub
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/rafa-mori/
       name: Rafael Mori on LinkedIn

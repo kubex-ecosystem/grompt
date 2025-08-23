@@ -6,6 +6,8 @@ import (
 	"github.com/rafa-mori/grompt/factory/providers"
 	"github.com/rafa-mori/grompt/internal/engine"
 	m "github.com/rafa-mori/grompt/internal/module"
+	sec "github.com/rafa-mori/grompt/internal/module/control"
+	st "github.com/rafa-mori/grompt/internal/module/control"
 	"github.com/rafa-mori/grompt/internal/types"
 	"github.com/spf13/cobra"
 )
@@ -39,19 +41,19 @@ type Grompt interface {
 // PromptEngine exposes the core prompt engineering functionality
 type PromptEngine interface {
 	// ProcessPrompt processes a prompt with variables and returns the result
-	ProcessPrompt(template string, vars map[string]interface{}) (engine.Result, error)
+	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
 
 	// GetProviders returns available AI providers
-	GetProviders() []providers.Provider
+	GetProviders() []Provider
 
 	// GetHistory returns the prompt history
-	GetHistory() []engine.Result
+	GetHistory() []Result
 
 	// SaveToHistory saves a prompt/response pair to history
 	SaveToHistory(prompt, response string) error
 
 	// BatchProcess processes multiple prompts concurrently
-	BatchProcess(prompts []string, vars map[string]interface{}) ([]engine.Result, error)
+	BatchProcess(prompts []string, vars map[string]interface{}) ([]Result, error)
 }
 
 // NewGrompt creates a new Grompt CLI instance
@@ -60,19 +62,61 @@ func NewGrompt() Grompt {
 }
 
 // NewPromptEngine creates a new prompt engineering engine for library use
-func NewPromptEngine(config types.IConfig) engine.IEngine { //PromptEngine {
+func NewPromptEngine(config Config) PromptEngine {
 	return engine.NewEngine(config)
 }
 
 // DefaultConfig returns a default configuration for the prompt engine
-func DefaultConfig() engine.Config {
-	return engine.Config{
+func DefaultConfig(configFilePath string) Config {
+	return &types.Config{
 		Port:           "8080",
 		ClaudeAPIKey:   "",
 		OpenAIAPIKey:   "",
 		DeepSeekAPIKey: "",
 		OllamaEndpoint: "http://localhost:11434",
-		HistoryPath:    "./grompt_history",
-		TemplatesPath:  "./grompt_templates",
+		Debug:          false,
 	}
 }
+
+// Exposed types for external use - avoid interface{} in consumer code
+
+// Result exposes the engine.Result type
+type Result = engine.Result
+
+// Config exposes the types.Config interface
+type Config = types.IConfig
+
+// Provider exposes the providers.Provider interface
+type Provider = providers.Provider
+
+type APIConfig = types.IAPIConfig
+
+// --- Bitflags de Segurança ---
+type SecFlag = sec.SecFlag
+
+const (
+	SecNone         = sec.SecNone
+	SecAuth         = sec.SecAuth
+	SecSanitize     = sec.SecSanitize
+	SecSanitizeBody = sec.SecSanitizeBody
+)
+
+// --- Registrador Atômico de Flags ---
+type FlagReg32A[T ~uint32] = sec.FlagReg32A[T]
+
+// --- Job States/Flags ---
+type JobFlag = st.JobFlag
+
+const (
+	JobPendingA         = st.JobPendingA
+	JobRunningA         = st.JobRunningA
+	JobCancelRequestedA = st.JobCancelRequestedA
+	JobRetryingA        = st.JobRetryingA
+	JobCompletedA       = st.JobCompletedA
+	JobFailedA          = st.JobFailedA
+	JobTimedOutA        = st.JobTimedOutA
+)
+
+type FlagReg32[T ~uint32] = st.FlagReg32[T]
+
+var ErrTerminal = st.ErrTerminal

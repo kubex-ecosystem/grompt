@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
-[![Build Status](https://github.com/rafa-mori/grompt/actions/workflows/release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/release.yml)
+[![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/rafa-mori/grompt?style=social)](https://github.com/rafa-mori/grompt/stargazers)
 
 ---
@@ -39,8 +39,8 @@
 **Before Grompt:**
 
 ```plaintext
-hey can you help me make a function that takes a list and sorts it but also 
-removes duplicates and maybe returns the count too? oh and it should work 
+hey can you help me make a function that takes a list and sorts it but also
+removes duplicates and maybe returns the count too? oh and it should work
 with strings and numbers...
 ```
 
@@ -222,7 +222,7 @@ export DEBUG=true                   # Enable debug mode
 
 # AI Provider APIs (all optional)
 export OPENAI_API_KEY=sk-...        # OpenAI GPT models
-export CLAUDE_API_KEY=sk-ant-...    # Anthropic Claude models  
+export CLAUDE_API_KEY=sk-ant-...    # Anthropic Claude models
 export DEEPSEEK_API_KEY=...         # DeepSeek models
 export CHATGPT_API_KEY=...          # ChatGPT API
 
@@ -254,7 +254,7 @@ grompt/
 │   │   └── index.js         # Entry point
 │   └── package.json
 ├── � internal/
-│   ├── services/server/     # HTTP server & handlers  
+│   ├── services/server/     # HTTP server & handlers
 │   └── types/               # API integrations & types
 ├── � cmd/                  # CLI entry points
 ├── 📄 main.go              # Application entry
@@ -460,7 +460,7 @@ We welcome contributions! Here's how you can help:
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/your-username/grompt
+git clone https://github.com/rafa-mori/grompt
 cd grompt
 
 # 2. Create feature branch
@@ -508,7 +508,7 @@ Look for issues labeled `good-first-issue` or `help-wanted` to get started!
 Special thanks to:
 
 - **[Anthropic](https://anthropic.com)** for the Claude API and advancing AI safety
-- **[OpenAI](https://openai.com)** for pioneering accessible AI models  
+- **[OpenAI](https://openai.com)** for pioneering accessible AI models
 - **[Ollama](https://ollama.ai)** for making local LLMs accessible to everyone
 - **[Go Team](https://golang.org)** for creating a robust, efficient language
 - **[React Team](https://reactjs.org)** for the excellent UI framework

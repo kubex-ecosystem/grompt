@@ -1,4 +1,24 @@
 {
+  "welcome": {
+    "title": "Bem-vindo ao Grompt",
+    "description": "Transforme suas ideias em prompts profissionais com AI",
+    "start_crafting": "Começar a Criar Prompts",
+    "manage_agents": "Gerenciar Agentes"
+  },
+  "features": {
+    "prompt_engineering": {
+      "title": "Engenharia de Prompts",
+      "description": "Crie prompts estruturados e eficazes usando metodologias comprovadas"
+    },
+    "agent_management": {
+      "title": "Gerenciamento de Agentes",
+      "description": "Organize e gerencie seus agentes de AI para diferentes propósitos"
+    },
+    "multi_llm": {
+      "title": "Múltiplos LLMs",
+      "description": "Suporte para diferentes provedores de AI (OpenAI, Claude, Ollama, etc.)"
+    }
+  },
   "header": {
     "title": "Prompt Crafter",
     "subtitle": "Transforme suas ideias brutas em prompts estruturados e profissionais",
@@ -8,7 +28,19 @@
   },
   "nav": {
     "promptCrafter": "Gerador de Prompts",
+    "prompt_crafter": "Gerador de Prompts",
     "agents": "Agentes"
+  },
+  "common": {
+    "subtitle": "Transforme suas ideias em prompts profissionais com AI",
+    "back": "Voltar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "yes": "Sim",
+    "no": "Não",
+    "light_mode": "Modo claro",
+    "dark_mode": "Modo escuro",
+    "viewLogs": "Ver Logs"
   },
   "theme": {
     "light": "Tema claro",
@@ -22,6 +54,11 @@
     "search": "Buscar agentes...",
     "all": "Todos",
     "exportButton": "Exportar AGENTS.md",
+    "viewAsGrid": "Visualizar como grade",
+    "viewAsList": "Visualizar como lista",
+    "filterByCategory": "Filtrar por categoria",
+    "back": "Voltar",
+    "toggleDarkMode": "Alternar modo escuro",
     "empty": {
       "title": "Nenhum agente encontrado",
       "description": "Comece criando seu primeiro agente ou gerando um squad completo."
@@ -37,9 +74,15 @@
       "role": "Função",
       "rolePlaceholder": "Ex: Implementar APIs REST escaláveis",
       "skills": "Habilidades",
+      "skill": "Habilidade",
       "skillPlaceholder": "Ex: Python, FastAPI, PostgreSQL",
+      "addSkill": "Adicionar Habilidade",
+      "removeSkill": "Remover Habilidade",
       "restrictions": "Restrições",
+      "restriction": "Restrição",
       "restrictionPlaceholder": "Ex: Evitar Java, usar apenas código assíncrono",
+      "addRestriction": "Adicionar Restrição",
+      "removeRestriction": "Remover Restrição",
       "promptExample": "Exemplo de Prompt",
       "promptExamplePlaceholder": "Descreva como este agente deve ser usado em prompts..."
     },
@@ -115,7 +158,7 @@
     "addButton": "Incluir (Ctrl+Enter)",
     "emptyState": "Adicione suas primeiras ideias ao lado ←",
     "expand": "Expandir entrada",
-    "collapse": "Minimizar entrada", 
+    "collapse": "Minimizar entrada",
     "minimized": "Formulário de entrada minimizado"
   },
   "ideas": {
@@ -133,7 +176,7 @@
   "config": {
     "purpose": "Propósito do Prompt",
     "purposeCode": "Código",
-    "purposeImage": "Imagem", 
+    "purposeImage": "Imagem",
     "purposeOthers": "Outros",
     "customPurpose": "Descreva o objetivo do prompt...",
     "maxLength": "Tamanho Máximo",
@@ -144,6 +187,8 @@
     "openai": "OpenAI API",
     "deepseek": "DeepSeek API",
     "ollama": "Ollama Local",
+    "gemini": "Gemini API",
+    "chatgpt": "ChatGPT API",
     "demo": "Modo Demo",
     "defaultModel": "Modelo padrão"
   },
@@ -167,7 +212,7 @@
     "instructions": "Instruções Específicas",
     "instructionsList": [
       "Analise cuidadosamente todas as ideias apresentadas acima",
-      "Identifique o objetivo principal e objetivos secundários", 
+      "Identifique o objetivo principal e objetivos secundários",
       "Forneça uma resposta estruturada e bem organizada",
       "Mantenha o foco no propósito definido: **{{purpose}}**",
       "Use exemplos práticos quando apropriado",
@@ -176,7 +221,7 @@
     "responseFormat": "Formato de Resposta Esperado",
     "responseSteps": [
       "**Análise Inicial**: Resumo do que foi solicitado",
-      "**Desenvolvimento**: Resposta detalhada seguindo as ideias", 
+      "**Desenvolvimento**: Resposta detalhada seguindo as ideias",
       "**Conclusão**: Próximos passos ou considerações finais"
     ],
     "technicalConfig": "Configurações Técnicas",

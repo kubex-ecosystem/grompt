@@ -12,18 +12,18 @@ __get_values_from_manifest() {
   _ROOT_DIR="$(cd "$(dirname "${0}")/.." && pwd)" || return 1
 
   # shellcheck disable=SC2005
-  _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")" || return 1
-  _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "No description provided.")" || return 1
-  _OWNER="$(jq -r '.organization' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "rafa-mori")" || return 1
+  _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")" || return 1
+  _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "No description provided.")" || return 1
+  _OWNER="$(jq -r '.organization' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "rafa-mori")" || return 1
   _OWNER="${_OWNER,,}" || return 1
   _BINARY_NAME="${_APP_NAME}" || return 1
-  _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "$_APP_NAME")" || return 1
-  _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "Rafa Mori")" || return 1
-  _VERSION=$(jq -r '.version' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "v0.0.0") || return 1
-  _LICENSE="$(jq -r '.license' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "MIT")" || return 1
-  _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")" || return 1
-  _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/info/manifest.json" 2>/dev/null || echo "false")" || return 1
- 
+  _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "$_APP_NAME")" || return 1
+  _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "Rafa Mori")" || return 1
+  _VERSION=$(jq -r '.version' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "v0.0.0") || return 1
+  _LICENSE="$(jq -r '.license' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "MIT")" || return 1
+  _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")" || return 1
+  _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/internal/module/info/manifest.json" 2>/dev/null || echo "false")" || return 1
+
   return 0
 }
 

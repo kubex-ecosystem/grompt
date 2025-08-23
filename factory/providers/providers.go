@@ -1,10 +1,18 @@
 // Package providers defines interfaces for AI providers.
 package providers
 
+import (
+	"github.com/rafa-mori/grompt/internal/types"
+	"github.com/rafa-mori/logz"
+)
+
 // Provider represents an AI provider interface
 type Provider interface {
 	// Name returns the provider name (e.g., "openai", "claude", "ollama")
 	Name() string
+
+	// Version returns the provider version
+	Version() string
 
 	// Execute sends a prompt to the provider and returns the response
 	Execute(prompt string) (string, error)
@@ -13,30 +21,77 @@ type Provider interface {
 	IsAvailable() bool
 
 	// GetCapabilities returns provider-specific capabilities
-	GetCapabilities() Capabilities
+	GetCapabilities() *types.Capabilities
 }
 
-// Capabilities describes what a provider can do
-type Capabilities struct {
-	MaxTokens         int      `json:"max_tokens"`
-	SupportsBatch     bool     `json:"supports_batch"`
-	SupportsStreaming bool     `json:"supports_streaming"`
-	Models            []string `json:"models"`
-	Pricing           *Pricing `json:"pricing,omitempty"`
-}
+type Capabilities = types.Capabilities
 
-// Pricing information for the provider
-type Pricing struct {
-	InputCostPer1K  float64 `json:"input_cost_per_1k"`
-	OutputCostPer1K float64 `json:"output_cost_per_1k"`
-	Currency        string  `json:"currency"`
+func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
+	return &types.ProviderImpl{
+		VName:    name,
+		VVersion: version,
+		VAPI:     cfg.GetAPIConfig(name),
+		VConfig:  cfg,
+	}
 }
 
 // Initialize creates and returns all available providers
-func Initialize(claudeKey, openaiKey, deepseekKey, ollamaEndpoint string) []Provider {
-	var providers []Provider
+func Initialize(
+	bindAddr,
+	port,
+	openAIKey,
+	deepSeekKey,
+	ollamaEndpoint,
+	claudeKey,
+	geminiKey,
+	chatGPTKey string,
+	logger logz.Logger,
+) []Provider {
 
-	// This will be implemented in internal/providers with concrete implementations
-	// For now, return empty slice to avoid compilation errors
+	if bindAddr == "" &&
+		port == "" &&
+		openAIKey == "" &&
+		deepSeekKey == "" &&
+		ollamaEndpoint == "" &&
+		claudeKey == "" &&
+		geminiKey == "" &&
+		chatGPTKey == "" {
+		return []Provider{}
+	}
+
+	var cfg = types.NewConfig(
+		bindAddr,
+		"8080",
+		openAIKey,
+		deepSeekKey,
+		ollamaEndpoint,
+		claudeKey,
+		geminiKey,
+		chatGPTKey,
+		nil,
+	)
+
+	cfg.Logger = logger
+
+	var providers []Provider
+	if claudeKey != "" {
+		providers = append(providers, NewProvider("claude", claudeKey, "v1", cfg))
+	}
+	if openAIKey != "" {
+		providers = append(providers, NewProvider("openai", openAIKey, "v1", cfg))
+	}
+	if deepSeekKey != "" {
+		providers = append(providers, NewProvider("deepseek", deepSeekKey, "v1", cfg))
+	}
+	if ollamaEndpoint != "" {
+		providers = append(providers, NewProvider("ollama", ollamaEndpoint, "v1", cfg))
+	}
+	if geminiKey != "" {
+		providers = append(providers, NewProvider("gemini", geminiKey, "v1", cfg))
+	}
+	if chatGPTKey != "" {
+		providers = append(providers, NewProvider("chatgpt", chatGPTKey, "v1", cfg))
+	}
+
 	return providers
 }

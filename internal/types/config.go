@@ -4,10 +4,14 @@ package types
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
+	"net/netip"
 	"time"
 
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
 	vs "github.com/rafa-mori/grompt/internal/module/version"
+	l "github.com/rafa-mori/logz"
 )
 
 var (
@@ -88,13 +92,32 @@ type IConfig interface {
 }
 
 type Config struct {
+	Logger         l.Logger
+	BindAddr       string `json:"bind_addr,omitempty" gorm:"default:'localhost'"`
 	Port           string `json:"port" gorm:"default:8080"`
-	OpenAIAPIKey   string `json:"openai_api_key" gorm:"default:''"`
-	DeepSeekAPIKey string `json:"deepseek_api_key" gorm:"default:''"`
-	OllamaEndpoint string `json:"ollama_endpoint" gorm:"default:'http://localhost:11434'"`
-	ClaudeAPIKey   string `json:"claude_api_key" gorm:"default:''"`
-	ChatGPTAPIKey  string `json:"chatgpt_api_key" gorm:"default:''"`
+	OpenAIAPIKey   string `json:"openai_api_key,omitempty" gorm:"default:''"`
+	DeepSeekAPIKey string `json:"deepseek_api_key,omitempty" gorm:"default:''"`
+	OllamaEndpoint string `json:"ollama_endpoint,omitempty" gorm:"default:'http://localhost:11434'"`
+	ClaudeAPIKey   string `json:"claude_api_key,omitempty" gorm:"default:''"`
+	GeminiAPIKey   string `json:"gemini_api_key,omitempty" gorm:"default:''"`
+	ChatGPTAPIKey  string `json:"chatgpt_api_key,omitempty" gorm:"default:''"`
 	Debug          bool   `json:"debug" gorm:"default:false"`
+}
+
+func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey, chatGPTKey string, logger l.Logger) *Config {
+	if logger == nil {
+		logger = gl.GetLogger[l.Logger](nil)
+	}
+	return &Config{
+		Logger:         logger,
+		BindAddr:       bindAddr,
+		Port:           port,
+		OpenAIAPIKey:   openAIKey,
+		DeepSeekAPIKey: deepSeekKey,
+		OllamaEndpoint: ollamaEndpoint,
+		ClaudeAPIKey:   claudeKey,
+		GeminiAPIKey:   geminiKey,
+	}
 }
 
 func (c *Config) GetAPIConfig(provider string) IAPIConfig {
@@ -107,6 +130,8 @@ func (c *Config) GetAPIConfig(provider string) IAPIConfig {
 		return NewOllamaAPI(c.OllamaEndpoint)
 	case "claude":
 		return NewClaudeAPI(c.ClaudeAPIKey)
+	case "gemini":
+		return NewGeminiAPI(c.GeminiAPIKey)
 	default:
 		return nil
 	}
@@ -129,6 +154,8 @@ func (c *Config) GetAPIKey(provider string) string {
 		return c.OllamaEndpoint
 	case "claude":
 		return c.ClaudeAPIKey
+	case "gemini":
+		return c.GeminiAPIKey
 	default:
 		return ""
 	}
@@ -144,6 +171,8 @@ func (c *Config) SetAPIKey(provider string, key string) error {
 		c.OllamaEndpoint = key
 	case "claude":
 		c.ClaudeAPIKey = key
+	case "gemini":
+		c.GeminiAPIKey = key
 	default:
 		return fmt.Errorf("unknown provider: %s", provider)
 	}
@@ -158,7 +187,14 @@ func (c *Config) GetAPIEndpoint(provider string) string {
 }
 
 func (c *Config) checkOllamaConnection() bool {
-	// Implementar verificação de conexão com Ollama
-	// Por simplicidade, retorna false por enquanto
-	return false
+	ip, err := netip.ParseAddr(c.OllamaEndpoint)
+	if err != nil {
+		return false
+	}
+	conn, err := net.DialTimeout("tcp", ip.String()+":11434", 2*time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }

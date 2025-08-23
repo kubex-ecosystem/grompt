@@ -1,0 +1,471 @@
+name: Kubex Go Dist CI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      target_manifest:
+        description: 'Path to the module manifest (e.g., internal/module/info/manifest.json)'
+        required: false
+        default: 'internal/module/info/manifest.json'
+        type: string
+      tag_name:
+        description: 'Tag name for manual release (e.g., v1.0.0)'
+        required: false
+        type: string
+      debug:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Enable dry run mode'
+        required: false
+        default: false
+        type: boolean
+      platforms:
+        description: 'Override platforms (comma-separated, e.g., linux/amd64,windows/amd64)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+env:
+  _TARGET_MANIFEST: ${{ github.event.inputs.target_manifest }}
+  _DEBUG: ${{ github.event.inputs.debug }}
+  _DRY_RUN: ${{ github.event.inputs.dry_run }}
+  _PLATFORMS: ${{ github.event.inputs.platforms }}
+  NON_INTERACTIVE: true
+  FORCE: y
+  CI: true
+
+jobs:
+  # ==========================================
+  # JOB 1: Build All Platforms
+  # ==========================================
+  build:
+    name: Cross-Platform Build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      go-version: ${{ steps.go-setup.outputs.go-version }}
+      module-name: ${{ steps.manifest.outputs.module-name }}
+      platforms: ${{ steps.manifest.outputs.platforms }}
+      version-mismatch: ${{ steps.version-check.outputs.version-mismatch }}
+      continue: ${{ steps.version-check.outputs.continue }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load Module Manifest
+        id: manifest
+        run: |
+          if [[ ! -f "$(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }}" ]]; then
+            echo "❌ ${{ github.env._TARGET_MANIFEST }} not found"
+            exit 1
+          fi
+
+          # Extract module information
+          MODULE_NAME=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.bin // .name // "unknown"')
+          MODULE_VERSION=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.version // "0.0.0"')
+          PLATFORMS=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.platforms[]?' | tr '\n' ' ' | sed 's/ $//')
+
+          # Validate required fields
+          if [[ "$MODULE_NAME" == "unknown" || "$MODULE_NAME" == "null" ]]; then
+            echo "❌ Module name not found in manifest (bin or name field required)"
+            exit 1
+          fi
+
+          if [[ -z "$PLATFORMS" ]]; then
+            echo "❌ No platforms specified in manifest"
+            exit 1
+          fi
+
+          echo "module-name=$MODULE_NAME" >> $GITHUB_OUTPUT
+          echo "manifest-version=$MODULE_VERSION" >> $GITHUB_OUTPUT
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+
+          echo "✅ Module: $MODULE_NAME"
+          echo "✅ Manifest Version: $MODULE_VERSION"
+          echo "✅ Platforms: $PLATFORMS"
+
+      - name: Extract Version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.tag_name }}" ]]; then
+            echo "version=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔍 Validate Tag Format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: vX.Y.Z (e.g., v1.2.3)"
+            exit 1
+          fi
+          echo "✅ Valid version: $VERSION"
+
+      - name: Version Compatibility Check
+        id: version-check
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          MANIFEST_VERSION="v${{ steps.manifest.outputs.manifest-version }}"
+
+          # Remove 'v' prefix for comparison
+          TAG_CLEAN="${TAG_VERSION#v}"
+          MANIFEST_CLEAN="${MANIFEST_VERSION#v}"
+
+          echo "🏷️  Tag Version: $TAG_VERSION ($TAG_CLEAN)"
+          echo "📋 Manifest Version: $MANIFEST_VERSION ($MANIFEST_CLEAN)"
+
+          if [[ "$TAG_CLEAN" != "$MANIFEST_CLEAN" ]]; then
+            echo ""
+            echo "❌ Version Mismatch!"
+            echo "   Git Tag: $TAG_VERSION"
+            echo "   Manifest: $MANIFEST_VERSION"
+            echo ""
+            echo "Please update ${{ github.env._TARGET_MANIFEST }} version to match the git tag."
+            echo "Expected: \"version\": \"$TAG_CLEAN\""
+            echo ""
+            echo "🛑 Workflow will skip remaining steps for safety."
+            echo "version-mismatch=true" >> $GITHUB_OUTPUT
+            echo "continue=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Version compatibility confirmed: $TAG_VERSION"
+            echo "version-mismatch=false" >> $GITHUB_OUTPUT
+            echo "continue=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Smart Go Setup
+        id: go-setup
+        if: steps.version-check.outputs.continue == 'true'
+        run: |
+          GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
+
+          bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh')" -s --version "$GO_VERSION"
+
+          # Verify installation
+          go version
+
+          # Output for other jobs
+          echo "go-version=$GO_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Cache Go Modules
+        if: steps.version-check.outputs.continue == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ steps.go-setup.outputs.go-version }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ steps.go-setup.outputs.go-version }}-
+
+      - name: Cross-Platform Build
+        if: steps.version-check.outputs.continue == 'true'
+        run: |
+          MODULE_NAME="${{ steps.manifest.outputs.module-name }}"
+          PLATFORMS="${{ steps.manifest.outputs.platforms }}"
+
+          echo "Building $MODULE_NAME for platforms: $PLATFORMS"
+          ENV_PLATFORMS="${ENV_PLATFORMS:-${{ github.event.inputs.platforms }}}"
+
+          if [[ -z $ENV_PLATFORMS ]]; then
+            echo "No platforms specified, using default from manifest."
+          else
+            PLATFORMS="$ENV_PLATFORMS"
+          fi
+
+          for platform in $PLATFORMS; do
+            # Parse platform (format: os/arch or os-arch)
+            if [[ "$platform" == *"/"* ]]; then
+              OS=$(echo "$platform" | cut -d'/' -f1)
+              ARCH=$(echo "$platform" | cut -d'/' -f2)
+            elif [[ "$platform" == *"-"* ]]; then
+              OS=$(echo "$platform" | cut -d'-' -f1)
+              ARCH=$(echo "$platform" | cut -d'-' -f2)
+            else
+              echo "❌ Invalid platform format: $platform (expected: os/arch or os-arch)"
+              continue
+            fi
+
+            # Set environment variables
+            export NON_INTERACTIVE=${NON_INTERACTIVE:-${{ github.env.NON_INTERACTIVE }}}
+            export FORCE=${FORCE:-${{ github.env.FORCE }}}
+            export CI=${CI:-${{ github.env.CI }}}
+            export DRY_RUN=${DRY_RUN:-${{ github.event.inputs.dry_run }}}
+            export DEBUG=${DEBUG:-${{ github.event.inputs.debug }}}
+
+            echo "🔨 Building for $OS/$ARCH..."
+            make build "${OS:-}" "${ARCH:-}"
+          done
+
+      - name: Verify Build Artifacts
+        if: steps.version-check.outputs.continue == 'true'
+        run: |
+          MODULE_NAME="${{ steps.manifest.outputs.module-name }}"
+          PLATFORM_LIST="${{ steps.manifest.outputs.platforms }}"
+          ARTIFACT_LIST=()
+
+          for platform in $PLATFORM_LIST; do
+            # Parse platform (format: os/arch or os-arch)
+            if [[ "$platform" == *"/"* ]]; then
+              OS=$(echo "$platform" | cut -d'/' -f1)
+              ARCH=$(echo "$platform" | cut -d'/' -f2)
+            elif [[ "$platform" == *"-"* ]]; then
+              OS=$(echo "$platform" | cut -d'-' -f1)
+              ARCH=$(echo "$platform" | cut -d'-' -f2)
+            else
+              echo "❌ Invalid platform format: $platform (expected: os/arch or os-arch)"
+              continue
+            fi
+
+            echo "os=${OS:-}" >> $GITHUB_OUTPUT
+            echo "arch=${ARCH:-}" >> $GITHUB_OUTPUT
+
+            if [[ ! $(basename pwd) != "bin" ]]; then
+              ls -la $(git rev-parse --show-toplevel)/bin/
+              cd $(git rev-parse --show-toplevel)/bin || exit 1
+            fi
+
+            ARTIFACT_LIST+=("${MODULE_NAME:-}_${OS:-}_${ARCH:-}")
+          done
+
+          cd $(git rev-parse --show-toplevel)/ || exit 1
+
+          echo "ARTIFACT_LIST=${ARTIFACT_LIST[*]}" >> $GITHUB_OUTPUT
+          echo "ARTIFACT_COUNT=${#ARTIFACT_LIST[@]}" >> $GITHUB_OUTPUT
+          echo "ARTIFACTS_DIR=$(git rev-parse --show-toplevel)/bin" >> $GITHUB_OUTPUT
+
+          if [[ ${#ARTIFACT_LIST[@]} -eq 0 ]]; then
+            echo "❌ No build artifacts found!"
+            exit 1
+          else
+            echo "✅ Build artifacts verified: ${ARTIFACT_LIST[*]}"
+          fi
+
+          if [[ ! -f $(git rev-parse --show-toplevel)/bin/SHA256SUMS ]]; then
+            touch $(git rev-parse --show-toplevel)/bin/SHA256SUMS
+          fi
+
+          sha256sum $(git rev-parse --show-toplevel)/bin/* > $(git rev-parse --show-toplevel)/bin/SHA256SUMS
+
+          ls -la $(git rev-parse --show-toplevel)/bin/
+
+      - name: Upload Build Artifacts
+        if: steps.version-check.outputs.continue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.manifest.outputs.module-name }}-release-binaries
+          path: |
+            bin/${{ steps.manifest.outputs.module-name }}_*
+          retention-days: 30
+
+      - name: Version Mismatch Summary
+        if: steps.version-check.outputs.version-mismatch == 'true'
+        run: |
+          echo "## ⚠️ Workflow Skipped Due to Version Mismatch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Tag**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Manifest**: v${{ steps.manifest.outputs.manifest-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please update \`info/manifest.json\` version to match the git tag before releasing." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Expected change in manifest:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          echo "\"version\": \"${{ steps.version.outputs.version }}\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # JOB 2: Security Scan (Optional)
+  # ==========================================
+  # security:
+  #   name: Security Scan
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: github.event_name != 'workflow_dispatch' && needs.build.outputs.continue == 'true'
+
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Smart Go Setup
+  #       run: |
+  #         GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
+
+  #         bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh')" -s --version "${GO_VERSION:-1.24.5}"
+
+  #         # Verify installation
+  #         go version
+
+  #     - name: Restore Go Cache
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ~/.cache/go-build
+  #           ~/go/pkg/mod
+  #         key: ${{ runner.os }}-go-${{ needs.build.outputs.go-version }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
+
+  #     - name: Run Gosec Security Scanner
+  #       run: |
+  #         go install github.com/securego/gosec/v2/cmd/gosec@latest
+  #         gosec -no-fail -fmt sarif -out gosec.sarif ./...
+
+  #     - name: Upload SARIF file
+  #       if: always()
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: gosec.sarif
+
+  # ==========================================
+  # JOB 3: Create GitHub Release
+  # ==========================================
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: always() && needs.build.result == 'success' && needs.build.outputs.continue == 'true'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.module-name }}-release-binaries
+          path: ./release-assets
+
+      - name: Generate Release Notes
+        run: |
+          MODULE_NAME="${{ needs.build.outputs.module-name }}"
+          VERSION="${{ needs.build.outputs.version }}"
+          PLATFORMS="${{ needs.build.outputs.platforms }}"
+
+          # Convert platforms to readable format
+          PLATFORM_LIST=""
+          for platform in $PLATFORMS; do
+            if [[ "$platform" == *"/"* ]]; then
+              OS=$(echo "$platform" | cut -d'/' -f1)
+              ARCH=$(echo "$platform" | cut -d'/' -f2)
+            elif [[ "$platform" == *"-"* ]]; then
+              OS=$(echo "$platform" | cut -d'-' -f1)
+              ARCH=$(echo "$platform" | cut -d'-' -f2)
+            else
+              echo "❌ Invalid platform format: $platform (expected: os/arch or os-arch)"
+              continue
+            fi
+
+            # Add platform-specific information
+            case "$platform" in
+              "linux/amd64"|"linux-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🐧 **Linux (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+              "windows/amd64"|"windows-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🪟 **Windows (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.zip\`" ;;
+              "windows/i386"|"windows-i386") PLATFORM_LIST="$PLATFORM_LIST          - 🪟 **Windows (i386)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.zip\`" ;;
+              "darwin/amd64"|"darwin-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🍎 **macOS (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+              "darwin/arm64"|"darwin-arm64") PLATFORM_LIST="$PLATFORM_LIST          - 🍎 **macOS (ARM64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+              *) PLATFORM_LIST="$PLATFORM_LIST          - 📦 **${platform:-}**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+            esac
+          done
+
+          cat > RELEASE_NOTES.md << EOF
+          ## ${MODULE_NAME:-} Release ${VERSION:-}
+
+          ### What's Included
+
+          This release contains cross-platform binaries for:
+          ${PLATFORM_LIST:-}
+
+          ### Installation
+
+          #### Linux/macOS
+          \`\`\`bash
+          # Download and extract
+          wget https://github.com/${{ github.repository }}/releases/download/$VERSION/${MODULE_NAME}_linux_amd64.tar.gz
+          tar -xzf ${MODULE_NAME:-}_linux_amd64.tar.gz
+          chmod +x ${MODULE_NAME:-}_linux_amd64
+          sudo mv ${MODULE_NAME:-}_linux_amd64 /usr/local/bin/${MODULE_NAME:-}
+          \`\`\`
+
+          #### Windows
+          \`\`\`powershell
+          # Download and extract the ZIP file
+          # Add the executable to your PATH
+          \`\`\`
+
+          ### Verification
+
+          All binaries are compressed and checksums are provided in \`SHA256SUMS\`.
+
+          \`\`\`bash
+          # Verify checksum
+          sha256sum -c SHA256SUMS
+          \`\`\`
+
+          ### Build Information
+
+          - **Go Version**: ${{ needs.build.outputs.go-version }}
+          - **Built on**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          - **Commit**: ${{ github.sha }}
+          - **Workflow**: ${{ github.run_id }}
+
+          ---
+
+          **Full Changelog**: [${{ github.repository }}/compare/...](https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }})
+          EOF
+
+      - name: Create GitHub Release
+        run: |
+          MODULE_NAME="${{ needs.build.outputs.module-name }}"
+          VERSION="${{ needs.build.outputs.version }}"
+
+          gh release create "${VERSION:-}" \
+            ./release-assets/* \
+            --title "${MODULE_NAME:-} ${VERSION:-}" \
+            --notes-file RELEASE_NOTES.md \
+            ${{ contains(needs.build.outputs.version, '-') && '--prerelease' || '' }}
+
+          echo "✅ Release created successfully!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          MODULE_NAME="${{ needs.build.outputs.module-name }}"
+          PLATFORMS="${{ needs.build.outputs.platforms }}"
+
+          echo "## Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Module**: ${MODULE_NAME:-}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ needs.build.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Go Version**: ${{ needs.build.outputs.go-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Assets Released:" >> $GITHUB_STEP_SUMMARY
+
+          for platform in $PLATFORMS; do
+            case "$platform" in
+              "linux/amd64"|"linux-amd64") echo "- 🐧 Linux AMD64" >> $GITHUB_STEP_SUMMARY ;;
+              "windows/amd64"|"windows-amd64") echo "- 🪟 Windows AMD64" >> $GITHUB_STEP_SUMMARY ;;
+              "windows/i386"|"windows-i386") echo "- 🪟 Windows i386" >> $GITHUB_STEP_SUMMARY ;;
+              "darwin/amd64"|"darwin-amd64") echo "- 🍎 macOS AMD64" >> $GITHUB_STEP_SUMMARY ;;
+              "darwin/arm64"|"darwin-arm64") echo "- 🍎 macOS ARM64" >> $GITHUB_STEP_SUMMARY ;;
+              *) echo "- 📦 ${platform}" >> $GITHUB_STEP_SUMMARY ;;
+            esac
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📄 Release Notes:" >> $GITHUB_STEP_SUMMARY
+          cat $(git rev-parse --show-toplevel)/RELEASE_NOTES.md >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY

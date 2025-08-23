@@ -27,5 +27,6 @@ Please check all items that apply before requesting a review:
 ---
 
 **Before approving this PR, reviewers must verify:**
+
 - [ ] All checklist items are completed
 - [ ] Linked related issues are valid and referenced above
