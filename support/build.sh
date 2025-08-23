@@ -8,175 +8,344 @@ set -o posix
 IFS=$'\n\t'
 
 get_output_name() {
-  local platform_pos="${1:-${_PLATFORM:-}}"
-  local arch_pos="${2:-${_ARCH:-}}"
+  local _platform_pos="${1:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}"
+  local _arch_pos="${2:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}"
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _binary_dir="${_root_dir:-}/dist"
+  local _cmd_path="${_CMD_PATH:-${CMD_PATH:-${_root_dir}/cmd}}"
+  local _binary_name="${_BINARY_NAME:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
+  local _will_upx_pack_binary="${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}"
 
-  local BINARY_DIR="${_ROOT_DIR}/dist"
-  if [[ ! -d "$BINARY_DIR" ]]; then
-    mkdir -p "$BINARY_DIR" || true
+  if [[ ! -d "${_binary_dir:-}" ]]; then
+    mkdir -p "${_binary_dir:-}" || true
   fi
-  local OUTPUT_NAME
-  OUTPUT_NAME="$(printf '%s/%s_%s_%s' "${BINARY_DIR}" "${_BINARY_NAME:-${_BINARY}}" "$platform_pos" "$arch_pos")"
-  if [[ "$_WILL_UPX_PACK_BINARY" == "true" ]]; then
-    OUTPUT_NAME="$(printf '%s/%s_%s_%s' "${BINARY_DIR}" "${_BINARY_NAME:-${_BINARY}}" "$platform_pos" "$arch_pos")"
-    if [[ "$platform_pos" == "windows" ]]; then
-      OUTPUT_NAME="$(printf '%s/%s_%s_%s.exe' "${BINARY_DIR}" "${_BINARY_NAME:-${_BINARY}}" "$platform_pos" "$arch_pos")"
+
+  local _output_name=""
+  _output_name="$(printf '%s/%s_%s_%s' "${_binary_dir:-}" "${_binary_name:-}" "${_platform_pos:-}" "${_arch_pos:-}")"
+  if [[ "$_will_upx_pack_binary" == "true" ]]; then
+    _output_name="$(printf '%s/%s_%s_%s' "${_binary_dir:-}" "${_binary_name:-}" "${_platform_pos:-}" "${_arch_pos:-}")"
+    if [[ "$_platform_pos" == "windows" ]]; then
+      _output_name="$(printf '%s/%s_%s_%s.exe' "${_binary_dir:-}" "${_binary_name:-}" "${_platform_pos:-}" "${_arch_pos:-}")"
     else
-      OUTPUT_NAME="$(printf '%s/%s_%s_%s' "${BINARY_DIR}" "${_BINARY_NAME:-${_BINARY}}" "$platform_pos" "$arch_pos")"
+      _output_name="$(printf '%s/%s_%s_%s' "${_binary_dir:-}" "${_binary_name:-}" "${_platform_pos:-}" "${_arch_pos:-}")"
     fi
   else
-    OUTPUT_NAME="${BINARY_DIR}/${_APP_NAME}"
+    _output_name="${_binary_dir:-}/${_APP_NAME:-}"
   fi
 
-  echo "$OUTPUT_NAME"
+  echo "${_output_name:-}"
 }
 
-build_binary() {
-  local _PLATFORM_ARG="${1:-${_PLATFORM:-}}"
-  local _ARCH_ARG="${2:-${_ARCH:-}}"
-  local _WILL_UPX_PACK_BINARY="${3:-true}"
-  local FORCE="${4:-${_FORCE:-n}}"
+upx_packaging() {
+  local _output_name="${1:-${_OUTPUT_NAME:-${OUTPUT_NAME:-}}}"
+  local _platform_pos="${2:-${_PLATFORM:-${PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
+  local _arch_pos="${3:-${_ARCH:-${ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}}"
 
-  # Obtém arrays de plataformas e arquiteturas
-  local platforms=( "$(_get_os_arr_from_args "$_PLATFORM_ARG")" )
-  local archs=( "$(_get_arch_arr_from_args "$_ARCH_ARG")" )
+  install_upx || return 1
 
-  for platform_pos in "${platforms[@]}"; do
-    [[ -z "$platform_pos" ]] && continue
-    for arch_pos in "${archs[@]}"; do
-      [[ -z "$arch_pos" ]] && continue
-      if [[ "$platform_pos" != "darwin" && "$arch_pos" == "arm64" ]]; then
-        continue
+  if [[ "${_platform_pos:-}" != "darwin" ]]; then
+    upx "${_output_name:-}" --force-overwrite --lzma --no-progress --no-color -qqq || true
+    log success "Packed binary: ${_output_name:-}"
+  else
+    upx "${_output_name:-}" --force-overwrite --lzma --no-progress --force-macos --no-color -qqq || true
+    log warn "UPX packing on macOS is not fully supported. The binary may not be compressed properly." true
+  fi
+
+  return 0
+}
+
+compile_binary() {
+  local _platform_pos="${1:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}"
+  local _arch_pos="${2:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}"
+  local _output_name="${3:-${_OUTPUT_NAME:-${OUTPUT_NAME:-}}}"
+  local _force="${4:-${_FORCE:-n}}"
+  local _will_upx_pack_binary="${5:-${_WILL_UPX_PACK_BINARY:-true}}"
+
+  local _root_dir="${_root_dir:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_cmd_path:-${CMD_PATH:-${_root_dir}/cmd}}"
+
+  local _binary_name="${_binary_name:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
+  local _app_name="${_app_name:-${APP_NAME:-$(basename "${_root_dir}")}}"
+  local _build_env=("GOOS=${_platform_pos}" "GOARCH=${_arch_pos}")
+
+  local _build_cmd=""
+  local _build_args=(
+    "-ldflags '-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)'"
+    "-trimpath -o \"${_output_name:-}\" \"${_cmd_path:-}\""
+  )
+  _build_cmd=$(printf '%s %s %s' "${_build_env[@]}" "go build " "${_build_args[@]}")
+  log info "Building for ${_platform_pos:-} ${_arch_pos:-}..." true
+
+  eval "${_build_cmd}" || {
+    log error "Failed to build for ${_platform_pos:-} ${_arch_pos:-}" true
+    return 1
+  }
+
+  log success "Binary built: ${_output_name:-}" true
+
+  return 0
+}
+
+check_overwrite_binary() {
+  local _platform_pos="${1:-${_platform_pos:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
+  local _arch_pos="${2:-${_arch_pos:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}}"
+  local _output_name="${3:-${_output_name:-}}"
+  local _force="${4:-${_force:-n}}"
+  local _will_upx_pack_binary="${5:-${_will_upx_pack_binary:-${WILL_UPX_PACK_BINARY:-true}}}"
+  local _is_interactive="${6:-${_is_interactive:-${IS_INTERACTIVE:-}}}"
+
+  if [[ -f "${_output_name:-}" ]]; then
+    local REPLY="y"
+
+    if [[ "${_is_interactive:-}" != "true" || "${CI:-}" != "true" ]]; then
+
+      if [[ ${_force:-} =~ [yY] || ${_force:-} == "true" || "${NON_INTERACTIVE:-}" == "true" ]]; then
+        REPLY="y"
+      elif [[ -t 0 ]]; then
+        # If the script is running interactively, prompt for confirmation
+        log notice "Binary already exists: ${_output_name:-}" true
+        log notice "Current binary: ${_output_name:-}"
+        log notice "Press 'y' to overwrite or any other key to skip." true
+        log question "(y) to overwrite, any other key to skip (default: n, 10 seconds to respond)" true
+        read -t 10 -p "" -n 1 -r REPLY || REPLY="n"
+        echo '' # Move to a new line after the prompt
+        REPLY="${REPLY,,}"  # Convert to lowercase
+        REPLY="${REPLY:-n}"  # Default to 'n' if no input
+      else
+        log notice "Binary already exists: ${_output_name:-}" true
+        log notice "Skipping confirmation in non-interactive mode." true
       fi
-      if [[ "$platform_pos" != "windows" && "$arch_pos" == "386" ]]; then
-        continue
+    fi
+
+    if [[ ! ${REPLY:-} =~ [yY] ]]; then
+      log notice "Skipping build for ${_platform_pos:-} ${_arch_pos:-}." true
+      return 0
+    fi
+
+    log warn "Overwriting existing binary: ${_output_name}" true
+    if [[ "${_platform_pos:-}" == "windows" ]]; then
+      rm -f "${_output_name:-}.exe" || return 1
+    else
+      rm -f "${_output_name:-}" || return 1
+    fi
+
+    log info "Binary built successfully: ${_output_name}"
+
+    if compile_binary "${_platform_pos:-}" "${_arch_pos:-}" "${_output_name:-}" "${_force:-}" "${_will_upx_pack_binary:-}"; then
+      log success "Binary built successfully: ${_output_name}"
+      return 0
+    else
+      log error "Failed to build binary: ${_output_name}" true
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+arch_iterator() {
+  local _platform_pos="${1:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}"
+  local _arch_arg="${2:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}"
+  local _will_upx_pack_binary="${3:-${_will_upx_pack_binary:-${WILL_UPX_PACK_BINARY:-true}}}"
+  local _force="${4:-${_force:-${FORCE:-}}}"
+
+  local _root_dir="${_root_dir:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_cmd_path:-${CMD_PATH:-${_root_dir}/cmd}}"
+
+  local _archs=( "$(_get_arch_arr_from_args "${_platform_pos:-}" "${_arch_arg:-}")" )
+
+  [[ -z "${_platform_pos:-}" ]] && return 0
+  [[ -z "${_arch_pos:-}" ]] && return 0
+
+  if [[ "${_platform_pos:-}" != "darwin" && "${_arch_pos:-}" == "arm64" ]]; then
+    log info "Unsupported build for ${_platform_pos:-} ${_arch_pos:-}. Skipping."
+    return 0
+  fi
+  if [[ "${_platform_pos:-}" != "windows" && "${_arch_pos:-}" == "386" ]]; then
+    log info "Skipping unsupported build for ${_platform_pos:-} ${_arch_pos:-}."
+    return 0
+  fi
+
+  local _old_bin_name
+  _old_bin_name=$(get_output_name "${_platform_pos:-}" "${_arch_pos:-}")
+
+  if ! check_overwrite_binary "${_platform_pos:-}" "${_arch_pos:-}" "${_old_bin_name:-}" "${_force:-}" "${_will_upx_pack_binary:-}" "true"; then
+    return 0
+  fi
+
+  if ! compile_binary "${_platform_pos:-}" "${_arch_pos:-}" "${_old_bin_name:-}" "${_force:-}" "${_will_upx_pack_binary:-}"; then
+    log error "Failed to build for ${_platform_pos:-} ${_arch_pos:-}" true
+    return 1
+  else
+    if [[ "${_will_upx_pack_binary:-}" == "true" ]]; then
+      if upx_packaging "${_old_bin_name:-}" "${_platform_pos:-}" "${_arch_pos:-}"; then
+        log success "UPX packing successful: ${_old_bin_name:-}"
+      else
+        log error "UPX packing failed: ${_old_bin_name:-}" true
+        return 1
       fi
 
-      local OUTPUT_NAME
-      OUTPUT_NAME=$(get_output_name "$platform_pos" "$arch_pos")
-      if [[ -f "$OUTPUT_NAME" ]]; then
-        local REPLY="y"
-        if [[ "${IS_INTERACTIVE:-}" != "true" || "${CI:-}" != "true" ]]; then
-          if [[ $FORCE =~ [yY] || $FORCE == "true" || "${NON_INTERACTIVE:-}" == "true" ]]; then
-            REPLY="y"
-          elif [[ -t 0 ]]; then
-            # If the script is running interactively, prompt for confirmation
-            log notice "Binary already exists: ${OUTPUT_NAME}" true
-            log notice "Current binary: ${OUTPUT_NAME}"
-            log notice "Press 'y' to overwrite or any other key to skip." true
-            log question "(y) to overwrite, any other key to skip (default: n, 10 seconds to respond)" true
-            read -t 10 -p "" -n 1 -r REPLY || REPLY="n"
-            echo  # Move to a new line after the prompt
-            REPLY="${REPLY,,}"  # Convert to lowercase
-            REPLY="${REPLY:-n}"  # Default to 'n' if no input
-          else
-            log notice "Binary already exists: ${OUTPUT_NAME}" true
-            log notice "Skipping confirmation in non-interactive mode." true
-          fi
-        fi
-        if [[ ! $REPLY =~ [yY] ]]; then
-          log notice "Skipping build for ${platform_pos} ${arch_pos}." true
-          continue
-        fi
-        log warn "Overwriting existing binary: ${OUTPUT_NAME}" true
-        if [[ "$platform_pos" == "windows" ]]; then
-          rm -f "${OUTPUT_NAME}.exe" || return 1
-        else
-          rm -f "${OUTPUT_NAME}" || return 1
-        fi
-      fi
-      local build_env=("GOOS=${platform_pos}" "GOARCH=${arch_pos}")
-      local build_args=(
-        "-ldflags '-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)'"
-        "-trimpath -o \"${OUTPUT_NAME}\" \"${_CMD_PATH}\""
-      )
-      local build_cmd=""
-      build_cmd=$(printf '%s %s %s' "${build_env[@]}" "go build " "${build_args[@]}")
-
-      log info "Building for ${platform_pos} ${arch_pos}..."
-
-      if ! bash -c "${build_cmd}"; then
-        log error "Failed to build for ${platform_pos} ${arch_pos}"
+      if [[ ! -f "${_old_bin_name:-}" ]]; then
+        log error "Binary not found after build: ${_old_bin_name:-}" true
         return 1
       else
-        if [[ "$_WILL_UPX_PACK_BINARY" == "true" ]]; then
-          if [[ "$platform_pos" != "windows" ]]; then
-              install_upx || return 1
-              upx "$OUTPUT_NAME" --force-overwrite --lzma --no-progress --no-color -qqq || true
-              log success "Packed binary: ${OUTPUT_NAME}"
-          fi
-          if [[ ! -f "$OUTPUT_NAME" ]]; then
-            log error "Binary not found: ${OUTPUT_NAME}"
-            return 1
-          else
-            compress_binary "$platform_pos" "$arch_pos" || return 1
-            log success "Binary created successfully: ${OUTPUT_NAME}"
-          fi
-        else
-          log warn "UPX packing disabled. The binary will not be compressed." true
-          log warn "Build indicated for development use only." true
-          log success "Binary created without packing: ${OUTPUT_NAME}"
-        fi
+        compress_binary "${_platform_pos:-}" "${_arch_pos:-}" || return 1
+        log success "Binary created successfully: ${_old_bin_name:-}"
+      fi
+
+    else
+      log warn "UPX packing disabled. The binary will not be compressed." true
+      log warn "Build indicated for development use only." true
+      log success "Binary created without packing: ${_old_bin_name:-}"
+    fi
+  fi
+
+  return 0
+}
+
+platform_iterator() {
+  local _platform_arg="${1:-${_PLATFORM:-${PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
+  local _arch_arg="${2:-${_ARCH:-${ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}}"
+  local _will_upx_pack_binary="${4:-${_will_upx_pack_binary:-${WILL_UPX_PACK_BINARY:-true}}}"
+  local _force="${3:-${_force:-${FORCE:-}}}"
+
+  local _platform_pos="${1:-${_PLATFORM:-${PLATFORM:-}}}"
+
+  _platform_pos="${_PLATFORM_ARG:-}"
+  [[ -z "${_platform_pos:-}" ]] && return 0
+
+  # Search for spaces inside, if found, its an array
+  if [[ "${_platform_pos:-}" =~ \  ]]; then
+    platforms=( "${_platform_pos// /_}" )
+    for _platform_pos in "${platforms[@]}"; do
+      local _arch_pos=""
+      _arch_pos="${2:-${_ARCH:-${ARCH:-}}}"
+      _arch_pos="${_ARCH_ARG:-}"
+      [[ -z "${_arch_pos:-}" ]] && return 0
+      if ! arch_iterator "${_platform_pos:-}" "${_arch_pos:-}" "${_force:-}" "${_will_upx_pack_binary:-}"; then
+        log error "Failed to build for ${_platform_pos:-} ${_arch_pos:-}"
+        return 1
       fi
     done
-  done
+  else
+    for _arch_pos in "${_archs[@]}"; do
+      _arch_pos="${2:-${_ARCH:-}}"
+      _arch_pos="${_ARCH_ARG:-}"
+      [[ -z "${_arch_pos:-}" ]] && return 0
+      if ! arch_iterator "${_platform_pos:-}" "${_arch_pos:-}" "${_force:-}" "${_will_upx_pack_binary:-}"; then
+        log error "Failed to build for ${_platform_pos:-} ${_arch_pos:-}" true
+        return 1
+      fi
+    done
+  fi
+
   return 0
 }
 
 compress_binary() {
-  local platform_arg="${1:-${_PLATFORM:-}}"
-  local arch_arg="${2:-${_ARCH:-}}"
+  local _platform_arg="${1:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}"
+  local _arch_arg="${2:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}"
+  local _output_name="${3:-${_OUTPUT_NAME:-}}"
+
+  local _ROOT_DIR="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _BINARY_PATH="${_BINARY_PATH:-${BINARY_PATH:-${_ROOT_DIR:-}/dist}}"
 
   # Obtém arrays de plataformas e arquiteturas
-  local platforms=( "$(_get_os_arr_from_args "$platform_arg")" )
-  local archs=( "$(_get_arch_arr_from_args "$arch_arg")" )
+  local _platforms=( "$(_get_os_arr_from_args "${_platform_arg:-}")" )
+  local _archs=( "$(_get_arch_arr_from_args "${_platform_pos:-}" "${_arch_arg:-}")" )
 
-  for platform_pos in "${platforms[@]}"; do
-    [[ -z "$platform_pos" ]] && continue
-    for arch_pos in "${archs[@]}"; do
-      [[ -z "$arch_pos" ]] && continue
-      if [[ "$platform_pos" != "darwin" && "$arch_pos" == "arm64" ]]; then
+  [[ -z "${_platform_arg:-}" ]] && _platform_arg="linux"
+  [[ -z "${_arch_arg:-}" ]] && _arch_arg="amd64"
+
+  for _platform_pos in "${_platforms[@]}"; do
+    [[ -z "${_platform_pos:-}" ]] && continue
+    for _arch_pos in "${_archs[@]}"; do
+      [[ -z "${_arch_pos:-}" ]] && continue
+
+      if [[ "${_platform_pos:-}" != "darwin" && "${_arch_pos:-}" == "arm64" ]]; then
         continue
       fi
-      if [[ "$platform_pos" == "linux" && "$arch_pos" == "386" ]]; then
+      if [[ "${_platform_pos:-}" == "linux" && "${_arch_pos:-}" == "386" ]]; then
         continue
       fi
+
       local BINARY_NAME
-      BINARY_NAME=$(printf '%s_%s_%s' "${_BINARY}" "$platform_pos" "$arch_pos")
-      if [[ "$platform_pos" == "windows" ]]; then
-        BINARY_NAME=$(printf '%s.exe' "${BINARY_NAME}")
+      BINARY_NAME=$(printf '%s_%s_%s' "${_BINARY:-}" "${_platform_pos:-}" "${_arch_pos:-}")
+      if [[ "${_platform_pos:-}" == "windows" ]]; then
+        BINARY_NAME=$(printf '%s.exe' "${BINARY_NAME:-}")
       fi
+
       local OUTPUT_NAME="${BINARY_NAME//.exe/}"
       local compress_cmd_exec=""
-      if [[ "$platform_pos" != "windows" ]]; then
-        OUTPUT_NAME="${OUTPUT_NAME}.tar.gz"
-        _CURR_PATH="$(pwd)"
-        _BINARY_PATH="${_ROOT_DIR}/dist"
 
-        cd "${_BINARY_PATH}" || true # Just to avoid tar warning about relative paths
-        if tar -czf "./$(basename "${OUTPUT_NAME}")" "./$(basename "${BINARY_NAME}")"; then
+      if [[ "${_platform_pos:-}" != "windows" ]]; then
+        OUTPUT_NAME="${OUTPUT_NAME:-}.tar.gz"
+        _CURR_PATH="$(pwd)"
+        _BINARY_PATH="${_ROOT_DIR:-}/dist"
+
+        cd "${_BINARY_PATH:-}" || true # Just to avoid tar warning about relative paths
+        if tar -czf "./$(basename "${OUTPUT_NAME:-}")" "./$(basename "${BINARY_NAME:-}")"; then
           compress_cmd_exec="true"
         else
           compress_cmd_exec="false"
         fi
-        cd "${_CURR_PATH}" || true
+        cd "${_CURR_PATH:-}" || true
       else
-        OUTPUT_NAME="${OUTPUT_NAME}.zip"
-        # log info "Comprimindo para ${platform_pos} ${arch_pos} em ${OUTPUT_NAME}..."
-        if zip -r -9 "${OUTPUT_NAME}" "${BINARY_NAME}" >/dev/null; then
+        OUTPUT_NAME="${OUTPUT_NAME:-}.zip"
+        # log info "Comprimindo para ${_platform_pos} ${_arch_pos} em ${OUTPUT_NAME}..."
+        if zip -r -9 "${OUTPUT_NAME:-}" "${BINARY_NAME:-}" >/dev/null; then
           compress_cmd_exec="true"
         else
           compress_cmd_exec="false"
         fi
       fi
-      if [[ "$compress_cmd_exec" == "false" ]]; then
-        log error "Failed to compress for ${platform_pos} ${arch_pos}"
+
+      if [[ "${compress_cmd_exec:-}" == "false" ]]; then
+        log error "Failed to compress for ${_platform_pos:-} ${_arch_pos:-}"
         return 1
       else
-        log success "Compressed binary: ${OUTPUT_NAME}"
+        log success "Compressed binary: ${OUTPUT_NAME:-}"
       fi
     done
   done
+}
+
+# Entrypoint for building binaries
+build_binary() {
+  local _platform_args="${1:-${_PLATFORM:-${PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
+  local _arch_args="${2:-${_ARCH:-${ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}}"
+  local _force="${3:-${_FORCE:-${FORCE:-}}}"
+  local _will_upx_pack_binary="${4:-${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}}"
+
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_CMD_PATH:-${CMD_PATH:-${_root_dir}/cmd}}"
+  local _binary_name="${_BINARY_NAME:-${BINARY_NAME:-$(basename "${_cmd_path:-}" .go)}}"
+  local _app_name="${_APP_NAME:-${APP_NAME:-$(basename "${_root_dir:-}")}}"
+  local _version="${_VERSION:-${VERSION:-$(git describe --tags)}}"
+
+  log notice "Binary Name: ${_binary_name:-}"
+  log notice "App Name: ${_app_name:-}"
+  log notice "Version: ${_version:-}"
+
+  local _platforms=()
+  _platforms=( $(_get_os_arr_from_args "${_platform_args:-}") )
+
+  [[ -z "${_platforms[*]}" ]] && _platforms=("linux")
+
+  for _platform_pos in "${_platforms[@]}"; do
+
+    # [[ -z "${_platform_pos:-}" ]] && continue
+
+    local _archs=( $(_get_arch_arr_from_args "${_platform_pos:-}" "${_arch_args:-}") )
+
+    if ! platform_iterator "${_platform_pos:-}" "${_archs[*]}" "${_force:-false}" "${_will_upx_pack_binary:-true}" "${_binary_name:-}"; then
+      log error "Failed to build for platform: ${_platform_pos:-}" true
+      return 1
+    fi
+
+  done
+
+  return 0
 }
 
 export -f build_binary

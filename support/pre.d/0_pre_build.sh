@@ -54,7 +54,7 @@ build_frontend() {
   fi
 }
 
-(build_frontend) || {
-  echo "An error occurred during the pre-build process."
-  exit 1
-}
+# (build_frontend) || {
+#   echo "An error occurred during the pre-build process."
+#   exit 1
+# }
