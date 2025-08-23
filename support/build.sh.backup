@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # build.sh - Enhanced cross-platform Go build system
 # Incorporates robust cross-compilation logic while maintaining current architecture
 
@@ -127,9 +126,7 @@ compute_build_matrix() {
   for platform in "${PLATFORMS[@]}"; do
     echo "${platform}:${GOPLT_MAP[${platform}]}"
   done
-}
-
-# ====== Build flags and ldflags ======
+}# ====== Build flags and ldflags ======
 prepare_build_flags() {
   local _os="${1:-}"
   local _arch="${2:-}"
@@ -371,9 +368,7 @@ build_for_arch() {
   done <<< "${_main_dirs}"
 
   return 0
-}
-
-# ====== Validate platform/architecture combination ======
+}# ====== Validate platform/architecture combination ======
 is_valid_platform_arch() {
   local _platform="${1:-}"
   local _arch="${2:-}"
@@ -907,27 +902,8 @@ build_binary_main() {
 
   # Use the enhanced build system
   build_binary_enhanced "${_platform_args}" "${_arch_args}" "${_force}" "${_build_mode}"
-
-  return $?
 }
 
 # ====== Set the main build_binary function ======
 # For backwards compatibility, we alias to the main function
 alias build_binary=build_binary_main
-
-# ====== Load Git information ======
-load_git_info() {
-  if have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    GIT_TAG="$(git describe --tags --dirty --always 2>/dev/null || true)"
-    GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || true)"
-    GIT_DATE="$(git show -s --format=%cd --date=format:%Y-%m-%d 2>/dev/null || date +%Y-%m-%d)"
-    SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct 2>/dev/null || date +%s)"; export SOURCE_DATE_EPOCH
-  else
-    GIT_TAG="dev"; GIT_COMMIT="none"; GIT_DATE="$(date +%Y-%m-%d)"
-    SOURCE_DATE_EPOCH="$(date +%s)"; export SOURCE_DATE_EPOCH
-  fi
-}
-
-have() {
-  command -v "$1" >/dev/null 2>&1
-}
