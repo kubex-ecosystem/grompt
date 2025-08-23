@@ -24,6 +24,7 @@ func ServerCmdList() []*cobra.Command {
 
 func startServer() *cobra.Command {
 	var debug bool
+	var port string
 
 	var startCmd = &cobra.Command{
 		Use: "start",
@@ -38,7 +39,7 @@ func startServer() *cobra.Command {
 			}
 
 			cfg := &t.Config{
-				Port:           utils.GetEnvOr("PORT", t.DefaultPort),
+				Port:           utils.GetEnvOr("PORT", port),
 				OpenAIAPIKey:   utils.GetEnvOr("OPENAI_API_KEY", ""),
 				ClaudeAPIKey:   utils.GetEnvOr("CLAUDE_API_KEY", ""),
 				DeepSeekAPIKey: utils.GetEnvOr("DEEPSEEK_API_KEY", ""),
@@ -70,6 +71,7 @@ func startServer() *cobra.Command {
 	}
 
 	startCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
+	startCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to run the server on")
 
 	return startCmd
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/rafa-mori/grompt/factory/providers"
 	"github.com/rafa-mori/grompt/internal/engine"
 	m "github.com/rafa-mori/grompt/internal/module"
+	sec "github.com/rafa-mori/grompt/internal/module/control"
+	st "github.com/rafa-mori/grompt/internal/module/control"
 	"github.com/rafa-mori/grompt/internal/types"
 	"github.com/spf13/cobra"
 )
@@ -88,3 +90,33 @@ type Config = types.IConfig
 type Provider = providers.Provider
 
 type APIConfig = types.IAPIConfig
+
+// --- Bitflags de Segurança ---
+type SecFlag = sec.SecFlag
+
+const (
+	SecNone         = sec.SecNone
+	SecAuth         = sec.SecAuth
+	SecSanitize     = sec.SecSanitize
+	SecSanitizeBody = sec.SecSanitizeBody
+)
+
+// --- Registrador Atômico de Flags ---
+type FlagReg32A[T ~uint32] = sec.FlagReg32A[T]
+
+// --- Job States/Flags ---
+type JobFlag = st.JobFlag
+
+const (
+	JobPendingA         = st.JobPendingA
+	JobRunningA         = st.JobRunningA
+	JobCancelRequestedA = st.JobCancelRequestedA
+	JobRetryingA        = st.JobRetryingA
+	JobCompletedA       = st.JobCompletedA
+	JobFailedA          = st.JobFailedA
+	JobTimedOutA        = st.JobTimedOutA
+)
+
+type FlagReg32[T ~uint32] = st.FlagReg32[T]
+
+var ErrTerminal = st.ErrTerminal
