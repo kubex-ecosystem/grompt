@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GHbex - GitHub Repository Analytics & Sanitization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0e27;
+      --bg-secondary: #151933;
+      --bg-card: #1e2139;
+      --text-primary: #e4e6eb;
+      --text-secondary: #9ca3af;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --border: #2d3148;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.03;
+      background-image:
+        radial-gradient(circle at 20% 80%, var(--accent-blue) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, var(--accent-purple) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, var(--accent-green) 0%, transparent 50%);
+      animation: bgShift 20s ease-in-out infinite;
+    }
+
+    @keyframes bgShift {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      33% {
+        transform: scale(1.1) rotate(120deg);
+      }
+
+      66% {
+        transform: scale(0.9) rotate(240deg);
+      }
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--gradient-1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: white;
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 1rem;
+      background: var(--bg-secondary);
+      padding: 0.5rem;
+      border-radius: 12px;
+    }
+
+    .nav-tab {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .nav-tab:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .nav-tab.active {
+      background: var(--gradient-1);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent-blue);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gradient-1);
+    }
+
+    .stat-card.green::before {
+      background: var(--gradient-4);
+    }
+
+    .stat-card.yellow::before {
+      background: var(--gradient-2);
+    }
+
+    .stat-card.purple::before {
+      background: var(--gradient-3);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stat-icon.blue {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-blue);
+    }
+
+    .stat-icon.green {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+    }
+
+    .stat-icon.yellow {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .stat-icon.purple {
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--accent-purple);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .stat-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .stat-change.positive {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+    }
+
+    .stat-change.negative {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+    }
+
+    /* Repository List */
+    .repo-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .repo-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .repo-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .repo-item:hover {
+      background: var(--bg-primary);
+      border-color: var(--accent-blue);
+      transform: translateX(5px);
+    }
+
+    .repo-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .repo-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .repo-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .repo-stat-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .repo-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .action-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .action-btn.primary {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .action-btn.secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Health Score */
+    .health-score {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .health-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .health-badge.A {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+    }
+
+    .health-badge.B {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-blue);
+    }
+
+    .health-badge.C {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .health-badge.D {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+    }
+
+    .health-badge.F {
+      background: rgba(239, 68, 68, 0.3);
+      color: #ff6b6b;
+    }
+
+    .health-bar {
+      width: 100px;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .health-fill {
+      height: 100%;
+      background: var(--gradient-4);
+      transition: width 0.5s ease;
+    }
+
+    /* Analytics View */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .analytics-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .analytics-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .language-bar {
+      display: flex;
+      height: 30px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .language-segment {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .language-segment:hover {
+      filter: brightness(1.2);
+      z-index: 10;
+    }
+
+    .language-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .language-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .language-item:hover {
+      background: var(--bg-primary);
+      transform: translateX(5px);
+    }
+
+    .language-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .language-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .language-percent {
+      font-weight: 500;
+      color: var(--accent-blue);
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      background: var(--gradient-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .fab:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+    }
+
+    /* Loading Animation */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .repo-item {
+        grid-template-columns: 1fr;
+      }
+
+      .repo-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    /* Toast Notifications */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .toast.success {
+      border-color: var(--accent-green);
+    }
+
+    .toast.error {
+      border-color: var(--accent-red);
+    }
+
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-animation"></div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">GH</div>
+        <div class="logo-text">
+          <h1>GHbex</h1>
+          <p>GitHub Repository Analytics & Sanitization</p>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('dashboard')">
+          📊 Dashboard
+        </button>
+        <button class="nav-tab" onclick="switchTab('sanitize')">
+          🧹 Sanitização
+        </button>
+        <button class="nav-tab" onclick="switchTab('analytics')">
+          📈 Analytics
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-header">
+            <div class="stat-icon green">📦</div>
+          </div>
+          <div class="stat-value">10</div>
+          <div class="stat-label">Repositórios Monitorados</div>
+          <div class="stat-change positive">
+            ↑ 2 novos esta semana
+          </div>
+        </div>
+
+        <div class="stat-card yellow">
+          <div class="stat-header">
+            <div class="stat-icon yellow">⚡</div>
+          </div>
+          <div class="stat-value">14</div>
+          <div class="stat-label">Workflow Runs Limpas</div>
+          <div class="stat-change positive">
+            ↑ 140MB economizados
+          </div>
+        </div>
+
+        <div class="stat-card purple">
+          <div class="stat-header">
+            <div class="stat-icon purple">🎯</div>
+          </div>
+          <div class="stat-value">2</div>
+          <div class="stat-label">Artefatos Removidos</div>
+          <div class="stat-change positive">
+            ↑ 28min economizados
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon blue">💯</div>
+          </div>
+          <div class="stat-value">45.7</div>
+          <div class="stat-label">Score Médio de Saúde</div>
+          <div class="stat-change negative">
+            ↓ Necessita atenção
+          </div>
+        </div>
+      </div>
+
+      <div class="repo-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span>📚</span>
+            Repositórios Recentes
+          </h2>
+          <button class="action-btn primary" onclick="runBulkSanitize()">
+            🚀 Sanitizar Todos
+          </button>
+        </div>
+        <div class="repo-list" id="repo-list">
+          <!-- Repos will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Sanitize View -->
+    <div id="sanitize-view" class="view" style="display: none;">
+      <div class="repo-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span>🧹</span>
+            Última Operação de Sanitização
+          </h2>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>📊 Resumo da Operação</h3>
+            <div class="language-list">
+              <div class="language-item">
+                <span class="language-name">Repositórios Processados</span>
+                <span class="language-percent">10</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Workflow Runs Removidas</span>
+                <span class="language-percent">14</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Artefatos Limpos</span>
+                <span class="language-percent">2</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Espaço Economizado</span>
+                <span class="language-percent">140 MB</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Tempo Economizado</span>
+                <span class="language-percent">28 min</span>
+              </div>
+            </div>
+          </div>
+          <div class="analytics-card">
+            <h3>🎯 Repositórios Afetados</h3>
+            <div class="language-list" id="sanitized-repos">
+              <!-- Will be populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics View -->
+    <div id="analytics-view" class="view" style="display: none;">
+      <div class="repo-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span>📈</span>
+            Análise Detalhada - xtui
+          </h2>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>💻 Distribuição de Linguagens</h3>
+            <div class="language-bar" id="language-bar">
+              <div class="language-segment" style="width: 81%; background: #00ADD8;" title="Go">
+                Go
+              </div>
+              <div class="language-segment" style="width: 17%; background: #89e051;" title="Shell">
+                Shell
+              </div>
+              <div class="language-segment" style="width: 2%; background: #427819;" title="Makefile">
+                Make
+              </div>
+            </div>
+            <div class="language-list">
+              <div class="language-item">
+                <span class="language-name">
+                  <span class="language-dot" style="background: #00ADD8;"></span>
+                  Go
+                </span>
+                <span class="language-percent">81.0%</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">
+                  <span class="language-dot" style="background: #89e051;"></span>
+                  Shell
+                </span>
+                <span class="language-percent">16.8%</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">
+                  <span class="language-dot" style="background: #427819;"></span>
+                  Makefile
+                </span>
+                <span class="language-percent">2.2%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>🏥 Health Score Breakdown</h3>
+            <div class="health-score">
+              <div class="health-badge F">Grade F</div>
+              <div class="health-bar">
+                <div class="health-fill" style="width: 45.7%;"></div>
+              </div>
+              <span>45.7/100</span>
+            </div>
+            <div class="language-list" style="margin-top: 1rem;">
+              <div class="language-item">
+                <span class="language-name">Qualidade do Código</span>
+                <span class="language-percent">9.5</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Dependências</span>
+                <span class="language-percent">21.2</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Diversidade</span>
+                <span class="language-percent">15.0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>📝 Métricas de Código</h3>
+            <div class="language-list">
+              <div class="language-item">
+                <span class="language-name">Total de Linhas</span>
+                <span class="language-percent">168,046</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Linhas de Código</span>
+                <span class="language-percent">134,436</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Comentários</span>
+                <span class="language-percent">25,206</span>
+              </div>
+              <div class="language-item">
+                <span class="language-name">Complexidade</span>
+                <span class="language-percent">2.59</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>💡 Recomendações</h3>
+            <div class="language-list">
+              <div class="language-item" style="background: rgba(239, 68, 68, 0.1);">
+                <span class="language-name">🔧 Melhorar qualidade do código</span>
+              </div>
+              <div class="language-item" style="background: rgba(245, 158, 11, 0.1);">
+                <span class="language-name">👥 Atrair mais contribuidores</span>
+              </div>
+              <div class="language-item" style="background: rgba(59, 130, 246, 0.1);">
+                <span class="language-name">⚡ Aumentar frequência de deploy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="fab" onclick="showToast('success', 'Sincronização iniciada!')">
+    🔄
+  </div>
+
+  <script>
+    // Sample data based on the provided output
+    const repositories = [
+      { name: 'byte_sleuth', owner: 'rafa-mori', runs: 0, artifacts: 2, health: 45, grade: 'F' },
+      { name: 'selfrestart', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 55, grade: 'F' },
+      { name: 'xtui', owner: 'rafa-mori', runs: 6, artifacts: 0, health: 45.76, grade: 'F' },
+      { name: 'logz', owner: 'rafa-mori', runs: 6, artifacts: 0, health: 48, grade: 'F' },
+      { name: 'golife', owner: 'rafa-mori', runs: 2, artifacts: 0, health: 55.71, grade: 'F' },
+      { name: 'mini_games', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 60, grade: 'D' },
+      { name: 'formatpilot', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 50, grade: 'F' },
+      { name: 'gocrafter', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 52, grade: 'F' },
+      { name: 'gastype', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 58, grade: 'D' },
+      { name: 'getl', owner: 'rafa-mori', runs: 0, artifacts: 0, health: 49, grade: 'F' }
+    ];
+
+    const sanitizedRepos = [
+      { name: 'gastype', cleaned: 0 },
+      { name: 'xtui', cleaned: 6 },
+      { name: 'logz', cleaned: 6 },
+      { name: 'mini_games', cleaned: 0 },
+      { name: 'byte_sleuth', cleaned: 0 },
+      { name: 'formatpilot', cleaned: 0 },
+      { name: 'selfrestart', cleaned: 0 },
+      { name: 'gocrafter', cleaned: 0 },
+      { name: 'golife', cleaned: 2 },
+      { name: 'getl', cleaned: 0 }
+    ];
+
+    // Initialize the dashboard
+    function initDashboard() {
+      renderRepositories();
+      renderSanitizedRepos();
+    }
+
+    // Render repository list
+    function renderRepositories() {
+      const repoList = document.getElementById('repo-list');
+      repoList.innerHTML = repositories.map(repo => `
+                <div class="repo-item" onclick="viewRepoAnalytics('${repo.name}')">
+                    <div class="repo-info">
+                        <h3>${repo.owner}/${repo.name}</h3>
+                        <div class="repo-stats">
+                            <div class="repo-stat">
+                                <span class="repo-stat-icon">🏃</span>
+                                <span>${repo.runs} workflow runs</span>
+                            </div>
+                            <div class="repo-stat">
+                                <span class="repo-stat-icon">📦</span>
+                                <span>${repo.artifacts} artifacts</span>
+                            </div>
+                            <div class="health-score">
+                                <div class="health-badge ${repo.grade}">${repo.grade}</div>
+                                <div class="health-bar">
+                                    <div class="health-fill" style="width: ${repo.health}%;"></div>
+                                </div>
+                                <span>${repo.health.toFixed(1)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="repo-actions">
+                        <button class="action-btn secondary" onclick="event.stopPropagation(); sanitizeRepo('${repo.name}')">
+                            🧹 Sanitizar
+                        </button>
+                        <button class="action-btn primary" onclick="event.stopPropagation(); analyzeRepo('${repo.name}')">
+                            📊 Analisar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // Render sanitized repos
+    function renderSanitizedRepos() {
+      const sanitizedList = document.getElementById('sanitized-repos');
+      if (sanitizedList) {
+        sanitizedList.innerHTML = sanitizedRepos.map(repo => `
+                    <div class="language-item">
+                        <span class="language-name">${repo.name}</span>
+                        <span class="language-percent">${repo.cleaned} runs</span>
+                    </div>
+                `).join('');
+      }
+    }
+
+    // Switch between tabs
+    function switchTab(tab) {
+      // Update nav tabs
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Update views
+      document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+      document.getElementById(`${tab}-view`).style.display = 'block';
+
+      // Add animation
+      const view = document.getElementById(`${tab}-view`);
+      view.style.opacity = '0';
+      view.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        view.style.transition = 'all 0.3s ease';
+        view.style.opacity = '1';
+        view.style.transform = 'translateY(0)';
+      }, 10);
+    }
+
+    // Sanitize single repository
+    function sanitizeRepo(repoName) {
+      showLoading();
+      setTimeout(() => {
+        showToast('success', `Repositório ${repoName} sanitizado com sucesso!`);
+        hideLoading();
+        updateStats();
+      }, 2000);
+    }
+
+    // Analyze repository
+    function analyzeRepo(repoName) {
+      switchTab('analytics');
+      showToast('info', `Carregando análise de ${repoName}...`);
+    }
+
+    // View repository analytics
+    function viewRepoAnalytics(repoName) {
+      analyzeRepo(repoName);
+    }
+
+    // Run bulk sanitize
+    function runBulkSanitize() {
+      showLoading();
+      showToast('info', 'Iniciando sanitização em massa...');
+
+      setTimeout(() => {
+        hideLoading();
+        showToast('success', '10 repositórios sanitizados! 140MB economizados.');
+        updateStats();
+        switchTab('sanitize');
+      }, 3000);
+    }
+
+    // Update statistics
+    function updateStats() {
+      // Animate number changes
+      const statValues = document.querySelectorAll('.stat-value');
+      statValues.forEach(stat => {
+        const current = parseFloat(stat.textContent);
+        const increment = Math.random() * 5;
+        animateValue(stat, current, current + increment, 1000);
+      });
+    }
+
+    // Animate value change
+    function animateValue(element, start, end, duration) {
+      const range = end - start;
+      const minTimer = 50;
+      let stepTime = Math.abs(Math.floor(duration / range));
+      stepTime = Math.max(stepTime, minTimer);
+      const startTime = new Date().getTime();
+      const endTime = startTime + duration;
+      let timer;
+
+      function run() {
+        const now = new Date().getTime();
+        const remaining = Math.max((endTime - now) / duration, 0);
+        const value = Math.round(end - (remaining * range));
+        element.textContent = value.toFixed(1);
+        if (value == end) {
+          clearInterval(timer);
+        }
+      }
+
+      timer = setInterval(run, stepTime);
+      run();
+    }
+
+    // Show toast notification
+    function showToast(type, message) {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+
+      toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <span>${message}</span>
+            `;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Show loading state
+    function showLoading() {
+      const loading = document.createElement('div');
+      loading.className = 'loading-overlay';
+      loading.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            `;
+      loading.innerHTML = '<div class="loading-spinner"></div>';
+      document.body.appendChild(loading);
+    }
+
+    // Hide loading state
+    function hideLoading() {
+      const loading = document.querySelector('.loading-overlay');
+      if (loading) {
+        loading.remove();
+      }
+    }
+
+    // Simulate real-time updates
+    function startRealtimeUpdates() {
+      setInterval(() => {
+        const randomRepo = repositories[Math.floor(Math.random() * repositories.length)];
+        const change = Math.random() > 0.5 ? 1 : -1;
+        randomRepo.health += change;
+        randomRepo.health = Math.max(0, Math.min(100, randomRepo.health));
+
+        // Update health grade
+        if (randomRepo.health >= 80) randomRepo.grade = 'A';
+        else if (randomRepo.health >= 70) randomRepo.grade = 'B';
+        else if (randomRepo.health >= 60) randomRepo.grade = 'C';
+        else if (randomRepo.health >= 50) randomRepo.grade = 'D';
+        else randomRepo.grade = 'F';
+
+        renderRepositories();
+      }, 10000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 's':
+            e.preventDefault();
+            runBulkSanitize();
+            break;
+          case 'r':
+            e.preventDefault();
+            location.reload();
+            break;
+          case '1':
+            e.preventDefault();
+            switchTab('dashboard');
+            break;
+          case '2':
+            e.preventDefault();
+            switchTab('sanitize');
+            break;
+          case '3':
+            e.preventDefault();
+            switchTab('analytics');
+            break;
+        }
+      }
+    });
+
+    // Add smooth scroll behavior
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initDashboard();
+      startRealtimeUpdates();
+      showToast('success', 'Dashboard carregado com sucesso!');
+    });
+
+    // API Integration placeholder
+    class GHbexAPI {
+      constructor(baseURL = 'http://localhost:8088') {
+        this.baseURL = baseURL;
+      }
+
+      async sanitizeRepo(owner, repo, dryRun = false) {
+        const response = await fetch(`${this.baseURL}/admin/repos/${owner}/${repo}/sanitize?dry_run=${dryRun}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        return response.json();
+      }
+
+      async bulkSanitize(dryRun = false) {
+        const response = await fetch(`${this.baseURL}/admin/sanitize/bulk?dry_run=${dryRun}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        return response.json();
+      }
+
+      async getAnalytics(owner, repo, days = 90) {
+        const response = await fetch(`${this.baseURL}/analytics/${owner}/${repo}?days=${days}`);
+        return response.json();
+      }
+    }
+
+    // Initialize API client
+    const api = new GHbexAPI();
+
+    // Make it available globally for testing
+    window.ghbexAPI = api;
+  

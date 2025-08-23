@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-type OpenAIAPI struct {
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
-}
+type OpenAIAPI struct{ *APIConfig }
 
 type OpenAIRequest struct {
 	Prompt    string `json:"prompt"`
@@ -63,12 +59,14 @@ type OpenAIErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewOpenAIAPI(apiKey string) *OpenAIAPI {
+func NewOpenAIAPI(apiKey string) IAPIConfig {
 	return &OpenAIAPI{
-		apiKey:  apiKey,
-		baseURL: "https://api.openai.com/v1/chat/completions",
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+		APIConfig: &APIConfig{
+			apiKey:  apiKey,
+			baseURL: "https://api.openai.com/v1/chat/completions",
+			httpClient: &http.Client{
+				Timeout: 60 * time.Second,
+			},
 		},
 	}
 }
@@ -242,3 +240,9 @@ func (o *OpenAIAPI) GetCommonModels() []string {
 		"gpt-3.5-turbo-16k",
 	}
 }
+
+// GetVersion returns the version of the API
+func (o *OpenAIAPI) GetVersion() string { return o.version }
+
+// IsDemoMode indicates if the API is in demo mode
+func (o *OpenAIAPI) IsDemoMode() bool { return o.demoMode }

@@ -9,10 +9,7 @@ import (
 	"time"
 )
 
-type OllamaAPI struct {
-	baseURL    string
-	httpClient *http.Client
-}
+type OllamaAPI struct{ *APIConfig }
 
 type OllamaRequest struct {
 	Model  string `json:"model"`
@@ -27,14 +24,16 @@ type OllamaResponse struct {
 
 func NewOllamaAPI(baseURL string) *OllamaAPI {
 	return &OllamaAPI{
-		baseURL: baseURL,
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+		APIConfig: &APIConfig{
+			baseURL: baseURL,
+			httpClient: &http.Client{
+				Timeout: 60 * time.Second,
+			},
 		},
 	}
 }
 
-func (o *OllamaAPI) Complete(model, prompt string) (string, error) {
+func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, error) {
 	endpoint := fmt.Sprintf("%s/api/generate", o.baseURL)
 
 	requestBody := OllamaRequest{
@@ -89,3 +88,25 @@ func (o *OllamaAPI) IsAvailable() bool {
 
 	return resp.StatusCode == http.StatusOK
 }
+
+func (o *OllamaAPI) GetCommonModels() []string {
+	return []string{
+		"ollama-chat",
+		"ollama-coder",
+		"ollama-math",
+		"ollama-reasoner",
+	}
+}
+
+func (o *OllamaAPI) ListModels() ([]string, error) {
+	return []string{
+		"ollama-chat",
+		"ollama-coder",
+		"ollama-math",
+		"ollama-reasoner",
+	}, nil
+}
+
+func (o *OllamaAPI) GetVersion() string { return o.version }
+
+func (o *OllamaAPI) IsDemoMode() bool { return o.demoMode }

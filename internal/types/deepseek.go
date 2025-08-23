@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-type DeepSeekAPI struct {
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
-}
+type DeepSeekAPI struct{ *APIConfig }
 
 type DeepSeekRequest struct {
 	Prompt    string `json:"prompt"`
@@ -67,10 +63,12 @@ type DeepSeekErrorResponse struct {
 
 func NewDeepSeekAPI(apiKey string) *DeepSeekAPI {
 	return &DeepSeekAPI{
-		apiKey:  apiKey,
-		baseURL: "https://api.deepseek.com/chat/completions",
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+		APIConfig: &APIConfig{
+			apiKey:  apiKey,
+			baseURL: "https://api.deepseek.com/chat/completions",
+			httpClient: &http.Client{
+				Timeout: 60 * time.Second,
+			},
 		},
 	}
 }
@@ -248,4 +246,30 @@ func (d *DeepSeekAPI) EstimateCost(promptTokens, completionTokens int, model str
 	}
 
 	return float64(promptTokens)*promptPrice + float64(completionTokens)*completionPrice
+}
+
+// GetVersion returns the version of the API
+func (d *DeepSeekAPI) GetVersion() string { return d.version }
+
+// IsDemoMode indicates if the API is in demo mode
+func (d *DeepSeekAPI) IsDemoMode() bool { return d.demoMode }
+
+// ListModels retrieves the list of available models from the DeepSeek API
+func (d *DeepSeekAPI) ListModels() ([]string, error) {
+	return []string{
+		"deepseek-chat",
+		"deepseek-coder",
+		"deepseek-math",
+		"deepseek-reasoner",
+	}, nil
+}
+
+// GetCommonModels retrieves the list of common models from the DeepSeek API
+func (d *DeepSeekAPI) GetCommonModels() []string {
+	return []string{
+		"deepseek-chat",
+		"deepseek-coder",
+		"deepseek-math",
+		"deepseek-reasoner",
+	}
 }

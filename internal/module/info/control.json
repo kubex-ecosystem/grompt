@@ -1,0 +1,45 @@
+{
+  "control": {
+    "schema_version": 1,
+    "module": {
+      "name": "Kubex - Grompt",
+      "application": "grompt",
+      "module_id": "0x7a12c3f1"
+    },
+    "ipc": {
+      "type": "unix",
+      "socket": "/run/kbx/grompt.sock",
+      "mode": "0600"
+    },
+    "bitreg": {
+      "brf_path": "/var/run/kbx/registry.brf",
+      "ns_bits": 1024,
+      "policy": "shared",
+      "cap_mask": "0x0000000000000000",
+      "state_hex": "0x000000000000000b"
+    },
+    "kv": {
+      "declare_hashes": [
+        {
+          "key_hash": "0x8f12ab34"
+        },
+        {
+          "key_hash": "0x91cc77fe"
+        }
+      ],
+      "values": [
+        {
+          "key_hash": "0x8f12ab34",
+          "u64_hex": "0x0abc00001f90"
+        },
+        {
+          "key_hash": "0x91cc77fe",
+          "u64_hex": "0x0abc00001f40"
+        }
+      ],
+      "encoding": "u64_port_claim"
+    },
+    "seq": 17,
+    "epoch_ns": 1724370000000000000
+  }
+}

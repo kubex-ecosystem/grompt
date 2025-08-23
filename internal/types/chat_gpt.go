@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-type ChatGPTAPI struct {
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
-}
+type ChatGPTAPI struct{ *APIConfig }
 
 type ChatGPTRequest struct {
 	Prompt    string `json:"prompt"`
@@ -63,12 +59,14 @@ type ChatGPTErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewChatGPTAPI(apiKey string) *ChatGPTAPI {
+func NewChatGPTAPI(apiKey string) IAPIConfig {
 	return &ChatGPTAPI{
-		apiKey:  apiKey,
-		baseURL: "https://api.chatgpt.com/v1/chat/completions",
-		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+		APIConfig: &APIConfig{
+			apiKey:  apiKey,
+			baseURL: "https://api.chatgpt.com/v1/chat/completions",
+			httpClient: &http.Client{
+				Timeout: 60 * time.Second,
+			},
 		},
 	}
 }
@@ -242,3 +240,9 @@ func (o *ChatGPTAPI) GetCommonModels() []string {
 		"gpt-3.5-turbo-16k",
 	}
 }
+
+// GetVersion returns the version of the API
+func (o *ChatGPTAPI) GetVersion() string { return o.version }
+
+// IsDemoMode indicates if the API is in demo mode
+func (o *ChatGPTAPI) IsDemoMode() bool { return o.demoMode }

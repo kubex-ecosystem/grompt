@@ -1,0 +1,43 @@
+{
+  "name": "Kubex - Grompt",
+  "application": "grompt",
+  "version": "1.0.3",
+  "private": false,
+  "published": true,
+  "aliases": [
+    "grompt",
+    "krompt"
+  ],
+  "repository": "https://github.com/rafa-mori/grompt",
+  "homepage": "https://grompt.rafa-mori.dev/",
+  "description": "Kubex - Grompt is a profissional AI prompt context object kind like: agents, prompts, API calls, and more.",
+  "main": "cmd/main.go",
+  "bin": "grompt",
+  "author": "Rafael Mori <faelmori@gmail.com>",
+  "organization": "rafa-mori",
+  "license": "MIT",
+  "keywords": [
+    "grompt",
+    "kubex",
+    "file-markers",
+    "control",
+    "command-line",
+    "tool",
+    "management"
+  ],
+  "platforms": [
+    "linux/amd64",
+    "darwin/amd64",
+    "darwin/arm64"
+  ],
+  "dependencies": [
+    "tar",
+    "gzip",
+    "curl",
+    "git",
+    "zip",
+    "unzip",
+    "jq",
+    "upx"
+  ]
+}

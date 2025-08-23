@@ -6,6 +6,97 @@
     "baseUrl": "Base URL",
     "status": "Status"
   },
+  "nav": {
+    "promptCrafter": "Prompt Crafter",
+    "agents": "Agents"
+  },
+  "theme": {
+    "light": "Light theme",
+    "dark": "Dark theme"
+  },
+  "agents": {
+    "title": "Agents",
+    "new": "New Agent",
+    "edit": "Edit Agent",
+    "generateSquad": "Generate Squad",
+    "search": "Search agents...",
+    "all": "All",
+    "exportButton": "Export AGENTS.md",
+    "import": {
+      "title": "Import AGENTS.md",
+      "upload": "Upload File",
+      "paste": "Paste Content",
+      "content": "File Content",
+      "preview": "Preview",
+      "options": "Options",
+      "merge": "Merge with existing agents",
+      "replace": "Replace all agents",
+      "validate": "Validate before importing",
+      "parsing": "Parsing file...",
+      "validating": "Validating agents...",
+      "importing": "Importing agents...",
+      "success": "Import completed successfully!",
+      "errors": "Errors found:",
+      "warnings": "Warnings:",
+      "agentsFound": "agents found",
+      "confirmReplace": "This will replace all existing agents. Continue?",
+      "supportedFormats": "Supported formats: .md, .markdown, .txt"
+    },
+    "export": {
+      "title": "Export Agents",
+      "selectAgents": "Select Agents",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "format": "Format",
+      "filename": "File Name",
+      "download": "Download",
+      "allAgents": "All Agents",
+      "selectedAgents": "Selected Agents",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "json": "JSON (.json)",
+        "yaml": "YAML (.yaml)"
+      }
+    },
+    "validation": {
+      "title": "Validate AGENTS.md",
+      "content": "Content to Validate",
+      "validate": "Validate",
+      "validating": "Validating...",
+      "valid": "Valid file!",
+      "invalid": "Invalid file",
+      "errors": "Errors",
+      "warnings": "Warnings",
+      "summary": "Validation Summary"
+    },
+    "generate": {
+      "title": "Generate Agent Squad",
+      "requirements": "Project Requirements",
+      "placeholder": "Describe the project you want to develop. Ex: 'I want to create a REST API in Python with FastAPI, PostgreSQL database, automated tests and Docker deployment. Avoid Java.'",
+      "result": "Generated Squad"
+    },
+    "empty": {
+      "title": "No agents found",
+      "description": "Start by creating your first agent or generating a complete squad."
+    },
+    "createFirst": "Create First Agent",
+    "confirmDelete": "Are you sure you want to delete this agent?",
+    "backToList": "Back to list",
+    "notFound": "Agent not found",
+    "form": {
+      "basic": "Basic Information",
+      "title": "Title",
+      "titlePlaceholder": "Ex: Python Backend Developer",
+      "role": "Role",
+      "rolePlaceholder": "Ex: Implement scalable REST APIs",
+      "skills": "Skills",
+      "skillPlaceholder": "Ex: Python, FastAPI, PostgreSQL",
+      "restrictions": "Restrictions",
+      "restrictionPlaceholder": "Ex: Avoid Java, use only async code",
+      "promptExample": "Prompt Example",
+      "promptExamplePlaceholder": "Describe how this agent should be used in prompts..."
+    }
+  },
   "connection": {
     "connected": "Connected to Go Server",
     "offline": "Go Server Offline",
@@ -50,7 +141,7 @@
   },
   "providers": {
     "claude": "Claude API",
-    "openai": "OpenAI API", 
+    "openai": "OpenAI API",
     "deepseek": "DeepSeek API",
     "ollama": "Ollama Local",
     "demo": "Demo Mode",
@@ -123,5 +214,19 @@
     "responseReceived": "Response received",
     "emptyResponse": "Empty response from server",
     "httpError": "HTTP Error"
-  }
+  },
+  "loading": "Loading",
+  "saving": "Saving",
+  "generating": "Generating",
+  "cancel": "Cancel",
+  "create": "Create",
+  "update": "Update",
+  "save": "Save",
+  "edit": "Edit",
+  "delete": "Delete",
+  "view": "View",
+  "export": "Export",
+  "copy": "Copy",
+  "copied": "Copied",
+  "generate": "Generate"
 }

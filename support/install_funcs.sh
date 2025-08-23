@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# lib/install_funcs.sh – Funções para instalação e manipulação de PATH
+# lib/install_funcs.sh – Functions for installing binaries and managing paths
 
 install_upx() {
     if ! command -v upx &> /dev/null; then
         if ! sudo -v &> /dev/null; then
-            log error "Você não tem permissões de superusuário para instalar o empacotador de binários."
-            log warn "Se deseja o empacotamento de binários, instale o UPX manualmente."
-            log warn "Veja: https://upx.github.io/"
+            log error "You do not have permission to install UPX."
+            log warn "If you want binary packing, please install UPX manually."
+            log warn "See: https://upx.github.io/"
             return 1
         fi
         if [[ "$(uname)" == "Darwin" ]]; then
@@ -30,15 +30,14 @@ install_upx() {
         elif command -v flatpak &> /dev/null; then
             sudo flatpak install flathub org.uptane.upx -y >/dev/null
         else
-            log warn "Se deseja o empacotamento de binários, instale o UPX manualmente."
-            log warn "Veja: https://upx.github.io/"
+            log warn "If you want binary packing, please install UPX manually."
+            log warn "See: https://upx.github.io/"
             return 1
         fi
     fi
 
     return 0
 }
-
 detect_shell_rc() {
     local shell_rc_file
     local user_shell
@@ -50,13 +49,15 @@ detect_shell_rc() {
         sh) shell_rc_file="${HOME:-~}/.profile" ;;
         fish) shell_rc_file="${HOME:-~}/.config/fish/config.fish" ;;
         *)
-            log warn "Shell não suportado; ajuste o PATH manualmente."
+            log warn "Unsupported shell: $user_shell"
+            log warn "Please add the path manually to your shell configuration file."
+            log warn "Supported shells: bash, zsh, sh, fish"
             return 1
             ;;
     esac
-    
+
     if [ ! -f "$shell_rc_file" ]; then
-        log error "Arquivo de configuração não encontrado: ${shell_rc_file}"
+        log error "Configuration file not found: ${shell_rc_file}"
         return 1
     fi
 
@@ -64,7 +65,6 @@ detect_shell_rc() {
 
     return 0
 }
-
 add_to_path() {
     local target_path="${1:-}"
 
@@ -76,120 +76,157 @@ add_to_path() {
 
     shell_rc_file="$(detect_shell_rc)"
 
-
-    if [ -z "$shell_rc_file" ]; then
-        log error "Não foi possível identificar o arquivo de configuração do shell."
+    if [[ -z "$shell_rc_file" ]]; then
+        log error "Could not identify the shell configuration file."
         return 1
     fi
     if grep -q "${path_expression}" "$shell_rc_file" 2>/dev/null; then
-        log success "$target_path já está no PATH do $shell_rc_file."
+        log success "$target_path is already in PATH for $shell_rc_file."
         return 0
     fi
 
     if [[ -z "${target_path}" ]]; then
-        log error "Caminho de destino não fornecido."
+        log error "Target path not provided."
         return 1
     fi
 
     if [[ ! -d "${target_path}" ]]; then
-        log error "Caminho de destino não é um diretório válido: $target_path"
+        log error "Target path is not a valid directory: $target_path"
         return 1
     fi
 
     if [[ ! -f "${shell_rc_file}" ]]; then
-        log error "Arquivo de configuração não encontrado: ${shell_rc_file}"
+        log error "Configuration file not found: ${shell_rc_file}"
         return 1
     fi
 
     # echo "export PATH=${target_path}:\$PATH" >> "$shell_rc_file"
     printf '%s\n' "${path_expression}" | tee -a "$shell_rc_file" >/dev/null || {
-        log error "Falha ao adicionar $target_path ao PATH em $shell_rc_file."
+        log error "Failed to add $target_path to PATH in $shell_rc_file."
         return 1
     }
 
-    log success "Adicionado $target_path ao PATH em $shell_rc_file."
-    
+    log success "Added $target_path to PATH in $shell_rc_file."
+
     "$SHELL" -c "source ${shell_rc_file}" || {
-        log warn "Falha ao recarregar o shell. Por favor, execute 'source ${shell_rc_file}' manualmente."
+        log warn "Failed to reload shell. Please run 'source ${shell_rc_file}' manually."
     }
 
     return 0
 }
-
 install_binary() {
     local SUFFIX="${_PLATFORM_WITH_ARCH}"
-    local BINARY_TO_INSTALL="${_BINARY}${SUFFIX:+_${SUFFIX}}"
-    log info "Instalando o binário: '${BINARY_TO_INSTALL}' como '$_APP_NAME'"
+    local BINARY_TO_INSTALL="${_BINARY/\/${_APP_NAME}/\/${_APP_NAME}\/dist}${SUFFIX:+_${SUFFIX}}"
+    log info "Installing binary: '${BINARY_TO_INSTALL}' as '$_APP_NAME'"
 
-    if [ "$(id -u)" -ne 0 ]; then
-        log info "Usuário não-root detectado. Instalando em ${_LOCAL_BIN}..."
+    if [[ "$(id -u)" -ne 0 ]]; then
+        log info "Non-root user detected. Installing to ${_LOCAL_BIN}..."
         mkdir -p "$_LOCAL_BIN"
         cp "$BINARY_TO_INSTALL" "$_LOCAL_BIN/$_APP_NAME" || exit 1
         add_to_path "$_LOCAL_BIN"
     else
-        log info "Usuário root detectado. Instalando em ${_GLOBAL_BIN}..."
+        log info "Root user detected. Installing to ${_GLOBAL_BIN}..."
         cp "$BINARY_TO_INSTALL" "$_GLOBAL_BIN/$_APP_NAME" || exit 1
         add_to_path "$_GLOBAL_BIN"
     fi
-}
 
+    if [[ -n "$shell_rc_file" ]]; then
+      # shellcheck source=/dev/null
+      . "${shell_rc_file:-$(detect_shell_rc)}" || {
+          log warn "Failed to reload shell configuration. Please run 'source ${shell_rc_file}' manually."
+      }
+    fi
+}
+uninstall_binary() {
+    log info "Uninstalling binary: '$_APP_NAME'"
+
+    if [ "$(id -u)" -ne 0 ]; then
+        log info "Non-root user detected. Uninstalling from ${_LOCAL_BIN}..."
+        rm -f "$_LOCAL_BIN/$_APP_NAME"
+    else
+        log info "Root user detected. Uninstalling from ${_GLOBAL_BIN}..."
+        rm -f "$_GLOBAL_BIN/$_APP_NAME"
+    fi
+
+    log success "Binary '$_APP_NAME' uninstalled successfully."
+
+    local shell_rc_file=""
+    shell_rc_file="$(detect_shell_rc)"
+
+    if [[ -n "$shell_rc_file" ]]; then
+      # shellcheck source=/dev/null
+      . "${shell_rc_file:-$(detect_shell_rc)}" || {
+          log warn "Failed to reload shell configuration. Please run 'source ${shell_rc_file}' manually."
+      }
+    fi
+
+    return 0
+}
 download_binary() {
+    if [[ "${_PRIVATE_REPOSITORY:-}" == "true" ]]; then
+        log error "It is not possible to download from a private repository." true
+        log error "Please clone the repository and build the binary locally." true
+        return 1
+    fi
     if ! what_platform; then
-        log error "Falha ao detectar a plataforma."
+        log error "Failed to detect platform."
         return 1
     fi
     if [[ -z "${_PLATFORM}" ]]; then
-        log error "Plataforma não suportada: ${_PLATFORM}"
+        log error "Unsupported platform: ${_PLATFORM}"
         return 1
     fi
     local version
-    version=$(curl -s "https://api.github.com/repos/${_OWNER}/${_PROJECT_NAME}/releases/latest" | grep "tag_name" | cut -d '"' -f 4 || echo "latest")
+    if [[ -z "${_VERSION}" ]]; then
+        version="${_REPOSITORY}/releases/latest"  # Use latest release if version is not specified
+    else
+        version="${_REPOSITORY}/releases/tag/${_VERSION}"
+    fi
     if [ -z "$version" ]; then
-        log error "Falha ao determinar a última versão."
+        log error "Failed to determine latest version."
         return 1
     fi
 
     local release_url
     release_url=$(get_release_url)
-    log info "Baixando o binário ${_APP_NAME} para OS=${_PLATFORM}, ARCH=${_ARCH}, Versão=${version}..."
-    log info "URL de Release: ${release_url}"
+    log info "Downloading binary ${_APP_NAME} for OS=${_PLATFORM}, ARCH=${_ARCH}, Version=${version}..."
+    log info "Release URL: ${release_url}"
 
     local archive_path="${_TEMP_DIR}/${_APP_NAME}.tar.gz"
     if ! curl -L -o "${archive_path}" "${release_url}"; then
-        log error "Falha ao baixar o binário de: ${release_url}"
+        log error "Failed to download binary from: ${release_url}"
         return 1
     fi
-    log success "Binário baixado com sucesso."
+    log success "Binary downloaded successfully."
 
-    log info "Extraindo o binário para: $(dirname "${_BINARY}")"
+    log info "Extracting binary to: $(dirname "${_BINARY}")"
     if ! tar -xzf "${archive_path}" -C "$(dirname "${_BINARY}")"; then
-        log error "Falha ao extrair o binário de: ${archive_path}"
+        log error "Failed to extract binary from: ${archive_path}"
         rm -rf "${_TEMP_DIR}"
-        exit 1
+        return 1
     fi
 
     rm -rf "${_TEMP_DIR}"
-    log success "Binário extraído com sucesso."
+    log success "Binary extracted successfully."
 
     if [ ! -f "$_BINARY" ]; then
-        log error "Binário não encontrado após extração: ${_BINARY}"
-        exit 1
+        log error "Binary not found after extraction: ${_BINARY}"
+        return 1
     fi
-    log success "Download e extração de ${_APP_NAME} concluídos!"
+    log success "Download and extraction of ${_APP_NAME} completed successfully!"
+    return 0
 }
-
 install_from_release() {
-    download_binary
-    install_binary
+    download_binary || return 1
+    install_binary || return 1
 }
-
 check_path() {
-    log info "Verificando se o diretório de instalação está no PATH..."
+    log info "Checking if $1 is in PATH..."
     if ! echo "$PATH" | grep -q "$1"; then
-        log warn "$1 não está no PATH."
-        log warn "Adicione: export PATH=$1:\$PATH"
+        log warn "$1 is not in PATH."
+        log warn "Add: export PATH=$1:\$PATH"
     else
-        log success "$1 já está no PATH."
+        log success "$1 is already in PATH."
     fi
 }
 

@@ -1,3 +1,6 @@
+// Package agents provides functionality to manage and persist agents.
+// It allows adding, updating, deleting, and retrieving agents,
+// as well as converting them to a markdown format for documentation.
 package agents
 
 import (

@@ -1,10 +1,144 @@
 {
+  "welcome": {
+    "title": "Bem-vindo ao Grompt",
+    "description": "Transforme suas ideias em prompts profissionais com AI",
+    "start_crafting": "Começar a Criar Prompts",
+    "manage_agents": "Gerenciar Agentes"
+  },
+  "features": {
+    "prompt_engineering": {
+      "title": "Engenharia de Prompts",
+      "description": "Crie prompts estruturados e eficazes usando metodologias comprovadas"
+    },
+    "agent_management": {
+      "title": "Gerenciamento de Agentes",
+      "description": "Organize e gerencie seus agentes de AI para diferentes propósitos"
+    },
+    "multi_llm": {
+      "title": "Múltiplos LLMs",
+      "description": "Suporte para diferentes provedores de AI (OpenAI, Claude, Ollama, etc.)"
+    }
+  },
   "header": {
     "title": "Prompt Crafter",
     "subtitle": "Transforme suas ideias brutas em prompts estruturados e profissionais",
     "debugMode": "Modo desenvolvimento",
     "baseUrl": "Base URL",
     "status": "Status"
+  },
+  "nav": {
+    "promptCrafter": "Gerador de Prompts",
+    "prompt_crafter": "Gerador de Prompts",
+    "agents": "Agentes"
+  },
+  "common": {
+    "subtitle": "Transforme suas ideias em prompts profissionais com AI",
+    "back": "Voltar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "yes": "Sim",
+    "no": "Não",
+    "light_mode": "Modo claro",
+    "dark_mode": "Modo escuro",
+    "viewLogs": "Ver Logs"
+  },
+  "theme": {
+    "light": "Tema claro",
+    "dark": "Tema escuro"
+  },
+  "agents": {
+    "title": "Agentes",
+    "new": "Novo Agente",
+    "edit": "Editar Agente",
+    "generateSquad": "Gerar Squad",
+    "search": "Buscar agentes...",
+    "all": "Todos",
+    "exportButton": "Exportar AGENTS.md",
+    "viewAsGrid": "Visualizar como grade",
+    "viewAsList": "Visualizar como lista",
+    "filterByCategory": "Filtrar por categoria",
+    "back": "Voltar",
+    "toggleDarkMode": "Alternar modo escuro",
+    "empty": {
+      "title": "Nenhum agente encontrado",
+      "description": "Comece criando seu primeiro agente ou gerando um squad completo."
+    },
+    "createFirst": "Criar Primeiro Agente",
+    "confirmDelete": "Tem certeza que deseja excluir este agente?",
+    "backToList": "Voltar para lista",
+    "notFound": "Agente não encontrado",
+    "form": {
+      "basic": "Informações Básicas",
+      "title": "Título",
+      "titlePlaceholder": "Ex: Desenvolvedor Backend Python",
+      "role": "Função",
+      "rolePlaceholder": "Ex: Implementar APIs REST escaláveis",
+      "skills": "Habilidades",
+      "skill": "Habilidade",
+      "skillPlaceholder": "Ex: Python, FastAPI, PostgreSQL",
+      "addSkill": "Adicionar Habilidade",
+      "removeSkill": "Remover Habilidade",
+      "restrictions": "Restrições",
+      "restriction": "Restrição",
+      "restrictionPlaceholder": "Ex: Evitar Java, usar apenas código assíncrono",
+      "addRestriction": "Adicionar Restrição",
+      "removeRestriction": "Remover Restrição",
+      "promptExample": "Exemplo de Prompt",
+      "promptExamplePlaceholder": "Descreva como este agente deve ser usado em prompts..."
+    },
+    "import": {
+      "title": "Importar AGENTS.md",
+      "upload": "Carregar Arquivo",
+      "paste": "Colar Conteúdo",
+      "content": "Conteúdo do Arquivo",
+      "preview": "Pré-visualização",
+      "options": "Opções",
+      "merge": "Mesclar com agentes existentes",
+      "replace": "Substituir todos os agentes",
+      "validate": "Validar antes de importar",
+      "parsing": "Analisando arquivo...",
+      "validating": "Validando agentes...",
+      "importing": "Importando agentes...",
+      "success": "Importação concluída com sucesso!",
+      "errors": "Erros encontrados:",
+      "warnings": "Avisos:",
+      "agentsFound": "agentes encontrados",
+      "confirmReplace": "Isso substituirá todos os agentes existentes. Continuar?",
+      "supportedFormats": "Formatos suportados: .md, .markdown, .txt"
+    },
+    "export": {
+      "title": "Exportar Agentes",
+      "selectAgents": "Selecionar Agentes",
+      "selectAll": "Selecionar Todos",
+      "deselectAll": "Desmarcar Todos",
+      "format": "Formato",
+      "filename": "Nome do Arquivo",
+      "download": "Baixar",
+      "allAgents": "Todos os Agentes",
+      "selectedAgents": "Agentes Selecionados",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "json": "JSON (.json)",
+        "yaml": "YAML (.yaml)"
+      }
+    },
+    "validation": {
+      "title": "Validar AGENTS.md",
+      "content": "Conteúdo para Validar",
+      "validate": "Validar",
+      "validating": "Validando...",
+      "valid": "Arquivo válido!",
+      "invalid": "Arquivo inválido",
+      "errors": "Erros",
+      "warnings": "Avisos",
+      "summary": "Resumo da Validação"
+    },
+    "generate": {
+      "title": "Gerar Squad de Agentes",
+      "requirements": "Requisitos do Projeto",
+      "placeholder": "Descreva o projeto que você quer desenvolver. Ex: 'Quero criar uma API REST em Python com FastAPI, banco PostgreSQL, testes automatizados e deploy com Docker. Evitar Java.'",
+      "result": "Squad Gerado"
+    }
   },
   "connection": {
     "connected": "Conectado ao Go Server",
@@ -24,7 +158,7 @@
     "addButton": "Incluir (Ctrl+Enter)",
     "emptyState": "Adicione suas primeiras ideias ao lado ←",
     "expand": "Expandir entrada",
-    "collapse": "Minimizar entrada", 
+    "collapse": "Minimizar entrada",
     "minimized": "Formulário de entrada minimizado"
   },
   "ideas": {
@@ -42,7 +176,7 @@
   "config": {
     "purpose": "Propósito do Prompt",
     "purposeCode": "Código",
-    "purposeImage": "Imagem", 
+    "purposeImage": "Imagem",
     "purposeOthers": "Outros",
     "customPurpose": "Descreva o objetivo do prompt...",
     "maxLength": "Tamanho Máximo",
@@ -53,6 +187,8 @@
     "openai": "OpenAI API",
     "deepseek": "DeepSeek API",
     "ollama": "Ollama Local",
+    "gemini": "Gemini API",
+    "chatgpt": "ChatGPT API",
     "demo": "Modo Demo",
     "defaultModel": "Modelo padrão"
   },
@@ -76,7 +212,7 @@
     "instructions": "Instruções Específicas",
     "instructionsList": [
       "Analise cuidadosamente todas as ideias apresentadas acima",
-      "Identifique o objetivo principal e objetivos secundários", 
+      "Identifique o objetivo principal e objetivos secundários",
       "Forneça uma resposta estruturada e bem organizada",
       "Mantenha o foco no propósito definido: **{{purpose}}**",
       "Use exemplos práticos quando apropriado",
@@ -85,7 +221,7 @@
     "responseFormat": "Formato de Resposta Esperado",
     "responseSteps": [
       "**Análise Inicial**: Resumo do que foi solicitado",
-      "**Desenvolvimento**: Resposta detalhada seguindo as ideias", 
+      "**Desenvolvimento**: Resposta detalhada seguindo as ideias",
       "**Conclusão**: Próximos passos ou considerações finais"
     ],
     "technicalConfig": "Configurações Técnicas",
@@ -123,5 +259,19 @@
     "responseReceived": "Resposta recebida",
     "emptyResponse": "Resposta vazia do servidor",
     "httpError": "Erro HTTP"
-  }
+  },
+  "loading": "Carregando",
+  "saving": "Salvando",
+  "generating": "Gerando",
+  "cancel": "Cancelar",
+  "create": "Criar",
+  "update": "Atualizar",
+  "save": "Salvar",
+  "edit": "Editar",
+  "delete": "Excluir",
+  "view": "Visualizar",
+  "export": "Exportar",
+  "copy": "Copiar",
+  "copied": "Copiado",
+  "generate": "Gerar"
 }

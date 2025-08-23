@@ -1,7 +1,8 @@
 package main
 
 import (
-	gl "github.com/rafa-mori/grompt/logger"
+	"github.com/rafa-mori/grompt/internal/module"
+	gl "github.com/rafa-mori/grompt/internal/module/logger"
 )
 
 // This file is the entry point for the Grompt CLI application.
@@ -10,7 +11,7 @@ import (
 
 // main initializes the logger and creates a new GoBE instance.
 func main() {
-	if err := RegX().Command().Execute(); err != nil {
+	if err := module.RegX().Command().Execute(); err != nil {
 		gl.Log("fatal", err.Error())
 	}
 }

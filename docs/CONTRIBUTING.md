@@ -38,10 +38,10 @@ cd grompt
 Make sure you have Go installed:
 You can install Go using one of the following methods:
 
-- [A super easy way to install Go](https://github.com/rafa-mori/go-installer)
+- [A super easy way to install Go](https://github.com/rafa-mori/gosetup)
 
   ```shell
-    curl -sSfL 'https://raw.githubusercontent.com/faelmori/go-installer/refs/heads/main/go.sh' | bash
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/rafa-mori/gosetup/main/install.sh)"
   ```
 
 - [Convencional way to download Go](https://go.dev/dl/)

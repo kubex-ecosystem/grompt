@@ -14,7 +14,9 @@ get_release_url() {
     else
       format="tar.gz"
     fi
-    echo "'https://github.com/${_OWNER}/${_PROJECT_NAME}/releases/download/${_VERSION}/${_PROJECT_NAME}_.${format}'"
+    local arch="${_PLATFORM##*-}"
+    local release_url="${_REPOSITORY}/releases/download/${_VERSION}/${_APP_NAME}_${_VERSION}_${os}_${arch}.${format}"
+    echo "${release_url}"
 }
 
 what_platform() {
@@ -52,8 +54,8 @@ what_platform() {
     platform="windows-${_arch}"
     ;;
   *)
-    log error "Plataforma não suportada: ${_os} ${_arch}"
-    log error "Informe este problema aos mantenedores do projeto."
+    log error "Unsupported OS: ${_os} with architecture: ${_arch}"
+    log error "Please report this issue to the project maintainers."
     return 1
     ;;
   esac
@@ -91,7 +93,7 @@ _get_os_from_args() {
     linux|LINUX|l|L|-l|-L) echo "linux" ;;
     darwin|DARWIN|macOS|MACOS|m|M|-m|-M) echo "darwin" ;;
     *)
-      log error "Plataforma inválida: '${arg}'. Opções válidas: windows, linux, darwin, all."
+      log error "Invalid platform: '${arg}'. Valid options: windows, linux, darwin, all."
       exit 1
       ;;
   esac
@@ -105,7 +107,7 @@ _get_arch_from_args() {
     arm64|ARM64|aarch64|AARCH64) echo "arm64" ;;
     386|i386|I386) echo "386" ;;
     *)
-      log error "Arquitetura inválida: '${arg}'. Opções válidas: amd64, arm64, 386."
+      log error "Invalid architecture: '${arg}'. Valid options: amd64, arm64, 386."
       exit 1
       ;;
   esac

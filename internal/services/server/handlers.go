@@ -11,16 +11,17 @@ import (
 )
 
 type Handlers struct {
-	config      *ii.Config
-	claudeAPI   *ii.ClaudeAPI
-	openaiAPI   *ii.OpenAIAPI
-	deepseekAPI *ii.DeepSeekAPI
-	chatGPTAPI  *ii.ChatGPTAPI
-	ollamaAPI   *ii.OllamaAPI
+	config      ii.IConfig
+	claudeAPI   ii.IAPIConfig
+	openaiAPI   ii.IAPIConfig
+	deepseekAPI ii.IAPIConfig
+	chatGPTAPI  ii.IAPIConfig
+	geminiAPI   ii.IAPIConfig
+	ollamaAPI   ii.IAPIConfig
 	agentStore  *agents.Store
 }
 
-// Unified request structure
+// UnifiedRequest request structure
 type UnifiedRequest struct {
 	Prompt    string `json:"prompt"`
 	MaxTokens int    `json:"max_tokens"`
@@ -42,15 +43,79 @@ type UsageInfo struct {
 	EstimatedCost    float64 `json:"estimated_cost,omitempty"`
 }
 
-func NewHandlers(cfg *ii.Config) *Handlers {
-	return &Handlers{
-		config:      cfg,
-		claudeAPI:   ii.NewClaudeAPI(cfg.ClaudeAPIKey),
-		openaiAPI:   ii.NewOpenAIAPI(cfg.OpenAIAPIKey),
-		chatGPTAPI:  ii.NewChatGPTAPI(cfg.ChatGPTAPIKey),
-		deepseekAPI: ii.NewDeepSeekAPI(cfg.DeepSeekAPIKey),
-		ollamaAPI:   ii.NewOllamaAPI(cfg.OllamaEndpoint),
-		agentStore:  agents.NewStore("agents.json"),
+var llmKeyMap map[string]string
+
+func NewHandlers(cfg ii.IConfig) *Handlers {
+	hndr := &Handlers{}
+	if cfg == nil {
+		return &Handlers{}
+	} else {
+		hndr.config = cfg
+	}
+
+	llmKeyMap = hndr.getLLMAPIKeyMap(cfg)
+	hndr.claudeAPI = ii.NewClaudeAPI(llmKeyMap["claude"])
+	hndr.openaiAPI = ii.NewOpenAIAPI(llmKeyMap["openai"])
+	hndr.chatGPTAPI = ii.NewChatGPTAPI(llmKeyMap["chatgpt"])
+	hndr.deepseekAPI = ii.NewDeepSeekAPI(llmKeyMap["deepseek"])
+	hndr.ollamaAPI = ii.NewOllamaAPI(llmKeyMap["ollama"])
+	hndr.geminiAPI = ii.NewGeminiAPI(llmKeyMap["gemini"])
+	hndr.agentStore = agents.NewStore("agents.json")
+
+	return hndr
+}
+
+func (h *Handlers) getLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
+	if llmKeyMap == nil {
+		llmKeyMap = make(map[string]string)
+	}
+	if h.config == nil && cfg != nil {
+		h.config = cfg
+	}
+	for _, provider := range []string{"claude", "openai", "chatgpt", "deepseek", "ollama", "gemini"} {
+		providerAPIKey := cfg.GetAPIKey(provider)
+		llmKeyMap[provider] = providerAPIKey
+	}
+	return llmKeyMap
+}
+
+func (h *Handlers) isAPIEnabled(provider string) bool {
+
+	switch provider {
+	case "claude":
+		return llmKeyMap["claude"] != ""
+	case "openai":
+		return llmKeyMap["openai"] != ""
+	case "chatgpt":
+		return llmKeyMap["chatgpt"] != ""
+	case "deepseek":
+		return llmKeyMap["deepseek"] != ""
+	case "ollama":
+		return llmKeyMap["ollama"] != ""
+	case "gemini":
+		return llmKeyMap["gemini"] != ""
+	default:
+		return false
+	}
+}
+
+func (h *Handlers) getAPIConfigKey(provider string) string {
+	if h.config == nil {
+		return ""
+	}
+	switch provider {
+	case "claude":
+		return h.config.GetAPIKey("claude")
+	case "openai":
+		return h.config.GetAPIKey("openai")
+	case "chatgpt":
+		return h.config.GetAPIKey("chatgpt")
+	case "deepseek":
+		return h.config.GetAPIKey("deepseek")
+	case "ollama":
+		return h.config.GetAPIKey("ollama")
+	default:
+		return ""
 	}
 }
 
@@ -61,10 +126,60 @@ func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config := h.config.GetAPIConfig()
+	if r.Method == "POST" {
+		// Handle POST request to update config
+		var updateReq map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		// Update configuration
+		for key, value := range updateReq {
+			if strValue, ok := value.(string); ok {
+				switch key {
+				case "gemini_api_key":
+					h.config.SetAPIKey("gemini", strValue)
+				case "openai_api_key":
+					h.config.SetAPIKey("openai", strValue)
+				case "claude_api_key":
+					h.config.SetAPIKey("claude", strValue)
+				case "deepseek_api_key":
+					h.config.SetAPIKey("deepseek", strValue)
+				case "chatgpt_api_key":
+					h.config.SetAPIKey("chatgpt", strValue)
+				case "ollama_endpoint":
+					h.config.SetAPIKey("ollama", strValue)
+				}
+			}
+		}
+
+		// Refresh the API map
+		h.getLLMAPIKeyMap(h.config)
+	}
+
+	// Prepare response with both raw config and availability flags
+	config := h.config
+	response := map[string]interface{}{
+		"port":             "8080",
+		"openai_api_key":   config.GetAPIKey("openai"),
+		"deepseek_api_key": config.GetAPIKey("deepseek"),
+		"ollama_endpoint":  config.GetAPIKey("ollama"),
+		"claude_api_key":   config.GetAPIKey("claude"),
+		"gemini_api_key":   config.GetAPIKey("gemini"),
+		"chatgpt_api_key":  config.GetAPIKey("chatgpt"),
+		"debug":            false,
+		// Availability flags for frontend
+		"openai_available":   h.isAPIEnabled("openai"),
+		"deepseek_available": h.isAPIEnabled("deepseek"),
+		"ollama_available":   h.isAPIEnabled("ollama"),
+		"claude_available":   h.isAPIEnabled("claude"),
+		"gemini_available":   h.isAPIEnabled("gemini"),
+		"chatgpt_available":  h.isAPIEnabled("chatgpt"),
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(config)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
@@ -85,12 +200,12 @@ func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.config.ClaudeAPIKey == "" {
+	if key := h.config.GetAPIKey("claude"); key == "" {
 		http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
 		return
 	}
 
-	response, err := h.claudeAPI.Complete(req.Prompt, req.MaxTokens)
+	response, err := h.claudeAPI.Complete(req.Prompt, req.MaxTokens, "")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in Claude API: %v", err), http.StatusInternalServerError)
 		return
@@ -124,7 +239,7 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.config.OpenAIAPIKey == "" {
+	if key := h.config.GetAPIKey("openai"); key == "" {
 		http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
 		return
 	}
@@ -169,7 +284,7 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.config.DeepSeekAPIKey == "" {
+	if key := h.config.GetAPIKey("deepseek"); key == "" {
 		http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
 		return
 	}
@@ -189,6 +304,96 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 	result := UnifiedResponse{
 		Response: response,
 		Provider: "deepseek",
+		Model:    model,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
+	h.setCORSHeaders(w)
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req UnifiedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if key := h.config.GetAPIKey("gemini"); key == "" {
+		http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Use default model if not specified
+	model := req.Model
+	if model == "" {
+		model = "gemini-2.5-flash"
+	}
+
+	response, err := h.geminiAPI.Complete(req.Prompt, req.MaxTokens, model)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error in Gemini API: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	result := UnifiedResponse{
+		Response: response,
+		Provider: "gemini",
+		Model:    model,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
+	h.setCORSHeaders(w)
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req UnifiedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if key := h.config.GetAPIKey("chatgpt"); key == "" {
+		http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Use default model if not specified
+	model := req.Model
+	if model == "" {
+		model = "gpt-4o-mini"
+	}
+
+	response, err := h.chatGPTAPI.Complete(req.Prompt, req.MaxTokens, model)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error in ChatGPT API: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	result := UnifiedResponse{
+		Response: response,
+		Provider: "chatgpt",
 		Model:    model,
 	}
 
@@ -220,7 +425,12 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 		model = "llama3.2"
 	}
 
-	response, err := h.ollamaAPI.Complete(model, req.Prompt)
+	maxTokens := req.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = 2048
+	}
+
+	response, err := h.ollamaAPI.Complete(model, maxTokens, req.Prompt)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in Ollama API: %v", err), http.StatusInternalServerError)
 		return
@@ -264,20 +474,21 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 	var response string
 	var err error
 	var model string = req.Model
+	var maxTokens int = req.MaxTokens
 
 	switch req.Provider {
 	case "claude":
-		if h.config.ClaudeAPIKey == "" {
+		if key := h.config.GetAPIKey("claude"); key == "" {
 			http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
 			return
 		}
-		response, err = h.claudeAPI.Complete(req.Prompt, req.MaxTokens)
+		response, err = h.claudeAPI.Complete(req.Prompt, maxTokens, model)
 		if model == "" {
 			model = "claude-3-5-sonnet-20241022"
 		}
 
 	case "openai":
-		if h.config.OpenAIAPIKey == "" {
+		if key := h.config.GetAPIKey("openai"); key == "" {
 			http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
 			return
 		}
@@ -287,7 +498,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		response, err = h.openaiAPI.Complete(req.Prompt, req.MaxTokens, model)
 
 	case "deepseek":
-		if h.config.DeepSeekAPIKey == "" {
+		if key := h.config.GetAPIKey("deepseek"); key == "" {
 			http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
 			return
 		}
@@ -300,7 +511,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		if model == "" {
 			model = "llama3.2"
 		}
-		response, err = h.ollamaAPI.Complete(model, req.Prompt)
+		response, err = h.ollamaAPI.Complete(model, maxTokens, req.Prompt)
 
 	default:
 		http.Error(w, "Unsupported provider: "+req.Provider, http.StatusBadRequest)
@@ -331,21 +542,21 @@ func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
 		"version":   ii.AppVersion,
 		"apis": map[string]interface{}{
 			"claude": map[string]interface{}{
-				"configured": h.config.ClaudeAPIKey != "",
-				"available":  h.config.ClaudeAPIKey != "",
+				"configured": h.config.GetAPIKey("claude") != "",
+				"available":  h.isAPIEnabled("claude"),
 			},
 			"openai": map[string]interface{}{
-				"configured": h.config.OpenAIAPIKey != "",
-				"available":  h.config.OpenAIAPIKey != "" && h.openaiAPI.IsAvailable(),
+				"configured": h.config.GetAPIKey("openai") != "",
+				"available":  h.isAPIEnabled("openai"),
 			},
 			"deepseek": map[string]interface{}{
-				"configured": h.config.DeepSeekAPIKey != "",
-				"available":  h.config.DeepSeekAPIKey != "" && h.deepseekAPI.IsAvailable(),
+				"configured": h.config.GetAPIKey("deepseek") != "",
+				"available":  h.isAPIEnabled("deepseek"),
 			},
 			"ollama": map[string]interface{}{
-				"configured": h.config.OllamaEndpoint != "",
-				"available":  h.ollamaAPI.IsAvailable(),
-				"endpoint":   h.config.OllamaEndpoint,
+				"configured": h.config.GetAPIKey("ollama") != "",
+				"available":  h.isAPIEnabled("ollama"),
+				// "endpoint":   h.config.OllamaEndpoint,
 			},
 		},
 		"features": map[string]bool{
@@ -373,7 +584,7 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 
 	switch provider {
 	case "openai":
-		if h.config.OpenAIAPIKey != "" {
+		if h.isAPIEnabled("openai") {
 			models, err = h.openaiAPI.ListModels()
 			if err != nil {
 				// Fallback to common models
@@ -384,7 +595,7 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "deepseek":
-		models = h.deepseekAPI.GetAvailableModels()
+		models = h.deepseekAPI.GetCommonModels()
 
 	case "claude":
 		models = []string{
@@ -411,7 +622,7 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 		// Return all models
 		allModels := map[string][]string{
 			"openai":   h.openaiAPI.GetCommonModels(),
-			"deepseek": h.deepseekAPI.GetAvailableModels(),
+			"deepseek": h.deepseekAPI.GetCommonModels(),
 			"claude": {
 				"claude-3-5-sonnet-20241022",
 				"claude-3-5-haiku-20241022",
@@ -454,7 +665,7 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 
 	switch provider {
 	case "claude":
-		available = h.config.ClaudeAPIKey != ""
+		available = h.config.GetAPIKey("claude") != ""
 		if available {
 			message = "Claude API configured"
 		} else {
@@ -462,8 +673,8 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "openai":
-		available = h.config.OpenAIAPIKey != "" && h.openaiAPI.IsAvailable()
-		if h.config.OpenAIAPIKey == "" {
+		available = h.config.GetAPIKey("openai") != "" && h.openaiAPI.IsAvailable()
+		if h.config.GetAPIKey("openai") == "" {
 			message = "OpenAI API Key not configured"
 		} else if !h.openaiAPI.IsAvailable() {
 			message = "OpenAI API is not responding"
@@ -472,8 +683,8 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "deepseek":
-		available = h.config.DeepSeekAPIKey != "" && h.deepseekAPI.IsAvailable()
-		if h.config.DeepSeekAPIKey == "" {
+		available = h.config.GetAPIKey("deepseek") != "" && h.deepseekAPI.IsAvailable()
+		if h.config.GetAPIKey("deepseek") == "" {
 			message = "DeepSeek API Key not configured"
 		} else if !h.deepseekAPI.IsAvailable() {
 			message = "DeepSeek API is not responding"
@@ -482,11 +693,12 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "ollama":
+		ollama := h.config.GetAPIConfig("ollama")
 		available = h.ollamaAPI.IsAvailable()
-		if available {
-			message = "Ollama is working at " + h.config.OllamaEndpoint
+		if available && ollama != nil {
+			message = "Ollama is working at " + h.config.GetAPIEndpoint("ollama")
 		} else {
-			message = "Ollama is not responding at " + h.config.OllamaEndpoint
+			message = "Ollama is not responding at " + h.config.GetAPIEndpoint("ollama")
 		}
 
 	default:
@@ -505,6 +717,7 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
+// setCORSHeaders sets the CORS headers for the response.
 func (h *Handlers) setCORSHeaders(w http.ResponseWriter) {
 	// CORS headers
 	// These headers allow cross-origin requests from any domain
@@ -521,6 +734,7 @@ func (h *Handlers) setCORSHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "DENY")
 }
 
+// HandleVersion returns the current application version
 func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -542,6 +756,7 @@ func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(versionInfo)
 }
 
+// HandleDocs returns the documentation URL
 func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -557,6 +772,7 @@ func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(docs)
 }
 
+// HandleSupport returns the support URL
 func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -572,6 +788,7 @@ func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(supportInfo)
 }
 
+// HandleAbout returns information about the application
 func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -591,6 +808,7 @@ func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(aboutInfo)
 }
 
+// HandleStatus returns the current status of the application
 func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -608,6 +826,7 @@ func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
+// HandleHelp returns the help URL or information
 func (h *Handlers) HandleHelp(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -623,6 +842,7 @@ func (h *Handlers) HandleHelp(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(helpInfo)
 }
 
+// HandleFeedback returns the feedback URL
 func (h *Handlers) HandleFeedback(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -638,6 +858,7 @@ func (h *Handlers) HandleFeedback(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(feedbackInfo)
 }
 
+// HandleContact returns the contact URL
 func (h *Handlers) HandleContact(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -653,6 +874,7 @@ func (h *Handlers) HandleContact(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(contactInfo)
 }
 
+// HandlePrivacy returns the privacy policy URL
 func (h *Handlers) HandlePrivacy(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -668,6 +890,7 @@ func (h *Handlers) HandlePrivacy(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(privInfo)
 }
 
+// HandleTerms returns the terms of service URL
 func (h *Handlers) HandleTerms(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -683,6 +906,7 @@ func (h *Handlers) HandleTerms(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(termsInfo)
 }
 
+// HandleRateLimit returns rate limit information
 func (h *Handlers) HandleRateLimit(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -698,6 +922,7 @@ func (h *Handlers) HandleRateLimit(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rateLimitInfo)
 }
 
+// HandleError returns a generic error message
 func (h *Handlers) HandleError(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -714,6 +939,7 @@ func (h *Handlers) HandleError(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(errorInfo)
 }
 
+// HandleNotFound returns a 404 not found error
 func (h *Handlers) HandleNotFound(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -730,6 +956,7 @@ func (h *Handlers) HandleNotFound(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(notFoundInfo)
 }
 
+// HandleMethodNotAllowed returns a 405 method not allowed error_count
 func (h *Handlers) HandleMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -746,6 +973,7 @@ func (h *Handlers) HandleMethodNotAllowed(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(methodNotAllowedInfo)
 }
 
+// HandleInternalServerError returns a 500 internal server error
 func (h *Handlers) HandleInternalServerError(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -762,6 +990,7 @@ func (h *Handlers) HandleInternalServerError(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(errorInfo)
 }
 
+// HandleBadRequest returns a 400 bad request error_count
 func (h *Handlers) HandleBadRequest(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -778,6 +1007,7 @@ func (h *Handlers) HandleBadRequest(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(badRequestInfo)
 }
 
+// HandleUnauthorized returns a 401 unauthorized error
 func (h *Handlers) HandleUnauthorized(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
@@ -794,6 +1024,7 @@ func (h *Handlers) HandleUnauthorized(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(unauthorizedInfo)
 }
 
+// HandleForbidden returns a 403 forbidden error_count
 func (h *Handlers) HandleForbidden(w http.ResponseWriter, r *http.Request) {
 	h.setCORSHeaders(w)
 
