@@ -9,7 +9,7 @@
     "krompt"
   ],
   "repository": "https://github.com/rafa-mori/grompt",
-  "homepage": "https://grompt.rafa-mori.dev/",
+  "homepage": "https://github.com/rafa-mori/grompt",
   "description": "Kubex - Grompt is a profissional AI prompt context object kind like: agents, prompts, API calls, and more.",
   "main": "cmd/main.go",
   "bin": "grompt",
@@ -26,9 +26,7 @@
     "management"
   ],
   "platforms": [
-    "linux/amd64",
-    "darwin/amd64",
-    "darwin/arm64"
+    "linux/amd64"
   ],
   "dependencies": [
     "tar",
