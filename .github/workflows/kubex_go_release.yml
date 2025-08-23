@@ -212,34 +212,34 @@ jobs:
             echo "os=${OS:-}" >> $GITHUB_OUTPUT
             echo "arch=${ARCH:-}" >> $GITHUB_OUTPUT
 
-            if [[ ! $(basename pwd) != "bin" ]]; then
-              ls -la $(git rev-parse --show-toplevel)/bin/
-              cd $(git rev-parse --show-toplevel)/bin || exit 1
+            if [[ ! $(basename pwd) != "dist" ]]; then
+              ls -la $(git rev-parse --show-toplevel)/dist/
+              cd $(git rev-parse --show-toplevel)/dist || exit 1
             fi
             ARTIFACT_LIST+=("${MODULE_NAME:-}_${OS:-}_${ARCH:-}")
           done
           cd $(git rev-parse --show-toplevel)/ || exit 1
           echo "ARTIFACT_LIST=${ARTIFACT_LIST[*]}" >> $GITHUB_OUTPUT
           echo "ARTIFACT_COUNT=${#ARTIFACT_LIST[@]}" >> $GITHUB_OUTPUT
-          echo "ARTIFACTS_DIR=$(git rev-parse --show-toplevel)/bin" >> $GITHUB_OUTPUT
+          echo "ARTIFACTS_DIR=$(git rev-parse --show-toplevel)/dist" >> $GITHUB_OUTPUT
           if [[ ${#ARTIFACT_LIST[@]} -eq 0 ]]; then
             echo "❌ No build artifacts found!"
             exit 1
           else
             echo "✅ Build artifacts verified: ${ARTIFACT_LIST[*]}"
           fi
-          if [[ ! -f $(git rev-parse --show-toplevel)/bin/SHA256SUMS ]]; then
-            touch $(git rev-parse --show-toplevel)/bin/SHA256SUMS
+          if [[ ! -f $(git rev-parse --show-toplevel)/dist/SHA256SUMS ]]; then
+            touch $(git rev-parse --show-toplevel)/dist/SHA256SUMS
           fi
-          sha256sum $(git rev-parse --show-toplevel)/bin/* > $(git rev-parse --show-toplevel)/bin/SHA256SUMS
-          ls -la $(git rev-parse --show-toplevel)/bin/
+          sha256sum $(git rev-parse --show-toplevel)/dist/* > $(git rev-parse --show-toplevel)/dist/SHA256SUMS
+          ls -la $(git rev-parse --show-toplevel)/dist/
       - name: Upload Build Artifacts
         if: steps.version-check.outputs.continue == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.manifest.outputs.module-name }}-release-binaries
           path: |
-            bin/${{ steps.manifest.outputs.module-name }}_*
+            dist/${{ steps.manifest.outputs.module-name }}_*
           retention-days: 30
 
       - name: Version Mismatch Summary
