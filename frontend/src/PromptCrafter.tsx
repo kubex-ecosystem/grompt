@@ -1,7 +1,10 @@
-import { AlertCircle, Check, ChevronDown, ChevronUp, Copy, Edit3, Moon, Plus, RefreshCw, Sun, Trash2, Wand2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, ChevronUp, Copy, Edit3, FileText, Moon, Plus, RefreshCw, Sun, Trash2, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import BackButton from './components/BackButton';
 import LanguageSelector from './components/LanguageSelector';
+import LogViewer from './components/LogViewer';
+import { logger, useFetchLogger, useNavigationLogger } from './utils/logger';
 
 const PromptCrafter = () => {
   const { t } = useTranslation();
@@ -36,6 +39,7 @@ const PromptCrafter = () => {
     }
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
+  const [showLogViewer, setShowLogViewer] = useState(false);
   type ServerInfo = {
     version?: string;
     apis?: {
@@ -100,6 +104,13 @@ const PromptCrafter = () => {
       throw error;
     }
   };
+
+  // Inicializar loggers
+  useEffect(() => {
+    useNavigationLogger();
+    useFetchLogger();
+    logger.logNavigation('init', window.location.pathname, 'push');
+  }, []);
 
   useEffect(() => {
     document.documentElement.className = darkMode ? 'dark' : '';
@@ -736,19 +747,22 @@ make run
       <div className="max-w-[90%] mx-auto">{/* Expandido de max-w-7xl para 90% */}
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">
-              <span className={currentTheme.accent}>{t('header.title')}</span>
-            </h1>
-            <p className={currentTheme.textSecondary}>
-              {t('header.subtitle')}
-            </p>
-            {/* Debug info em desenvolvimento */}
-            {process.env.NODE_ENV === 'development' && (
-              <p className="text-xs text-yellow-400 mt-1">
-                🔧 {t('header.debugMode')} | {t('header.baseUrl')}: {getBaseURL()} | {t('header.status')}: {connectionStatus}
+          <div className="flex items-center gap-4">
+            <BackButton to="/" currentTheme={currentTheme} label="Home" />
+            <div>
+              <h1 className="text-4xl font-bold mb-2">
+                <span className={currentTheme.accent}>{t('header.title')}</span>
+              </h1>
+              <p className={currentTheme.textSecondary}>
+                {t('header.subtitle')}
               </p>
-            )}
+              {/* Debug info em desenvolvimento */}
+              {process.env.NODE_ENV === 'development' && (
+                <p className="text-xs text-yellow-400 mt-1">
+                  🔧 {t('header.debugMode')} | {t('header.baseUrl')}: {getBaseURL()} | {t('header.status')}: {connectionStatus}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -803,6 +817,14 @@ make run
             )}
 
             <LanguageSelector currentTheme={currentTheme} />
+
+            <button
+              onClick={() => setShowLogViewer(true)}
+              className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
+              title={t('common.viewLogs')}
+            >
+              <FileText size={20} />
+            </button>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -1033,6 +1055,13 @@ make run
           </div> */}
         </div>
       </div>
+
+      {/* Log Viewer Modal */}
+      <LogViewer
+        currentTheme={currentTheme}
+        isOpen={showLogViewer}
+        onClose={() => setShowLogViewer(false)}
+      />
     </div>
   );
 };

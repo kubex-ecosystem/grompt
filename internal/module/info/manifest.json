@@ -1,7 +1,7 @@
 {
   "name": "Kubex - Grompt",
   "application": "grompt",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": false,
   "published": true,
   "aliases": [
@@ -26,7 +26,9 @@
     "management"
   ],
   "platforms": [
-    "linux/amd64"
+    "linux/amd64",
+    "darwin/amd64",
+    "darwin/arm64"
   ],
   "dependencies": [
     "tar",

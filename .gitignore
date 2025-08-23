@@ -3,7 +3,7 @@
 !grompt/
 
 # Build outputs
-build/
+
 dist/
 
 # Go

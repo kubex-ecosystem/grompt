@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   Code,
   FileText,
   Moon,
@@ -13,6 +12,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import BackButton from './BackButton';
 import LanguageSelector from './LanguageSelector';
 
 export interface Agent {
@@ -202,13 +202,7 @@ const AgentForm = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <button
-                title={t('agents.back')}
-                onClick={() => router.push('/agents')}
-                className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
+              <BackButton to="/agents" currentTheme={currentTheme} />
               <User className="h-8 w-8 text-blue-500" />
               <h1 className="text-2xl font-bold">
                 {isEdit ? t('agents.edit') : t('agents.new')}
