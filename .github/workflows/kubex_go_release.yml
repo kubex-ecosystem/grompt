@@ -6,6 +6,11 @@ on:
       - "v*.*.*"
   workflow_dispatch:
     inputs:
+      target_manifest:
+        description: 'Path to the module manifest (e.g., internal/module/info/manifest.json)'
+        required: false
+        default: 'internal/module/info/manifest.json'
+        type: string
       tag_name:
         description: 'Tag name for manual release (e.g., v1.0.0)'
         required: false
@@ -32,6 +37,10 @@ permissions:
   id-token: write
 
 env:
+  _TARGET_MANIFEST: ${{ github.event.inputs.target_manifest }}
+  _DEBUG: ${{ github.event.inputs.debug }}
+  _DRY_RUN: ${{ github.event.inputs.dry_run }}
+  _PLATFORMS: ${{ github.event.inputs.platforms }}
   NON_INTERACTIVE: true
   FORCE: y
   CI: true
@@ -60,15 +69,15 @@ jobs:
       - name: Load Module Manifest
         id: manifest
         run: |
-          if [[ ! -f "$(git rev-parse --show-toplevel)/internal/module/info/manifest.json" ]]; then
-            echo "❌ internal/module/info/manifest.json not found"
+          if [[ ! -f "$(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }}" ]]; then
+            echo "❌ ${{ github.env._TARGET_MANIFEST }} not found"
             exit 1
           fi
 
           # Extract module information
-          MODULE_NAME=$(cat $(git rev-parse --show-toplevel)/internal/module/info/manifest.json | jq -r '.bin // .name // "unknown"')
-          MODULE_VERSION=$(cat $(git rev-parse --show-toplevel)/internal/module/info/manifest.json | jq -r '.version // "0.0.0"')
-          PLATFORMS=$(cat $(git rev-parse --show-toplevel)/internal/module/info/manifest.json | jq -r '.platforms[]?' | tr '\n' ' ' | sed 's/ $//')
+          MODULE_NAME=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.bin // .name // "unknown"')
+          MODULE_VERSION=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.version // "0.0.0"')
+          PLATFORMS=$(cat $(git rev-parse --show-toplevel)${{ github.env._TARGET_MANIFEST }} | jq -r '.platforms[]?' | tr '\n' ' ' | sed 's/ $//')
 
           # Validate required fields
           if [[ "$MODULE_NAME" == "unknown" || "$MODULE_NAME" == "null" ]]; then
@@ -127,7 +136,7 @@ jobs:
             echo "   Git Tag: $TAG_VERSION"
             echo "   Manifest: $MANIFEST_VERSION"
             echo ""
-            echo "Please update info/manifest.json version to match the git tag."
+            echo "Please update ${{ github.env._TARGET_MANIFEST }} version to match the git tag."
             echo "Expected: \"version\": \"$TAG_CLEAN\""
             echo ""
             echo "🛑 Workflow will skip remaining steps for safety."
@@ -193,9 +202,9 @@ jobs:
             fi
 
             # Set environment variables
-            export NON_INTERACTIVE=${NON_INTERACTIVE:-${{ github.event.env.NON_INTERACTIVE }}}
-            export FORCE=${FORCE:-${{ github.event.env.FORCE }}}
-            export CI=${CI:-${{ github.event.env.CI }}}
+            export NON_INTERACTIVE=${NON_INTERACTIVE:-${{ github.env.NON_INTERACTIVE }}}
+            export FORCE=${FORCE:-${{ github.env.FORCE }}}
+            export CI=${CI:-${{ github.env.CI }}}
             export DRY_RUN=${DRY_RUN:-${{ github.event.inputs.dry_run }}}
             export DEBUG=${DEBUG:-${{ github.event.inputs.debug }}}
 
@@ -226,9 +235,9 @@ jobs:
             echo "os=${OS:-}" >> $GITHUB_OUTPUT
             echo "arch=${ARCH:-}" >> $GITHUB_OUTPUT
 
-            if [[ ! $(basename pwd) != "dist" ]]; then
-              ls -la $(git rev-parse --show-toplevel)/dist/
-              cd $(git rev-parse --show-toplevel)/dist || exit 1
+            if [[ ! $(basename pwd) != "bin" ]]; then
+              ls -la $(git rev-parse --show-toplevel)/bin/
+              cd $(git rev-parse --show-toplevel)/bin || exit 1
             fi
 
             ARTIFACT_LIST+=("${MODULE_NAME:-}_${OS:-}_${ARCH:-}")
@@ -238,7 +247,7 @@ jobs:
 
           echo "ARTIFACT_LIST=${ARTIFACT_LIST[*]}" >> $GITHUB_OUTPUT
           echo "ARTIFACT_COUNT=${#ARTIFACT_LIST[@]}" >> $GITHUB_OUTPUT
-          echo "ARTIFACTS_DIR=$(git rev-parse --show-toplevel)/dist" >> $GITHUB_OUTPUT
+          echo "ARTIFACTS_DIR=$(git rev-parse --show-toplevel)/bin" >> $GITHUB_OUTPUT
 
           if [[ ${#ARTIFACT_LIST[@]} -eq 0 ]]; then
             echo "❌ No build artifacts found!"
@@ -247,13 +256,13 @@ jobs:
             echo "✅ Build artifacts verified: ${ARTIFACT_LIST[*]}"
           fi
 
-          if [[ ! -f $(git rev-parse --show-toplevel)/dist/SHA256SUMS ]]; then
-            touch $(git rev-parse --show-toplevel)/dist/SHA256SUMS
+          if [[ ! -f $(git rev-parse --show-toplevel)/bin/SHA256SUMS ]]; then
+            touch $(git rev-parse --show-toplevel)/bin/SHA256SUMS
           fi
 
-          sha256sum $(git rev-parse --show-toplevel)/dist/* > $(git rev-parse --show-toplevel)/dist/SHA256SUMS
+          sha256sum $(git rev-parse --show-toplevel)/bin/* > $(git rev-parse --show-toplevel)/bin/SHA256SUMS
 
-          ls -la $(git rev-parse --show-toplevel)/dist/
+          ls -la $(git rev-parse --show-toplevel)/bin/
 
       - name: Upload Build Artifacts
         if: steps.version-check.outputs.continue == 'true'
@@ -261,7 +270,7 @@ jobs:
         with:
           name: ${{ steps.manifest.outputs.module-name }}-release-binaries
           path: |
-            dist/${{ steps.manifest.outputs.module-name }}_*
+            bin/${{ steps.manifest.outputs.module-name }}_*
           retention-days: 30
 
       - name: Version Mismatch Summary
@@ -272,7 +281,7 @@ jobs:
           echo "**Git Tag**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Manifest**: v${{ steps.manifest.outputs.manifest-version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Please update \`internal/module/info/manifest.json\` version to match the git tag before releasing." >> $GITHUB_STEP_SUMMARY
+          echo "Please update \`info/manifest.json\` version to match the git tag before releasing." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Expected change in manifest:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
