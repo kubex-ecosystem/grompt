@@ -37,9 +37,9 @@ DESCRIPTION := $(shell git log -1 --pretty=%B | head -n 1)
 endif
 BINARY_NAME := $(shell jq -r '.bin' < $(TARGET_MANIFEST))
 ifeq ($(BINARY_NAME),)
-BINARY_NAME := $(ROOT_DIR)bin/$(APP_NAME)
+BINARY_NAME := $(ROOT_DIR)dist/$(APP_NAME)
 else
-BINARY_NAME := $(ROOT_DIR)bin/$(BINARY_NAME)
+BINARY_NAME := $(ROOT_DIR)dist/$(BINARY_NAME)
 endif
 CMD_DIR := $(ROOT_DIR)cmd
 
