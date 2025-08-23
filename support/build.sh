@@ -60,16 +60,16 @@ discover_main_packages() {
   # Use relative path from project root
   cd "${_root_dir}" || return 1
 
-  local _main_dirs=()
-  mapfile -t _main_dirs < <(go list -f '{{if eq .Name "main"}}{{.Dir}}{{end}}' "${_target_path}" 2>/dev/null | awk 'NF')
+  local _main_dirs_arr=()
+  mapfile -t _main_dirs_arr < <(go list -f '{{if eq .Name "main"}}{{.Dir}}{{end}}' "${_target_path}" 2>/dev/null | awk 'NF')
 
-  if [[ ${#_main_dirs[@]} -eq 0 ]]; then
+  if [[ ${#_main_dirs_arr[@]} -eq 0 ]]; then
     log error "No 'main' packages found in ${_target_path}"
     return 1
   fi
 
-  log info "Found ${#_main_dirs[@]} main package(s): ${_main_dirs[*]}"
-  printf '%s\n' "${_main_dirs[@]}"
+  log info "Found ${#_main_dirs_arr[@]} main package(s): ${_main_dirs_arr[*]}"
+  printf '%s\n' "${_main_dirs_arr[@]}"
 }
 
 # ====== Platform/Architecture Matrix ======
@@ -268,7 +268,7 @@ compile_binary() {
   )
 
   # Execute build
-  if env "${_build_env[@]}" go build "${_build_args[@]}" -o "${_output_name}" "${_main_dir}"; then
+  if env "${_build_env[@]}" go build "${_build_args[@]}" -o "${_output_name}" "./cmd"; then
     log success "Build successful: $(basename "${_output_name}")"
 
     # Apply UPX compression if enabled
@@ -279,50 +279,6 @@ compile_binary() {
     return 0
   else
     log error "Build failed for ${_platform_pos}/${_arch_pos}"
-    return 1
-  fi
-}
-
-# ====== Check for existing binary and prompt for overwrite ======
-check_overwrite_binary() {
-  local _output_name="${1:-}"
-  local _force="${2:-${_FORCE:-false}}"
-  local _is_interactive="${3:-true}"
-
-  [[ ! -f "${_output_name}" ]] && return 0
-
-  # Force overwrite
-  if [[ "${_force}" == "true" || "${_force}" =~ ^[yY]$ ]]; then
-    log info "Force overwrite enabled, removing existing binary: $(basename "${_output_name}")"
-    rm -f "${_output_name}"
-    return 0
-  fi
-
-  # Non-interactive mode
-  if [[ "${_is_interactive}" != "true" || "${CI:-}" == "true" || "${NON_INTERACTIVE:-}" == "true" ]]; then
-    log warn "Binary exists, skipping in non-interactive mode: $(basename "${_output_name}")"
-    return 1
-  fi
-
-  # Interactive prompt
-  log notice "Binary already exists: $(basename "${_output_name}")"
-  log question "Overwrite? (y/N, 10s timeout)"
-
-  local reply="n"
-  if read -t 10 -r -n 1 reply 2>/dev/null; then
-    echo # New line after input
-    reply="${reply,,}" # Convert to lowercase
-  else
-    echo # New line after timeout
-    log info "Timeout reached, defaulting to 'no'"
-  fi
-
-  if [[ "${reply}" =~ ^[yY]$ ]]; then
-    log info "Overwriting existing binary: $(basename "${_output_name}")"
-    rm -f "${_output_name}"
-    return 0
-  else
-    log info "Skipping existing binary: $(basename "${_output_name}")"
     return 1
   fi
 }
@@ -457,14 +413,68 @@ build_for_platform() {
 
 # ====== Main build function ======
 build_binary() {
-  local _platform_args="${1:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
-  local _arch_args="${2:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  local _platform_args="${1:-}"
+  local _arch_args="${2:-}"
   local _force="${3:-false}"
   local _build_mode="${4:-production}"
 
   # Initialize configuration
   load_manifest_config
   load_git_info
+
+  # Check for cross-compilation mode
+  if [[ "${_platform_args}" == "__CROSS_COMPILE__" || -z "${_platform_args}" ]]; then
+    log info "Cross-compilation mode: building for all platforms in manifest.json"
+
+    # Build for each platform in manifest
+    local manifest_path="${_ROOT_DIR:-$(pwd)}/internal/module/info/manifest.json"
+    if [[ -f "${manifest_path}" ]] && command -v jq >/dev/null 2>&1; then
+      local built_any=false
+      while IFS= read -r platform; do
+        if [[ -n "${platform}" ]]; then
+          local os
+          local arch
+          os=$(echo "${platform}" | cut -d'/' -f1)
+          arch=$(echo "${platform}" | cut -d'/' -f2)
+          log info "Building for ${platform}..."
+
+          # Use main package path from manifest or default
+          local main_package="./cmd"
+          if [[ -f "${manifest_path}" ]] && command -v jq >/dev/null 2>&1; then
+            local manifest_main
+            manifest_main=$(jq -r '.main // empty' "${manifest_path}" 2>/dev/null)
+            if [[ -n "${manifest_main}" ]]; then
+              main_package="./$(dirname "${manifest_main}")"
+            fi
+          fi
+
+          build_for_arch "${os}" "${arch}" "${main_package}" "${_build_mode}" "${_force}"
+          built_any=true
+        fi
+      done < <(jq -r '.platforms[]?' "${manifest_path}" 2>/dev/null)
+
+      if [[ "${built_any}" == "true" ]]; then
+        log success "Cross-platform build completed"
+        return 0
+      else
+        log warn "No platforms found in manifest.json"
+      fi
+    else
+      log warn "Manifest not found or jq not available, falling back to current platform"
+    fi
+
+    # Fallback to current platform
+    _platform_args="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    _arch_args="$(uname -m | tr '[:upper:]' '[:lower:]')"
+  fi
+
+  # Original single-platform logic
+  # Normalize arch for single builds
+  case "${_arch_args}" in
+    x86_64|X86_64) _arch_args="amd64" ;;
+    aarch64|AARCH64) _arch_args="arm64" ;;
+    i386|I386) _arch_args="386" ;;
+  esac
 
   # Discover main packages
   local _main_dirs
@@ -497,70 +507,12 @@ build_binary() {
 # ====== Legacy compatibility functions ======
 # These maintain compatibility with the existing system
 
-upx_packaging() {
-  # Wrapper for legacy compatibility
-  command upx_packaging "$@"
-}
+# Function removed - using single upx_packaging definition above
 
-compile_binary() {
-  # Enhanced version with new parameters
-  command compile_binary "$@"
-}
+# Function removed - using single compile_binary definition above
 
-check_overwrite_binary() {
-  # Enhanced version with better prompting
-  command check_overwrite_binary "$@"
-}
 
-arch_iterator() {
-  local _output_name="${1:-${_OUTPUT_NAME:-${OUTPUT_NAME:-}}}"
-  local _platform_pos="${2:-${_PLATFORM:-${PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
-  local _arch_pos="${3:-${_ARCH:-${ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}}"
-
-  install_upx || return 1
-
-  if [[ "${_platform_pos:-}" != "darwin" ]]; then
-    upx "${_output_name:-}" --force-overwrite --lzma --no-progress --no-color -qqq || true
-    log success "Packed binary: ${_output_name:-}"
-  else
-    upx "${_output_name:-}" --force-overwrite --lzma --no-progress --force-macos --no-color -qqq || true
-    log warn "UPX packing on macOS is not fully supported. The binary may not be compressed properly." true
-  fi
-
-  return 0
-}
-
-compile_binary() {
-  local _platform_pos="${1:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}"
-  local _arch_pos="${2:-${_ARCH:-$(uname -m | tr '[:upper:]' '[:lower:]')}}"
-  local _output_name="${3:-${_OUTPUT_NAME:-${OUTPUT_NAME:-}}}"
-  local _force="${4:-${_FORCE:-n}}"
-  local _will_upx_pack_binary="${5:-${_WILL_UPX_PACK_BINARY:-true}}"
-
-  local _root_dir="${_root_dir:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
-  local _cmd_path="${_cmd_path:-${CMD_PATH:-${_root_dir}/cmd}}"
-
-  local _binary_name="${_binary_name:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
-  local _app_name="${_app_name:-${APP_NAME:-$(basename "${_root_dir}")}}"
-  local _build_env=("GOOS=${_platform_pos}" "GOARCH=${_arch_pos}")
-
-  local _build_cmd=""
-  local _build_args=(
-    "-ldflags '-s -w -X main.version=$(git describe --tags) -X main.commit=$(git rev-parse HEAD) -X main.date=$(date +%Y-%m-%d)'"
-    "-trimpath -o \"${_output_name:-}\" \"${_cmd_path:-}\""
-  )
-  _build_cmd=$(printf '%s %s %s' "${_build_env[@]}" "go build " "${_build_args[@]}")
-  log info "Building for ${_platform_pos:-} ${_arch_pos:-}..." true
-
-  eval "${_build_cmd}" || {
-    log error "Failed to build for ${_platform_pos:-} ${_arch_pos:-}" true
-    return 1
-  }
-
-  log success "Binary built: ${_output_name:-}" true
-
-  return 0
-}
+# Function removed - duplicate definition
 
 check_overwrite_binary() {
   local _platform_pos="${1:-${_platform_pos:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
@@ -915,19 +867,20 @@ build_binary_main() {
 # For backwards compatibility, we alias to the main function
 alias build_binary=build_binary_main
 
-# ====== Load Git information ======
-load_git_info() {
-  if have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    GIT_TAG="$(git describe --tags --dirty --always 2>/dev/null || true)"
-    GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || true)"
-    GIT_DATE="$(git show -s --format=%cd --date=format:%Y-%m-%d 2>/dev/null || date +%Y-%m-%d)"
-    SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct 2>/dev/null || date +%s)"; export SOURCE_DATE_EPOCH
-  else
-    GIT_TAG="dev"; GIT_COMMIT="none"; GIT_DATE="$(date +%Y-%m-%d)"
-    SOURCE_DATE_EPOCH="$(date +%s)"; export SOURCE_DATE_EPOCH
-  fi
-}
-
 have() {
   command -v "$1" >/dev/null 2>&1
 }
+
+# ====== Export Functions ======
+export -f load_manifest_config
+export -f load_git_info
+export -f discover_main_packages
+export -f compute_build_matrix
+export -f prepare_build_flags
+export -f get_output_name
+export -f upx_packaging
+export -f compile_binary
+export -f build_for_arch
+export -f build_binary
+export -f have
+

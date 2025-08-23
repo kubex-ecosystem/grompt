@@ -168,8 +168,18 @@ __main() {
   # local _arrArgs=( "${_args[@]::$#}" )
 
   local _command="${1:-help}"
-  local _platform_arg="${2:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
-  local _arch_arg="${3:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  local _platform_arg="${2:-}"
+  local _arch_arg="${3:-}"
+
+  # If no platform specified, use cross-compilation mode
+  if [[ -z "${_platform_arg}" ]]; then
+    _platform_arg="__CROSS_COMPILE__"  # Special flag for cross-compilation
+  fi
+
+  # Set defaults only for specific platform requests
+  if [[ "${_platform_arg}" != "__CROSS_COMPILE__" ]]; then
+    _arch_arg="${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  fi
 
   local _force="${_FORCE:-${FORCE:-n}}"
   local _will_upx_pack_binary="${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}"
