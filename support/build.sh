@@ -51,6 +51,22 @@ load_git_info() {
   fi
 }
 
+# ====== Go Version Validation ======
+# Source go version management functions
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/go_version.sh"
+
+validate_go_version() {
+  # Use modular go version checking
+  if ! check_go_version_compatibility; then
+    if [[ "${GO_VERSION_CHECK:-true}" == "true" ]]; then
+      log error "Set GO_VERSION_CHECK=false to skip this check"
+      return 1
+    fi
+  fi
+  return 0
+}
+
 # ====== Discover main packages ======
 discover_main_packages() {
   local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
@@ -420,6 +436,7 @@ build_binary() {
   # Initialize configuration
   load_manifest_config
   load_git_info
+  validate_go_version || return 1
 
   # Check for cross-compilation mode
   if [[ "${_platform_args}" == "__CROSS_COMPILE__" || -z "${_platform_args}" ]]; then

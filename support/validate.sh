@@ -1,34 +1,54 @@
 #!/usr/bin/env bash
 # lib/validate.sh – Validação da versão do Go e dependências
 
+# Source go version management functions
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/go_version.sh"
+
 validate_versions() {
-    local _GO_SETUP='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
-    local go_version
-    go_version=$(go version | awk '{print $3}' | tr -d 'go' || echo "")
-    if [[ -z "$go_version" ]]; then
+    local go_setup_url='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
+    local current_version required_version
+
+    # Use modular functions for version checking
+    current_version="$(get_current_go_version)"
+    required_version="$(get_required_go_version)"
+
+    if [[ "${current_version}" == "not-installed" ]]; then
         log error "Go is not installed or not found in PATH."
         return 1
     fi
-    local version_target=""
-    version_target="$(grep '^go ' go.mod | awk '{print $2}')"
-    if [[ -z "$version_target" ]]; then
+
+    if [[ -z "$required_version" ]]; then
         log error "Could not determine the target Go version from go.mod."
         return 1
     fi
-    if [[ "$go_version" != "$version_target" ]]; then
-      local _go_installation_output
-      if [[ -t 0 ]]; then
-        _go_installation_output="$(bash -c "$(curl -sSfL "${_GO_SETUP}")" -s --version "$version_target" >/dev/tty)"
-      else
-        _go_installation_output="$(export NON_INTERACTIVE=true; bash -c "$(curl -sSfL "${_GO_SETUP}")" -s --version "$version_target")"
-      fi
-      if [[ $? -ne 0 ]]; then
-          log error "Failed to install Go version ${version_target}. Output: ${_go_installation_output}"
-          return 1
-      fi
+
+    # Check version compatibility
+    if [[ "$current_version" != "$required_version" ]]; then
+        log warn "Go version mismatch: current=${current_version}, required=${required_version}"
+
+        local go_installation_output
+        if [[ -t 0 ]]; then
+            go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+        else
+            go_installation_output="$(export NON_INTERACTIVE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+        fi
+
+        # shellcheck disable=SC2181
+        if [[ $? -ne 0 ]]; then
+            log error "Failed to install Go version ${required_version}. Output: ${go_installation_output}"
+            return 1
+        fi
     fi
-    local _DEPENDENCIES=( $(cat "${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-/internal/module/info/manifest.json}" | jq -r '.dependencies[]?') )
-    check_dependencies "${_DEPENDENCIES[@]}" || return 1
+
+    # Validate other dependencies from manifest
+    local dependencies manifest_file
+    manifest_file="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-/internal/module/info/manifest.json}"
+
+    if [[ -f "${manifest_file}" ]]; then
+        mapfile -t dependencies < <(jq -r '.dependencies[]?' "${manifest_file}")
+        check_dependencies "${dependencies[@]}" || return 1
+    fi
     return 0
 }
 
@@ -56,7 +76,7 @@ check_dependencies() {
           fi
         else
           log warn "$dep is required for this script to run. Installing..." true
-          if [[ $_FORCE =~ ^[Yy]$ ]]; then
+          if [[ "${_FORCE:-}" =~ ^[Yy]$ ]]; then
             log warn "Force mode is enabled. Installing $dep without confirmation."
             sudo apt-get install -y "$dep" || {
             log error "Failed to install $dep. Please install it manually."

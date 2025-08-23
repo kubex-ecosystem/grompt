@@ -1,0 +1,53 @@
+name: "Grompt Build Engine"
+description: "Universal Go build, test, and distribution engine"
+branding:
+  icon: "package"
+  color: "blue"
+
+inputs:
+  command:
+    description: "Command to run (build, build-dev, test, clean, install)"
+    required: true
+    default: "build"
+  platform:
+    description: "Target platform (linux, darwin, windows, all)"
+    required: false
+  arch:
+    description: "Target architecture (amd64, arm64, all)"
+    required: false
+  go-version-check:
+    description: "Enforce exact Go version from go.mod"
+    required: false
+    default: "true"
+  upx-compression:
+    description: "Enable UPX binary compression"
+    required: false
+    default: "true"
+
+outputs:
+  artifacts-path:
+    description: "Path to generated artifacts"
+    value: ${{ steps.build.outputs.artifacts-path }}
+  version:
+    description: "Built application version"
+    value: ${{ steps.build.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build with Grompt Engine
+      id: build
+      shell: bash
+      run: |
+        # Set environment variables
+        export ENABLE_UPX="${{ inputs.upx-compression }}"
+        export GO_VERSION_CHECK="${{ inputs.go-version-check }}"
+
+        # Run the build engine
+        make ${{ inputs.command }} \
+          ${{ inputs.platform && format('PLATFORM={0}', inputs.platform) || '' }} \
+          ${{ inputs.arch && format('ARCH={0}', inputs.arch) || '' }}
+
+        # Set outputs
+        echo "artifacts-path=dist" >> $GITHUB_OUTPUT
+        echo "version=$(jq -r '.version' internal/module/info/manifest.json)" >> $GITHUB_OUTPUT
