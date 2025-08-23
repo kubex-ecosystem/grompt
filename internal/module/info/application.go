@@ -1,5 +1,5 @@
-// Package manifest provides functionality to read and parse the application manifest.
-package manifest
+// Package info provides functionality to read and parse the application manifest.
+package info
 
 import (
 	_ "embed"
@@ -10,9 +10,7 @@ import (
 //go:embed manifest.json
 var manifestJSONData []byte
 
-var (
-	application Manifest
-)
+// var application Manifest
 
 type Reference struct {
 	Name            string `json:"name"`
@@ -73,16 +71,16 @@ func (m *mmanifest) IsPrivate() bool        { return m.Private }
 
 // lazy cache
 var (
-	cachedManifest *Manifest
+	cachedManifest Manifest
 	cachedControl  *Control
 )
 
 // GetManifest lazy, sem init() com side-effects
 func GetManifest() (Manifest, error) {
 	if cachedManifest != nil {
-		return *cachedManifest, nil
+		return cachedManifest, nil
 	}
-	var m Manifest
+
 	if len(manifestJSONData) == 0 {
 		return nil, fmt.Errorf("manifest.json: embed is empty")
 	}
@@ -92,7 +90,7 @@ func GetManifest() (Manifest, error) {
 		return nil, fmt.Errorf("manifest.json: %w", err)
 	}
 	cachedManifest = &m
-	return m, nil
+	return &m, nil
 }
 
 // FS secOrder quiser permitir override por FS externo:

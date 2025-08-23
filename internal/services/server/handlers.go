@@ -473,8 +473,8 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 
 	var response string
 	var err error
-	var model string = req.Model
-	var maxTokens int = req.MaxTokens
+	var model = req.Model
+	var maxTokens = req.MaxTokens
 
 	switch req.Provider {
 	case "claude":
