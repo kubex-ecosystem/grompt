@@ -54,7 +54,7 @@ func NewGeminiAPI(apiKey string) IAPIConfig {
 	return &GeminiAPI{
 		APIConfig: &APIConfig{
 			apiKey:  apiKey,
-			baseURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+			baseURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
 			httpClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
@@ -71,7 +71,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	// Define default model if not specified
 	if model == "" {
-		model = "gemini-1.5-flash"
+		model = "gemini-2.0-flash"
 	}
 
 	// Update baseURL with model
@@ -215,8 +215,8 @@ func (g *GeminiAPI) IsAvailable() bool {
 // GetCommonModels returns a list of common Gemini models
 func (g *GeminiAPI) GetCommonModels() []string {
 	return []string{
-		//"gemini-2.5-flash",
-		"gemini-1.5-flash",
+		"gemini-2.0-flash",
+		//"gemini-1.5-flash",
 		// "gemini-1.5-pro",
 		// "gemini-1.0-pro",
 	}

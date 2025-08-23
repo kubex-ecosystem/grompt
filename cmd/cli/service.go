@@ -147,6 +147,7 @@ func startServerService() *cobra.Command {
 		geminiKey,
 		chatGPTKey string
 
+
 	var startCmd = &cobra.Command{
 		Use: "start",
 		Annotations: GetDescriptions([]string{
@@ -219,6 +220,7 @@ func startServerService() *cobra.Command {
 	startCmd.Flags().StringVarP(&claudeKey, "claude-key", "C", "", "Claude API key")
 	startCmd.Flags().StringVarP(&geminiKey, "gemini-key", "G", "", "Gemini API key")
 	startCmd.Flags().StringVarP(&chatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
+
 
 	return startCmd
 }
