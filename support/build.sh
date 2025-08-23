@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# build.sh - Enhanced cross-platform Go build system
-# Incorporates robust cross-compilation logic while maintaining current architecture
-
 set -euo pipefail
 set -o errtrace
 set -o functrace
@@ -45,8 +42,10 @@ load_git_info() {
   else
     export _GIT_TAG="dev"
     export _GIT_COMMIT="unknown"
-    export _GIT_DATE="$(date +%Y-%m-%d)"
-    export SOURCE_DATE_EPOCH="$(date +%s)"
+    export _GIT_DATE=
+    _GIT_DATE="$(date +%Y-%m-%d)"
+    export SOURCE_DATE_EPOCH=
+    SOURCE_DATE_EPOCH="$(date +%s)"
 
     log warn "Git not available, using default build info"
   fi
@@ -494,7 +493,7 @@ build_binary() {
   log notice "Mode: ${_build_mode}"
 
   # Build for each platform/architecture combination
-  local platform_info platform arch_list
+  #local platform_info platform arch_list
   while IFS=':' read -r platform arch_list; do
     [[ -z "${platform}" || -z "${arch_list}" ]] && continue
     build_for_platform "${platform}" "${arch_list}" "${_main_dirs}" "${_build_mode}" "${_force}"
@@ -503,16 +502,6 @@ build_binary() {
   log success "Build process completed"
   return 0
 }
-
-# ====== Legacy compatibility functions ======
-# These maintain compatibility with the existing system
-
-# Function removed - using single upx_packaging definition above
-
-# Function removed - using single compile_binary definition above
-
-
-# Function removed - duplicate definition
 
 check_overwrite_binary() {
   local _platform_pos="${1:-${_platform_pos:-${_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}}}"
@@ -818,33 +807,6 @@ install_upx() {
   fi
 }
 
-# ====== Export functions for external use ======
-export -f load_manifest_config
-export -f load_git_info
-export -f discover_main_packages
-export -f compute_build_matrix
-export -f prepare_build_flags
-export -f get_output_name
-export -f upx_packaging
-export -f compile_binary
-export -f check_overwrite_binary
-export -f build_for_arch
-export -f build_for_platform
-export -f build_binary
-export -f build_binary_enhanced
-export -f create_archive
-export -f compress_binary
-export -f arch_iterator
-export -f platform_iterator
-export -f clean_build_artifacts
-export -f install_upx
-export -f measure_build_performance
-export -f _get_os_arr_from_args
-export -f _get_arch_arr_from_args
-export -f _get_os_from_args
-export -f _get_arch_from_args
-export -f is_valid_platform_arch
-
 # ====== Main entry point with legacy compatibility ======
 # This maintains compatibility with main.sh while providing enhanced functionality
 build_binary_main() {
@@ -870,17 +832,3 @@ alias build_binary=build_binary_main
 have() {
   command -v "$1" >/dev/null 2>&1
 }
-
-# ====== Export Functions ======
-export -f load_manifest_config
-export -f load_git_info
-export -f discover_main_packages
-export -f compute_build_matrix
-export -f prepare_build_flags
-export -f get_output_name
-export -f upx_packaging
-export -f compile_binary
-export -f build_for_arch
-export -f build_binary
-export -f have
-
