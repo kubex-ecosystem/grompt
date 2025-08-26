@@ -1,20 +1,8 @@
-import {
-  Code,
-  Copy,
-  Download,
-  Edit,
-  FileText,
-  Moon,
-  Shield,
-  Sun,
-  Trash2,
-  User
-} from 'lucide-react';
+import { Code, Copy, Download, Edit, FileText, Shield, Trash2, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/dist/client/components/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import BackButton from './BackButton';
-import LanguageSelector from './LanguageSelector';
+ 
 
 const AgentView = () => {
   const { t } = useTranslation();
@@ -23,7 +11,7 @@ const AgentView = () => {
   const id = searchParams.get('view') || searchParams.get('id');
 
   // Estados
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [darkMode] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [agent, setAgent] = useState<any | null>(null);
@@ -173,47 +161,29 @@ ${agent.PromptExample || 'No prompt example provided'}
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
-      {/* Header */}
-      <header className={`${currentTheme.cardBg} ${currentTheme.border} border-b sticky top-0 z-10`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/agents" currentTheme={currentTheme} />
-              <User className="h-8 w-8 text-blue-500" />
-              <h1 className="text-2xl font-bold">{agent.Title}</h1>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <LanguageSelector currentTheme={currentTheme} />
-
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-
-              <button
-                onClick={() => router.push(`/agents/new?id=${id}`)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
-              >
-                <Edit size={16} />
-                {t('edit')}
-              </button>
-
-              <button
-                onClick={deleteAgent}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
-              >
-                <Trash2 size={16} />
-                {t('delete')}
-              </button>
-            </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <User className="h-7 w-7 text-blue-500" />
+            <h1 className="text-2xl font-bold">{agent.Title}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push(`/agents/new?id=${id}`)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentTheme.button} transition-colors`}
+            >
+              <Edit size={16} />
+              {t('edit')}
+            </button>
+            <button
+              onClick={deleteAgent}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+            >
+              <Trash2 size={16} />
+              {t('delete')}
+            </button>
           </div>
         </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Informações Básicas */}
         <div className={`${currentTheme.cardBg} ${currentTheme.border} border rounded-lg p-6 mb-8`}>
           <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">

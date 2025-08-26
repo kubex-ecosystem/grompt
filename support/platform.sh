@@ -4,6 +4,7 @@ set -euo pipefail
 set -o errtrace
 set -o functrace
 set -o posix
+
 IFS=$'\n\t'
 
 get_release_url() {
@@ -68,48 +69,162 @@ what_platform() {
 }
 
 _get_os_arr_from_args() {
-  local _PLATFORM_ARG=$1
-  if [[ "${_PLATFORM_ARG}" == "all" ]]; then
-    echo "windows darwin linux"
-  else
-    echo "${_PLATFORM_ARG}"
-  fi
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform}" in
+    all|ALL|a|A|-a|-A)
+      echo "windows darwin linux"
+      return 0
+    ;;
+
+    win|WIN|windows|WINDOWS|w|W|-w|-W)
+      echo "windows"
+      return 0
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      echo "linux"
+      return 0
+    ;;
+
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      echo "darwin"
+      return 0
+    ;;
+
+    *)
+      local _argArr=( "${_platform}" )
+      for arg in "${_argArr[@]}"; do
+        echo "${arg}"
+      done
+    ;;
+  esac
 }
 
 _get_arch_arr_from_args() {
-  local _ARCH_ARG=$1
-  if [[ "${_ARCH_ARG}" == "all" ]]; then
-    echo "amd64 386 arm64"
-  else
-    echo "${_ARCH_ARG}"
-  fi
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+  local _arch="${2:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}" in
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64"
+          return 0
+          ;;
+        arm64|ARM64|aarch64|AARCH64)
+          echo "arm64"
+          return 0
+          ;;
+        amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '$_arch'. Valid options: amd64, arm64."
+          return 1
+          ;;
+      esac
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A|amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '$_arch'. Valid options: amd64."
+          return 1
+          ;;
+      esac
+    ;;
+
+    windows|WINDOWS|w|W|-w|-W)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64"
+          return 0
+          ;;
+        arm64|ARM64|aarch64|AARCH64)
+          echo "arm64"
+          return 0
+          ;;
+        amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, arm64." true
+          return 1
+          ;;
+      esac
+    ;;
+
+    *)
+      log fatal "${_arch:-} is invalid for ${_platform:-}." true
+    ;;
+  esac
+
+  return 1
 }
 
 _get_os_from_args() {
-  local arg=$1
-  case "$arg" in
-    all|ALL|a|A|-a|-A) echo "all" ;;
-    win|WIN|windows|WINDOWS|w|W|-w|-W) echo "windows" ;;
-    linux|LINUX|l|L|-l|-L) echo "linux" ;;
-    darwin|DARWIN|macOS|MACOS|m|M|-m|-M) echo "darwin" ;;
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}" in
+    all|ALL|a|A|-a|-A)
+      echo "all"
+    ;;
+
+    win|WIN|windows|WINDOWS|w|W|-w|-W)
+      echo "windows"
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      echo "linux"
+    ;;
+
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      echo "darwin"
+    ;;
+
     *)
-      log error "Invalid platform: '${arg}'. Valid options: windows, linux, darwin, all."
-      exit 1
-      ;;
+      log fatal "Invalid platform: '${_platform:-}'. Valid options: windows, linux, darwin, all."
+    ;;
+
   esac
 }
 
 _get_arch_from_args() {
-  local arg=$1
-  case "$arg" in
-    all|ALL|a|A|-a|-A) echo "all" ;;
-    amd64|AMD64|x86_64|X86_64|x64|X64) echo "amd64" ;;
-    arm64|ARM64|aarch64|AARCH64) echo "arm64" ;;
-    386|i386|I386) echo "386" ;;
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+  local _arch="${2:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_arch:-}" in
+    all|ALL|a|A|-a|-A)
+      echo "all"
+      return 0
+    ;;
+
+    amd64|AMD64|x86_64|X86_64|x64|X64)
+      echo "amd64"
+      return 0
+    ;;
+
+    arm64|ARM64|aarch64|AARCH64)
+      echo "arm64"
+      return 0
+    ;;
+
+    386|i386|I386)
+      echo "386"
+      return 0
+    ;;
+
     *)
-      log error "Invalid architecture: '${arg}'. Valid options: amd64, arm64, 386."
-      exit 1
-      ;;
+      log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, arm64, 386."
+    ;;
+
   esac
 }
 

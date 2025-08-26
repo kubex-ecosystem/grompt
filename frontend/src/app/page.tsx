@@ -1,16 +1,13 @@
 'use client';
 
-import { Moon, Sparkles, Sun, Users } from 'lucide-react';
+import { Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import LanguageSelector from '../components/LanguageSelector';
+ 
 
 export default function Home() {
   const { t } = useTranslation();
-  const pathname = usePathname();
-  const [darkMode, setDarkMode] = useState(true);
+  
 
   // Temas
   const theme = {
@@ -34,68 +31,11 @@ export default function Home() {
     }
   };
 
-  const currentTheme = darkMode ? theme.dark : theme.light;
-
-  const isActive = (path: string) => pathname === path;
+  const currentTheme = theme.dark;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${currentTheme.bg} ${currentTheme.text}`}>
-      {/* Header */}
-      <header className={`${currentTheme.cardBg} shadow-lg border-b ${currentTheme.border}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                  Grompt
-                </h1>
-                <p className="text-xs text-gray-500">{t('common.subtitle')}</p>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex space-x-8">
-              <Link
-                href="/prompt"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/prompt') ? currentTheme.accent : 'text-gray-500 hover:text-gray-300'
-                  }`}
-              >
-                <Sparkles className="h-4 w-4" />
-                <span>{t('nav.prompt_crafter')}</span>
-              </Link>
-
-              <Link
-                href="/agents"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/agents') ? currentTheme.accent : 'text-gray-500 hover:text-gray-300'
-                  }`}
-              >
-                <Users className="h-4 w-4" />
-                <span>{t('nav.agents')}</span>
-              </Link>
-            </nav>
-
-            {/* Actions */}
-            <div className="flex items-center space-x-4">
-              <LanguageSelector currentTheme={currentTheme} />
-
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-md ${currentTheme.button} transition-colors`}
-                title={darkMode ? t('common.light_mode') : t('common.dark_mode')}
-              >
-                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="py-4">
         {/* Welcome Section */}
         <div className={`${currentTheme.cardBg} rounded-lg shadow-lg p-8 mb-8 ${currentTheme.border} border`}>
           <div className="text-center">

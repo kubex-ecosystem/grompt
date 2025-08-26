@@ -1,11 +1,12 @@
 'use client';
 
-import { Moon, Settings, Sparkles, Sun, Users } from 'lucide-react';
+import { KeyRound, Moon, Settings, Sparkles, Sun, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ConfigModal from './ConfigModal';
+import ApiKeysDrawer from './ApiKeysDrawer';
 import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
@@ -13,6 +14,7 @@ export default function Header() {
   const pathname = usePathname();
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [showConfigModal, setShowConfigModal] = useState<boolean>(false);
+  const [showKeysDrawer, setShowKeysDrawer] = useState<boolean>(false);
 
   // Temas
   const theme = {
@@ -92,6 +94,14 @@ export default function Header() {
             <LanguageSelector currentTheme={currentTheme} />
 
             <button
+              onClick={() => setShowKeysDrawer(true)}
+              className={`p-2 rounded-md ${currentTheme.buttonSecondary} transition-colors`}
+              title="Gerenciar Chaves (BYOK)"
+            >
+              <KeyRound className="h-4 w-4" />
+            </button>
+
+            <button
               onClick={() => setShowConfigModal(true)}
               className={`p-2 rounded-md ${currentTheme.buttonSecondary} transition-colors`}
               title="Configurações"
@@ -119,6 +129,9 @@ export default function Header() {
           window.location.reload();
         }}
       />
+
+      {/* BYOK Drawer */}
+      <ApiKeysDrawer isOpen={showKeysDrawer} onClose={() => setShowKeysDrawer(false)} />
     </header>
   );
 }

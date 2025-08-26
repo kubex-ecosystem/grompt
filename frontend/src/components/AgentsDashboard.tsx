@@ -1,28 +1,10 @@
-import {
-  CheckSquare,
-  Copy,
-  Download,
-  Edit,
-  Eye,
-  FileText,
-  Grid,
-  List,
-  Moon,
-  Plus,
-  Search,
-  Sun,
-  Trash2,
-  Upload,
-  Users
-} from 'lucide-react';
+import { CheckSquare, Copy, Download, Edit, Eye, FileText, Grid, List, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Agent } from './AgentForm';
-import BackButton from './BackButton';
 import ExportAgentsModal from './ExportAgentsModal';
 import ImportAgentsModal from './ImportAgentsModal';
-import LanguageSelector from './LanguageSelector';
 import ValidationAgentsModal from './ValidationAgentsModal';
 
 const AgentsDashboard = () => {
@@ -31,7 +13,7 @@ const AgentsDashboard = () => {
 
   // Estados
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -194,31 +176,11 @@ const AgentsDashboard = () => {
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text}`}>
-      {/* Header */}
-      <header className={`${currentTheme.cardBg} ${currentTheme.border} border-b sticky top-0 z-10`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/" currentTheme={currentTheme} label="Home" />
-              <Users className="h-8 w-8 text-blue-500" />
-              <h1 className="text-2xl font-bold">{t('agents.title')}</h1>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <LanguageSelector currentTheme={currentTheme} />
-
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Users className="h-7 w-7 text-blue-500" />
+          <h1 className="text-2xl font-bold">{t('agents.title')}</h1>
+        </div>
         {/* Controles */}
         <div className={`${currentTheme.cardBg} ${currentTheme.border} border rounded-lg p-6 mb-8`}>
           <div className="flex flex-col gap-4">

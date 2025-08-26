@@ -13,12 +13,15 @@ _WARN="\033[0;33m"
 _ERROR="\033[0;31m"
 _INFO="\033[0;36m"
 _NOTICE="\033[0;35m"
+_FATAL="\033[0;41m"
+_TRACE="\033[0;34m"
 _NC="\033[0m"
 
 log() {
   local type=${1:-info}
   local message=${2:-}
   local debug=${3:-${DEBUG:-false}}
+  debug="${DEBUG:-$debug}"
 
   case $type in
     question|_QUESTION|-q|-Q)
@@ -48,12 +51,12 @@ log() {
       printf '%b[_SUCCESS]%b ✅  %s\n' "$_SUCCESS" "$_NC" "$message"
       ;;
     fatal|_FATAL|-f|-F)
-      printf '%b[_FATAL]%b 💀  %s\n' "$_FATAL" "$_NC" "$message"
-      if [[ "$debug" == true ]]; then
-        printf '%b[_FATAL]%b 💀  %s\n' "$_FATAL" "$_NC" "Exiting due to fatal error."
-      fi
+
+      printf '%b[_FATAL]%b 💀  %s\n' "$_FATAL" "$_NC" "Exiting due to fatal error: $message" | tee /dev/tty
       clear_build_artifacts
-      exit 1
+
+      # shellcheck disable=SC2317
+      exit 1 || kill -9 $$
       ;;
     *)
       if [[ "$debug" == true ]]; then
