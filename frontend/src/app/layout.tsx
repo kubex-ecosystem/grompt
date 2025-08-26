@@ -3,6 +3,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { ReactNode } from 'react';
 import ClientProvider from './client-provider';
+import AppShell from '../components/AppShell';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -17,7 +18,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-gray-900 text-white`}>
         <ClientProvider>
-          {children}
+          <AppShell>
+            {children}
+          </AppShell>
         </ClientProvider>
       </body>
     </html>

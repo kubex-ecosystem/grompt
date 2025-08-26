@@ -1,8 +1,6 @@
-import { AlertCircle, Check, ChevronDown, ChevronUp, Copy, Edit3, FileText, Moon, Plus, RefreshCw, Sun, Trash2, Wand2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, ChevronUp, Copy, Edit3, Plus, RefreshCw, Trash2, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import BackButton from './components/BackButton';
-import LanguageSelector from './components/LanguageSelector';
 import LogViewer from './components/LogViewer';
 import { logger, useFetchLogger, useNavigationLogger } from './utils/logger';
 
@@ -40,6 +38,7 @@ const PromptCrafter = () => {
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
   const [showLogViewer, setShowLogViewer] = useState(false);
+  const [byokMap, setByokMap] = useState<{[k:string]: boolean}>({});
   type ServerInfo = {
     version?: string;
     apis?: {
@@ -89,7 +88,7 @@ const PromptCrafter = () => {
 
     console.log(`🔗 Fazendo requisição para: ${url}`);
 
-    const defaultOptions = {
+    let defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -116,6 +115,26 @@ const PromptCrafter = () => {
     document.documentElement.className = darkMode ? 'dark' : '';
   }, [darkMode]);
 
+  // Ao trocar provider, carregar default model do BYOK (se existir)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { unlock } = await import('./hooks/useApiKeys');
+        const res = await unlock();
+        const v: any = res.vault || {};
+        const defaults: Record<string, string | undefined> = {
+          claude: v.anthropic?.defaultModel,
+          openai: v.openai?.defaultModel,
+          deepseek: v.deepseek?.defaultModel,
+          ollama: v.ollama?.defaultModel,
+          gemini: v.gemini?.defaultModel,
+          chatgpt: v.chatgpt?.defaultModel || v.openai?.defaultModel,
+        };
+        setSelectedModel(defaults[apiProvider] || '');
+      } catch {}
+    })();
+  }, [apiProvider]);
+
   // Verificar configuração e APIs disponíveis na inicialização
   useEffect(() => {
     checkAPIAvailability();
@@ -140,29 +159,63 @@ const PromptCrafter = () => {
 
       if (configResponse.ok) {
         const config = await configResponse.json();
-        setAvailableAPIs(config);
+
+        // Também checar BYOK no navegador e mesclar disponibilidade
+        let byok: any = {};
+        try {
+          const { unlock } = await import('./hooks/useApiKeys');
+          const res = await unlock();
+          const v = (res && res.vault) || {};
+          byok = {
+            claude_available: !!v.anthropic?.apiKey,
+            openai_available: !!(v.openai?.apiKey || v.chatgpt?.apiKey),
+            deepseek_available: !!v.deepseek?.apiKey,
+            ollama_available: !!v.ollama?.baseUrl,
+            gemini_available: !!v.gemini?.apiKey,
+            chatgpt_available: !!(v.chatgpt?.apiKey || v.openai?.apiKey),
+          };
+        } catch {}
+
+        const merged = {
+          ...config,
+          claude_available: config.claude_available || byok.claude_available,
+          openai_available: config.openai_available || byok.openai_available,
+          deepseek_available: config.deepseek_available || byok.deepseek_available,
+          ollama_available: config.ollama_available || byok.ollama_available,
+          gemini_available: config.gemini_available || byok.gemini_available,
+          chatgpt_available: config.chatgpt_available || byok.chatgpt_available,
+        };
+
+        setAvailableAPIs(merged);
+        // update BYOK map for badges
+        setByokMap({
+          claude: !!byok.claude_available,
+          openai: !!byok.openai_available,
+          deepseek: !!byok.deepseek_available,
+          ollama: !!byok.ollama_available,
+          gemini: !!byok.gemini_available,
+          chatgpt: !!byok.chatgpt_available,
+        });
         setConnectionStatus('connected');
 
-        console.log('📋 Configuração recebida:', config);
-
-        // Definir provider padrão baseado na disponibilidade
-        if (config.claude_available) {
+        // Definir provider padrão baseado na disponibilidade (BYOK também conta)
+        if (merged.claude_available) {
           setApiProvider('claude');
-        } else if (config.openai_available) {
+        } else if (merged.openai_available) {
           setApiProvider('openai');
-        } else if (config.deepseek_available) {
+        } else if (merged.deepseek_available) {
           setApiProvider('deepseek');
-        } else if (config.ollama_available) {
+        } else if (merged.ollama_available) {
           setApiProvider('ollama');
-        } else if (config.gemini_available) {
+        } else if (merged.gemini_available) {
           setApiProvider('gemini');
-        } else if (config.chatgpt_available) {
+        } else if (merged.chatgpt_available) {
           setApiProvider('chatgpt');
         } else {
           setApiProvider('demo');
         }
 
-        console.log('✅ APIs disponíveis:', config);
+        console.log('✅ APIs disponíveis (merged):', merged);
       } else {
         throw new Error(`Servidor retornou status ${configResponse.status}`);
       }
@@ -179,6 +232,22 @@ const PromptCrafter = () => {
       }
     }
   };
+
+  // Reagir a updates do BYOK (drawer) e storage de outras abas
+  useEffect(() => {
+    const onUpdated = () => {
+      checkAPIAvailability();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'grompt.apikeys.v1') checkAPIAvailability();
+    };
+    window.addEventListener('grompt:apikeys-updated' as any, onUpdated as any);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('grompt:apikeys-updated' as any, onUpdated as any);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const addIdea = () => {
     if (currentInput.trim()) {
@@ -335,13 +404,24 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
         response = generateDemoPrompt();
       } else if (apiProvider === 'claude') {
         console.log('🤖 Enviando para Claude API...');
-        const result = await apiCall('/api/claude', {
-          method: 'POST',
-          body: JSON.stringify({
-            prompt: engineeringPrompt,
-            max_tokens: maxLength
-          })
-        });
+        // Prefer direct BYOK call (streaming)
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('anthropic', vr.vault || {})) {
+          setGeneratedPrompt('');
+          await streamDirectCall('anthropic', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength }, (delta) => {
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/api/claude', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -354,14 +434,23 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'openai') {
         console.log('🧠 Enviando para OpenAI API...');
-        const result = await apiCall('/api/openai', {
-          method: 'POST',
-          body: JSON.stringify({
-            prompt: engineeringPrompt,
-            max_tokens: maxLength,
-            model: selectedModel || 'gpt-3.5-turbo'
-          })
-        });
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('openai', vr.vault || {})) {
+          setGeneratedPrompt('');
+          await streamDirectCall('openai', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-3.5-turbo' }, (delta) => {
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/api/openai', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-3.5-turbo' })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -374,14 +463,23 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'deepseek') {
         console.log('🔍 Enviando para DeepSeek API...');
-        const result = await apiCall('/api/deepseek', {
-          method: 'POST',
-          body: JSON.stringify({
-            prompt: engineeringPrompt,
-            max_tokens: maxLength,
-            model: selectedModel || 'deepseek-chat'
-          })
-        });
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('deepseek', vr.vault || {})) {
+          setGeneratedPrompt('');
+          await streamDirectCall('deepseek', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'deepseek-chat' }, (delta) => {
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/api/deepseek', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'deepseek-chat' })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -393,14 +491,23 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
         console.log('✅ Resposta recebida do DeepSeek');
       } else if (apiProvider === 'ollama') {
         console.log('🦙 Enviando para Ollama...');
-        const result = await apiCall('/api/ollama', {
-          method: 'POST',
-          body: JSON.stringify({
-            model: selectedModel || 'llama2',
-            prompt: engineeringPrompt,
-            stream: false
-          })
-        });
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('ollama', vr.vault || {})) {
+          setGeneratedPrompt('');
+          await streamDirectCall('ollama', vr.vault || {}, { prompt: engineeringPrompt, model: selectedModel || 'llama2', stream: true }, (delta) => {
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/api/ollama', {
+            method: 'POST',
+            body: JSON.stringify({ model: selectedModel || 'llama2', prompt: engineeringPrompt, stream: false })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -413,14 +520,22 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'gemini') {
         console.log('🔶 Enviando para Gemini...');
-        const result = await apiCall('/api/gemini', {
-          method: 'POST',
-          body: JSON.stringify({
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('gemini', vr.vault || {})) {
+          result = await directCall('gemini', vr.vault || {}, {
             prompt: engineeringPrompt,
             max_tokens: maxLength,
             model: selectedModel || 'gemini-1.5-pro'
-          })
-        });
+          });
+        } else {
+          result = await apiCall('/api/gemini', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gemini-1.5-pro' })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -432,14 +547,23 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
         console.log('✅ Resposta recebida do Gemini');
       } else if (apiProvider === 'chatgpt') {
         console.log('🤖 Enviando para ChatGPT...');
-        const result = await apiCall('/api/chatgpt', {
-          method: 'POST',
-          body: JSON.stringify({
-            prompt: engineeringPrompt,
-            max_tokens: maxLength,
-            model: selectedModel || 'gpt-4'
-          })
-        });
+        const { unlock } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlock();
+        let result: Response;
+        if (hasByok('chatgpt', vr.vault || {})) {
+          setGeneratedPrompt('');
+          await streamDirectCall('chatgpt', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-4' }, (delta) => {
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/api/chatgpt', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-4' })
+          });
+        }
 
         if (!result.ok) {
           const errorText = await result.text();
@@ -744,33 +868,24 @@ make run
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4 transition-colors duration-300`}>
-      <div className="max-w-[90%] mx-auto">{/* Expandido de max-w-7xl para 90% */}
+      <div className="max-w-[90%] mx-auto px-2 sm:px-0">{/* Melhor espaçamento em telas menores */}
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <BackButton to="/" currentTheme={currentTheme} label="Home" />
-            <div>
-              <h1 className="text-4xl font-bold mb-2">
-                <span className={currentTheme.accent}>{t('header.title')}</span>
-              </h1>
-              <p className={currentTheme.textSecondary}>
-                {t('header.subtitle')}
+          <div>
+            <h1 className="text-4xl font-bold mb-2">
+              <span className={currentTheme.accent}>{t('header.title')}</span>
+            </h1>
+            <p className={currentTheme.textSecondary}>
+              {t('header.subtitle')}
+            </p>
+            {/* Debug info em desenvolvimento */}
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-xs text-yellow-400 mt-1">
+                🔧 {t('header.debugMode')} | {t('header.baseUrl')}: {getBaseURL()} | {t('header.status')}: {connectionStatus}
               </p>
-              {/* Debug info em desenvolvimento */}
-              {process.env.NODE_ENV === 'development' && (
-                <p className="text-xs text-yellow-400 mt-1">
-                  🔧 {t('header.debugMode')} | {t('header.baseUrl')}: {getBaseURL()} | {t('header.status')}: {connectionStatus}
-                </p>
-              )}
-            </div>
+            )}
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
-              <span className={`text-sm ${getConnectionStatusColor()}`}>
-                {getConnectionStatusText()}
-              </span>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 justify-end">
             <select
               title={t('providers.select')}
               value={apiProvider}
@@ -778,25 +893,25 @@ make run
                 setApiProvider(e.target.value);
                 setSelectedModel(''); // Reset model when changing provider
               }}
-              className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500`}
+              className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-w-[180px]`}
             >
-              {availableAPIs.claude_available && (
-                <option value="claude">{t('providers.claude')}</option>
+              {(availableAPIs.claude_available || byokMap['claude']) && (
+                <option value="claude">{t('providers.claude')}{byokMap['claude'] ? ' (BYOK)' : ''}</option>
               )}
-              {availableAPIs.openai_available && (
-                <option value="openai">{t('providers.openai')}</option>
+              {(availableAPIs.openai_available || byokMap['openai']) && (
+                <option value="openai">{t('providers.openai')}{byokMap['openai'] ? ' (BYOK)' : ''}</option>
               )}
-              {availableAPIs.deepseek_available && (
-                <option value="deepseek">{t('providers.deepseek')}</option>
+              {(availableAPIs.deepseek_available || byokMap['deepseek']) && (
+                <option value="deepseek">{t('providers.deepseek')}{byokMap['deepseek'] ? ' (BYOK)' : ''}</option>
               )}
-              {availableAPIs.ollama_available && (
-                <option value="ollama">{t('providers.ollama')}</option>
+              {(availableAPIs.ollama_available || byokMap['ollama']) && (
+                <option value="ollama">{t('providers.ollama')}{byokMap['ollama'] ? ' (BYOK)' : ''}</option>
               )}
-              {availableAPIs.gemini_available && (
-                <option value="gemini">{t('providers.gemini')}</option>
+              {(availableAPIs.gemini_available || byokMap['gemini']) && (
+                <option value="gemini">{t('providers.gemini')}{byokMap['gemini'] ? ' (BYOK)' : ''}</option>
               )}
-              {availableAPIs.chatgpt_available && (
-                <option value="chatgpt">{t('providers.chatgpt')}</option>
+              {(availableAPIs.chatgpt_available || byokMap['chatgpt']) && (
+                <option value="chatgpt">{t('providers.chatgpt')}{byokMap['chatgpt'] ? ' (BYOK)' : ''}</option>
               )}
               <option value="demo">{t('providers.demo')}</option>
             </select>
@@ -807,7 +922,7 @@ make run
                 title={t('providers.selectModel')}
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500`}
+                className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-w-[200px]`}
               >
                 <option value="">{t('providers.defaultModel')}</option>
                 {((availableAPIs as typeof availableAPIs).available_models as Record<string, string[]>)[apiProvider].map((model) => (
@@ -816,22 +931,16 @@ make run
               </select>
             )}
 
-            <LanguageSelector currentTheme={currentTheme} />
-
-            <button
-              onClick={() => setShowLogViewer(true)}
-              className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
-              title={t('common.viewLogs')}
-            >
-              <FileText size={20} />
-            </button>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg ${currentTheme.buttonSecondary} transition-colors`}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            {/* Custom model override (useful when BYOK with limited access) */}
+            {apiProvider !== 'demo' && (
+              <input
+                title="Custom model (optional)"
+                placeholder={apiProvider === 'gemini' ? 'e.g., gemini-1.5-flash, gemini-1.5-flash-8b' : 'custom model (optional)'}
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500 w-full md:w-auto flex-1 min-w-[220px]`}
+              />
+            )}
           </div>
         </div>
 
@@ -871,7 +980,7 @@ make run
           </div>
         )}
 
-        <div className={`grid gap-6 transition-all duration-700 ease-in-out ${
+        <div className={`grid gap-4 sm:gap-6 transition-all duration-700 ease-in-out ${
           // Grid que se adapta fluida e dinamicamente
           isInputCollapsed && isOutputCollapsed
             ? 'grid-cols-1' // Apenas Ideas quando ambos colapsados
@@ -879,7 +988,7 @@ make run
               ? 'grid-cols-1 lg:grid-cols-2' // Ideas + Output
               : !isInputCollapsed && isOutputCollapsed
                 ? 'grid-cols-1 lg:grid-cols-2' // Input + Ideas
-                : 'grid-cols-1 lg:grid-cols-3' // Todos expandidos: Input + Ideas + Output
+                : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' // 3 colunas só em ≥xl
           }`}>
 
           {/* Input Section - Sempre no DOM, mas com transições ultra-fluidas */}
@@ -891,7 +1000,7 @@ make run
           </div>
 
           {/* Ideas List - Sempre visível e responsivo */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] ${
+          <div className={`${currentTheme.cardBg} rounded-xl p-4 sm:p-6 border ${currentTheme.border} shadow-lg hover:shadow-xl transition-all duration-500 ease-in-out transform hover:scale-[1.02] ${
             // Expande quando é o único card visível
             isInputCollapsed && isOutputCollapsed ? 'lg:col-span-1' : ''
             }`}>
@@ -1056,12 +1165,14 @@ make run
         </div>
       </div>
 
-      {/* Log Viewer Modal */}
+  	  {/* Log Viewer Modal */}
       <LogViewer
         currentTheme={currentTheme}
         isOpen={showLogViewer}
         onClose={() => setShowLogViewer(false)}
       />
+
+      {/* BYOK Drawer is global in AppShell */}
     </div>
   );
 };
