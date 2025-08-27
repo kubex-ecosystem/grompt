@@ -130,7 +130,7 @@ grompt -h
 Use the `squad` command to generate an `AGENTS.md` with recommended AI agents based on your project requirements:
 
 ```bash
-./grompt squad "Quero um microserviço de backend para pagamentos, com autenticação, integração com Stripe, testes automatizados, e deploy em Docker. Prefiro Go ou Python, sem Java."
+./grompt squad "Want a backend microservice for payments, with authentication, Stripe integration, automated tests, and Docker deployment. Prefer Go or Python, no Java."
 ```
 
 This will create an `AGENTS.md` file in the current directory.
