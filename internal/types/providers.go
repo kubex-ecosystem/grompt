@@ -160,6 +160,7 @@ func NewProviders(config IConfig) []*ProviderImpl {
 		{"gemini", "gemini"},
 		{"deepseek", "deepseek"},
 		{"ollama", "ollama"},
+		{"chatgpt", "chatgpt"},
 	}
 
 	for _, pc := range providerConfigs {

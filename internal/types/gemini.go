@@ -54,7 +54,7 @@ func NewGeminiAPI(apiKey string) IAPIConfig {
 	return &GeminiAPI{
 		APIConfig: &APIConfig{
 			apiKey:  apiKey,
-			baseURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+			baseURL: "https://generativelanguage.googleapis.com/", //v1beta/models/gemini-2.0-flash:generateContent
 			httpClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
@@ -75,7 +75,11 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 	}
 
 	// Update baseURL with model
-	baseURL := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", model)
+	baseURL := fmt.Sprintf(
+		"https://generativelanguage.googleapis.com/%s/models/%s:generateContent",
+		g.GetVersion(),
+		model,
+	)
 
 	requestBody := GeminiRequest{
 		Contents: []struct {
@@ -155,8 +159,6 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 // IsAvailable checks if the Gemini API is available
 func (g *GeminiAPI) IsAvailable() bool {
-	return true
-
 	if g.apiKey == "" {
 		gl.Log("notice", "Gemini API key not configured, assuming not available")
 		return false
@@ -216,9 +218,10 @@ func (g *GeminiAPI) IsAvailable() bool {
 func (g *GeminiAPI) GetCommonModels() []string {
 	return []string{
 		"gemini-2.0-flash",
-		//"gemini-1.5-flash",
-		// "gemini-1.5-pro",
-		// "gemini-1.0-pro",
+		"gemini-1.5-flash",
+		"gemini-2.0-pro",
+		"gemini-1.5-pro",
+		"gemini-1.0-pro",
 	}
 }
 

@@ -89,6 +89,7 @@ type IConfig interface {
 	GetAPIKey(provider string) string
 	SetAPIKey(provider string, key string) error
 	GetAPIEndpoint(provider string) string
+	GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string
 }
 
 type Config struct {
@@ -197,4 +198,70 @@ func (c *Config) checkOllamaConnection() bool {
 	}
 	defer conn.Close()
 	return true
+}
+
+// GetBaseGenerationPrompt transforms raw ideas into a structured prompt engineering template.
+// This method applies professional prompt engineering techniques to convert unorganized ideas
+// into well-structured, effective prompts for AI interactions.
+func (c *Config) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
+	// Set default values
+	if ideas == nil {
+		ideas = []string{}
+	}
+	if lang == "" {
+		lang = "português"
+	}
+	if maxLength <= 0 {
+		maxLength = 2000
+	}
+	if purposeType == "" {
+		purposeType = "Outros"
+	}
+
+	// Build ideas list
+	ideasListStr := ""
+	for i, idea := range ideas {
+		ideasListStr += fmt.Sprintf("%d. \"%s\"\n", i+1, idea)
+	}
+
+	// Build purpose text
+	purposeText := purposeType
+	if purpose != "" {
+		purposeText += ` (` + purpose + `)`
+	}
+
+	engineeringPrompt := `
+Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
+
+CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
+` + ideasListStr + `
+
+PROPÓSITO DO PROMPT: ` + purposeText + `
+IDIOMA DE RESPOSTA: ` + lang + `
+TAMANHO MÁXIMO: ` + fmt.Sprintf("%d", maxLength) + ` caracteres
+
+INSTRUÇÕES PARA ESTRUTURAÇÃO:
+1. **Análise**: Identifique o objetivo principal e temas centrais das ideias
+2. **Organização**: Estruture logicamente as informações em hierarquia clara
+3. **Técnicas de Prompt Engineering**:
+   - Definição clara de contexto e papel (persona)
+   - Instruções específicas, mensuráveis e testáveis
+   - Exemplos concretos quando apropriado
+   - Formato de saída bem definido e estruturado
+   - Chain-of-thought para raciocínios complexos
+   - Few-shot examples se necessário
+4. **Formatação**: Use markdown para estruturação visual clara
+5. **Tom**: Seja preciso, objetivo, profissional e acionável
+6. **Escopo**: Mantenha dentro do limite de caracteres especificado
+
+CRITÉRIOS DE QUALIDADE:
+- Clareza: Instruções inequívocas e fáceis de seguir
+- Completude: Cubra todos os aspectos relevantes das ideias originais
+- Eficácia: Optimize para obter os melhores resultados da IA
+- Usabilidade: Pronto para uso imediato sem ajustes
+
+IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais, metadados ou texto introdutório. O prompt deve ser completo, autossuficiente e pronto para uso.
+`
+
+	return engineeringPrompt
 }

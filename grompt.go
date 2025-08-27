@@ -73,6 +73,8 @@ func DefaultConfig(configFilePath string) Config {
 		ClaudeAPIKey:   "",
 		OpenAIAPIKey:   "",
 		DeepSeekAPIKey: "",
+		GeminiAPIKey:   "",
+		ChatGPTAPIKey:  "",
 		OllamaEndpoint: "http://localhost:11434",
 		Debug:          false,
 	}
