@@ -1,9 +1,9 @@
 'use client';
 
+import { CheckCircle, Download, KeyRound, Lock, PlugZap, Trash2, Unlock, Upload, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { KeyRound, Upload, Download, Trash2, Lock, Unlock, CheckCircle, XCircle, PlugZap } from 'lucide-react';
-import { ApiKeysVault, unlockVault, saveVault, clearVault, exportStoredEnvelope, importStoredEnvelope } from '../hooks/useApiKeys';
-import { providerHeaders, testProvider, ProviderId } from '../lib/providers';
+import { ApiKeysVault, clearVault, exportStoredEnvelope, importStoredEnvelope, saveVault, unlockVault } from '../hooks/useApiKeys';
+import { ProviderId, testProvider } from '../lib/providers';
 
 type Props = {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
   const [enc, setEnc] = useState<boolean>(false);
   const [vault, setVault] = useState<ApiKeysVault>({});
   const [busy, setBusy] = useState(false);
-  const [testResult, setTestResult] = useState<Record<string, { status: 'idle'|'ok'|'fail'; detail?: string }>>({});
+  const [testResult, setTestResult] = useState<Record<string, { status: 'idle' | 'ok' | 'fail'; detail?: string }>>({});
 
   const baseURL = useMemo(() => getBaseURL(), []);
 
@@ -48,7 +48,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
     if (res.ok && res.vault) {
       setLocked(false);
       setVault(res.vault);
-      try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch {}
+      try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch { }
     } else {
       setLocked(true);
       alert(res.error || 'Falha ao desbloquear');
@@ -63,7 +63,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
       setEnc(res.enc);
       setLocked(!!res.locked);
       alert('Chaves salvas no navegador.');
-      try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch {}
+      try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch { }
     } catch (e) {
       alert('Erro ao salvar chaves');
     } finally {
@@ -78,7 +78,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
     setLocked(false);
     setEnc(false);
     setPassphrase('');
-    try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch {}
+    try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch { }
   };
 
   const handleExport = () => {
@@ -99,7 +99,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
       try {
         importStoredEnvelope(String(reader.result));
         alert('Importado com sucesso. Se criptografado, informe a passphrase e Desbloqueie.');
-        try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch {}
+        try { window.dispatchEvent(new CustomEvent('grompt:apikeys-updated')); } catch { }
       } catch (err) {
         alert('JSON inválido para importação');
       }
@@ -160,10 +160,10 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               onChange={(e) => setPassphrase(e.target.value)}
             />
             {enc && locked ? (
-              <button onClick={handleUnlock} className="px-3 py-2 bg-blue-600 rounded flex items-center gap-1"><Unlock size={16}/> Desbloquear</button>
+              <button onClick={handleUnlock} className="px-3 py-2 bg-blue-600 rounded flex items-center gap-1"><Unlock size={16} /> Desbloquear</button>
             ) : (
               <div className="px-3 py-2 border border-gray-700 rounded flex items-center gap-1 text-gray-300">
-                {enc ? <Lock size={16}/> : <Unlock size={16}/>} {enc ? 'Criptografado' : 'Sem criptografia'}
+                {enc ? <Lock size={16} /> : <Unlock size={16} />} {enc ? 'Criptografado' : 'Sem criptografia'}
               </div>
             )}
           </div>
@@ -182,19 +182,28 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
             <input
               type="text" placeholder="Default model (ex.: gpt-4o-mini)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
-              value={vault.openai?.defaultModel || ''}
-              onChange={(e) => setVault({ ...vault, openai: { ...(vault.openai || {}), defaultModel: e.target.value } })}
+              value={(vault.openai?.defaultModel || '') as string}
+              onChange={(e) =>
+                setVault({
+                  ...vault,
+                  openai: {
+                    apiKey: vault.openai?.apiKey ?? '',
+                    org: vault.openai?.org,
+                    defaultModel: e.target.value
+                  }
+                })
+              }
             />
             <input
               type="text" placeholder="OpenAI-Organization (opcional)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.openai?.org || ''}
-              onChange={(e) => setVault({ ...vault, openai: { ...(vault.openai || {}), org: e.target.value } })}
+              onChange={(e) => setVault({ ...vault, openai: { apiKey: vault.openai?.apiKey ?? '', org: e.target.value, defaultModel: vault.openai?.defaultModel } })}
             />
             <button onClick={() => test('openai')} className="text-sm px-3 py-1 bg-gray-700 rounded flex items-center gap-2">
-              <PlugZap size={16}/> Testar Conexão
-              {testResult['openai']?.status === 'ok' && <CheckCircle size={16} className="text-green-400"/>}
-              {testResult['openai']?.status === 'fail' && <XCircle size={16} className="text-red-400"/>}
+              <PlugZap size={16} /> Testar Conexão
+              {testResult['openai']?.status === 'ok' && <CheckCircle size={16} className="text-green-400" />}
+              {testResult['openai']?.status === 'fail' && <XCircle size={16} className="text-red-400" />}
             </button>
             {testResult['openai']?.status === 'fail' && (
               <p className="mt-2 text-xs text-yellow-400">{testResult['openai']?.detail || 'Falha na conexão. Se for CORS, use proxy/backend sem enviar a chave.'}</p>
@@ -213,12 +222,12 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               type="text" placeholder="Default model (ex.: claude-3-haiku)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.anthropic?.defaultModel || ''}
-              onChange={(e) => setVault({ ...vault, anthropic: { ...(vault.anthropic || {}), defaultModel: e.target.value } })}
+              onChange={(e) => setVault({ ...vault, anthropic: { apiKey: vault.anthropic?.apiKey ?? '', defaultModel: e.target.value } })}
             />
             <button onClick={() => test('anthropic')} className="text-sm px-3 py-1 bg-gray-700 rounded flex items-center gap-2">
-              <PlugZap size={16}/> Testar Conexão
-              {testResult['anthropic']?.status === 'ok' && <CheckCircle size={16} className="text-green-400"/>}
-              {testResult['anthropic']?.status === 'fail' && <XCircle size={16} className="text-red-400"/>}
+              <PlugZap size={16} /> Testar Conexão
+              {testResult['anthropic']?.status === 'ok' && <CheckCircle size={16} className="text-green-400" />}
+              {testResult['anthropic']?.status === 'fail' && <XCircle size={16} className="text-red-400" />}
             </button>
             {testResult['anthropic']?.status === 'fail' && (
               <p className="mt-2 text-xs text-yellow-400">{testResult['anthropic']?.detail || 'Falha na conexão. Se for CORS, use proxy/backend sem enviar a chave.'}</p>
@@ -237,12 +246,12 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               type="text" placeholder="Default model (ex.: gemini-1.5-flash)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.gemini?.defaultModel || ''}
-              onChange={(e) => setVault({ ...vault, gemini: { ...(vault.gemini || {}), defaultModel: e.target.value } })}
+              onChange={(e) => setVault({ ...vault, gemini: { apiKey: vault.gemini?.apiKey ?? '', defaultModel: e.target.value } })}
             />
             <button onClick={() => test('gemini')} className="text-sm px-3 py-1 bg-gray-700 rounded flex items-center gap-2">
-              <PlugZap size={16}/> Testar Conexão
-              {testResult['gemini']?.status === 'ok' && <CheckCircle size={16} className="text-green-400"/>}
-              {testResult['gemini']?.status === 'fail' && <XCircle size={16} className="text-red-400"/>}
+              <PlugZap size={16} /> Testar Conexão
+              {testResult['gemini']?.status === 'ok' && <CheckCircle size={16} className="text-green-400" />}
+              {testResult['gemini']?.status === 'fail' && <XCircle size={16} className="text-red-400" />}
             </button>
             {testResult['gemini']?.status === 'fail' && (
               <p className="mt-2 text-xs text-yellow-400">{testResult['gemini']?.detail || 'Falha na conexão. Se for CORS, use proxy/backend sem enviar a chave.'}</p>
@@ -261,12 +270,12 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               type="text" placeholder="Default model (ex.: deepseek-chat)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.deepseek?.defaultModel || ''}
-              onChange={(e) => setVault({ ...vault, deepseek: { ...(vault.deepseek || {}), defaultModel: e.target.value } })}
+              onChange={(e) => setVault({ ...vault, deepseek: { apiKey: vault.deepseek?.apiKey ?? '', defaultModel: e.target.value } })}
             />
             <button onClick={() => test('deepseek')} className="text-sm px-3 py-1 bg-gray-700 rounded flex items-center gap-2">
-              <PlugZap size={16}/> Testar Conexão
-              {testResult['deepseek']?.status === 'ok' && <CheckCircle size={16} className="text-green-400"/>}
-              {testResult['deepseek']?.status === 'fail' && <XCircle size={16} className="text-red-400"/>}
+              <PlugZap size={16} /> Testar Conexão
+              {testResult['deepseek']?.status === 'ok' && <CheckCircle size={16} className="text-green-400" />}
+              {testResult['deepseek']?.status === 'fail' && <XCircle size={16} className="text-red-400" />}
             </button>
             {testResult['deepseek']?.status === 'fail' && (
               <p className="mt-2 text-xs text-yellow-400">{testResult['deepseek']?.detail || 'Falha na conexão. Se for CORS, use proxy/backend sem enviar a chave.'}</p>
@@ -288,9 +297,9 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               onChange={(e) => setVault({ ...vault, ollama: { ...(vault.ollama || {}), defaultModel: e.target.value } })}
             />
             <button onClick={() => test('ollama')} className="text-sm px-3 py-1 bg-gray-700 rounded flex items-center gap-2">
-              <PlugZap size={16}/> Testar Conexão
-              {testResult['ollama']?.status === 'ok' && <CheckCircle size={16} className="text-green-400"/>}
-              {testResult['ollama']?.status === 'fail' && <XCircle size={16} className="text-red-400"/>}
+              <PlugZap size={16} /> Testar Conexão
+              {testResult['ollama']?.status === 'ok' && <CheckCircle size={16} className="text-green-400" />}
+              {testResult['ollama']?.status === 'fail' && <XCircle size={16} className="text-red-400" />}
             </button>
             {testResult['ollama']?.status === 'fail' && (
               <p className="mt-2 text-xs text-yellow-400">{testResult['ollama']?.detail || 'Falha na conexão. Verifique URL do Ollama e CORS.'}</p>
@@ -301,17 +310,17 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
         {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-2">
           <button disabled={busy} onClick={handleSave} className="px-3 py-2 bg-blue-600 rounded flex items-center gap-2 disabled:opacity-60">
-            <Lock size={16}/> Salvar (local)
+            <Lock size={16} /> Salvar (local)
           </button>
           <label className="px-3 py-2 bg-gray-700 rounded flex items-center gap-2 cursor-pointer">
-            <Upload size={16}/> Importar JSON
-            <input type="file" accept="application/json" className="hidden" onChange={handleImport}/>
+            <Upload size={16} /> Importar JSON
+            <input type="file" accept="application/json" className="hidden" onChange={handleImport} />
           </label>
           <button onClick={handleExport} className="px-3 py-2 bg-gray-700 rounded flex items-center gap-2">
-            <Download size={16}/> Exportar JSON
+            <Download size={16} /> Exportar JSON
           </button>
           <button onClick={handleClear} className="px-3 py-2 bg-red-700 rounded flex items-center gap-2">
-            <Trash2 size={16}/> Limpar
+            <Trash2 size={16} /> Limpar
           </button>
         </div>
 
