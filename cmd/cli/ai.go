@@ -15,6 +15,78 @@ import (
 	l "github.com/rafa-mori/logz"
 )
 
+// getProviderAPIKey returns the API key only for the matching provider
+func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
+	if currentProvider == targetProvider && apiKey != "" {
+		return apiKey
+	}
+	return ""
+}
+
+// setupConfig creates configuration with proper API key distribution
+func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig, error) {
+	var cfg t.IConfig
+	var err error
+
+	if configFile != "" {
+		cfg, err = loadConfigFile(configFile)
+		if err != nil {
+			return nil, fmt.Errorf("error loading configuration file: %v", err)
+		}
+		gl.Log("info", "Configuration loaded from file.")
+	} else {
+		cfg = t.NewConfig(
+			utils.GetEnvOr("BIND_ADDR", ""),
+			utils.GetEnvOr("PORT", ""),
+			utils.GetEnvOr("OPENAI_API_KEY", getProviderAPIKey("openai", provider, apiKey)),
+			utils.GetEnvOr("DEEPSEEK_API_KEY", getProviderAPIKey("deepseek", provider, apiKey)),
+			utils.GetEnvOr("OLLAMA_ENDPOINT", ollamaEndpoint),
+			utils.GetEnvOr("CLAUDE_API_KEY", getProviderAPIKey("claude", provider, apiKey)),
+			utils.GetEnvOr("GEMINI_API_KEY", getProviderAPIKey("gemini", provider, apiKey)),
+			utils.GetEnvOr("CHATGPT_API_KEY", getProviderAPIKey("chatgpt", provider, apiKey)),
+			gl.GetLogger[l.Logger](nil),
+		)
+	}
+
+	if cfg == nil {
+		return nil, fmt.Errorf("configuration not loaded")
+	}
+
+	return cfg, nil
+}
+
+// setupProvider initializes and validates the AI provider
+func setupProvider(cfg t.IConfig, provider, apiKey string) (t.IAPIConfig, string, error) {
+	if provider == "" {
+		provider = getDefaultProvider(cfg)
+	}
+
+	providerObj := t.NewProvider(
+		provider,
+		utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
+		cfg,
+	)
+	if providerObj == nil {
+		return nil, "", fmt.Errorf("unknown provider: %s", provider)
+	}
+
+	if providerObj.VConfig == nil {
+		return nil, "", fmt.Errorf("provider '%s' is not configured", provider)
+	}
+
+	providerObj.VConfig.SetAPIKey(provider, apiKey)
+	apiConfig := providerObj.VConfig.GetAPIConfig(providerObj.Name())
+	if apiConfig == nil {
+		return nil, "", fmt.Errorf("provider '%s' is not configured or available", provider)
+	}
+
+	if !providerObj.IsAvailable() {
+		return nil, "", fmt.Errorf("provider '%s' is not available. Please check your API key and configuration", provider)
+	}
+
+	return apiConfig, provider, nil
+}
+
 // AICmdList returns all AI-related commands
 func AICmdList() []*cobra.Command {
 	return []*cobra.Command{
@@ -52,62 +124,21 @@ Examples:
 				gl.GetLogger[l.Logger](nil)
 				gl.SetDebug(true)
 			}
-			var cfg t.IConfig
-			var err error
 
 			if len(prompt) == 0 {
 				gl.Log("fatal", "Prompt cannot be empty. Use --prompt flag")
 			}
 
-			if configFile != "" {
-				cfg, err = loadConfigFile(configFile)
-				if err != nil {
-					gl.Log("fatal", fmt.Sprintf("Error loading configuration file: %v", err))
-				}
-				gl.Log("info", "Configuration loaded from file.")
-			} else {
-				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", ""),
-					utils.GetEnvOr("PORT", ""),
-					utils.GetEnvOr("OPENAI_API_KEY", apiKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", apiKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", ollamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", apiKey),
-					utils.GetEnvOr("GEMINI_API_KEY", apiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", apiKey),
-					gl.GetLogger[l.Logger](nil),
-				)
+			// Setup configuration
+			cfg, err := setupConfig(configFile, provider, apiKey, ollamaEndpoint)
+			if err != nil {
+				gl.Log("fatal", err.Error())
 			}
 
-			if cfg == nil {
-				gl.Log("fatal", "Configuration not loaded")
-			}
-
-			if provider == "" {
-				provider = getDefaultProvider(cfg)
-			}
-
-			providerObj := t.NewProvider(
-				provider,
-				utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
-				cfg,
-			)
-			if providerObj == nil {
-				gl.Log("fatal", fmt.Sprintf("Unknown provider: %s", provider))
-			} else {
-				if providerObj.VConfig == nil {
-					gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured", provider))
-				}
-			}
-
-			providerObj.VConfig.SetAPIKey(provider, apiKey)
-			apiConfig := providerObj.VConfig.GetAPIConfig(providerObj.Name())
-			if apiConfig == nil {
-				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured or available", provider))
-			}
-
-			if !providerObj.IsAvailable() {
-				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not available. Please check your API key and configuration.", provider))
+			// Setup provider
+			apiConfig, provider, err := setupProvider(cfg, provider, apiKey)
+			if err != nil {
+				gl.Log("fatal", err.Error())
 			}
 
 			// Set default model if not specified
@@ -185,62 +216,21 @@ Examples:
 				gl.GetLogger[l.Logger](nil)
 				gl.SetDebug(true)
 			}
-			var cfg t.IConfig
-			var err error
 
 			if len(ideas) == 0 {
 				gl.Log("fatal", "At least one idea is required. Use --ideas flag")
 			}
 
-			if configFile != "" {
-				cfg, err = loadConfigFile(configFile)
-				if err != nil {
-					gl.Log("fatal", fmt.Sprintf("Error loading configuration file: %v", err))
-				}
-				gl.Log("info", "Configuration loaded from file.")
-			} else {
-				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", ""),
-					utils.GetEnvOr("PORT", ""),
-					utils.GetEnvOr("OPENAI_API_KEY", apiKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", apiKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", ollamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", apiKey),
-					utils.GetEnvOr("GEMINI_API_KEY", apiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", apiKey),
-					gl.GetLogger[l.Logger](nil),
-				)
+			// Setup configuration
+			cfg, err := setupConfig(configFile, provider, apiKey, ollamaEndpoint)
+			if err != nil {
+				gl.Log("fatal", err.Error())
 			}
 
-			if cfg == nil {
-				gl.Log("fatal", "Configuration not loaded")
-			}
-
-			if provider == "" {
-				provider = getDefaultProvider(cfg)
-			}
-
-			providerObj := t.NewProvider(
-				provider,
-				utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
-				cfg,
-			)
-			if providerObj == nil {
-				gl.Log("fatal", fmt.Sprintf("Unknown provider: %s", provider))
-			} else {
-				if providerObj.VConfig == nil {
-					gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured", provider))
-				}
-			}
-
-			providerObj.VConfig.SetAPIKey(provider, apiKey)
-			apiConfig := providerObj.VConfig.GetAPIConfig(providerObj.Name())
-			if apiConfig == nil {
-				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured or available", provider))
-			}
-
-			if !providerObj.IsAvailable() {
-				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not available. Please check your API key and configuration.", provider))
+			// Setup provider
+			apiConfig, provider, err := setupProvider(cfg, provider, apiKey)
+			if err != nil {
+				gl.Log("fatal", err.Error())
 			}
 
 			// Set defaults
@@ -414,9 +404,12 @@ Examples:
 			for {
 				gl.Log("info", "🧑 You:")
 
-				// Read user input
+				// Read user input with error handling
 				if !scanner.Scan() {
-					break
+					if err := scanner.Err(); err != nil {
+						return fmt.Errorf("error reading input: %v", err)
+					}
+					break // EOF
 				}
 				input := strings.TrimSpace(scanner.Text())
 
