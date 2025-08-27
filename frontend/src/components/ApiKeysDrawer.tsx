@@ -11,7 +11,10 @@ type Props = {
 };
 
 function getBaseURL() {
-  if (process.env.NODE_ENV === 'development') return 'http://localhost:8080';
+  if (process.env.NODE_ENV === 'development')
+    return `http://localhost:${process.env.PORT || 8080}`;
+  // const m = window.location.href.match(/^(https?:\/\/[^\/]+)/);
+  // if (m) return m[1];
   return '';
 }
 

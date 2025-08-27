@@ -4,13 +4,12 @@ package server
 import (
 	"embed"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -22,21 +21,10 @@ import (
 //go:embed all:build
 var reactApp embed.FS
 
-var (
-	excludePatterns = []string{
-		"*next",
-		"api",
-		"src",
-		"out",
-		"sys",
-		"root",
-		"index",
-	}
-)
-
 type Server struct {
 	config   *t.Config
 	handlers *Handlers
+	router   *http.ServeMux
 }
 
 type ReactApp struct {
@@ -51,6 +39,7 @@ func NewServer(cfg t.IConfig) *Server {
 	return &Server{
 		config:   cfg.(*t.Config),
 		handlers: handlers,
+		router:   http.NewServeMux(),
 	}
 }
 
@@ -84,7 +73,7 @@ func (s *Server) Start() error {
 		openBrowser(url)
 	}()
 
-	return http.ListenAndServe(":"+s.config.Port, nil)
+	return http.ListenAndServe(net.JoinHostPort(s.config.BindAddr, s.config.Port), s.router)
 }
 
 func (s *Server) setupRoutes() {
@@ -95,133 +84,43 @@ func (s *Server) setupRoutes() {
 		return
 	}
 
-	// registra MIME do .wasm globalmente (belt & suspenders)
-	_ = mime.AddExtensionType(".wasm", "application/wasm")
+	s.router.HandleFunc("/", s.handlers.HandleRoot(buildFS))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		p := strings.TrimPrefix(r.URL.Path, "/")
-		if strings.HasPrefix(p, "api/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		// 🧼 normaliza caminho e bloqueia traversal
-		p = path.Clean(p)
-		if p == "" || p == "/" || p == "." {
-			p = "index.html"
-		}
-		if strings.Contains(p, "..") || !fs.ValidPath(p) {
-			http.Error(w, "bad path", http.StatusBadRequest)
-			return
-		}
-
-		// tenta arquivo exato
-		if f, err := buildFS.Open(p); err == nil {
-			defer f.Close()
-			if fi, _ := f.Stat(); fi != nil {
-				if fi.IsDir() {
-					// Get index.html inside the current folder
-					f, err := buildFS.Open(path.Join(p, "index.html"))
-					if err == nil {
-						defer f.Close()
-						w.Header().Set("Content-Type", "text/html; charset=utf-8")
-						http.ServeContent(w, r, "index.html", time.Time{}, f.(io.ReadSeeker))
-					} else {
-						http.Error(w, "Frontend não disponível", 500)
-					}
-				} else {
-					// define Content-Type (garante .wasm)
-					if ct := mime.TypeByExtension(path.Ext(p)); ct != "" {
-						w.Header().Set("Content-Type", ct)
-					} else {
-						// fallback heurístico
-						buf := make([]byte, 512)
-						n, _ := f.Read(buf)
-						// f.(io.Seeker).Seek(0, io.SeekStart)
-						w.Header().Set("Content-Type", http.DetectContentType(buf[:n]))
-					}
-					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-					if rs, ok := f.(io.ReadSeeker); ok {
-						http.ServeContent(w, r, p, time.Time{}, rs)
-					} else {
-						fmt.Printf("⚠️  ServeContent não suportado para %s, usando ServeFile\n", p)
-						http.ServeFile(w, r, p)
-					}
-					return
-				}
-			}
-		}
-
-		// SPA fallback
-		f, err := buildFS.Open("index.html")
-		if err != nil {
-			http.Error(w, "Frontend não disponível", 500)
-			return
-		}
-		defer f.Close()
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		http.ServeContent(w, r, "index.html", time.Time{}, f.(io.ReadSeeker))
+	// Rotas de API
+	s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
 	})
-
-	// --- TIPOS DE ARQUIVO E MIME ---
-	var mimeByExt = map[string]string{
-		".wasm": "application/wasm",
-		".js":   "application/javascript; charset=utf-8",
-		".mjs":  "application/javascript; charset=utf-8",
-		".css":  "text/css; charset=utf-8",
-		".json": "application/json; charset=utf-8",
-		".svg":  "image/svg+xml",
-		".ico":  "image/x-icon",
-		".map":  "application/octet-stream",
-		".txt":  "text/plain; charset=utf-8",
-		".html": "text/html; charset=utf-8",
-	}
-
-	const enableCOOPCOEP = false // mude para true se Rust/WASM usar threads
-
-	setStaticHeaders := func(w http.ResponseWriter, path string) {
-		ext := strings.ToLower(filepath.Ext(path))
-		if ctype, ok := mimeByExt[ext]; ok {
-			w.Header().Set("Content-Type", ctype)
-		}
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-		if enableCOOPCOEP && ext == ".wasm" {
-			w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-			w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
-		}
-	}
-
-	http.HandleFunc("/api/models", s.handlers.HandleModels)
-	http.HandleFunc("/api/claude", s.handlers.HandleClaude)
-	http.HandleFunc("/api/ollama", s.handlers.HandleOllama)
-	http.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
-	http.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
-	http.HandleFunc("/api/gemini", s.handlers.HandleGemini)
-	http.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
-	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
-	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
-	http.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
-	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
-	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
+	s.router.HandleFunc("/api/models", s.handlers.HandleModels)
+	s.router.HandleFunc("/api/claude", s.handlers.HandleClaude)
+	s.router.HandleFunc("/api/ollama", s.handlers.HandleOllama)
+	s.router.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
+	s.router.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
+	s.router.HandleFunc("/api/gemini", s.handlers.HandleGemini)
+	s.router.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
+	s.router.HandleFunc("/api/unified", s.handlers.HandleUnified)
+	s.router.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	s.router.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
+	s.router.HandleFunc("/api/agents/", s.handlers.HandleAgent)
+	s.router.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.
 	// It is useful for clients to know how to interact with the server's APIs.
-	http.HandleFunc("/api/config", s.handlers.HandleConfig)
+	s.router.HandleFunc("/api/config", s.handlers.HandleConfig)
 
 	// Test route
 	// This route is used to test the server's API functionality.
 	// It can be used to verify that the server is running and responding correctly.
-	http.HandleFunc("/api/test", s.handlers.HandleTest)
+	s.router.HandleFunc("/api/test", s.handlers.HandleTest)
 
 	// Health check route
 	// This route checks the health of the server and returns a simple JSON response.
 	// It is useful for monitoring and ensuring the server is running correctly.
-	http.HandleFunc("/api/health", s.handlers.HandleHealth)
+	s.router.HandleFunc("/api/health", s.handlers.HandleHealth)
 
 	// Página de teste para WASM
-	http.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {
-		setStaticHeaders(w, "wasm-test.html")
+	s.router.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {
+		SetStaticHeaders(w, "wasm-test.html")
 		w.Write([]byte(`<!DOCTYPE html>
 <html lang="en">
 <meta charset="UTF-8" />
@@ -265,7 +164,7 @@ func (s *Server) setupFallbackRoutes() error {
 	// Fallback route for when the React frontend is not found
 	// This route serves a simple HTML page explaining that the React frontend is not available
 	// It provides instructions on how to build the React app and recompile the Go server.
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	s.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
 			http.NotFound(w, r)
 			return
@@ -367,33 +266,33 @@ cd ..</code></pre>
 	// Fallback API routes
 	// These routes handle API requests when the React frontend is not available.
 	// They provide basic functionality to ensure the server can still respond to API requests.
-	http.HandleFunc("/api/models", s.handlers.HandleModels)
-	http.HandleFunc("/api/claude", s.handlers.HandleClaude)
-	http.HandleFunc("/api/ollama", s.handlers.HandleOllama)
-	http.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
-	http.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
-	http.HandleFunc("/api/gemini", s.handlers.HandleGemini)
-	http.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
-	http.HandleFunc("/api/unified", s.handlers.HandleUnified)
-	http.HandleFunc("/api/agents", s.handlers.HandleAgents)
-	http.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
-	http.HandleFunc("/api/agents/", s.handlers.HandleAgent)
-	http.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
+	s.router.HandleFunc("/api/models", s.handlers.HandleModels)
+	s.router.HandleFunc("/api/claude", s.handlers.HandleClaude)
+	s.router.HandleFunc("/api/ollama", s.handlers.HandleOllama)
+	s.router.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
+	s.router.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
+	s.router.HandleFunc("/api/gemini", s.handlers.HandleGemini)
+	s.router.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
+	s.router.HandleFunc("/api/unified", s.handlers.HandleUnified)
+	s.router.HandleFunc("/api/agents", s.handlers.HandleAgents)
+	s.router.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
+	s.router.HandleFunc("/api/agents/", s.handlers.HandleAgent)
+	s.router.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.
 	// It is useful for clients to know how to interact with the server's APIs.
-	http.HandleFunc("/api/config", s.handlers.HandleConfig)
+	s.router.HandleFunc("/api/config", s.handlers.HandleConfig)
 
 	// Test route
 	// This route is used to test the server's API functionality.
 	// It can be used to verify that the server is running and responding correctly.
-	http.HandleFunc("/api/test", s.handlers.HandleTest)
+	s.router.HandleFunc("/api/test", s.handlers.HandleTest)
 
 	// Health check route
 	// This route checks the health of the server and returns a simple JSON response.
 	// It is useful for monitoring and ensuring the server is running correctly.
-	http.HandleFunc("/api/health", s.handlers.HandleHealth)
+	s.router.HandleFunc("/api/health", s.handlers.HandleHealth)
 
 	// Log the fallback routes setup
 	log.Println("⚠️  Fallback routes: Unavailable React frontend, serving API endpoints only")
@@ -403,4 +302,36 @@ cd ..</code></pre>
 
 func (s *Server) Shutdown() {
 	fmt.Println("🧹 Cleaning resources...")
+}
+
+func SetStaticHeaders(w http.ResponseWriter, path string) {
+
+	// registra MIME do .wasm globalmente (belt & suspenders)
+	_ = mime.AddExtensionType(".wasm", "application/wasm")
+
+	// --- TIPOS DE ARQUIVO E MIME ---
+	var mimeByExt = map[string]string{
+		".wasm": "application/wasm",
+		".js":   "application/javascript; charset=utf-8",
+		".mjs":  "application/javascript; charset=utf-8",
+		".css":  "text/css; charset=utf-8",
+		".json": "application/json; charset=utf-8",
+		".svg":  "image/svg+xml",
+		".ico":  "image/x-icon",
+		".map":  "application/octet-stream",
+		".txt":  "text/plain; charset=utf-8",
+		".html": "text/html; charset=utf-8",
+	}
+
+	const enableCOOPCOEP = false // mude para true se Rust/WASM usar threads
+
+	ext := strings.ToLower(filepath.Ext(path))
+	if ctype, ok := mimeByExt[ext]; ok {
+		w.Header().Set("Content-Type", ctype)
+	}
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	if enableCOOPCOEP && ext == ".wasm" {
+		w.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+		w.Header().Set("Cross-Origin-Embedder-Policy", "require-corp")
+	}
 }

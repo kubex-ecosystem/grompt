@@ -59,7 +59,7 @@ type OpenAIErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewOpenAIAPI(apiKey string) IAPIConfig {
+func NewOpenAIAPI(apiKey string) *OpenAIAPI {
 	return &OpenAIAPI{
 		APIConfig: &APIConfig{
 			apiKey:  apiKey,

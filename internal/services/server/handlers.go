@@ -3,7 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/rafa-mori/grompt/internal/services/agents"
@@ -21,12 +24,21 @@ type Handlers struct {
 	agentStore  *agents.Store
 }
 
-// UnifiedRequest request structure
+// UnifiedRequest represents a request structure that supports both direct prompts
+// and prompt engineering from raw ideas. Either 'prompt' OR 'ideas' must be provided.
+//
+// Usage examples:
+//   - Direct prompt: {"prompt": "Write a story about cats", "max_tokens": 500}
+//   - Prompt engineering: {"ideas": ["cats", "adventure", "friendship"], "purpose": "Creative writing", "max_tokens": 500}
 type UnifiedRequest struct {
-	Prompt    string `json:"prompt"`
-	MaxTokens int    `json:"max_tokens"`
-	Model     string `json:"model"`
-	Provider  string `json:"provider"`
+	Lang        string   `json:"lang,omitempty"`         // Response language (default: "português")
+	Purpose     string   `json:"purpose,omitempty"`      // Specific purpose description
+	PurposeType string   `json:"purpose_type,omitempty"` // Type category (e.g., "Tutorial", "Creative writing")
+	Ideas       []string `json:"ideas,omitempty"`        // Raw ideas for prompt engineering (alternative to prompt)
+	Prompt      string   `json:"prompt,omitempty"`       // Direct prompt text (alternative to ideas)
+	MaxTokens   int      `json:"max_tokens,omitempty"`   // Maximum response tokens
+	Model       string   `json:"model,omitempty"`        // AI model to use
+	Provider    string   `json:"provider,omitempty"`     // AI provider (for unified endpoint)
 }
 
 type UnifiedResponse struct {
@@ -63,6 +75,73 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	hndr.agentStore = agents.NewStore("agents.json")
 
 	return hndr
+}
+
+func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		p := strings.TrimPrefix(r.URL.Path, "/")
+		if strings.HasPrefix(p, "api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// 🧼 normaliza caminho e bloqueia traversal
+		p = path.Clean(p)
+		if p == "" || p == "/" || p == "." {
+			p = "index.html"
+		}
+
+		if strings.Contains(p, "..") || !fs.ValidPath(p) {
+			http.Error(w, "bad path", http.StatusBadRequest)
+			return
+		}
+
+		// Hide file from address bar
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%s", path.Base(p)))
+
+		// tenta arquivo exato
+		if f, err := buildFS.Open(p); err == nil {
+			defer f.Close()
+			if fi, _ := f.Stat(); fi != nil {
+				if fi.IsDir() {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
+					http.ServeFileFS(w, r, buildFS, p+"/index.html")
+					return
+				} else {
+					if strings.HasSuffix(p, ".txt") {
+						p = strings.TrimSuffix(p, ".txt") + ".html"
+					}
+
+					// Define headers estáticos
+					SetStaticHeaders(w, p)
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p)
+					http.ServeFileFS(w, r, buildFS, p)
+					return
+				}
+			}
+		}
+
+		// tenta index.html em subdiretório
+		if f, err := buildFS.Open(path.Join(p, "index.html")); err == nil {
+			defer f.Close()
+			if fi, _ := f.Stat(); fi != nil {
+				if !fi.IsDir() {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
+					http.ServeFileFS(w, r, buildFS, p)
+					return
+
+				}
+			}
+		}
+
+		fmt.Printf("⚙️  ServeFileFS para %s\n", "index.html")
+		http.ServeFileFS(w, r, buildFS, p+"index.html")
+	}
 }
 
 func (h *Handlers) getLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
@@ -108,12 +187,14 @@ func (h *Handlers) getAPIConfigKey(provider string) string {
 		return h.config.GetAPIKey("claude")
 	case "openai":
 		return h.config.GetAPIKey("openai")
-	case "chatgpt":
-		return h.config.GetAPIKey("chatgpt")
 	case "deepseek":
 		return h.config.GetAPIKey("deepseek")
 	case "ollama":
 		return h.config.GetAPIKey("ollama")
+	case "gemini":
+		return h.config.GetAPIKey("gemini")
+	case "chatgpt":
+		return h.config.GetAPIKey("chatgpt")
 	default:
 		return ""
 	}
@@ -200,12 +281,29 @@ func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate input: must have either prompt or ideas
+	if req.Prompt == "" && len(req.Ideas) == 0 {
+		http.Error(w, "Either 'prompt' or 'ideas' must be provided", http.StatusBadRequest)
+		return
+	}
+
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Failed to generate prompt", http.StatusInternalServerError)
+		return
+	}
+
 	if key := h.config.GetAPIKey("claude"); key == "" {
 		http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
 		return
 	}
 
-	response, err := h.claudeAPI.Complete(req.Prompt, req.MaxTokens, "")
+	response, err := h.claudeAPI.Complete(prompt, req.MaxTokens, "")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in Claude API: %v", err), http.StatusInternalServerError)
 		return
@@ -239,6 +337,17 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	if key := h.config.GetAPIKey("openai"); key == "" {
 		http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
 		return
@@ -250,7 +359,7 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 		model = "gpt-4o-mini"
 	}
 
-	response, err := h.openaiAPI.Complete(req.Prompt, req.MaxTokens, model)
+	response, err := h.openaiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in OpenAI API: %v", err), http.StatusInternalServerError)
 		return
@@ -284,6 +393,17 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	if key := h.config.GetAPIKey("deepseek"); key == "" {
 		http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
 		return
@@ -295,7 +415,7 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 		model = "deepseek-chat"
 	}
 
-	response, err := h.deepseekAPI.Complete(req.Prompt, req.MaxTokens, model)
+	response, err := h.deepseekAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in DeepSeek API: %v", err), http.StatusInternalServerError)
 		return
@@ -329,6 +449,17 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	if key := h.config.GetAPIKey("gemini"); key == "" {
 		http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
 		return
@@ -340,7 +471,7 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 		model = "gemini-2.5-flash"
 	}
 
-	response, err := h.geminiAPI.Complete(req.Prompt, req.MaxTokens, model)
+	response, err := h.geminiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in Gemini API: %v", err), http.StatusInternalServerError)
 		return
@@ -374,6 +505,17 @@ func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	if key := h.config.GetAPIKey("chatgpt"); key == "" {
 		http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
 		return
@@ -385,7 +527,7 @@ func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
 		model = "gpt-4o-mini"
 	}
 
-	response, err := h.chatGPTAPI.Complete(req.Prompt, req.MaxTokens, model)
+	response, err := h.chatGPTAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in ChatGPT API: %v", err), http.StatusInternalServerError)
 		return
@@ -419,6 +561,17 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	// Use default model if not specified
 	model := req.Model
 	if model == "" {
@@ -430,7 +583,7 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 		maxTokens = 2048
 	}
 
-	response, err := h.ollamaAPI.Complete(model, maxTokens, req.Prompt)
+	response, err := h.ollamaAPI.Complete(model, maxTokens, prompt)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error in Ollama API: %v", err), http.StatusInternalServerError)
 		return
@@ -465,6 +618,17 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prompt := ""
+	if req.Prompt != "" {
+		prompt = req.Prompt
+	} else {
+		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+	}
+	if prompt == "" {
+		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		return
+	}
+
 	// Validate provider
 	if req.Provider == "" {
 		http.Error(w, "Provider not specified", http.StatusBadRequest)
@@ -482,7 +646,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
 			return
 		}
-		response, err = h.claudeAPI.Complete(req.Prompt, maxTokens, model)
+		response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
 		if model == "" {
 			model = "claude-3-5-sonnet-20241022"
 		}
@@ -495,7 +659,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		if model == "" {
 			model = "gpt-4o-mini"
 		}
-		response, err = h.openaiAPI.Complete(req.Prompt, req.MaxTokens, model)
+		response, err = h.openaiAPI.Complete(prompt, req.MaxTokens, model)
 
 	case "deepseek":
 		if key := h.config.GetAPIKey("deepseek"); key == "" {
@@ -505,13 +669,13 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		if model == "" {
 			model = "deepseek-chat"
 		}
-		response, err = h.deepseekAPI.Complete(req.Prompt, req.MaxTokens, model)
+		response, err = h.deepseekAPI.Complete(prompt, req.MaxTokens, model)
 
 	case "ollama":
 		if model == "" {
 			model = "llama3.2"
 		}
-		response, err = h.ollamaAPI.Complete(model, maxTokens, req.Prompt)
+		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
 
 	default:
 		http.Error(w, "Unsupported provider: "+req.Provider, http.StatusBadRequest)

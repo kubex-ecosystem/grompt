@@ -1,9 +1,7 @@
-# ![Grompt Logo](docs/assets/top_banner.png)
+# ![Grompt Logo](docs/assets/top_banner_c.png)
 
-> **Transform your raw ideas into structured, professional prompts with real engineering practices**
-
-[![Go Version](https://img.shields.io/badge/Go-1.21+-blue.svg)](https://golang.org)
-[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
+[![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
+[![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
 [![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
@@ -20,17 +18,18 @@
 1. [🎯 Why Grompt?](#-why-grompt)
 2. [✨ Key Features](#-key-features)
 3. [🚀 Quick Start](#-quick-start)
-4. [💡 Usage Examples](#-usage-examples)
-5. [🎪 Use Cases](#-use-cases)
-6. [⚙️ Configuration & API Support](#️-configuration--api-support)
-7. [🔗 Custom Build Hooks](#-custom-build-hooks-modular-build-steps-with-pred-and-posd)
-8. [🛡️ Security & Best Practices](#️-security--best-practices)
-9. [🏗️ Performance & Specifications](#-performance--specifications)
-10. [🛣️ Roadmap](#️-roadmap)
-11. [🤝 Contributing](#-contributing)
-12. [🙏 Acknowledgments](#-acknowledgments)
-13. [📄 License](#-license)
-14. [🌎 Documentation](#-documentation)
+4. [🖥️ CLI Commands](#️-cli-commands)
+5. [💡 Usage Examples](#-usage-examples)
+6. [🎪 Use Cases](#-use-cases)
+7. [⚙️ Configuration & API Support](#️-configuration--api-support)
+8. [🔗 Custom Build Hooks](#-custom-build-hooks-modular-build-steps-with-pred-and-posd)
+9. [🛡️ Security & Best Practices](#️-security--best-practices)
+10. [🏗️ Performance & Specifications](#-performance--specifications)
+11. [🛣️ Roadmap](#️-roadmap)
+12. [🤝 Contributing](#-contributing)
+13. [🙏 Acknowledgments](#-acknowledgments)
+14. [📄 License](#-license)
+15. [🌎 Documentation](#-documentation)
 
 ---
 
@@ -118,16 +117,179 @@ This will create an `AGENTS.md` file in the current directory.
 
 ---
 
+## 🖥️ **CLI Commands**
+
+Grompt provides a command-line interface (CLI) for interacting with AI models and managing prompts. Here are the main commands you can use:
+
+1. **ask**: Send a direct prompt to an AI provider.
+
+   ```bash
+   ./grompt ask "What is the capital of France?" --provider openai --apikey 'sk-...' --model 'gpt-4'
+   ```
+
+   ```bash
+   GEMINI_API_KEY='sk-...' \
+   ./grompt ask 'How to implement user authentication?' \
+      --provider 'gemini' \
+      --model 'gemini-1.5-pro' \
+      --max-tokens 1000
+   ```
+
+2. **generate**: Create prompts from ideas using prompt engineering.
+
+   ```bash
+   ./grompt generate --provider gemini --apikey 'sk-...' --model 'gemini-2.0-flash' \
+    --idea 'Was thinking about a feature that summarizes scientific articles.'
+    --idea 'Also want it to highlight key points and references.'
+    --idea 'Make it user-friendly and easy to integrate with other tools.'
+    --max-tokens 10000 --purpose 'code'
+   ```
+
+   **Response**:
+
+   ```bash
+     [INFO]  ℹ️  - 🔨 Engineering prompt from 3 ideas using GEMINI
+     # Generated Prompt (gemini - gemini-2.0-flash)
+
+     ```markdown
+     ## Prompt: Scientific Article Summarization and Key Point Extraction
+
+     **Persona:** You are a highly skilled software engineer specializing in natural language processing and API development. Your task is to design a function that efficiently summarizes scientific articles and extracts key information for users.
+
+     **Objective:** Develop a Python function that takes the text of a scientific article as input and returns a structured summary, highlighting key points and providing a list of cited references.
+
+     **Instructions:**
+
+     1.  **Input:** The function will receive the full text of a scientific article as a string. This text may contain formatting inconsistencies (e.g., inconsistent whitespace, special characters).
+
+     2.  **Preprocessing:** Clean the input text by:
+         *   Removing extraneous whitespace (leading/trailing spaces, multiple spaces).
+         *   Handling special characters appropriately (e.g., converting LaTeX symbols if possible, or removing them if conversion is not feasible).
+
+     3.  **Summarization:** Generate a concise summary of the article (approximately 3-5 sentences). Focus on the article s main findings and conclusions. Use extractive or abstractive summarization techniques as appropriate. Prioritize clarity and conciseness.
+
+     4.  **Key Point Extraction:** Identify and extract 3-5 key points from the article. These should be the most significant findings, arguments, or contributions made by the authors. Present these as a bulleted list. Each point should be a single, clear sentence.
+
+     5.  **Reference Extraction:** Identify and extract all cited references from the article. The output should be a list of strings, where each string represents a single reference. Attempt to format each reference in a consistent style (e.g., APA, MLA, or a simplified numeric style). If a specific style is not feasible, prioritize accuracy and completeness.
+
+     6.  **Output Format:** The function should return a dictionary with the following keys:
+         *   `summary`: A string containing the summary of the article.
+         *   `key_points`: A list of strings, where each string is a key point.
+         *   `references`: A list of strings, where each string is a reference.
+
+     **Example:**
+
+     ```python
+     def summarize_article(article_text: str) -> dict:
+       """
+       Summarizes a scientific article, extracts key points, and identifies references.
+
+       Args:
+         article_text: The full text of the scientific article.
+
+       Returns:
+         A dictionary containing the summary, key points, and references.
+       """
+       # Your code here (including preprocessing, summarization, key point extraction, and reference extraction)
+       # Example output (replace with actual results):
+       summary = "This study investigates the effects of X on Y, finding a significant correlation. The results suggest Z as a potential mechanism."
+       key_points = [
+           "X has a significant impact on Y.",
+           "Z is proposed as a potential mediator of the X-Y relationship.",
+           "Further research is needed to confirm the causal link."
+       ]
+       references = [
+           "Smith, J. (2020). The Impact of X on Y. Journal of Science, 1(1), 1-10.",
+           "Doe, A. (2021). Z as a Mediator. Nature, 2(2), 11-20."
+       ]
+       return {"summary": summary, "key_points": key_points, "references": references}
+
+     # Example Usage:
+     article_text = " [Insert example scientific article text here] "
+     result = summarize_article(article_text)
+     print(result)
+     \```
+
+     **Constraints:**
+
+     * Prioritize accuracy and clarity in the summary and key points.
+     * The function should be reasonably efficient in terms of processing time.
+     * The code should be well-documented and easy to understand.
+     * Consider using relevant Python libraries such as `nltk`, `transformers`, or `spaCy` for text processing and summarization.
+
+     **Testing:**
+
+     * Test the function with a variety of scientific articles from different domains.
+     * Verify that the summary accurately reflects the content of the article.
+     * Ensure that the key points are relevant and informative.
+     * Confirm that the references are correctly extracted and formatted.
+
+    ```
+
+3. **squad**: Generate a list of recommended AI agents based on your project requirements.
+
+   ```bash
+   ./grompt squad "I need a backend microservice for payments, with authentication, Stripe integration, automated tests, and Docker deployment. Prefer Go or Python, no Java."
+   ```
+
+   This will create an `AGENTS.md` file in the current directory with the recommended agents.
+
+   **AGENTS.md Content:**
+
+   ```bash
+     [INFO]  ℹ️  - 🧠 Generating AI Squad from project description using OPENAI
+     [INFO]  ℹ️  - 📝 Writing AGENTS.md file with recommended agents
+
+     ```markdown
+     # AGENTS.md
+
+     ## Recommended AI Agents for Your Project
+
+     Based on your project requirements, here are the recommended AI agents to help you build a robust backend microservice for payments:
+
+     ### 1. Backend Developer Bot
+     - **Role:** Develop the core backend functionality using Go or Python.
+     - **Skills:** REST API design, database integration, authentication mechanisms.
+     - **Responsibilities:** Implement payment processing logic, handle API requests, and ensure secure data handling.
+
+     ### 2. Authentication Specialist Bot
+     - **Role:** Design and implement user authentication and authorization.
+     - **Skills:** OAuth2, JWT, session management, security best practices.
+     - **Responsibilities:** Create secure login/logout endpoints, manage user sessions, and protect sensitive routes.
+
+     ### 3. Payment Gateway Integrator Bot
+     - **Role:** Integrate Stripe payment gateway into the microservice.
+     - **Skills:** Stripe API, webhooks, payment processing workflows.
+     - **Responsibilities:** Set up Stripe integration, handle payment events, and manage transaction records.
+
+     ### 4. Testing & QA Bot
+     - **Role:** Develop automated tests to ensure code quality and reliability.
+     - **Skills:** Unit testing, integration testing, test frameworks (e.g., pytest for Python, testing package for Go).
+     - **Responsibilities:** Write test cases for all functionalities, ensure high test coverage, and automate test execution.
+
+     ### 5. DevOps & Deployment Bot
+     - **Role:** Manage Docker deployment and CI/CD pipelines.
+     - **Skills:** Docker, container orchestration (e.g., Kubernetes), CI/CD tools (e.g., GitHub Actions).
+     - **Responsibilities:** Create Dockerfiles, set up deployment pipelines, and monitor application performance.
+
+     ## Summary
+
+     By leveraging these AI agents, you can efficiently build a secure and scalable backend microservice for payments that meets your specified requirements. Each agent focuses on a specific aspect of the project to ensure comprehensive coverage of all necessary functionalities.
+
+   ```
+
+---
+
 ## 💡 **Usage Examples**
 
 ### Example 1: Code Generation Prompt
 
 **Input Ideas:**
 
-- "Make a REST API"
-- "User authentication"
-- "Database with PostgreSQL"
-- "Rate limiting"
+* "Make a REST API"
+* "User authentication"
+* "Database with PostgreSQL"
+* "Rate limiting"
 
 **Generated Prompt:**
 
@@ -164,10 +326,10 @@ Create a RESTful API server with the following specifications:
 
 **Input Ideas:**
 
-- "Sci-fi story"
-- "Time travel paradox"
-- "Character loses memory"
-- "Mystery elements"
+* "Sci-fi story"
+* "Time travel paradox"
+* "Character loses memory"
+* "Mystery elements"
 
 **Generated Prompt:**
 
@@ -242,43 +404,24 @@ export OLLAMA_ENDPOINT=http://localhost:11434  # Ollama local models
 
 ---
 
-## 🏗️ **Architecture & Development**
-
-### Project Structure
-
-```plaintext
-grompt/
-├── 📁 frontend/              # React application
-│   ├── src/
-│   │   ├── App.jsx          # Main component
-│   │   └── index.js         # Entry point
-│   └── package.json
-├── � internal/
-│   ├── services/server/     # HTTP server & handlers
-│   └── types/               # API integrations & types
-├── � cmd/                  # CLI entry points
-├── 📄 main.go              # Application entry
-├── 📄 Makefile             # Build automation
-└── 📄 go.mod               # Go dependencies
-```
-
 ### Development Setup
 
 ```bash
-# Install dependencies
-make install-deps
+# Clone the repository
+git clone https://github.com/yourusername/grompt.git
+cd grompt
 
-# Development mode (hot reload)
-make dev
+# Development mode
+make build-dev
 
 # Build for production
-make build-all
+make build
 
 # Cross-platform builds
-make build-cross
+make build windows amd64
 
-# Run tests
-make test
+# Clean up
+make clean
 ```
 
 ### API Endpoints
@@ -292,6 +435,8 @@ GET  /api/models     # Available models per provider
 # Prompt Generation
 POST /api/unified    # Unified endpoint for all providers
 POST /api/openai     # OpenAI specific endpoint
+POST /api/gemini     # Gemini specific endpoint
+POST /api/chatgpt    # ChatGPT specific endpoint
 POST /api/claude     # Claude specific endpoint
 POST /api/deepseek   # DeepSeek specific endpoint
 POST /api/ollama     # Ollama specific endpoint
@@ -309,20 +454,20 @@ This provides maximum flexibility for teams and advanced users who need to autom
 
 ### 📂 **How It Works**
 
-- **Scripts in `support/pre.d/`** are executed **before** the main build (pre-build).
-- **Scripts in `support/pos.d/`** run **after** the main build (post-build).
-- All scripts are executed in **lexicographic order** (`01-init.sh`, `10-db-migrate.sh`, etc).
-- Each script runs in its own subshell for safety.
+* **Scripts in `support/pre.d/`** are executed **before** the main build (pre-build).
+* **Scripts in `support/pos.d/`** run **after** the main build (post-build).
+* All scripts are executed in **lexicographic order** (`01-init.sh`, `10-db-migrate.sh`, etc).
+* Each script runs in its own subshell for safety.
 
 **Perfect for:**
 
-- Setting up environment variables before building
-- Running migrations or checks
-- Cleaning up files or sending notifications after build
+* Setting up environment variables before building
+* Running migrations or checks
+* Cleaning up files or sending notifications after build
 
 ### 📝 **Example Hook Script**
 
-- **support/pre.d/10-setup-env.sh**
+* **support/pre.d/10-setup-env.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -332,7 +477,7 @@ echo "🔧 [pre.d] Setting up environment..."
 export GROMPT_ENV="dev"
 ```
 
-- **support/pos.d/10-notify.sh**
+* **support/pos.d/10-notify.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -346,40 +491,40 @@ echo "✅ [pos.d] Build completed! Sending notification..."
 
 ## ⚠️ **Security & Best Practices**
 
-- **Scripts are run with the current user’s permissions.**
+* **Scripts are run with the current user’s permissions.**
   **DO NOT** add untrusted code to these folders!
-- Keep hooks small, modular, and easy to review.
-- Always set execute permission: `chmod +x script.sh`
-- Use ordered prefixes (`01-`, `02-`, etc) for predictable execution.
-- If a script fails, the error is logged but the process continues (you can tune this as needed).
-- Full execution log is available for troubleshooting.
+* Keep hooks small, modular, and easy to review.
+* Always set execute permission: `chmod +x script.sh`
+* Use ordered prefixes (`01-`, `02-`, etc) for predictable execution.
+* If a script fails, the error is logged but the process continues (you can tune this as needed).
+* Full execution log is available for troubleshooting.
 
 ### 🛡️ **Sandboxing Tips (Bash Shell Level)**
 
 While bash has limited sandboxing, these measures help mitigate risk:
 
-- **Run each script in a subshell:**
+* **Run each script in a subshell:**
   Prevents variable/function leakage.
 
   ```bash
   ( bash "$SCRIPT" )
   ```
 
-- **Restrict permissions:**
+* **Restrict permissions:**
   Set `chmod 500` on scripts, and limit writable locations.
-- **Resource limits:**
+* **Resource limits:**
   Use `ulimit` for memory/CPU protection (Linux).
 
   ```bash
   ulimit -v 1048576  # Limit to 1GB RAM
   ```
 
-- **Use containers or chroot for critical tasks** (advanced).
-- **Review every script before use**; never add code you don't trust.
+* **Use containers or chroot for critical tasks** (advanced).
+* **Review every script before use**; never add code you don't trust.
 
 ### 📄 **Template: Default Hook Script**
 
-- **support/pre.d/10-example.sh**
+* **support/pre.d/10-example.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -389,7 +534,7 @@ echo "🔧 Running $(basename "$0")"
 # Put your custom commands below
 ```
 
-- **support/pos.d/10-example.sh**
+* **support/pos.d/10-example.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -401,10 +546,10 @@ echo "✅ Finished $(basename "$0")"
 
 ### 💡 **Why Use This System?**
 
-- **No need to fork or patch main build scripts for local/company tweaks**
-- Keeps project clean, modular, and easy to maintain
-- Encourages community contributions and custom workflows
-- Great for CI/CD, advanced automation, or onboarding new team members
+* **No need to fork or patch main build scripts for local/company tweaks**
+* Keeps project clean, modular, and easy to maintain
+* Encourages community contributions and custom workflows
+* Great for CI/CD, advanced automation, or onboarding new team members
 
 ---
 
@@ -413,36 +558,25 @@ echo "✅ Finished $(basename "$0")"
 > Create or drop scripts into `support/pre.d/` and `support/pos.d/`, make them executable, and Grompt (or any GoForge-based project) will run them for you at the right time.
 > This makes your automation as extensible as your imagination — no more “hacking” core scripts.
 
----
-
-**Pro Tip:**
-When you migrate this to GoForge, já pode chamar de
-**“Zero-Fragile Build System™”** — porque toda extensão agora é plugável e reversível.
-Quem mexe, entende, quem não mexe, nem percebe!
-
 ## 🛣️ **Roadmap**
 
 ### 🚧 Current Development
 
-- [ ] **Prompt Templates Library** - Pre-built templates for common use cases
-- [ ] **Prompt History & Versioning** - Save and track prompt iterations
-- [ ] **Batch Processing** - Process multiple ideas simultaneously
+* [ ] **Prompt Templates Library** - Pre-built templates for common use cases
+* [ ] **Prompt History & Versioning** - Save and track prompt iterations
+* [ ] **Batch Processing** - Process multiple ideas simultaneously
 
-### � Future Features
+### ⚡️ Future Features
 
-- [ ] **Prompt Analytics** - Track effectiveness and usage patterns
-- [ ] **Team Collaboration** - Share prompts and collaborate on prompt engineering
-- [ ] **Plugin System** - Extend functionality with custom prompt processors
-- [ ] **API Rate Limiting** - Built-in rate limiting for API providers
-- [ ] **Prompt Testing Framework** - A/B test different prompt variations
-- [ ] **Integration Webhooks** - Connect with external tools and workflows
+* [ ] **Team Collaboration** - Share prompts and collaborate on prompt engineering
+* [ ] **API Rate Limiting** - Built-in rate limiting for API providers
+* [ ] **Integration Webhooks** - Connect with external tools and workflows
+* [ ] **Prompt Testing Framework** - A/B test different prompt variations
 
 ### 💭 Under Consideration
 
-- [ ] **Prompt Marketplace** - Community-driven prompt sharing
-- [ ] **AI Model Training Data** - Export prompts for fine-tuning
-- [ ] **Multi-language Support** - Interface localization
-- [ ] **Mobile App** - Native mobile applications
+* [ ] **Prompt Marketplace** - Community-driven prompt sharing
+* [ ] **Mobile App** - Native mobile applications
 
 ---
 
@@ -452,37 +586,16 @@ We welcome contributions! Here's how you can help:
 
 ### 🐛 **Bug Reports & Feature Requests**
 
-- Open an issue with detailed description
-- Include steps to reproduce for bugs
-- Use issue templates when available
-
-### 💻 **Code Contributions**
-
-```bash
-# 1. Fork and clone
-git clone https://github.com/rafa-mori/grompt
-cd grompt
-
-# 2. Create feature branch
-git checkout -b feature/awesome-feature
-
-# 3. Make changes and test
-make test
-make build-all
-
-# 4. Commit with clear message
-git commit -m "Add awesome feature: brief description"
-
-# 5. Push and create PR
-git push origin feature/awesome-feature
-```
+* Open an issue with detailed description
+* Include steps to reproduce for bugs
+* Use issue templates when available
 
 ### 📋 **Development Guidelines**
 
-- Follow Go and React best practices
-- Add tests for new functionality
-- Update documentation for API changes
-- Ensure cross-platform compatibility
+* Follow Go and React best practices
+* Add tests for new functionality
+* Update documentation for API changes
+* Ensure cross-platform compatibility
 
 ### 🎯 **Good First Issues**
 
@@ -507,12 +620,15 @@ Look for issues labeled `good-first-issue` or `help-wanted` to get started!
 
 Special thanks to:
 
-- **[Anthropic](https://anthropic.com)** for the Claude API and advancing AI safety
-- **[OpenAI](https://openai.com)** for pioneering accessible AI models
-- **[Ollama](https://ollama.ai)** for making local LLMs accessible to everyone
-- **[Go Team](https://golang.org)** for creating a robust, efficient language
-- **[React Team](https://reactjs.org)** for the excellent UI framework
-- **All contributors** who help improve this project
+* **[Anthropic](https://anthropic.com)** for the Claude API and advancing AI safety
+* **[OpenAI](https://openai.com)** for pioneering accessible AI models
+* **[Ollama](https://ollama.ai)** for making local LLMs accessible to everyone
+* **[Gemini](https://ai.google/gemini)** for their cutting-edge AI models
+* **[DeepSeek](https://deepseek.ai)** for their innovative AI solutions
+* **[Go Team](https://golang.org)** for creating a robust, efficient language
+* **[React Team](https://reactjs.org)** for the excellent UI framework
+* **All contributors** who help improve this project
+* **[Spotify](https://www.spotify.com)** for their music streaming service who keep me company while coding!
 
 ---
 
@@ -522,16 +638,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🌎 **Documentation**
 
-- **[English Documentation](README.md)** (this file)
-- **[Documentação em Português](docs/README.pt-BR.md)**
-- **[Contributing Guidelines](docs/CONTRIBUTING.md)**
-<!-- - **[API Documentation](docs/API.md)**
-- **[Developer Guide](docs/DEVELOPMENT.md)** -->
+* **[English Documentation](README.md)** (this file)
+* **[Documentação em Português](docs/README.pt-BR.md)**
+* **[Contributing Guidelines](docs/CONTRIBUTING.md)**
 
 ---
 
-**Made with ❤️ by Mori family, using Go + React!**
+***Open source lives and grows in the open — by the people, for the people. ❤️***
 
-[⭐ Star this project](https://github.com/rafa-mori/grompt/stargazers) • [🐛 Report Bug](https://github.com/rafa-mori/grompt/issues) • [✨ Request Feature](https://github.com/rafa-mori/grompt/issues)
+[⭐ Star this project](https://github.com/rafa-mori/grompt/stargazers)\
+[🐛 Report Bug](https://github.com/rafa-mori/grompt/issues)\
+[✨ Request Feature](https://github.com/rafa-mori/grompt/issues)
 
 *Transform your ideas into powerful prompts today!*

@@ -38,7 +38,7 @@ const PromptCrafter = () => {
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
   const [showLogViewer, setShowLogViewer] = useState(false);
-  const [byokMap, setByokMap] = useState<{[k:string]: boolean}>({});
+  const [byokMap, setByokMap] = useState<{ [k: string]: boolean }>({});
   type ServerInfo = {
     version?: string;
     apis?: {
@@ -119,8 +119,8 @@ const PromptCrafter = () => {
   useEffect(() => {
     (async () => {
       try {
-        const { unlock } = await import('./hooks/useApiKeys');
-        const res = await unlock();
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const res = await unlockVault();
         const v: any = res.vault || {};
         const defaults: Record<string, string | undefined> = {
           claude: v.anthropic?.defaultModel,
@@ -131,7 +131,7 @@ const PromptCrafter = () => {
           chatgpt: v.chatgpt?.defaultModel || v.openai?.defaultModel,
         };
         setSelectedModel(defaults[apiProvider] || '');
-      } catch {}
+      } catch { }
     })();
   }, [apiProvider]);
 
@@ -163,8 +163,8 @@ const PromptCrafter = () => {
         // Também checar BYOK no navegador e mesclar disponibilidade
         let byok: any = {};
         try {
-          const { unlock } = await import('./hooks/useApiKeys');
-          const res = await unlock();
+          const { unlockVault } = await import('./hooks/useApiKeys');
+          const res = await unlockVault();
           const v = (res && res.vault) || {};
           byok = {
             claude_available: !!v.anthropic?.apiKey,
@@ -174,7 +174,7 @@ const PromptCrafter = () => {
             gemini_available: !!v.gemini?.apiKey,
             chatgpt_available: !!(v.chatgpt?.apiKey || v.openai?.apiKey),
           };
-        } catch {}
+        } catch { }
 
         const merged = {
           ...config,
@@ -405,9 +405,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
       } else if (apiProvider === 'claude') {
         console.log('🤖 Enviando para Claude API...');
         // Prefer direct BYOK call (streaming)
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('anthropic', vr.vault || {})) {
           setGeneratedPrompt('');
@@ -434,9 +434,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'openai') {
         console.log('🧠 Enviando para OpenAI API...');
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('openai', vr.vault || {})) {
           setGeneratedPrompt('');
@@ -463,9 +463,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'deepseek') {
         console.log('🔍 Enviando para DeepSeek API...');
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('deepseek', vr.vault || {})) {
           setGeneratedPrompt('');
@@ -491,9 +491,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
         console.log('✅ Resposta recebida do DeepSeek');
       } else if (apiProvider === 'ollama') {
         console.log('🦙 Enviando para Ollama...');
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('ollama', vr.vault || {})) {
           setGeneratedPrompt('');
@@ -520,9 +520,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
       } else if (apiProvider === 'gemini') {
         console.log('🔶 Enviando para Gemini...');
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('gemini', vr.vault || {})) {
           result = await directCall('gemini', vr.vault || {}, {
@@ -547,9 +547,9 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
         console.log('✅ Resposta recebida do Gemini');
       } else if (apiProvider === 'chatgpt') {
         console.log('🤖 Enviando para ChatGPT...');
-        const { unlock } = await import('./hooks/useApiKeys');
+        const { unlockVault } = await import('./hooks/useApiKeys');
         const { directCall, hasByok, streamDirectCall } = await import('./lib/providers');
-        const vr = await unlock();
+        const vr = await unlockVault();
         let result: Response;
         if (hasByok('chatgpt', vr.vault || {})) {
           setGeneratedPrompt('');
@@ -1165,7 +1165,7 @@ make run
         </div>
       </div>
 
-  	  {/* Log Viewer Modal */}
+      {/* Log Viewer Modal */}
       <LogViewer
         currentTheme={currentTheme}
         isOpen={showLogViewer}

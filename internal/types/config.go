@@ -11,6 +11,7 @@ import (
 
 	gl "github.com/rafa-mori/grompt/internal/module/logger"
 	vs "github.com/rafa-mori/grompt/internal/module/version"
+	"github.com/rafa-mori/grompt/utils"
 	l "github.com/rafa-mori/logz"
 )
 
@@ -60,9 +61,10 @@ func init() {
 	// }
 }
 
+var AppVersion = vs.GetVersion()
+
 const (
 	AppName     = "Grompt"
-	AppVersion  = "1.0.0"
 	DefaultPort = "8080"
 )
 
@@ -89,6 +91,7 @@ type IConfig interface {
 	GetAPIKey(provider string) string
 	SetAPIKey(provider string, key string) error
 	GetAPIEndpoint(provider string) string
+	GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string
 }
 
 type Config struct {
@@ -121,17 +124,23 @@ func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey
 }
 
 func (c *Config) GetAPIConfig(provider string) IAPIConfig {
+	if c == nil {
+		gl.Log("error", "Config is nil")
+		return nil
+	}
 	switch provider {
 	case "openai":
-		return NewOpenAIAPI(c.OpenAIAPIKey)
+		return NewOpenAIAPI(c.GetAPIKey("openai"))
 	case "deepseek":
-		return NewDeepSeekAPI(c.DeepSeekAPIKey)
+		return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
 	case "ollama":
-		return NewOllamaAPI(c.OllamaEndpoint)
+		return NewOllamaAPI(c.GetAPIEndpoint("ollama"))
 	case "claude":
-		return NewClaudeAPI(c.ClaudeAPIKey)
+		return NewClaudeAPI(c.GetAPIKey("claude"))
 	case "gemini":
-		return NewGeminiAPI(c.GeminiAPIKey)
+		return NewGeminiAPI(c.GetAPIKey("gemini"))
+	case "chatgpt":
+		return NewChatGPTAPI(c.GetAPIKey("chatgpt"))
 	default:
 		return nil
 	}
@@ -147,15 +156,35 @@ func (c *Config) GetPort() string {
 func (c *Config) GetAPIKey(provider string) string {
 	switch provider {
 	case "openai":
+		if c.OpenAIAPIKey == "" {
+			c.OpenAIAPIKey = utils.GetEnvOr("OPENAI_API_KEY", c.OpenAIAPIKey)
+		}
 		return c.OpenAIAPIKey
 	case "deepseek":
+		if c.DeepSeekAPIKey == "" {
+			c.DeepSeekAPIKey = utils.GetEnvOr("DEEPSEEK_API_KEY", c.DeepSeekAPIKey)
+		}
 		return c.DeepSeekAPIKey
 	case "ollama":
+		if c.OllamaEndpoint == "" {
+			c.OllamaEndpoint = utils.GetEnvOr("OLLAMA_ENDPOINT", c.OllamaEndpoint)
+		}
 		return c.OllamaEndpoint
 	case "claude":
+		if c.ClaudeAPIKey == "" {
+			c.ClaudeAPIKey = utils.GetEnvOr("CLAUDE_API_KEY", c.ClaudeAPIKey)
+		}
 		return c.ClaudeAPIKey
 	case "gemini":
+		if c.GeminiAPIKey == "" {
+			c.GeminiAPIKey = utils.GetEnvOr("GEMINI_API_KEY", c.GeminiAPIKey)
+		}
 		return c.GeminiAPIKey
+	case "chatgpt":
+		if c.ChatGPTAPIKey == "" {
+			c.ChatGPTAPIKey = utils.GetEnvOr("CHATGPT_API_KEY", c.ChatGPTAPIKey)
+		}
+		return c.ChatGPTAPIKey
 	default:
 		return ""
 	}
@@ -173,6 +202,8 @@ func (c *Config) SetAPIKey(provider string, key string) error {
 		c.ClaudeAPIKey = key
 	case "gemini":
 		c.GeminiAPIKey = key
+	case "chatgpt":
+		c.ChatGPTAPIKey = key
 	default:
 		return fmt.Errorf("unknown provider: %s", provider)
 	}
@@ -197,4 +228,70 @@ func (c *Config) checkOllamaConnection() bool {
 	}
 	defer conn.Close()
 	return true
+}
+
+// GetBaseGenerationPrompt transforms raw ideas into a structured prompt engineering template.
+// This method applies professional prompt engineering techniques to convert unorganized ideas
+// into well-structured, effective prompts for AI interactions.
+func (c *Config) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
+	// Set default values
+	if ideas == nil {
+		ideas = []string{}
+	}
+	if lang == "" {
+		lang = "english"
+	}
+	if maxLength <= 0 {
+		maxLength = 2000
+	}
+	if purposeType == "" {
+		purposeType = "Code"
+	}
+
+	// Build ideas list
+	ideasListStr := ""
+	for i, idea := range ideas {
+		ideasListStr += fmt.Sprintf("%d. \"%s\"\n", i+1, idea)
+	}
+
+	// Build purpose text
+	purposeText := purposeType
+	if purpose != "" {
+		purposeText += ` (` + purpose + `)`
+	}
+
+	engineeringPrompt := `
+Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
+
+CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
+` + ideasListStr + `
+
+PROPÓSITO DO PROMPT: ` + purposeText + `
+IDIOMA DE RESPOSTA: ` + lang + `
+TAMANHO MÁXIMO: ` + fmt.Sprintf("%d", maxLength) + ` caracteres
+
+INSTRUÇÕES PARA ESTRUTURAÇÃO:
+1. **Análise**: Identifique o objetivo principal e temas centrais das ideias
+2. **Organização**: Estruture logicamente as informações em hierarquia clara
+3. **Técnicas de Prompt Engineering**:
+   - Definição clara de contexto e papel (persona)
+   - Instruções específicas, mensuráveis e testáveis
+   - Exemplos concretos quando apropriado
+   - Formato de saída bem definido e estruturado
+   - Chain-of-thought para raciocínios complexos
+   - Few-shot examples se necessário
+4. **Formatação**: Use markdown para estruturação visual clara
+5. **Tom**: Seja preciso, objetivo, profissional e acionável
+6. **Escopo**: Mantenha dentro do limite de caracteres especificado
+
+CRITÉRIOS DE QUALIDADE:
+- Clareza: Instruções inequívocas e fáceis de seguir
+- Completude: Cubra todos os aspectos relevantes das ideias originais
+- Eficácia: Optimize para obter os melhores resultados da IA
+- Usabilidade: Pronto para uso imediato sem ajustes
+
+IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais, metadados ou texto introdutório. O prompt deve ser completo, autossuficiente e pronto para uso.
+`
+
+	return engineeringPrompt
 }
