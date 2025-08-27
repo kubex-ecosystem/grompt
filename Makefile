@@ -95,6 +95,25 @@ test:
 	@bash $(INSTALL_SCRIPT) test $(ARGS)
 	$(shell exit 0)
 
+# Platform-specific targets (prevent wildcard capture)
+linux:
+	@echo "Platform argument detected: linux"
+
+amd64:
+	@echo "Architecture argument detected: amd64"
+
+windows:
+	@echo "Platform argument detected: windows"
+
+darwin:
+	@echo "Platform argument detected: darwin"
+
+arm64:
+	@echo "Architecture argument detected: arm64"
+
+386:
+	@echo "Architecture argument detected: 386"
+
 ## Run dynamic commands with arguments calling the install script.
 %:
 	@:

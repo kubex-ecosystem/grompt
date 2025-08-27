@@ -141,13 +141,12 @@ __run_custom_scripts() {
             log info "Made script executable: ${_CUSTOM_SCRIPT:-}" true
           fi
 
-          # Execute the script
-          "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" "$@" || {
+          # Execute the script without passing build arguments
+          "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
             log error "Script execution failed: ${_CUSTOM_SCRIPT:-}" true
             return 1
           }
           log success "Script executed successfully: ${_CUSTOM_SCRIPT:-}" true
-          return 0
         else
           log warn "Script not found: ${_CUSTOM_SCRIPT:-}" true
           return 1

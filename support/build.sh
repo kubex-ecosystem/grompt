@@ -67,6 +67,34 @@ validate_go_version() {
   return 0
 }
 
+# ====== Load platforms from manifest.json ======
+load_platforms_from_manifest() {
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _manifest_path="${_root_dir}/internal/module/info/manifest.json"
+
+  if [[ -f "${_manifest_path}" ]] && command -v jq >/dev/null 2>&1; then
+    local platforms=()
+    while IFS= read -r platform; do
+      if [[ -n "${platform}" && "${platform}" != "null" ]]; then
+        platforms+=("${platform}")
+      fi
+    done < <(jq -r '.platforms[]?' "${_manifest_path}" 2>/dev/null)
+
+    if [[ ${#platforms[@]} -gt 0 ]]; then
+      printf '%s\n' "${platforms[@]}"
+      return 0
+    fi
+  fi
+
+  # Fallback to default platforms
+  echo "linux/amd64"
+  echo "darwin/amd64"
+  echo "darwin/arm64"
+  echo "windows/amd64"
+  echo "windows/386"
+  return 1
+}
+
 # ====== Discover main packages ======
 discover_main_packages() {
   local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
@@ -108,7 +136,7 @@ compute_build_matrix() {
       PLATFORMS=("linux" "darwin" "windows")
       GOPLT_MAP[linux]="amd64"
       GOPLT_MAP[darwin]="amd64 arm64"
-      GOPLT_MAP[windows]="amd64 arm64"
+      GOPLT_MAP[windows]="amd64 386"
       ;;
     linux|LINUX)
       PLATFORMS=("linux")
@@ -127,7 +155,7 @@ compute_build_matrix() {
     windows|WINDOWS)
       PLATFORMS=("windows")
       case "${_arch_arg}" in
-        all|ALL) GOPLT_MAP[windows]="amd64 arm64" ;;
+        all|ALL) GOPLT_MAP[windows]="amd64 386" ;;
         *) GOPLT_MAP[windows]="${_arch_arg}" ;;
       esac
       ;;
@@ -321,8 +349,11 @@ build_for_arch() {
 
   # Build each main package
   local main_dir
+  local build_count=0
   while IFS= read -r main_dir; do
     [[ -z "${main_dir}" ]] && continue
+    build_count=$((build_count + 1))
+    log info "BUILD ITERATION #${build_count} for ${_platform_pos}/${_arch_pos}: ${main_dir}"
 
     local _output_name
     _output_name=$(get_output_name "${_platform_pos}" "${_arch_pos}")
@@ -364,7 +395,7 @@ is_valid_platform_arch() {
       ;;
     windows)
       case "${_arch}" in
-        amd64|arm64) return 0 ;;
+        amd64|386) return 0 ;;
         *) return 1 ;;
       esac
       ;;
@@ -438,53 +469,50 @@ build_binary() {
   load_git_info
   validate_go_version || return 1
 
+  # Debug logging
+  log info "Build called with: platform='${_platform_args}', arch='${_arch_args}', force='${_force}', mode='${_build_mode}'"
+
   # Check for cross-compilation mode
-  if [[ "${_platform_args}" == "__CROSS_COMPILE__" || -z "${_platform_args}" ]]; then
+  # Only enter cross-compilation if no specific platform is provided
+  if [[ "${_platform_args}" == "__CROSS_COMPILE__" ]] || [[ -z "${_platform_args}" && -z "${_arch_args}" ]]; then
     log info "Cross-compilation mode: building for all platforms in manifest.json"
 
-    # Build for each platform in manifest
-    local manifest_path="${_ROOT_DIR:-$(pwd)}/internal/module/info/manifest.json"
-    if [[ -f "${manifest_path}" ]] && command -v jq >/dev/null 2>&1; then
-      local built_any=false
-      while IFS= read -r platform; do
-        if [[ -n "${platform}" ]]; then
-          local os
-          local arch
-          os=$(echo "${platform}" | cut -d'/' -f1)
-          arch=$(echo "${platform}" | cut -d'/' -f2)
-          log info "Building for ${platform}..."
+    # Discover main packages once
+    local _main_dirs
+    _main_dirs=$(discover_main_packages "./cmd/...")
+    [[ -z "${_main_dirs}" ]] && {
+      log error "No main packages found"
+      return 1
+    }
 
-          # Use main package path from manifest or default
-          local main_package="./cmd"
-          if [[ -f "${manifest_path}" ]] && command -v jq >/dev/null 2>&1; then
-            local manifest_main
-            manifest_main=$(jq -r '.main // empty' "${manifest_path}" 2>/dev/null)
-            if [[ -n "${manifest_main}" ]]; then
-              main_package="./$(dirname "${manifest_main}")"
-            fi
-          fi
+    log info "Starting cross-platform build process..."
+    log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
+    log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
+    log notice "Mode: ${_build_mode}"
 
-          build_for_arch "${os}" "${arch}" "${main_package}" "${_build_mode}" "${_force}"
+    # Load platforms from manifest and build directly
+    local built_any=false
+    while IFS='/' read -r os arch; do
+      if [[ -n "${os}" && -n "${arch}" ]]; then
+        log info "Building for ${os}/${arch}..."
+        if build_for_arch "${os}" "${arch}" "${_main_dirs}" "${_build_mode}" "${_force}"; then
           built_any=true
         fi
-      done < <(jq -r '.platforms[]?' "${manifest_path}" 2>/dev/null)
-
-      if [[ "${built_any}" == "true" ]]; then
-        log success "Cross-platform build completed"
-        return 0
-      else
-        log warn "No platforms found in manifest.json"
       fi
-    else
-      log warn "Manifest not found or jq not available, falling back to current platform"
-    fi
+    done < <(load_platforms_from_manifest)
 
-    # Fallback to current platform
-    _platform_args="$(uname -s | tr '[:upper:]' '[:lower:]')"
-    _arch_args="$(uname -m | tr '[:upper:]' '[:lower:]')"
+    if [[ "${built_any}" == "true" ]]; then
+      log success "Cross-platform build completed"
+      return 0
+    else
+      log error "No platforms were successfully built"
+      return 1
+    fi
   fi
 
-  # Original single-platform logic
+  # Single-platform build mode
+  log info "Single-platform build mode: ${_platform_args}/${_arch_args}"
+
   # Normalize arch for single builds
   case "${_arch_args}" in
     x86_64|X86_64) _arch_args="amd64" ;;
@@ -500,24 +528,20 @@ build_binary() {
     return 1
   }
 
-  # Compute build matrix
-  local _build_matrix
-  _build_matrix=$(compute_build_matrix "${_platform_args}" "${_arch_args}")
-
-  log info "Starting build process..."
+  log info "Starting single-platform build process..."
   log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
   log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
   log notice "Mode: ${_build_mode}"
+  log notice "Target: ${_platform_args}/${_arch_args}"
 
-  # Build for each platform/architecture combination
-  #local platform_info platform arch_list
-  while IFS=':' read -r platform arch_list; do
-    [[ -z "${platform}" || -z "${arch_list}" ]] && continue
-    build_for_platform "${platform}" "${arch_list}" "${_main_dirs}" "${_build_mode}" "${_force}"
-  done <<< "${_build_matrix}"
-
-  log success "Build process completed"
-  return 0
+  # Build directly for the specified platform/arch
+  if build_for_arch "${_platform_args}" "${_arch_args}" "${_main_dirs}" "${_build_mode}" "${_force}"; then
+    log success "Single-platform build completed: ${_platform_args}/${_arch_args}"
+    return 0
+  else
+    log error "Single-platform build failed: ${_platform_args}/${_arch_args}"
+    return 1
+  fi
 }
 
 check_overwrite_binary() {

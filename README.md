@@ -83,7 +83,18 @@ Create a generic TypeScript function that:
 
 ## 🚀 **Quick Start**
 
-### Option 1: Download Pre-built Binary
+### Option 1: Download Links
+
+Grab the latest release for your platform:
+
+- [Linux amd64](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_linux_amd64)
+- [macOS Intel](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_amd64)
+- [macOS Apple Silicon](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_arm64)
+- [Windows](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_windows_amd64.exe)
+
+Or see all options in the [Releases Page](https://github.com/rafa-mori/grompt/releases).
+
+### Option 2: Download and Run (Terminal)
 
 ```bash
 # Download the latest release for your platform
@@ -94,13 +105,22 @@ chmod +x grompt
 # Opens automatically at http://localhost:8080
 ```
 
-### Option 2: Build from Source
+### Option 3: Build from Source
 
 ```bash
 git clone https://github.com/rafa-mori/grompt
 cd grompt
-make build-all
-./grompt
+make build
+./dist/grompt -h
+```
+
+Or you can install directly from make command:
+
+```bash
+git clone https://github.com/rafa-mori/grompt
+cd grompt
+make install
+grompt -h
 ```
 
 **That's it!** No Docker, no complex setup, no cloud accounts needed.
@@ -129,7 +149,7 @@ Grompt provides a command-line interface (CLI) for interacting with AI models an
 
    ```bash
    GEMINI_API_KEY='sk-...' \
-   ./grompt ask 'How to implement user authentication?' \
+   grompt ask 'How to implement user authentication?' \
       --provider 'gemini' \
       --model 'gemini-1.5-pro' \
       --max-tokens 1000
@@ -138,11 +158,12 @@ Grompt provides a command-line interface (CLI) for interacting with AI models an
 2. **generate**: Create prompts from ideas using prompt engineering.
 
    ```bash
-   ./grompt generate --provider gemini --apikey 'sk-...' --model 'gemini-2.0-flash' \
-    --idea 'Was thinking about a feature that summarizes scientific articles.'
-    --idea 'Also want it to highlight key points and references.'
-    --idea 'Make it user-friendly and easy to integrate with other tools.'
-    --max-tokens 10000 --purpose 'code'
+   export GEMINI_API_KEY='sk-...' &&
+   grompt generate --model 'gemini-2.0-flash' \
+    --idea 'Was thinking about a feature that summarizes scientific articles.' \
+    --idea 'Also want it to highlight key points and references.' \
+    --idea 'Make it user-friendly and easy to integrate with other tools.' \
+    --max-tokens 10000 --purpose 'code' --provider gemini
    ```
 
    **Response**:
@@ -286,10 +307,10 @@ Grompt provides a command-line interface (CLI) for interacting with AI models an
 
 **Input Ideas:**
 
-* "Make a REST API"
-* "User authentication"
-* "Database with PostgreSQL"
-* "Rate limiting"
+- "Make a REST API"
+- "User authentication"
+- "Database with PostgreSQL"
+- "Rate limiting"
 
 **Generated Prompt:**
 
@@ -326,10 +347,10 @@ Create a RESTful API server with the following specifications:
 
 **Input Ideas:**
 
-* "Sci-fi story"
-* "Time travel paradox"
-* "Character loses memory"
-* "Mystery elements"
+- "Sci-fi story"
+- "Time travel paradox"
+- "Character loses memory"
+- "Mystery elements"
 
 **Generated Prompt:**
 
@@ -454,20 +475,20 @@ This provides maximum flexibility for teams and advanced users who need to autom
 
 ### 📂 **How It Works**
 
-* **Scripts in `support/pre.d/`** are executed **before** the main build (pre-build).
-* **Scripts in `support/pos.d/`** run **after** the main build (post-build).
-* All scripts are executed in **lexicographic order** (`01-init.sh`, `10-db-migrate.sh`, etc).
-* Each script runs in its own subshell for safety.
+- **Scripts in `support/pre.d/`** are executed **before** the main build (pre-build).
+- **Scripts in `support/pos.d/`** run **after** the main build (post-build).
+- All scripts are executed in **lexicographic order** (`01-init.sh`, `10-db-migrate.sh`, etc).
+- Each script runs in its own subshell for safety.
 
 **Perfect for:**
 
-* Setting up environment variables before building
-* Running migrations or checks
-* Cleaning up files or sending notifications after build
+- Setting up environment variables before building
+- Running migrations or checks
+- Cleaning up files or sending notifications after build
 
 ### 📝 **Example Hook Script**
 
-* **support/pre.d/10-setup-env.sh**
+- **support/pre.d/10-setup-env.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -477,7 +498,7 @@ echo "🔧 [pre.d] Setting up environment..."
 export GROMPT_ENV="dev"
 ```
 
-* **support/pos.d/10-notify.sh**
+- **support/pos.d/10-notify.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -491,40 +512,40 @@ echo "✅ [pos.d] Build completed! Sending notification..."
 
 ## ⚠️ **Security & Best Practices**
 
-* **Scripts are run with the current user’s permissions.**
+- **Scripts are run with the current user’s permissions.**
   **DO NOT** add untrusted code to these folders!
-* Keep hooks small, modular, and easy to review.
-* Always set execute permission: `chmod +x script.sh`
-* Use ordered prefixes (`01-`, `02-`, etc) for predictable execution.
-* If a script fails, the error is logged but the process continues (you can tune this as needed).
-* Full execution log is available for troubleshooting.
+- Keep hooks small, modular, and easy to review.
+- Always set execute permission: `chmod +x script.sh`
+- Use ordered prefixes (`01-`, `02-`, etc) for predictable execution.
+- If a script fails, the error is logged but the process continues (you can tune this as needed).
+- Full execution log is available for troubleshooting.
 
 ### 🛡️ **Sandboxing Tips (Bash Shell Level)**
 
 While bash has limited sandboxing, these measures help mitigate risk:
 
-* **Run each script in a subshell:**
+- **Run each script in a subshell:**
   Prevents variable/function leakage.
 
   ```bash
   ( bash "$SCRIPT" )
   ```
 
-* **Restrict permissions:**
+- **Restrict permissions:**
   Set `chmod 500` on scripts, and limit writable locations.
-* **Resource limits:**
+- **Resource limits:**
   Use `ulimit` for memory/CPU protection (Linux).
 
   ```bash
   ulimit -v 1048576  # Limit to 1GB RAM
   ```
 
-* **Use containers or chroot for critical tasks** (advanced).
-* **Review every script before use**; never add code you don't trust.
+- **Use containers or chroot for critical tasks** (advanced).
+- **Review every script before use**; never add code you don't trust.
 
 ### 📄 **Template: Default Hook Script**
 
-* **support/pre.d/10-example.sh**
+- **support/pre.d/10-example.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -534,7 +555,7 @@ echo "🔧 Running $(basename "$0")"
 # Put your custom commands below
 ```
 
-* **support/pos.d/10-example.sh**
+- **support/pos.d/10-example.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -546,10 +567,10 @@ echo "✅ Finished $(basename "$0")"
 
 ### 💡 **Why Use This System?**
 
-* **No need to fork or patch main build scripts for local/company tweaks**
-* Keeps project clean, modular, and easy to maintain
-* Encourages community contributions and custom workflows
-* Great for CI/CD, advanced automation, or onboarding new team members
+- **No need to fork or patch main build scripts for local/company tweaks**
+- Keeps project clean, modular, and easy to maintain
+- Encourages community contributions and custom workflows
+- Great for CI/CD, advanced automation, or onboarding new team members
 
 ---
 
@@ -562,21 +583,21 @@ echo "✅ Finished $(basename "$0")"
 
 ### 🚧 Current Development
 
-* [ ] **Prompt Templates Library** - Pre-built templates for common use cases
-* [ ] **Prompt History & Versioning** - Save and track prompt iterations
-* [ ] **Batch Processing** - Process multiple ideas simultaneously
+- [ ] **Prompt Templates Library** - Pre-built templates for common use cases
+- [ ] **Prompt History & Versioning** - Save and track prompt iterations
+- [ ] **Batch Processing** - Process multiple ideas simultaneously
 
 ### ⚡️ Future Features
 
-* [ ] **Team Collaboration** - Share prompts and collaborate on prompt engineering
-* [ ] **API Rate Limiting** - Built-in rate limiting for API providers
-* [ ] **Integration Webhooks** - Connect with external tools and workflows
-* [ ] **Prompt Testing Framework** - A/B test different prompt variations
+- [ ] **Team Collaboration** - Share prompts and collaborate on prompt engineering
+- [ ] **API Rate Limiting** - Built-in rate limiting for API providers
+- [ ] **Integration Webhooks** - Connect with external tools and workflows
+- [ ] **Prompt Testing Framework** - A/B test different prompt variations
 
 ### 💭 Under Consideration
 
-* [ ] **Prompt Marketplace** - Community-driven prompt sharing
-* [ ] **Mobile App** - Native mobile applications
+- [ ] **Prompt Marketplace** - Community-driven prompt sharing
+- [ ] **Mobile App** - Native mobile applications
 
 ---
 
@@ -586,16 +607,16 @@ We welcome contributions! Here's how you can help:
 
 ### 🐛 **Bug Reports & Feature Requests**
 
-* Open an issue with detailed description
-* Include steps to reproduce for bugs
-* Use issue templates when available
+- Open an issue with detailed description
+- Include steps to reproduce for bugs
+- Use issue templates when available
 
 ### 📋 **Development Guidelines**
 
-* Follow Go and React best practices
-* Add tests for new functionality
-* Update documentation for API changes
-* Ensure cross-platform compatibility
+- Follow Go and React best practices
+- Add tests for new functionality
+- Update documentation for API changes
+- Ensure cross-platform compatibility
 
 ### 🎯 **Good First Issues**
 
@@ -620,15 +641,15 @@ Look for issues labeled `good-first-issue` or `help-wanted` to get started!
 
 Special thanks to:
 
-* **[Anthropic](https://anthropic.com)** for the Claude API and advancing AI safety
-* **[OpenAI](https://openai.com)** for pioneering accessible AI models
-* **[Ollama](https://ollama.ai)** for making local LLMs accessible to everyone
-* **[Gemini](https://ai.google/gemini)** for their cutting-edge AI models
-* **[DeepSeek](https://deepseek.ai)** for their innovative AI solutions
-* **[Go Team](https://golang.org)** for creating a robust, efficient language
-* **[React Team](https://reactjs.org)** for the excellent UI framework
-* **All contributors** who help improve this project
-* **[Spotify](https://www.spotify.com)** for their music streaming service who keep me company while coding!
+- **[Anthropic](https://anthropic.com)** for the Claude API and advancing AI safety
+- **[OpenAI](https://openai.com)** for pioneering accessible AI models
+- **[Ollama](https://ollama.ai)** for making local LLMs accessible to everyone
+- **[Gemini](https://ai.google/gemini)** for their cutting-edge AI models
+- **[DeepSeek](https://deepseek.ai)** for their innovative AI solutions
+- **[Go Team](https://golang.org)** for creating a robust, efficient language
+- **[React Team](https://reactjs.org)** for the excellent UI framework
+- **All contributors** who help improve this project
+- **[Spotify](https://www.spotify.com)** for their music streaming service who keep me company while coding!
 
 ---
 
@@ -638,9 +659,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🌎 **Documentation**
 
-* **[English Documentation](README.md)** (this file)
-* **[Documentação em Português](docs/README.pt-BR.md)**
-* **[Contributing Guidelines](docs/CONTRIBUTING.md)**
+- **[English Documentation](README.md)** (this file)
+- **[Documentação em Português](docs/README.pt-BR.md)**
+- **[Contributing Guidelines](docs/CONTRIBUTING.md)**
 
 ---
 
