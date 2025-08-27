@@ -6,7 +6,8 @@
   "published": true,
   "aliases": [
     "grompt",
-    "krompt"
+    "krompt",
+    "kbxprompt"
   ],
   "repository": "https://github.com/rafa-mori/grompt",
   "homepage": "https://github.com/rafa-mori/grompt",
@@ -26,7 +27,10 @@
     "management"
   ],
   "platforms": [
-    "linux/amd64"
+    "linux/amd64",
+    "darwin/amd64",
+    "darwin/arm64",
+    "windows/amd64"
   ],
   "dependencies": [
     "tar",
