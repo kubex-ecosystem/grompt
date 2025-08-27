@@ -1,12 +1,13 @@
 'use client';
 
 import { KeyRound, Moon, Settings, Sparkles, Sun, Users } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ConfigModal from './ConfigModal';
+// import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import ApiKeysDrawer from './ApiKeysDrawer';
+import ConfigModal from './ConfigModal';
 import LanguageSelector from './LanguageSelector';
 
 export default function Header() {

@@ -3,7 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/rafa-mori/grompt/internal/services/agents"
@@ -63,6 +66,73 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	hndr.agentStore = agents.NewStore("agents.json")
 
 	return hndr
+}
+
+func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		p := strings.TrimPrefix(r.URL.Path, "/")
+		if strings.HasPrefix(p, "api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// 🧼 normaliza caminho e bloqueia traversal
+		p = path.Clean(p)
+		if p == "" || p == "/" || p == "." {
+			p = "index.html"
+		}
+
+		if strings.Contains(p, "..") || !fs.ValidPath(p) {
+			http.Error(w, "bad path", http.StatusBadRequest)
+			return
+		}
+
+		// Hide file from address bar
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%s", path.Base(p)))
+
+		// tenta arquivo exato
+		if f, err := buildFS.Open(p); err == nil {
+			defer f.Close()
+			if fi, _ := f.Stat(); fi != nil {
+				if fi.IsDir() {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
+					http.ServeFileFS(w, r, buildFS, p+"/index.html")
+					return
+				} else {
+					if strings.HasSuffix(p, ".txt") {
+						p = strings.TrimSuffix(p, ".txt") + ".html"
+					}
+
+					// Define headers estáticos
+					SetStaticHeaders(w, p)
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p)
+					http.ServeFileFS(w, r, buildFS, p)
+					return
+				}
+			}
+		}
+
+		// tenta index.html em subdiretório
+		if f, err := buildFS.Open(path.Join(p, "index.html")); err == nil {
+			defer f.Close()
+			if fi, _ := f.Stat(); fi != nil {
+				if !fi.IsDir() {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
+					http.ServeFileFS(w, r, buildFS, p)
+					return
+
+				}
+			}
+		}
+
+		fmt.Printf("⚙️  ServeFileFS para %s\n", "index.html")
+		http.ServeFileFS(w, r, buildFS, p+"index.html")
+	}
 }
 
 func (h *Handlers) getLLMAPIKeyMap(cfg ii.IConfig) map[string]string {

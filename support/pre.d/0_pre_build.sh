@@ -47,6 +47,8 @@ build_frontend() {
           exit 1
       }
 
+
+
       echo "Frontend build moved to server directory successfully."
   else
       echo "npm is not installed. Please install Node.js and npm to continue."

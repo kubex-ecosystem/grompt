@@ -61,7 +61,7 @@ async function deriveAesGcmKey(passphrase: string, salt: Uint8Array) {
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      //salt: salt,
       iterations: 100_000,
       hash: 'SHA-256'
     },
@@ -132,7 +132,12 @@ export async function unlockVault(passphrase?: string): Promise<UnlockResult> {
     const salt = base64ToBytes(stored.salt || '');
     const iv = base64ToBytes(stored.iv || '');
     const key = await deriveAesGcmKey(passphrase, salt);
-    const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, base64ToBytes(stored.data));
+    const cipherData = base64ToBytes(stored.data);
+    const plainBuf = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: Uint8Array.from(iv) },
+      key,
+      Uint8Array.from(cipherData)
+    );
     const json = dec.decode(new Uint8Array(plainBuf));
     return { ok: true, enc: true, vault: JSON.parse(json) };
   } catch (e) {
