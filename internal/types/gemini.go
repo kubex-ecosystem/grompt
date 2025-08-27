@@ -50,15 +50,16 @@ type GeminiErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewGeminiAPI(apiKey string) IAPIConfig {
-	return &GeminiAPI{
-		APIConfig: &APIConfig{
-			apiKey:  apiKey,
-			baseURL: "https://generativelanguage.googleapis.com/", //v1beta/models/gemini-2.0-flash:generateContent
-			httpClient: &http.Client{
-				Timeout: 60 * time.Second,
-			},
+func NewGeminiAPI(apiKey string) *GeminiAPI {
+	configAPI := &APIConfig{
+		apiKey:  apiKey,
+		baseURL: "https://generativelanguage.googleapis.com/", //v1beta/models/gemini-2.0-flash:generateContent
+		httpClient: &http.Client{
+			Timeout: 60 * time.Second,
 		},
+	}
+	return &GeminiAPI{
+		APIConfig: configAPI,
 	}
 }
 
@@ -159,59 +160,43 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 // IsAvailable checks if the Gemini API is available
 func (g *GeminiAPI) IsAvailable() bool {
+	if g == nil {
+		gl.Log("notice", "Gemini API is not initialized, assuming not available")
+		return false
+	}
+
 	if g.apiKey == "" {
 		gl.Log("notice", "Gemini API key not configured, assuming not available")
 		return false
 	}
 
-	// Make a simple request to check API availability
-	testReq := GeminiRequest{
-		Contents: []struct {
-			Parts []struct {
-				Text string `json:"text"`
-			} `json:"parts"`
-		}{
-			{
-				Parts: []struct {
-					Text string `json:"text"`
-				}{
-					{Text: "test"},
-				},
-			},
-		},
-		GenerationConfig: struct {
-			MaxOutputTokens int     `json:"maxOutputTokens,omitempty"`
-			Temperature     float64 `json:"temperature,omitempty"`
-		}{
-			MaxOutputTokens: 1,
-		},
-	}
-
-	jsonData, err := json.Marshal(testReq)
-	if err != nil {
-		gl.Log("error", "Failed to serialize Gemini test request: %v", err)
+	if g.httpClient == nil {
+		gl.Log("notice", "Gemini HTTP client not configured, assuming not available")
 		return false
 	}
 
-	requestURL := fmt.Sprintf("%s?key=%s", g.baseURL, g.apiKey)
-	req, err := http.NewRequest("POST", requestURL, bytes.NewBuffer(jsonData))
+	rq := bytes.NewBuffer([]byte(`{"contents":[{"parts":[{"text":"ping"}]}]}`))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s?key=%s", g.baseURL+"v1beta/models/gemini-2.0-flash:generateContent", g.apiKey), rq)
 	if err != nil {
-		gl.Log("error", "Failed to create Gemini test request: %v", err)
+		gl.Log("error", "Failed to create Gemini availability request: %v", err)
 		return false
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		gl.Log("error", "Gemini test request error: %v", err)
+		gl.Log("error", "Gemini availability request error: %v", err)
 		return false
 	}
 	defer resp.Body.Close()
 
-	gl.Log("debug", "Gemini API test request status: %d", resp.StatusCode)
-	return resp.StatusCode == http.StatusOK
+	if resp.StatusCode != http.StatusOK {
+		gl.Log("error", "Gemini API returned non-OK status: %d", resp.StatusCode)
+		return false
+	}
+
+	gl.Log("debug", "Gemini API is available")
+	return true
 }
 
 // GetCommonModels returns a list of common Gemini models

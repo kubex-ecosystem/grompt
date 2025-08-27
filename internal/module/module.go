@@ -31,8 +31,10 @@ func (m *Grompt) Usage() string {
 func (m *Grompt) Examples() []string {
 	return []string{
 		"grompt start",
-		"grompt stop",
-		"grompt status",
+		"grompt start -p 5000 -d '127.0.0.1'",
+		"grompt ask --prompt \"What is Go?\" --provider gemini",
+		"grompt generate --ideas \"API,REST,tutorial\" --purpose \"Learning\"",
+		"grompt chat --provider claude",
 	}
 }
 func (m *Grompt) Active() bool {
@@ -60,6 +62,7 @@ func (m *Grompt) Command() *cobra.Command {
 
 	rtCmd.AddCommand(cc.ServerCmdList()...)
 	rtCmd.AddCommand(cc.SquadCmdList()...)
+	rtCmd.AddCommand(cc.AICmdList()...)
 	rtCmd.AddCommand(vs.CliCommand())
 
 	// Set usage definitions for the command and its subcommands
