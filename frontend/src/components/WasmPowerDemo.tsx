@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import {
+  Receipt as BeakerIcon,
+  Bolt as BoltIcon,
+  BarChart as ChartBarIcon,
+  Timer as ClockIcon,
+  Code as CodeBracketIcon,
+  ElectricalServicesOutlined as CpuChipIcon,
+  RocketLaunch as RocketLaunchIcon
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { 
-  BoltIcon, 
-  RocketLaunchIcon,
-  ChartBarIcon,
-  BeakerIcon,
-  ClockIcon,
-  CpuChipIcon,
-  CodeBracketIcon
-} from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
 
 // Tipos para benchmarking
 interface BenchmarkResult {
@@ -59,13 +59,13 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary';
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  label, 
-  onClick, 
-  variant = 'primary' 
+export const Button: React.FC<ButtonProps> = ({
+  label,
+  onClick,
+  variant = 'primary'
 }) => {
   return (
-    <button 
+    <button
       className={\`btn btn-\${variant}\`}
       onClick={onClick}
     >
@@ -78,10 +78,10 @@ export const Button: React.FC<ButtonProps> = ({
 /*lookatni:start:hook:useCounter.ts*/
 export const useCounter = (initialValue = 0) => {
   const [count, setCount] = useState(initialValue);
-  
+
   const increment = () => setCount(c => c + 1);
   const decrement = () => setCount(c => c - 1);
-  
+
   return { count, increment, decrement };
 };
 /*lookatni:end:hook:useCounter.ts*/`;
@@ -91,9 +91,9 @@ export const useCounter = (initialValue = 0) => {
     const loadWasm = async () => {
       try {
         setIsLoading(true);
-        
+
         await new Promise(resolve => setTimeout(resolve, 2000)); // Simular loading
-        
+
         // Mock do módulo WASM
         const mockWasm: WasmModule = {
           parse_ai_code: (content: string) => {
@@ -124,7 +124,7 @@ export const useCounter = (initialValue = 0) => {
             });
           }
         };
-        
+
         setWasmModule(mockWasm);
         setError(null);
       } catch (err) {
@@ -140,20 +140,20 @@ export const useCounter = (initialValue = 0) => {
   // Executar parsing
   const runParsing = async () => {
     if (!wasmModule?.parse_ai_code) return;
-    
+
     setIsRunningParsing(true);
     setParseResult(null);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 800)); // Simular processamento
-      
+
       const start = performance.now();
       const result = wasmModule.parse_ai_code(demoCode);
       const end = performance.now();
-      
+
       const parsed = JSON.parse(result) as ParseResult;
       parsed.processing_time_ms = end - start; // Usar tempo real
-      
+
       setParseResult(parsed);
       console.log('🦀 Rust WASM Parsing Result:', result);
       console.log(`⚡ Processing time: ${(end - start).toFixed(2)}ms`);
@@ -165,20 +165,20 @@ export const useCounter = (initialValue = 0) => {
   // Executar validação
   const runValidation = async () => {
     if (!wasmModule?.validate_ai_code) return;
-    
+
     setIsRunningValidation(true);
     setValidationResult(null);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 600)); // Simular processamento
-      
+
       const start = performance.now();
       const result = wasmModule.validate_ai_code(demoCode);
       const end = performance.now();
-      
+
       const parsed = JSON.parse(result) as ValidationResult;
       parsed.processing_time_ms = end - start; // Usar tempo real
-      
+
       setValidationResult(parsed);
       console.log('🦀 Rust WASM Validation Result:', result);
       console.log(`⚡ Validation time: ${(end - start).toFixed(2)}ms`);
@@ -190,15 +190,15 @@ export const useCounter = (initialValue = 0) => {
   // Executar benchmark
   const runBenchmark = async () => {
     if (!wasmModule?.benchmark_vs_js) return;
-    
+
     setIsRunningBenchmark(true);
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simular processamento
-      
+
       const result = wasmModule.benchmark_vs_js(demoCode, 1000);
       const parsed = JSON.parse(result) as BenchmarkResult & { iterations: number };
-      
+
       setBenchmarkResult({
         rust_time: parsed.rust_time,
         js_time: parsed.js_time,
@@ -271,7 +271,7 @@ export const useCounter = (initialValue = 0) => {
           Rust + WebAssembly Power
         </h2>
         <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Demonstração de performance nativa no browser. O parser LookAtni reescrito em Rust 
+          Demonstração de performance nativa no browser. O parser LookAtni reescrito em Rust
           oferece velocidade de próximo século para análise de código AI.
         </p>
       </motion.div>
@@ -281,33 +281,30 @@ export const useCounter = (initialValue = 0) => {
         <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           <button
             onClick={() => setActiveDemo('parsing')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${
-              activeDemo === 'parsing'
-                ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${activeDemo === 'parsing'
+              ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
           >
             <CodeBracketIcon className="w-5 h-5" />
             Parsing
           </button>
           <button
             onClick={() => setActiveDemo('validation')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${
-              activeDemo === 'validation'
-                ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${activeDemo === 'validation'
+              ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
           >
             <BeakerIcon className="w-5 h-5" />
             Validation
           </button>
           <button
             onClick={() => setActiveDemo('benchmark')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${
-              activeDemo === 'benchmark'
-                ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-md font-medium transition-all ${activeDemo === 'benchmark'
+              ? 'bg-white dark:bg-gray-700 text-orange-600 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
           >
             <ChartBarIcon className="w-5 h-5" />
             Benchmark
@@ -416,7 +413,7 @@ export const useCounter = (initialValue = 0) => {
                 {!parseResult && !isRunningParsing && (
                   <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Clique no botão acima para executar o parser Rust via WASM. 
+                      Clique no botão acima para executar o parser Rust via WASM.
                       Os resultados aparecerão aqui em tempo real! 👆
                     </p>
                   </div>
@@ -448,11 +445,10 @@ export const useCounter = (initialValue = 0) => {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`rounded-lg p-4 border-l-4 ${
-                      validationResult.is_valid 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700 border-green-500'
-                        : 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border-red-500'
-                    }`}
+                    className={`rounded-lg p-4 border-l-4 ${validationResult.is_valid
+                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700 border-green-500'
+                      : 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 border-red-500'
+                      }`}
                   >
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                       🦀 Resultados da Validação Rust
@@ -463,11 +459,10 @@ export const useCounter = (initialValue = 0) => {
                     <div className="grid grid-cols-1 gap-3 text-sm">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 dark:text-gray-400">✅ Status:</span>
-                        <span className={`font-semibold px-2 py-1 rounded-full text-xs ${
-                          validationResult.is_valid 
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`font-semibold px-2 py-1 rounded-full text-xs ${validationResult.is_valid
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {validationResult.is_valid ? 'VÁLIDO' : 'INVÁLIDO'}
                         </span>
                       </div>
@@ -485,12 +480,11 @@ export const useCounter = (initialValue = 0) => {
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-green-200 dark:border-gray-600">
-                      <p className={`text-xs font-medium ${
-                        validationResult.is_valid 
-                          ? 'text-green-700 dark:text-green-400'
-                          : 'text-red-700 dark:text-red-400'
-                      }`}>
-                        {validationResult.is_valid 
+                      <p className={`text-xs font-medium ${validationResult.is_valid
+                        ? 'text-green-700 dark:text-green-400'
+                        : 'text-red-700 dark:text-red-400'
+                        }`}>
+                        {validationResult.is_valid
                           ? '✅ Código AI válido! Marcadores LookAtni detectados corretamente. 🎯'
                           : '❌ Código AI inválido! Marcadores LookAtni não encontrados. 🚫'
                         }
@@ -502,7 +496,7 @@ export const useCounter = (initialValue = 0) => {
                 {!validationResult && !isRunningValidation && (
                   <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Clique no botão acima para validar os marcadores LookAtni usando Rust WASM. 
+                      Clique no botão acima para validar os marcadores LookAtni usando Rust WASM.
                       Resultado aparecerá aqui instantaneamente! ⚡
                     </p>
                   </div>
@@ -618,7 +612,7 @@ export const useCounter = (initialValue = 0) => {
           🚀 O Futuro da Análise de Código
         </h3>
         <p className="text-lg mb-6 opacity-90">
-          Com Rust + WASM, o LookAtni File Markers oferece performance de próximo século 
+          Com Rust + WASM, o LookAtni File Markers oferece performance de próximo século
           diretamente no seu browser, sem instalação adicional.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
