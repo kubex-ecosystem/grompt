@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2015
+# shellcheck disable=SC2015,SC1091
 
 # Script Metadata
 __secure_logic_version="1.0.0"
@@ -297,43 +297,98 @@ __main() {
     # BUILD-DOCS
     # Build documentation for the project
     build-docs|BUILD-DOCS|-bdc|-BDC)
-      log info "Generating API documentation..."
+      log info "Generating Documentation..."
 
-      if ! go install github.com/swaggo/swag/cmd/swag@latest; then
-        log error "Failed to install swaggo/swag." true
-        return 1
-      fi
-
-      if ! swag init -g cmd/swagger/main.go -o docs/ --parseDependency --parseInternal; then
-        log error "Failed to initialize swag." true
-        return 1
-      fi
-
-      if ! go build -o "${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" "${_ROOT_DIR:-}/cmd/swagger/main.go"; then
-        log error "Failed to build documentation binary." true
-        return 1
-      fi
-      chmod +x "${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" || {
-        log error "Failed to make documentation binary executable." true
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}" true
         return 1
       }
-      log success "Documentation binary built successfully at ${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" true
+
+      # Validate uv
+      if ! command -v uv >/dev/null 2>&1; then
+        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
+        return 1
+      fi
+
+      # Validate if .venv exists
+      if [[ ! -d ".venv" ]]; then
+        uv venv
+        . .venv/bin/activate
+        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+      else
+        . .venv/bin/activate
+      fi
+
+      # Generate the documentation
+      mkdocs build -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" -q || {
+        log error "Failed to generate documentation." true
+        return 1
+      }
+
+      log success "Documentation generated successfully."
       ;;
 
     # SERVE-DOCS
     # Serve the generated documentation
     serve-docs|SERVE-DOCS|-sdc|-SDC)
-      if [[ -f "${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" ]]; then
-        log info "Starting documentation server..."
-        "${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" || {
-          log error "Failed to start documentation server." true
-          return 1
-        }
-        log success "Documentation server successfully ran at http://localhost:8080/swagger/index.html" true
-      else
-        log error "Documentation binary not found: ${_ROOT_DIR:-}/dist/${_APP_NAME:-}-docs" true
+      log info "Serving Documentation..."
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs" true
+        return 1
+      }
+
+      # Validate uv
+      if ! command -v uv >/dev/null 2>&1; then
+        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
         return 1
       fi
+
+      # Validate if .venv exists
+      if [[ ! -d ".venv" ]]; then
+        uv venv
+        . .venv/bin/activate
+        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+      else
+        . .venv/bin/activate
+      fi
+
+
+      mkdocs serve -a "0.0.0.0:8081" -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" --dirtyreload -q || {
+        log error "Failed to serve documentation." true
+        return 1
+      }
+
+      log success "Documentation server successfully ran at http://localhost:8081/docs" true
+      ;;
+
+    pub-docs|PUB-DOCS|-pd|-PD)
+      log info "Publishing Documentation..."
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs" true
+        return 1
+      }
+
+      # Validate uv
+      if ! command -v uv >/dev/null 2>&1; then
+        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
+        return 1
+      fi
+
+      # Validate if .venv exists
+      if [[ ! -d ".venv" ]]; then
+        uv venv
+        . .venv/bin/activate
+        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+      else
+        . .venv/bin/activate
+      fi
+
+      mkdocs gh-deploy -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" --force --no-history -q || {
+        log error "Failed to publish documentation." true
+        return 1
+      }
+
+      log success "Documentation published successfully."
       ;;
 
     # DEFAULT
@@ -395,11 +450,15 @@ else
   fi
 fi
 
-__run_custom_scripts "pre" "$@" || log fatal "Failed to execute pre-installation scripts."
+if ${_RUN_PRE_SCRIPTS:-false}; then
+  __run_custom_scripts "pre" "$@" || log fatal "Failed to execute pre-installation scripts."
+fi
 
 __secure_logic_main "$@" || log fatal "Script execution failed." true
 
-__run_custom_scripts "post" "$@" || log fatal "Failed to execute post-installation scripts."
+if ${_RUN_POST_SCRIPTS:-false}; then
+  __run_custom_scripts "post" "$@" || log fatal "Failed to execute post-installation scripts."
+fi
 
 __secure_logic_elapsed_time="$(($(date +%s) - __secure_logic_init_timestamp))"
 

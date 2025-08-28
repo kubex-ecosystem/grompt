@@ -7,6 +7,8 @@
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TARGET_MANIFEST = $(ROOT_DIR)internal/module/info/manifest.json
 APP_NAME := $(shell jq -r '.name' < $(TARGET_MANIFEST))
+_RUN_PRE_SCRIPTS := $(shell echo "true")
+_RUN_POST_SCRIPTS := $(shell echo "true")
 
 ifeq ($(APP_NAME),)
 APP_NAME := $(shell  echo $(basename $(CURDIR)) | tr '[:upper:]' '[:lower:]')
@@ -113,6 +115,20 @@ arm64:
 
 386:
 	@echo "Architecture argument detected: 386"
+
+build-docs:
+	@echo "Building documentation..."
+	@bash $(INSTALL_SCRIPT) build-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+	$(shell exit 0)
+
+serve-docs:
+	@echo "Starting documentation server..."
+	@bash $(INSTALL_SCRIPT) serve-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+
+pub-docs:
+	@echo "Publishing documentation..."
+	@bash $(INSTALL_SCRIPT) pub-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+	$(shell exit 0)
 
 ## Run dynamic commands with arguments calling the install script.
 %:

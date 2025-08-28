@@ -6,6 +6,8 @@ site_author: "Rafael Mori"
 repo_name: "rafa-mori/grompt"
 repo_url: https://github.com/rafa-mori/grompt
 
+docs_dir: ../../docs
+
 theme:
   name: material
   palette:
