@@ -57,8 +57,7 @@ jobs:
 
       - name: Install MkDocs and dependencies
         run: |
-          ## sudo apt-get update && sudo apt-get install -y uv ## Run updating before only if you need to update the packages list
-          sudo apt-get install -y uv
+          sudo apt-get update && sudo apt-get install -y uv
           uv pip install mkdocs mkdocs-material
           uv pip install mkdocs-git-revision-date-localized-plugin
           uv pip install pymdown-extensions
