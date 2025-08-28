@@ -59,12 +59,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          uv pip install mkdocs mkdocs-material
-          uv pip install mkdocs-git-revision-date-localized-plugin
-          uv pip install pymdown-extensions
-          uv venv ./docs/.venv
-          . docs/.venv/bin/activate
-          uv pip install ./support/docs/requirements.txt --active --no-progress --quiet
+          uv pip install mkdocs mkdocs-material --system --no-progress --quiet
+          uv pip install mkdocs-git-revision-date-localized-plugin --system --no-progress --quiet
+          uv pip install pymdown-extensions --system --no-progress --quiet
+          uv pip install -r ./support/docs/requirements.txt --system --no-progress --quiet
 
       - name: Copy files to docs directory
         run: |
@@ -133,7 +131,6 @@ jobs:
       - name: Build documentation
         run: |
           cd $(git rev-parse --show-toplevel) || exit 1
-          . docs/.venv/bin/activate
           make build-docs
 
       - name: Setup Pages
