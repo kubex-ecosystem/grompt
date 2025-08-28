@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -65,79 +65,79 @@ jobs:
       - name: Copy files to docs directory
         run: |
           # Copiar arquivos do repositório para a estrutura de docs
-          mkdir -p support/docs/docs/project-info
+          mkdir -p docs/project-info
 
           # Copiar arquivos principais
-          cp README.md support/docs/docs/project-info/readme-en.md
-          cp docs/README.pt-BR.md support/docs/docs/project-info/readme-pt-br.md
-          cp LICENSE support/docs/docs/project-info/license.md
-          cp NOTICE.md support/docs/docs/project-info/notice.md
-          cp SECURITY.md support/docs/docs/project-info/security.md
-          cp docs/CONTRIBUTING.md support/docs/docs/development/contributing-original.md
+          cp README.md docs/project-info/readme-en.md
+          cp docs/README.pt-BR.md docs/project-info/readme-pt-br.md
+          cp LICENSE docs/project-info/license.md
+          cp NOTICE.md docs/project-info/notice.md
+          cp SECURITY.md docs/project-info/security.md
+          cp docs/CONTRIBUTING.md docs/development/contributing-original.md
 
           # Criar arquivo de changelog se não existir
-          if [ ! -f support/docs/docs/project-info/changelog.md ]; then
-            echo "# Changelog" > support/docs/docs/project-info/changelog.md
-            echo "" >> support/docs/docs/project-info/changelog.md
-            echo "Consulte o [histórico de releases](https://github.com/rafa-mori/grompt/releases) para ver todas as mudanças." >> support/docs/docs/project-info/changelog.md
+          if [ ! -f docs/project-info/changelog.md ]; then
+            echo "# Changelog" > docs/project-info/changelog.md
+            echo "" >> docs/project-info/changelog.md
+            echo "Consulte o [histórico de releases](https://github.com/rafa-mori/grompt/releases) para ver todas as mudanças." >> docs/project-info/changelog.md
           fi
 
           # Criar páginas que faltam se não existirem
-          mkdir -p support/docs/docs/user-guide
-          mkdir -p support/docs/docs/community
-          mkdir -p support/docs/docs/development
+          mkdir -p docs/user-guide
+          mkdir -p docs/community
+          mkdir -p docs/development
 
           # API Reference
-          if [ ! -f support/docs/docs/user-guide/api-reference.md ]; then
-            echo "# API Reference" > support/docs/docs/user-guide/api-reference.md
-            echo "" >> support/docs/docs/user-guide/api-reference.md
-            echo "Documentação da API em desenvolvimento." >> support/docs/docs/user-guide/api-reference.md
+          if [ ! -f docs/user-guide/api-reference.md ]; then
+            echo "# API Reference" > docs/user-guide/api-reference.md
+            echo "" >> docs/user-guide/api-reference.md
+            echo "Documentação da API em desenvolvimento." >> docs/user-guide/api-reference.md
           fi
 
           # Support page
-          if [ ! -f support/docs/docs/community/support.md ]; then
-            echo "# Suporte" > support/docs/docs/community/support.md
-            echo "" >> support/docs/docs/community/support.md
-            echo "Para suporte, visite nossas [GitHub Issues](https://github.com/rafa-mori/grompt/issues)." >> support/docs/docs/community/support.md
+          if [ ! -f docs/community/support.md ]; then
+            echo "# Suporte" > docs/community/support.md
+            echo "" >> docs/community/support.md
+            echo "Para suporte, visite nossas [GitHub Issues](https://github.com/rafa-mori/grompt/issues)." >> docs/community/support.md
           fi
 
           # Authors page
-          if [ ! -f support/docs/docs/community/authors.md ]; then
-            echo "# Autores" > support/docs/docs/community/authors.md
-            echo "" >> support/docs/docs/community/authors.md
-            echo "## Criador Principal" >> support/docs/docs/community/authors.md
-            echo "- **Rafael Mori** - [@rafa-mori](https://github.com/rafa-mori)" >> support/docs/docs/community/authors.md
-            echo "" >> support/docs/docs/community/authors.md
-            echo "## Contribuidores" >> support/docs/docs/community/authors.md
-            echo "Veja a lista completa de [contribuidores](https://github.com/rafa-mori/grompt/contributors)." >> support/docs/docs/community/authors.md
+          if [ ! -f docs/community/authors.md ]; then
+            echo "# Autores" > docs/community/authors.md
+            echo "" >> docs/community/authors.md
+            echo "## Criador Principal" >> docs/community/authors.md
+            echo "- **Rafael Mori** - [@rafa-mori](https://github.com/rafa-mori)" >> docs/community/authors.md
+            echo "" >> docs/community/authors.md
+            echo "## Contribuidores" >> docs/community/authors.md
+            echo "Veja a lista completa de [contribuidores](https://github.com/rafa-mori/grompt/contributors)." >> docs/community/authors.md
           fi
 
           # Architecture page
-          if [ ! -f support/docs/docs/development/architecture.md ]; then
-            echo "# Arquitetura" > support/docs/docs/development/architecture.md
-            echo "" >> support/docs/docs/development/architecture.md
-            echo "Documentação da arquitetura em desenvolvimento." >> support/docs/docs/development/architecture.md
+          if [ ! -f docs/development/architecture.md ]; then
+            echo "# Arquitetura" > docs/development/architecture.md
+            echo "" >> docs/development/architecture.md
+            echo "Documentação da arquitetura em desenvolvimento." >> docs/development/architecture.md
           fi
 
           # Troubleshooting page
-          if [ ! -f support/docs/docs/development/troubleshooting.md ]; then
-            echo "# Solução de Problemas" > support/docs/docs/development/troubleshooting.md
-            echo "" >> support/docs/docs/development/troubleshooting.md
-            echo "Guia de solução de problemas em desenvolvimento." >> support/docs/docs/development/troubleshooting.md
+          if [ ! -f docs/development/troubleshooting.md ]; then
+            echo "# Solução de Problemas" > docs/development/troubleshooting.md
+            echo "" >> docs/development/troubleshooting.md
+            echo "Guia de solução de problemas em desenvolvimento." >> docs/development/troubleshooting.md
           fi
 
       - name: Build documentation
         run: |
-          cd support/docs
-          mkdocs build --verbose
+          cd $(git rev-parse --show-toplevel)
+          make build-docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          path: support/docs/site
+          path: dist/site
 
   # Deployment job
   deploy:
