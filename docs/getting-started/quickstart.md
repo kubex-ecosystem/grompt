@@ -2,9 +2,27 @@
 
 Comece a usar o Grompt em apenas 5 minutos! Este guia mostra como transformar suas primeiras ideias em prompts profissionais.
 
-## 🚀 Configuração em 3 Passos
+## 🚀 Configuração passo a passo
 
 ### 1. Baixar e Executar
+
+#### 📦 Downloads Rápidos
+
+- **Linux (amd64)** — [grompt_linux_amd64](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_linux_amd64)
+- **macOS Intel** — [grompt_darwin_amd64](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_amd64)
+- **macOS Apple Silicon** — [grompt_darwin_arm64](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_arm64)
+- **Windows (amd64)** — [grompt_windows_amd64.exe](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_windows_amd64.exe)
+
+👉 Ou veja todas as opções na [página de Releases](https://github.com/rafa-mori/grompt/releases).
+
+#### Verificação opcional de integridade (Linux/macOS)
+
+```bash
+sha256sum grompt_linux_amd64
+# compare com o checksum publicado no release
+```
+
+#### 📦 Download e Execução pelo Terminal
 
 ```bash
 # Linux/macOS
@@ -19,13 +37,15 @@ Invoke-WebRequest -Uri "https://github.com/rafa-mori/grompt/releases/latest/down
 .\grompt.exe
 ```
 
-### 2. Abrir no Navegador
+#### Abrir no Navegador
 
 O Grompt abre automaticamente em: **<http://localhost:8080>**
 
-### 3. Começar a Usar
+#### Começar a Usar
 
 Nenhuma configuração adicional é necessária. O modo demo está pronto para uso.
+
+---
 
 ## 🎯 Primeiro Prompt em 2 Minutos
 
@@ -56,7 +76,7 @@ grompt generate \
 
 **Resultado:**
 
-```plaintext
+```markdown
 Crie uma função JavaScript para cálculo e aplicação de descontos com as seguintes especificações:
 
 **Objetivo Principal:** Implementar lógica de desconto flexível para produtos
@@ -72,11 +92,11 @@ Crie uma função JavaScript para cálculo e aplicação de descontos com as seg
 - Retorno: { precoOriginal, desconto, precoFinal, economia }
 
 **Exemplo de Uso:**
-```javascript
+\```javascript
 const produto = { id: 1, nome: "Notebook", preco: 2000, categoria: "tech" };
 const resultado = aplicarDesconto(produto, 15);
 // resultado: { precoOriginal: 2000, desconto: 300, precoFinal: 1700, economia: 300 }
-/```
+\```
 
 **Considerações:**
 
@@ -85,6 +105,8 @@ const resultado = aplicarDesconto(produto, 15);
 - Incluir documentação JSDoc
 
 ```
+
+---
 
 ## 🔧 Configurando um Provedor de IA
 
@@ -118,12 +140,10 @@ grompt ask "Como implementar autenticação JWT?" \
 
 **Suas ideias:**
 
-```plaintext
 - Sistema de login
 - Com React e Node.js
 - Usando JWT
 - Banco PostgreSQL
-```
 
 **CLI:**
 
@@ -141,12 +161,10 @@ grompt generate \
 
 **Suas ideias:**
 
-```plaintext
 - Analisar vendas do trimestre
 - Identificar produtos mais vendidos
 - Criar gráficos
 - Python pandas
-```
 
 **CLI:**
 

@@ -1,6 +1,6 @@
 site_name: Grompt
 site_url: https://rafa-mori.github.io/grompt/
-site_description: "A powerful CLI tool for managing and transforming prompts with advanced features and dynamic notifications"
+site_description: "CLI poderosa para gerenciar e transformar prompts com práticas de engenharia — Go 1.25, React 19, Next 15."
 site_author: "Rafael Mori"
 
 repo_name: "rafa-mori/grompt"
@@ -10,6 +10,7 @@ docs_dir: ../../docs
 
 theme:
   name: material
+  language: pt-BR
   palette:
     primary: "indigo"
     accent: "indigo"
@@ -21,14 +22,8 @@ theme:
     - navigation.sections
     - navigation.tracking
     - navigation.tabs.sticky
-    - navigation.tabs.sticky.scroll
-    - navigation.tabs.sticky.scroll.offset: 64
-    - navigation.tabs.sticky.scroll.offset.mobile: 0
-    - navigation.tabs.sticky.scroll.offset.desktop: 64
-    - navigation.tabs.sticky.scroll.offset.tablet: 64
-    - search.highlight
-    - search.share
-    - search.suggest
+    - content.code.copy
+    - content.tabs.link
   font:
     text: Roboto
     code: Roboto Mono
@@ -40,8 +35,8 @@ markdown_extensions:
   - codehilite:
       linenums: true
   - toc:
-      permalink: True
-      title: On this page
+      permalink: true
+      title: Nesta página
   - attr_list
   - def_list
   - footnotes
@@ -114,12 +109,17 @@ extra:
     provider: mike
   analytics:
     provider: google
-    property: ${G-7HLY17F3DK}
-# plugins:
-#   - search:
-#       lang: en
-#   - git-revision-date-localized:
-#       type: datetime
-#       timezone: America/Sao_Paulo
-#       locale: en
-#       fallback_to_build_date: true
+    property: G-7HLY17F3DK
+
+plugins:
+  - search:
+      lang: pt
+  - git-revision-date-localized:
+      type: datetime
+      timezone: America/Sao_Paulo
+      locale: pt_BR
+      fallback_to_build_date: true
+  # - linkcheck:
+  #     fail_on_dead_links: true
+  #     timeout: 10
+  #     retry_count: 2
