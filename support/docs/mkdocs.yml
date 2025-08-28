@@ -74,23 +74,28 @@ markdown_extensions:
   - pymdownx.tilde
 
 nav:
-  - Home: index.md
-  - Documentation:
-      - Getting Started:
-          - README: README.en.md
-          - Installation: INSTALL.md
-      - User Guide:
-          - README (Portuguese): README.pt-BR.md
-  - Community:
-      - Contributing: CONTRIBUTING.md
-      - Code of Conduct: CODE_OF_CONDUCT.md
-      - Support: SUPPORT.md
-      - Authors: AUTHORS.md
-  - Project Info:
-      - License: LICENSE
-      - Notice: NOTICE.md
-      - Security Policy: SECURITY.md
-      - Changelog: CHANGELOG.md
+  - Início: index.md
+  - Primeiros Passos:
+      - Instalação: getting-started/installation.md
+      - Início Rápido: getting-started/quickstart.md
+  - Guia do Usuário:
+      - Comandos CLI: user-guide/cli-commands.md
+      - Configuração: user-guide/configuration.md
+      - Exemplos de Uso: user-guide/usage-examples.md
+      - API Reference: user-guide/api-reference.md
+  - Desenvolvimento:
+      - Contribuindo: development/contributing.md
+      - Solução de Problemas: development/troubleshooting.md
+      - Arquitetura: development/architecture.md
+  - Comunidade:
+      - Código de Conduta: community/code-of-conduct.md
+      - Suporte: community/support.md
+      - Autores: community/authors.md
+  - Informações do Projeto:
+      - Licença: project-info/license.md
+      - Aviso Legal: project-info/notice.md
+      - Política de Segurança: project-info/security.md
+      - Changelog: project-info/changelog.md
 
 extra:
   social:
