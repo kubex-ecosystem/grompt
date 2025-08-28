@@ -13,6 +13,11 @@ IFS=$'\n\t'
 build_frontend() {
   local _ROOT_DIR="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}"
 
+  if [[ ! -d "${_ROOT_DIR}/frontend" ]]; then
+      echo "Frontend directory does not exist."
+      exit 1
+  fi
+
   cd "${_ROOT_DIR}/frontend" || {
       echo "Failed to change directory to ${_ROOT_DIR}/frontend"
       exit 1
@@ -47,8 +52,6 @@ build_frontend() {
           exit 1
       }
 
-
-
       echo "Frontend build moved to server directory successfully."
   else
       echo "npm is not installed. Please install Node.js and npm to continue."
@@ -56,7 +59,7 @@ build_frontend() {
   fi
 }
 
-(build_frontend) || {
+build_frontend || {
   echo "An error occurred during the pre-build process."
   exit 1
 }

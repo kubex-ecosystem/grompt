@@ -465,13 +465,13 @@ else
   fi
 fi
 
-if ${_RUN_PRE_SCRIPTS:-false}; then
+if [[ "${_RUN_PRE_SCRIPTS:-false}" == "true" ]]; then
   __run_custom_scripts "pre" "$@" || log fatal "Failed to execute pre-installation scripts."
 fi
 
 __secure_logic_main "$@" || log fatal "Script execution failed." true
 
-if ${_RUN_POST_SCRIPTS:-false}; then
+if [[ "${_RUN_POST_SCRIPTS:-false}" == "true" ]]; then
   __run_custom_scripts "post" "$@" || log fatal "Failed to execute post-installation scripts."
 fi
 
