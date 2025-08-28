@@ -57,10 +57,11 @@ jobs:
 
       - name: Install MkDocs and dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material
-          pip install mkdocs-git-revision-date-localized-plugin
-          pip install pymdown-extensions
+          apt-get install -y uv
+          uv pip install mkdocs mkdocs-material
+          uv pip install mkdocs-git-revision-date-localized-plugin
+          uv pip install pymdown-extensions
+          uv pip install ./support/docs/requirements.txt --active --no-progress --quiet
 
       - name: Copy files to docs directory
         run: |
@@ -128,7 +129,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          cd $(git rev-parse --show-toplevel)
+          cd $(git rev-parse --show-toplevel) || exit 1
           make build-docs
 
       - name: Setup Pages
@@ -137,7 +138,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          path: dist/site
+          path: dist/docs
 
   # Deployment job
   deploy:

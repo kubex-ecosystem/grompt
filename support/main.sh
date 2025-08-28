@@ -300,31 +300,34 @@ __main() {
       log info "Generating Documentation..."
 
       cd "${_ROOT_DIR:-}/docs" || {
-        log error "Failed to change directory to ${_ROOT_DIR:-}" true
+        log error "Failed to change directory to ${_ROOT_DIR:-}"
         return 1
       }
 
       # Validate uv
-      if ! command -v uv >/dev/null 2>&1; then
-        apt-get update && apt-get install -y uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
         if ! command -v uv >/dev/null 2>&1; then
-          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-          return 1
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
         fi
-      fi
 
-      # Validate if .venv exists
-      if [[ ! -d ".venv" ]]; then
-        uv venv
-        . .venv/bin/activate
-        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
-      else
-        . .venv/bin/activate
+        # Validate if .venv exists
+
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
+        fi
       fi
 
       # Generate the documentation
       mkdocs build -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" -q || {
-        log error "Failed to generate documentation." true
+        log error "Failed to generate documentation."
         return 1
       }
 
@@ -336,64 +339,67 @@ __main() {
     serve-docs|SERVE-DOCS|-sdc|-SDC)
       log info "Serving Documentation..."
       cd "${_ROOT_DIR:-}/docs" || {
-        log error "Failed to change directory to ${_ROOT_DIR:-}/docs" true
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs"
         return 1
       }
 
       # Validate uv
-      if ! command -v uv >/dev/null 2>&1; then
-        apt-get update && apt-get install -y uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
         if ! command -v uv >/dev/null 2>&1; then
-          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-          return 1
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
+        fi
+
+        # Validate if .venv exists
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
         fi
       fi
 
-      # Validate if .venv exists
-      if [[ ! -d ".venv" ]]; then
-        uv venv
-        . .venv/bin/activate
-        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
-      else
-        . .venv/bin/activate
-      fi
-
-
       mkdocs serve -a "0.0.0.0:8081" -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" --dirtyreload -q || {
-        log error "Failed to serve documentation." true
+        log error "Failed to serve documentation."
         return 1
       }
 
-      log success "Documentation server successfully ran at http://localhost:8081/docs" true
+      log success "Documentation server successfully ran at http://localhost:8081/docs"
       ;;
 
     pub-docs|PUB-DOCS|-pd|-PD)
       log info "Publishing Documentation..."
       cd "${_ROOT_DIR:-}/docs" || {
-        log error "Failed to change directory to ${_ROOT_DIR:-}/docs" true
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs"
         return 1
       }
 
       # Validate uv
-      if ! command -v uv >/dev/null 2>&1; then
-        apt-get update && apt-get install -y uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
         if ! command -v uv >/dev/null 2>&1; then
-          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-          return 1
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
+        fi
+
+        # Validate if .venv exists
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
         fi
       fi
 
-      # Validate if .venv exists
-      if [[ ! -d ".venv" ]]; then
-        uv venv
-        . .venv/bin/activate
-        uv pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
-      else
-        . .venv/bin/activate
-      fi
-
       mkdocs gh-deploy -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" --force --no-history -q || {
-        log error "Failed to publish documentation." true
+        log error "Failed to publish documentation."
         return 1
       }
 
