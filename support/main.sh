@@ -306,8 +306,11 @@ __main() {
 
       # Validate uv
       if ! command -v uv >/dev/null 2>&1; then
-        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-        return 1
+        apt-get update && apt-get install -y uv
+        if ! command -v uv >/dev/null 2>&1; then
+          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
+          return 1
+        fi
       fi
 
       # Validate if .venv exists
@@ -339,8 +342,11 @@ __main() {
 
       # Validate uv
       if ! command -v uv >/dev/null 2>&1; then
-        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-        return 1
+        apt-get update && apt-get install -y uv
+        if ! command -v uv >/dev/null 2>&1; then
+          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
+          return 1
+        fi
       fi
 
       # Validate if .venv exists
@@ -370,8 +376,11 @@ __main() {
 
       # Validate uv
       if ! command -v uv >/dev/null 2>&1; then
-        log error "The 'uv' tool is required to build documentation. Please install it and try again." true
-        return 1
+        apt-get update && apt-get install -y uv
+        if ! command -v uv >/dev/null 2>&1; then
+          log error "The 'uv' tool is required to build documentation. Please install it and try again." true
+          return 1
+        fi
       fi
 
       # Validate if .venv exists
