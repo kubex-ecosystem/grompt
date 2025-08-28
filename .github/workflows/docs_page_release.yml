@@ -1,0 +1,155 @@
+name: Documentation Deploy
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+    branches: [ main ]
+    paths:
+      - 'support/docs/**'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'support/docs/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  NON_INTERACTIVE: true
+  FORCE: y
+  CI: true
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install mkdocs mkdocs-material --system --no-progress --quiet
+          uv pip install mkdocs-git-revision-date-localized-plugin --system --no-progress --quiet
+          uv pip install pymdown-extensions --system --no-progress --quiet
+          uv pip install -r ./support/docs/requirements.txt --system --no-progress --quiet
+
+      - name: Copy files to docs directory
+        run: |
+          # Copiar arquivos do repositório para a estrutura de docs
+          mkdir -p docs/project-info
+
+          # Copiar arquivos principais
+          cp README.md docs/project-info/readme-en.md
+          cp docs/README.pt-BR.md docs/project-info/readme-pt-br.md
+          cp LICENSE docs/project-info/license.md
+          cp NOTICE.md docs/project-info/notice.md
+          cp SECURITY.md docs/project-info/security.md
+          cp docs/CONTRIBUTING.md docs/development/contributing-original.md
+
+          # Criar arquivo de changelog se não existir
+          if [ ! -f docs/project-info/changelog.md ]; then
+            echo "# Changelog" > docs/project-info/changelog.md
+            echo "" >> docs/project-info/changelog.md
+            echo "Consulte o [histórico de releases](https://github.com/rafa-mori/grompt/releases) para ver todas as mudanças." >> docs/project-info/changelog.md
+          fi
+
+          # Criar páginas que faltam se não existirem
+          mkdir -p docs/user-guide
+          mkdir -p docs/community
+          mkdir -p docs/development
+
+          # API Reference
+          if [ ! -f docs/user-guide/api-reference.md ]; then
+            echo "# API Reference" > docs/user-guide/api-reference.md
+            echo "" >> docs/user-guide/api-reference.md
+            echo "Documentação da API em desenvolvimento." >> docs/user-guide/api-reference.md
+          fi
+
+          # Support page
+          if [ ! -f docs/community/support.md ]; then
+            echo "# Suporte" > docs/community/support.md
+            echo "" >> docs/community/support.md
+            echo "Para suporte, visite nossas [GitHub Issues](https://github.com/rafa-mori/grompt/issues)." >> docs/community/support.md
+          fi
+
+          # Authors page
+          if [ ! -f docs/community/authors.md ]; then
+            echo "# Autores" > docs/community/authors.md
+            echo "" >> docs/community/authors.md
+            echo "## Criador Principal" >> docs/community/authors.md
+            echo "- **Rafael Mori** - [@rafa-mori](https://github.com/rafa-mori)" >> docs/community/authors.md
+            echo "" >> docs/community/authors.md
+            echo "## Contribuidores" >> docs/community/authors.md
+            echo "Veja a lista completa de [contribuidores](https://github.com/rafa-mori/grompt/contributors)." >> docs/community/authors.md
+          fi
+
+          # Architecture page
+          if [ ! -f docs/development/architecture.md ]; then
+            echo "# Arquitetura" > docs/development/architecture.md
+            echo "" >> docs/development/architecture.md
+            echo "Documentação da arquitetura em desenvolvimento." >> docs/development/architecture.md
+          fi
+
+          # Troubleshooting page
+          if [ ! -f docs/development/troubleshooting.md ]; then
+            echo "# Solução de Problemas" > docs/development/troubleshooting.md
+            echo "" >> docs/development/troubleshooting.md
+            echo "Guia de solução de problemas em desenvolvimento." >> docs/development/troubleshooting.md
+          fi
+
+      - name: Build documentation
+        run: |
+          cd $(git rev-parse --show-toplevel) || exit 1
+          make build-docs
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/docs
+
+  # Deployment job
+  deploy:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
