@@ -518,7 +518,7 @@ _show_info() {
   local _arch="${_ARCH:-${_CURRENT_ARCH:-}}"
   local _build_target="${_BUILD_TARGET:-${_platform}-${_arch}}"
 
-  if [[ "${_platform_arg:-}" == "__CROSS_COMPILE__" ]]; then
+  if [[ "${_platform_arg}" == "__CROSS_COMPILE__" ]]; then
     _platform_arg=""
   fi
 

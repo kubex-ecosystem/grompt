@@ -116,6 +116,9 @@ arm64:
 386:
 	@echo "Process finished for architecture: 386"
 
+all:
+	@echo "Process finished for all platforms and architectures"
+
 build-docs:
 	@echo "Building documentation..."
 	@bash $(INSTALL_SCRIPT) build-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
