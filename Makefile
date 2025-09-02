@@ -99,22 +99,22 @@ test:
 
 # Platform-specific targets (prevent wildcard capture)
 linux:
-	@echo "Platform argument detected: linux"
+	@echo "Process finished for platform: linux"
 
 amd64:
-	@echo "Architecture argument detected: amd64"
+	@echo "Process finished for architecture: amd64"
 
 windows:
-	@echo "Platform argument detected: windows"
+	@echo "Process finished for platform: windows"
 
 darwin:
-	@echo "Platform argument detected: darwin"
+	@echo "Process finished for platform: darwin"
 
 arm64:
-	@echo "Architecture argument detected: arm64"
+	@echo "Process finished for architecture: arm64"
 
 386:
-	@echo "Architecture argument detected: 386"
+	@echo "Process finished for architecture: 386"
 
 build-docs:
 	@echo "Building documentation..."

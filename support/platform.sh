@@ -197,34 +197,17 @@ _get_os_from_args() {
 }
 
 _get_arch_from_args() {
-  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
-  local _arch="${2:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}"
+  local _platform="${1:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
+  local _arch="${2:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
 
-  case "${_arch:-}" in
-    all|ALL|a|A|-a|-A)
-      echo "all"
-      return 0
-    ;;
-
-    amd64|AMD64|x86_64|X86_64|x64|X64)
-      echo "amd64"
-      return 0
-    ;;
-
-    arm64|ARM64|aarch64|AARCH64)
-      echo "arm64"
-      return 0
-    ;;
-
-    386|i386|I386)
-      echo "386"
-      return 0
-    ;;
-
-    *)
-      log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, arm64, 386."
-    ;;
-
+  # Normalize common arch names
+  case "${_arch}" in
+    x86_64|X86_64) echo "amd64" ;;
+    aarch64|AARCH64) echo "arm64" ;;
+    i386|I386) echo "386" ;;
+    all|ALL|a|A|-a|-A) echo "all" ;;
+    amd64|arm64|386) echo "${_arch}" ;;
+    *) echo "${_arch}" ;;
   esac
 }
 
@@ -234,5 +217,3 @@ export -f _get_os_from_args
 export -f _get_arch_from_args
 export -f get_release_url
 export -f what_platform
-
-what_platform "${@}"

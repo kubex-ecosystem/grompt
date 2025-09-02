@@ -92,6 +92,7 @@ load_platforms_from_manifest() {
   echo "darwin/arm64"
   echo "windows/amd64"
   echo "windows/386"
+
   return 1
 }
 
@@ -474,7 +475,7 @@ build_binary() {
 
   # Check for cross-compilation mode
   # Only enter cross-compilation if no specific platform is provided
-  if [[ "${_platform_args}" == "__CROSS_COMPILE__" ]] || [[ -z "${_platform_args}" && -z "${_arch_args}" ]]; then
+  if [[ "${_platform_args:-__CROSS_COMPILE__}" == "__CROSS_COMPILE__" ]] || [[ -z "${_platform_args}" && -z "${_arch_args}" ]]; then
     log info "Cross-compilation mode: building for all platforms in manifest.json"
 
     # Discover main packages once
@@ -485,10 +486,10 @@ build_binary() {
       return 1
     }
 
-    log info "Starting cross-platform build process..."
-    log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
-    log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
-    log notice "Mode: ${_build_mode}"
+    # log info "Starting cross-platform build process..."
+    # log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
+    # log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
+    # log notice "Mode: ${_build_mode}"
 
     # Load platforms from manifest and build directly
     local built_any=false
@@ -508,39 +509,39 @@ build_binary() {
       log error "No platforms were successfully built"
       return 1
     fi
-  fi
-
-  # Single-platform build mode
-  log info "Single-platform build mode: ${_platform_args}/${_arch_args}"
-
-  # Normalize arch for single builds
-  case "${_arch_args}" in
-    x86_64|X86_64) _arch_args="amd64" ;;
-    aarch64|AARCH64) _arch_args="arm64" ;;
-    i386|I386) _arch_args="386" ;;
-  esac
-
-  # Discover main packages
-  local _main_dirs
-  _main_dirs=$(discover_main_packages "./cmd/...")
-  [[ -z "${_main_dirs}" ]] && {
-    log error "No main packages found"
-    return 1
-  }
-
-  log info "Starting single-platform build process..."
-  log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
-  log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
-  log notice "Mode: ${_build_mode}"
-  log notice "Target: ${_platform_args}/${_arch_args}"
-
-  # Build directly for the specified platform/arch
-  if build_for_arch "${_platform_args}" "${_arch_args}" "${_main_dirs}" "${_build_mode}" "${_force}"; then
-    log success "Single-platform build completed: ${_platform_args}/${_arch_args}"
-    return 0
   else
-    log error "Single-platform build failed: ${_platform_args}/${_arch_args}"
-    return 1
+    # Single-platform build mode
+    log info "Single-platform build mode: ${_platform_args}/${_arch_args}"
+
+    # Normalize arch for single builds
+    case "${_arch_args}" in
+      x86_64|X86_64) _arch_args="amd64" ;;
+      aarch64|AARCH64) _arch_args="arm64" ;;
+      i386|I386) _arch_args="386" ;;
+    esac
+
+    # Discover main packages
+    local _main_dirs
+    _main_dirs=$(discover_main_packages "./cmd/...")
+    [[ -z "${_main_dirs}" ]] && {
+      log error "No main packages found"
+      return 1
+    }
+
+    log info "Starting single-platform build process..."
+    log notice "App: ${_APP_NAME:-unknown} v${_VERSION:-unknown}"
+    log notice "Git: ${_GIT_TAG:-unknown} (${_GIT_COMMIT:-unknown})"
+    log notice "Mode: ${_build_mode}"
+    log notice "Target: ${_platform_args}/${_arch_args}"
+
+    # Build directly for the specified platform/arch
+    if build_for_arch "${_platform_args}" "${_arch_args}" "${_main_dirs}" "${_build_mode}" "${_force}"; then
+      log success "Single-platform build completed: ${_platform_args}/${_arch_args}"
+      return 0
+    else
+      log error "Single-platform build failed: ${_platform_args}/${_arch_args}"
+      return 1
+    fi
   fi
 }
 
@@ -721,24 +722,29 @@ _get_arch_arr_from_args() {
 }
 
 _get_os_from_args() {
-  local _platform="${1:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
 
-  case "${_platform}" in
+  case "${_platform:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}" in
     all|ALL|a|A|-a|-A)
       echo "all"
-      ;;
+    ;;
+
     win|WIN|windows|WINDOWS|w|W|-w|-W)
       echo "windows"
-      ;;
+    ;;
+
     linux|LINUX|l|L|-l|-L)
       echo "linux"
-      ;;
+    ;;
+
     darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
       echo "darwin"
-      ;;
+    ;;
+
     *)
-      echo "${_platform}"
-      ;;
+      log fatal "Invalid platform: '${_platform:-}'. Valid options: windows, linux, darwin, all."
+    ;;
+
   esac
 }
 

@@ -10,53 +10,76 @@ shopt -s inherit_errexit # Inherit the errexit option in functions
 
 IFS=$'\n\t'
 
+__source_script_if_needed() {
+  local _check_declare="${1:-}"
+  local _script_path="${2:-}"
+  # shellcheck disable=SC2065
+  if test -z "$(declare -f "${_check_declare:-}")" >/dev/null; then
+    # shellcheck source=/dev/null
+    source "${_script_path:-}" || {
+      echo "Error: Could not source ${_script_path:-}. Please ensure it exists." >&2
+      return 1
+    }
+  fi
+  return 0
+}
+
+_SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || {
+  echo "Error: Could not source utils.sh. Please ensure it exists." >&2
+  exit 1
+}
+
 build_frontend() {
   local _ROOT_DIR="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}"
 
   cd "${_ROOT_DIR}/frontend" || {
-      echo "Failed to change directory to ${_ROOT_DIR}/frontend"
-      exit 1
+    log fatal "Failed to change directory to ${_ROOT_DIR}/frontend" || echo "Failed to change directory to ${_ROOT_DIR}/frontend" >&2
+    exit 1
   }
 
   if command -v npm &>/dev/null; then
-      echo "Installing frontend dependencies..."
-      npm i --no-audit --no-fund --prefer-offline || {
-          echo "Failed to install frontend dependencies."
-          exit 1
-      }
+      log info "Building frontend..." true
 
-      npm run build || {
+      _frontend_install_output="$(npm i --no-audit --no-fund --prefer-offline --silent || {
+          echo "Failed to install frontend dependencies."
+      })"
+
+      _frontend_build_output="$(npm run build --silent > /dev/null 2>&1 || {
           echo "Failed to build frontend assets."
+      })"
+
+      if [[ "${_frontend_build_output:-}" == "Failed to build frontend assets." ]] || [[ -n "${_frontend_build_output:-}" && "${_QUIET:-false}" != "true" ]]; then
+          log error "${_frontend_build_output}" true
+          log fatal "Frontend build failed." true
           exit 1
-      }
+      fi
 
       if [[ -d './build' ]]; then
-          echo "Frontend assets built successfully."
+          log success "Frontend assets built successfully." true
       else
-          echo "Build directory does not exist."
+          log fatal "Build directory does not exist." true
           exit 1
       fi
 
       if [[ -d "${_ROOT_DIR}/internal/services/server/" ]]; then
-          echo "Removing old build directory..."
+          log notice "Removing old build directory..."
           rm -rf "${_ROOT_DIR}/internal/services/server/build"
       fi
 
       mv './build' "${_ROOT_DIR}/internal/services/server/build" || {
-          echo "Failed to move build directory to server."
+          log fatal "Failed to move build directory to server." true
           exit 1
       }
 
-
-
-      echo "Frontend build moved to server directory successfully."
+      log success "Frontend build moved to server directory successfully." true
   else
-      echo "npm is not installed. Please install Node.js and npm to continue."
+      log fatal "npm is not installed. Please install Node.js and npm to continue." true
       exit 1
   fi
 }
 
 (build_frontend) || {
-  echo "An error occurred during the pre-build process."
+  log fatal "An error occurred during the pre-build process." || echo "An error occurred during the pre-build process." >&2
   exit 1
 }

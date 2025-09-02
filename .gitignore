@@ -1,6 +1,7 @@
 # Binários
 
 !grompt/
+.venv/
 
 # Build outputs
 

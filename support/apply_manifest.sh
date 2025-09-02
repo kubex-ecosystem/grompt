@@ -7,24 +7,59 @@ set -o posix
 
 IFS=$'\n\t'
 
-_MANIFEST_SUBPATH='internal/module/info/manifest.json'
+# # Define the root directory (assuming this script is in lib/ under the root)
+# _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")"
+# _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")"
+# _OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")"
+# _OWNER="${_OWNER,,}"  # Converts to lowercase
+# _BINARY_NAME="${_APP_NAME}"
+# _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")"
+# _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")"
+# _VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0")
+# _LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")"
+# _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
+# _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
+# _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
+# _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Linux, MacOS, Windows")"
+# _PLATFORMS_SUPPORTED="$(printf '%s ' "${_PLATFORMS_SUPPORTED[*]//
+# /, }")" # Converts to comma-separated list
+
+_ROOT_DIR="${_ROOT_DIR:-}"
+_APP_NAME="${_APP_NAME:-}"
+_DESCRIPTION="${_DESCRIPTION:-}"
+_OWNER="${_OWNER:-}"
+_BINARY_NAME="${_BINARY_NAME:-}"
+_PROJECT_NAME="${_PROJECT_NAME:-}"
+_AUTHOR="${_AUTHOR:-}"
+_VERSION="${_VERSION:-}"
+_LICENSE="${_LICENSE:-}"
+_REPOSITORY="${_REPOSITORY:-}"
+_PRIVATE_REPOSITORY="${_PRIVATE_REPOSITORY:-}"
+_VERSION_GO="${_VERSION_GO:-}"
+
+_MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
 
 __get_values_from_manifest() {
-  # Define the root directory (assuming this script is in lib/ under the root)
-  _ROOT_DIR="$(cd "$(dirname "${0}")/.." && pwd)" || return 1
+  # # Define the root directory (assuming this script is in lib/ under the root)
+  _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
   # shellcheck disable=SC2005
-  _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")" || return 1
-  _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")" || return 1
-  _OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")" || return 1
-  _OWNER="${_OWNER,,}" || return 1
-  _BINARY_NAME="${_APP_NAME}" || return 1
-  _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")" || return 1
-  _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")" || return 1
-  _VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0") || return 1
-  _LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")" || return 1
-  _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")" || return 1
-  _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")" || return 1
+  _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR:-}")")"
+  _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")"
+  _OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")"
+  _OWNER="${_OWNER,,}"  # Converts to lowercase
+  _BINARY_NAME="${_APP_NAME}"
+  _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")"
+  _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")"
+  _VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0")
+  _LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")"
+  _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
+  _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
+  _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
+  _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Linux, MacOS, Windows")"
+  _PLATFORMS_SUPPORTED="$(printf '%s ' "${_PLATFORMS_SUPPORTED[*]//
+  /, }")" # Converts to comma-separated list
 
   return 0
 }
@@ -111,10 +146,15 @@ __replace_project_name() {
   return 0
 }
 
-apply_manifest() {
-  __get_values_from_manifest || return 1
+change_project_name() {
   __replace_project_name || return 1
   return 0
 }
 
+apply_manifest() {
+  __get_values_from_manifest || return 1
+  return 0
+}
+
 export -f apply_manifest
+export -f change_project_name
