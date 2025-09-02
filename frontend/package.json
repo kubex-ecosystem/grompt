@@ -3,7 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Krompt: A React-based Prompt Engineering Tool for AI Models",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafa-mori/grompt.git"
+  },
+  "author": "Rafael Mori",
+  "license": "MIT",
+  "private": "true",
+  "enabledApiProposals": [
+    "aiTextSearchProvider",
+    "aiRelatedInformation",
+    "interactiveWindow"
+  ],
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -69,8 +80,6 @@
     "golang",
     "embedded"
   ],
-  "author": "Rafael Mori",
-  "license": "MIT",
   "browserslist": {
     "production": [
       ">0.2%",

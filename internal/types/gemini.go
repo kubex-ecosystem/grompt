@@ -106,7 +106,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
-		gl.Log("error", "Failed to serialize Gemini request: %v", err)
+		gl.Log("error", fmt.Sprintf("Failed to serialize Gemini request: %v", err))
 		return "", fmt.Errorf("error serializing request: %v", err)
 	}
 
@@ -114,7 +114,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 	requestURL := fmt.Sprintf("%s?key=%s", baseURL, g.apiKey)
 	req, err := http.NewRequest("POST", requestURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		gl.Log("error", "Failed to create Gemini request: %v", err)
+		gl.Log("error", fmt.Sprintf("Failed to create Gemini request: %v", err))
 		return "", fmt.Errorf("error creating request: %v", err)
 	}
 
@@ -122,14 +122,14 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		gl.Log("error", "Gemini API request error: %v", err)
+		gl.Log("error", fmt.Sprintf("Gemini API request error: %v", err))
 		return "", fmt.Errorf("request error: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		gl.Log("error", "Failed to read Gemini response: %v", err)
+		gl.Log("error", fmt.Sprintf("Failed to read Gemini response: %v", err))
 		return "", fmt.Errorf("error reading response: %v", err)
 	}
 
@@ -137,16 +137,16 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 		// Try to parse Gemini error response
 		var errorResp GeminiErrorResponse
 		if err := json.Unmarshal(body, &errorResp); err == nil {
-			gl.Log("error", "Gemini API error: %s (code: %d)", errorResp.Error.Message, errorResp.Error.Code)
+			gl.Log("error", fmt.Sprintf("Gemini API error: %s (code: %d)", errorResp.Error.Message, errorResp.Error.Code))
 			return "", fmt.Errorf("gemini API error: %s (code: %d)", errorResp.Error.Message, errorResp.Error.Code)
 		}
-		gl.Log("error", "API returned status %d: %s", resp.StatusCode, string(body))
+		gl.Log("error", fmt.Sprintf("API returned status %d: %s", resp.StatusCode, string(body)))
 		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var response GeminiResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		gl.Log("error", "Failed to parse Gemini response: %v", err)
+		gl.Log("error", fmt.Sprintf("Failed to parse Gemini response: %v", err))
 		return "", fmt.Errorf("error parsing response: %v", err)
 	}
 

@@ -63,7 +63,7 @@ const AgentsDashboard = () => {
   const loadAgents = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/agents');
+      const response = await fetch('/agents');
       if (!response.ok) throw new Error('Failed to load agents');
       const data = await response.json();
       setAgents(data);
@@ -86,7 +86,7 @@ const AgentsDashboard = () => {
   // Deletar agent
   const deleteAgent = async (id: string) => {
     try {
-      const response = await fetch(`/api/agents/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/agents/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete agent');
       setAgents(agents.filter(a => a.ID !== id));
     } catch (err) {
@@ -98,7 +98,7 @@ const AgentsDashboard = () => {
   const generateAgentsFromRequirements = async () => {
     try {
       setIsGenerating(true);
-      const response = await fetch('/api/agents/generate', {
+      const response = await fetch('/agents/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requirements })
@@ -117,7 +117,7 @@ const AgentsDashboard = () => {
   // Exportar AGENTS.md
   const exportAgentsMarkdown = async () => {
     try {
-      const response = await fetch('/api/agents/markdown');
+      const response = await fetch('/agents/markdown');
       if (!response.ok) throw new Error('Failed to export markdown');
       const markdown = await response.text();
 
@@ -154,7 +154,7 @@ const AgentsDashboard = () => {
   // Copiar markdown para clipboard
   const copyMarkdownToClipboard = async () => {
     try {
-      const response = await fetch('/api/agents/markdown');
+      const response = await fetch('/agents/markdown');
       if (!response.ok) throw new Error('Failed to get markdown');
       const markdown = await response.text();
       await navigator.clipboard.writeText(markdown);
