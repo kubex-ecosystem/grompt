@@ -1,4 +1,4 @@
-# ![Grompt Logo](assets/top_banner.png)
+# ![Grompt Logo](assets/top_banner_z_lg.png)
 
 > **Transforme suas ideias brutas em prompts estruturados e profissionais com práticas reais de engenharia**
 

@@ -1,4 +1,4 @@
-# ![Grompt Logo](docs/assets/top_banner_c.png)
+# ![Grompt Logo](docs/assets/top_banner_z_2_md.png)
 
 [![Version](https://img.shields.io/badge/Version-1.0.7-purple.svg)](https://github.com/rafa-mori/grompt/releases/latest)
 [![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
