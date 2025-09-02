@@ -16,6 +16,8 @@ fi
 
 IFS=$'\n\t'
 
+declare -a _main_args=( "$@" )
+
 __secure_logic_sourced_name() {
   local _self="${BASH_SOURCE-}"
   _self="${_self//${_kbx_root:-$()}/}"
@@ -79,11 +81,12 @@ __first(){
   fi
 }
 
+_QUIET=${_QUIET:-${QUIET:-false}}
 _DEBUG=${_DEBUG:-${DEBUG:-false}}
 _HIDE_ABOUT=${_HIDE_ABOUT:-${HIDE_ABOUT:-false}}
 _SCRIPT_DIR="$(dirname "${0}")"
 
-__first "$@" >&2 || {
+__first "${_main_args[@]}" >&2 || {
   echo "Error: This script must be run directly, not sourced." >&2
   exit 1
 }
@@ -105,17 +108,16 @@ __source_script_if_needed() {
 
 # Load library files
 _SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-__source_script_if_needed "show_banner" "${_SCRIPT_DIR:-}/config.sh" || exit 1
-__source_script_if_needed "log" "${_SCRIPT_DIR:-}/utils.sh" || exit 1
+__source_script_if_needed "show_summary" "${_SCRIPT_DIR:-}/config.sh" || exit 1
+__source_script_if_needed "apply_manifest" "${_SCRIPT_DIR:-}/apply_manifest.sh" || exit 1
+__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || exit 1
 __source_script_if_needed "what_platform" "${_SCRIPT_DIR:-}/platform.sh" || exit 1
 __source_script_if_needed "check_dependencies" "${_SCRIPT_DIR:-}/validate.sh" || exit 1
 __source_script_if_needed "detect_shell_rc" "${_SCRIPT_DIR:-}/install_funcs.sh" || exit 1
 __source_script_if_needed "build_binary" "${_SCRIPT_DIR:-}/build.sh" || exit 1
-__source_script_if_needed "show_summary" "${_SCRIPT_DIR:-}/info.sh" || exit 1
-__source_script_if_needed "apply_manifest" "${_SCRIPT_DIR:-}/apply_manifest.sh" || exit 1
 
 # Initialize traps
-set_trap "$@"
+set_trap "${_main_args[@]}"
 
 clear_screen
 
@@ -123,37 +125,63 @@ __run_custom_scripts() {
   local _STAGE="${1:-post}"
   if test -d "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"; then
     if ls -1A "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"*.sh >/dev/null 2>&1; then
-      log info "Running custom ${_STAGE} scripts..." true
       local _CUSTOM_SCRIPTS=()
-      # shellcheck disable=SC2011
+      local _print_stage_header=false
 
+      # shellcheck disable=SC2011
       _CUSTOM_SCRIPTS=( "$(ls -1A "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"*.sh | xargs -I{} basename {} || true)" )
-      for _CUSTOM_SCRIPT in "${_CUSTOM_SCRIPTS[@]}"; do
-        if [[ -f "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
-          log info "Executing script: ${_CUSTOM_SCRIPT}" true
-          # Ensure the script is executable
-          if [[ ! -x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
-            log info "Making script executable: ${_CUSTOM_SCRIPT:-}"
-            chmod +x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
-              log error "Failed to make script executable: ${_CUSTOM_SCRIPT:-}" true
+      local _CUSTOM_SCRIPTS_LEN="${#_CUSTOM_SCRIPTS[@]}"
+
+      if [[ $_CUSTOM_SCRIPTS_LEN -gt 0 ]]; then
+        log info "${_CUSTOM_SCRIPTS_LEN} ${_STAGE} custom scripts found..." true
+
+        if [[ $_CUSTOM_SCRIPTS_LEN -gt 1 ]]; then
+          _print_stage_header=true
+        fi
+
+        test ${_print_stage_header:-false} = true && log hr "[BEGIN CUSTOM STAGE: ${_STAGE}] " || true
+
+        for _CUSTOM_SCRIPT in "${_CUSTOM_SCRIPTS[@]}"; do
+          if [[ -f "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
+            log hr "[STAGE: ${_STAGE} - START SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+            log notice "Executing script: ${_CUSTOM_SCRIPT}"
+            # Ensure the script is executable
+            if [[ ! -x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
+              log info "Making script executable: ${_CUSTOM_SCRIPT:-}"
+              chmod +x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
+                log error "Failed to make script executable: ${_CUSTOM_SCRIPT:-}" true
+                log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+                test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+                return 1
+              }
+              log notice "Made script executable: ${_CUSTOM_SCRIPT:-}"
+            fi
+
+            # Execute the script without passing build arguments
+            "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
+              log error "Script execution failed: ${_CUSTOM_SCRIPT:-}" true
+              log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+              test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
               return 1
             }
-            log info "Made script executable: ${_CUSTOM_SCRIPT:-}" true
+            log success "Script executed successfully: ${_CUSTOM_SCRIPT:-}"
+          else
+            log warn "Script not found: ${_CUSTOM_SCRIPT:-}" true
+            log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+            test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+            return 1
           fi
 
-          # Execute the script without passing build arguments
-          "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
-            log error "Script execution failed: ${_CUSTOM_SCRIPT:-}" true
-            return 1
-          }
-          log success "Script executed successfully: ${_CUSTOM_SCRIPT:-}" true
-        else
-          log warn "Script not found: ${_CUSTOM_SCRIPT:-}" true
-          return 1
-        fi
-      done
+          log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+        done
+
+        test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+
+        return 0
+      fi
     fi
   fi
+
   return 0
 }
 
@@ -163,12 +191,12 @@ __main() {
     return 1
   fi
 
-  local _arrArgs=( "$@" )
+  local _arrArgs=( "${_main_args[@]}" )
   # local _arrArgs=( "${_args[@]::$#}" )
 
-  local _command="${1:-help}"
-  local _platform_arg="${2:-}"
-  local _arch_arg="${3:-}"
+  local _command="${_arrArgs[0]:-help}"
+  local _platform_arg="${_arrArgs[1]:-}"
+  local _arch_arg="${_arrArgs[2]:-}"
 
   # If no platform specified, use cross-compilation mode
   if [[ -z "${_platform_arg}" ]]; then
@@ -188,10 +216,13 @@ __main() {
   local _app_name="${_APP_NAME:-${APP_NAME:-$(basename "${_root_dir}")}}"
   local _version="${_VERSION:-${VERSION:-$(git describe --tags)}}"
 
+  local _platform="${_PLATFORM:-${_CURRENT_PLATFORM:-}}"
+  local _arch="${_ARCH:-${_CURRENT_ARCH:-}}"
+  local _build_target="${_BUILD_TARGET:-${_platform}-${_arch}}"
 
-  log notice "Command: ${_command:-}" true
-  log notice "Platform: $(_get_os_from_args "${_platform_arg:-}")" true
-  log notice "Architecture: $(_get_arch_from_args "${_platform_arg:-}" "${_arch_arg:-}")" true
+  if [[ "${_platform_arg}" == "__CROSS_COMPILE__" ]]; then
+    _platform_arg=""
+  fi
 
   case "${_command:-}" in
     # Help
@@ -228,7 +259,7 @@ __main() {
         return 1
       fi
       log info "Running build command..."
-      build_binary "${_platform_arg:-}" "${_arch_arg:-}" "${_force:-}" "${_will_upx_pack_binary:-true}"
+      build_binary "${_platform_arg:-__CROSS_COMPILE__}" "${_arch_arg:-}" "${_force:-}" "${_will_upx_pack_binary:-true}"
       return 0
       ;;
     install|INSTALL|-i|-I)
@@ -443,7 +474,7 @@ __secure_logic_main() {
   local _ws_name_val
   _ws_name_val=$(eval "echo \${${_ws_name:-}}")
   if test "${_ws_name_val:-}" != "true"; then
-    __main "$@"
+    __main "${_main_args[@]}"
     return $?
   else
     # If the script is sourced, we export the functions
@@ -453,23 +484,82 @@ __secure_logic_main() {
   fi
 }
 
-if [[ "${_DEBUG:-false}" != true ]]; then
+_show_info() {
+  if ! what_platform; then
+    log error "Platform could not be determined." true
+    return 1
+  fi
+
+  local _arrArgs=( "${_main_args[@]}" )
+
+  local _command="${_arrArgs[0]:-help}"
+  local _platform_arg="${_arrArgs[1]:-}"
+  local _arch_arg="${_arrArgs[2]:-}"
+
+  # If no platform specified, use cross-compilation mode
+  if [[ -z "${_platform_arg}" ]]; then
+    _platform_arg="__CROSS_COMPILE__"  # Special flag for cross-compilation
+  fi
+
+  # Set defaults only for specific platform requests
+  if [[ "${_platform_arg}" != "__CROSS_COMPILE__" ]]; then
+    _arch_arg="${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  fi
+
+  local _force="${_FORCE:-${FORCE:-n}}"
+  local _will_upx_pack_binary="${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}"
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_CMD_PATH:-${CMD_PATH:-${_root_dir}/cmd}}"
+  local _binary_name="${_BINARY_NAME:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
+  local _app_name="${_APP_NAME:-${APP_NAME:-$(basename "${_root_dir}")}}"
+  local _version="${_VERSION:-${VERSION:-$(git describe --tags)}}"
+
+  local _platform="${_PLATFORM:-${_CURRENT_PLATFORM:-}}"
+  local _arch="${_ARCH:-${_CURRENT_ARCH:-}}"
+  local _build_target="${_BUILD_TARGET:-${_platform}-${_arch}}"
+
+  if [[ "${_platform_arg}" == "__CROSS_COMPILE__" ]]; then
+    _platform_arg=""
+  fi
+
+  log notice "Command: ${_command:-}"
+  log notice "Platform: $(_get_os_from_args "${_platform_arg:-$(uname -s | tr '[:upper:]' '[:lower:]')}" )"
+  log notice "Architecture: $(_get_arch_from_args "${_platform_arg:-$(uname -s | tr '[:upper:]' '[:lower:]')}" "${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}" )"
+
   show_headers || log fatal "Failed to display headers." true
-  if [[ -z "${_HIDE_ABOUT:-}" ]]; then
-    show_about || log fatal "Failed to display about information." true
+}
+
+main() {
+  _show_info "${_main_args[@]}" || {
+    log fatal "Failed to display process information." true
+  }
+
+  if [[ "${_RUN_PRE_SCRIPTS:-true}" != "false" ]]; then
+    __run_custom_scripts "pre" "${_main_args[@]}" || {
+      log error "pre-installation scripts: $?"
+      log fatal "Failed to execute pre-installation scripts." true
+    }
   fi
-else
-  log info "Debug mode enabled; banner will be ignored..."
-  if [[ -z "${_HIDE_ABOUT:-}" ]]; then
-    show_about || log fatal "Failed to display about information." true
+
+  __secure_logic_main "${_main_args[@]}" || {
+    log fatal "Script execution failed." true
+  }
+
+  if [[ "${_RUN_POST_SCRIPTS:-true}" != "false" ]]; then
+    __run_custom_scripts "post" "${_main_args[@]}" || {
+      log error "post-installation scripts: $?"
+      log fatal "Failed to execute post-installation scripts." true
+    }
   fi
-fi
 
 if [[ "${_RUN_PRE_SCRIPTS:-false}" == "true" ]]; then
   __run_custom_scripts "pre" "$@" || log fatal "Failed to execute pre-installation scripts."
 fi
 
-__secure_logic_main "$@" || log fatal "Script execution failed." true
+  if [[ "${MYNAME_VERBOSE:-false}" == "true" || "${_DEBUG:-false}" == "true" ]]; then
+    log info "Script executed in ${__secure_logic_elapsed_time} seconds."
+  fi
+}
 
 if [[ "${_RUN_POST_SCRIPTS:-false}" == "true" ]]; then
   __run_custom_scripts "post" "$@" || log fatal "Failed to execute post-installation scripts."

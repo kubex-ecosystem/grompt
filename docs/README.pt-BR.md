@@ -310,9 +310,11 @@ Este projeto é licenciado sob a Licença MIT - veja o arquivo [LICENSE](../LICE
 
 ---
 
+<!-- markdownlint-disable MD033 -->
+
 <div align="center">
 
-**Feito com ❤️ usando Go + React**
+***Feito com ❤️ usando Go + React***
 
 [⭐ Star este projeto](https://github.com/rafa-mori/grompt/stargazers) • [🐛 Reportar Bug](https://github.com/rafa-mori/grompt/issues) • [✨ Solicitar Funcionalidade](https://github.com/rafa-mori/grompt/issues)
 

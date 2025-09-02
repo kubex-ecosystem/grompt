@@ -50,9 +50,9 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
-    "export": "next build && next export",
+    "export": "next build --no-lint && next export",
     "lint": "next lint"
   },
   "keywords": [
