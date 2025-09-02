@@ -6,8 +6,7 @@ The following table outlines which versions of Grompt currently receive security
 
 | Version | Supported           |
 | ------- | ------------------- |
-| 1.0.x   | :white_check_mark:  |
-| < 0.0   | :x:                 |
+| 1.x     | :white_check_mark:  |
 
 > **Note:** Only the latest minor versions in each major release are supported with security updates. Older versions do not receive fixes.
 
