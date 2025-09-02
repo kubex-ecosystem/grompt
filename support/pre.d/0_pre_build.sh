@@ -77,23 +77,14 @@ build_frontend() {
           exit 1
       }
 
-<<<<<<< HEAD
       log success "Frontend build moved to server directory successfully." true
-=======
-      echo "Frontend build moved to server directory successfully."
->>>>>>> main/main
   else
       log fatal "npm is not installed. Please install Node.js and npm to continue." true
       exit 1
   fi
 }
 
-<<<<<<< HEAD
 (build_frontend) || {
   log fatal "An error occurred during the pre-build process." || echo "An error occurred during the pre-build process." >&2
-=======
-build_frontend || {
-  echo "An error occurred during the pre-build process."
->>>>>>> main/main
   exit 1
 }
