@@ -9,11 +9,11 @@ on:
     #   - 'support/docs/**'
     #   - 'docs/**'
     #   - '.github/workflows/docs.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'support/docs/**'
-      - 'docs/**'
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'support/docs/**'
+  #     - 'docs/**'
   workflow_dispatch:
 
 permissions:
