@@ -528,12 +528,12 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explica√ß√
           result = await directCall('gemini', vr.vault || {}, {
             prompt: engineeringPrompt,
             max_tokens: maxLength,
-            model: selectedModel || 'gemini-1.5-pro'
+            model: selectedModel || 'gemini-2.0-flash'
           });
         } else {
           result = await apiCall('/api/gemini', {
             method: 'POST',
-            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gemini-1.5-pro' })
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gemini-2.0-flash' })
           });
         }
 
@@ -935,7 +935,7 @@ make run
             {apiProvider !== 'demo' && (
               <input
                 title="Custom model (optional)"
-                placeholder={apiProvider === 'gemini' ? 'e.g., gemini-1.5-flash, gemini-1.5-flash-8b' : 'custom model (optional)'}
+                placeholder={apiProvider === 'gemini' ? 'e.g., gemini-2.0-flash, gemini-2.0-flash-8b' : 'custom model (optional)'}
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500 w-full md:w-auto flex-1 min-w-[220px]`}

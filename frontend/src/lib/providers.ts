@@ -94,7 +94,7 @@ export async function directCall(provider: ProviderId, vault: ApiKeysVault, payl
     }
     case 'gemini': {
       const key = vault.gemini?.apiKey as string;
-      const model = encodeURIComponent(payload.model || vault.gemini?.defaultModel || 'gemini-1.5-flash');
+      const model = encodeURIComponent(payload.model || vault.gemini?.defaultModel || 'gemini-2.0-flash');
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
       const contents = payload.contents || [{ parts: [{ text: payload.prompt }] }];
       return fetch(url, {
@@ -183,7 +183,7 @@ export async function streamDirectCall(
           const j = JSON.parse(data);
           const delta = j.choices?.[0]?.delta?.content || '';
           if (delta) onDelta(delta);
-        } catch {}
+        } catch { }
       }
     }
     return;
@@ -218,7 +218,7 @@ export async function streamDirectCall(
           if (j.type === 'content_block_delta' && j.delta?.text) {
             onDelta(j.delta.text);
           }
-        } catch {}
+        } catch { }
       }
     }
     return;
@@ -244,7 +244,7 @@ export async function streamDirectCall(
         try {
           const j = JSON.parse(l);
           if (j.response) onDelta(j.response);
-        } catch {}
+        } catch { }
       }
     }
     return;
@@ -256,15 +256,14 @@ export async function testProvider(
   provider: ProviderId,
   vault: ApiKeysVault,
   baseURL = ''
-): Promise<{ ok: boolean; status: number; data?: any; error?: string }>
-{
+): Promise<{ ok: boolean; status: number; data?: any; error?: string }> {
   // Prefer BYOK direct call when available to avoid exposing keys to backend
   if (hasByok(provider, vault)) {
     try {
       const payload: any = { prompt: 'ping' };
       if (provider === 'openai') payload.model = 'gpt-3.5-turbo';
       if (provider === 'chatgpt') payload.model = 'gpt-4o-mini';
-      if (provider === 'gemini') payload.model = 'gemini-1.5-pro';
+      if (provider === 'gemini') payload.model = 'gemini-2.0-flash';
       if (provider === 'deepseek') payload.model = 'deepseek-chat';
       if (provider === 'ollama') payload.model = 'llama3.1';
       const res = await directCall(provider, vault, payload);
@@ -283,7 +282,7 @@ export async function testProvider(
     case 'openai': endpoint = '/api/openai'; body = { prompt: 'ping', model: 'gpt-3.5-turbo' }; break;
     case 'chatgpt': endpoint = '/api/chatgpt'; body = { prompt: 'ping', model: 'gpt-4o-mini' }; break;
     case 'anthropic': endpoint = '/api/claude'; body = { prompt: 'ping' }; break;
-    case 'gemini': endpoint = '/api/gemini'; body = { prompt: 'ping', model: 'gemini-1.5-pro' }; break;
+    case 'gemini': endpoint = '/api/gemini'; body = { prompt: 'ping', model: 'gemini-2.0-flash' }; break;
     case 'deepseek': endpoint = '/api/deepseek'; body = { prompt: 'ping', model: 'deepseek-chat' }; break;
     case 'ollama': endpoint = '/api/ollama'; body = { prompt: 'ping', model: 'llama3.1' }; break;
   }

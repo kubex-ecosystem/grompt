@@ -121,16 +121,16 @@ all:
 
 build-docs:
 	@echo "Building documentation..."
-	@bash $(INSTALL_SCRIPT) build-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+	@bash $(INSTALL_SCRIPT) build-docs $(ARGS)
 	$(shell exit 0)
 
 serve-docs:
 	@echo "Starting documentation server..."
-	@bash $(INSTALL_SCRIPT) serve-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+	@bash $(INSTALL_SCRIPT) serve-docs $(ARGS)
 
 pub-docs:
 	@echo "Publishing documentation..."
-	@bash $(INSTALL_SCRIPT) pub-docs $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
+	@bash $(INSTALL_SCRIPT) pub-docs $(ARGS)
 	$(shell exit 0)
 
 ## Run dynamic commands with arguments calling the install script.

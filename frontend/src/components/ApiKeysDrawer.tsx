@@ -246,7 +246,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               onChange={(e) => setVault({ ...vault, gemini: { apiKey: e.target.value } })}
             />
             <input
-              type="text" placeholder="Default model (ex.: gemini-1.5-flash)"
+              type="text" placeholder="Default model (ex.: gemini-2.0-flash)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.gemini?.defaultModel || ''}
               onChange={(e) => setVault({ ...vault, gemini: { apiKey: vault.gemini?.apiKey ?? '', defaultModel: e.target.value } })}
