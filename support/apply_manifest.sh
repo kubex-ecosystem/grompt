@@ -1,29 +1,13 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-set -o errtrace
-set -o functrace
-set -o posix
-
+# set -o posix
+set -o nounset  # Treat unset variables as an error
+set -o errexit  # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Prevent errors in a pipeline from being masked
+set -o errtrace # If a command fails, the shell will exit immediately
+set -o functrace # If a function fails, the shell will exit immediately
+shopt -s inherit_errexit # Inherit the errexit option in functions
 IFS=$'\n\t'
-
-# # Define the root directory (assuming this script is in lib/ under the root)
-# _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR}")")"
-# _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")"
-# _OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")"
-# _OWNER="${_OWNER,,}"  # Converts to lowercase
-# _BINARY_NAME="${_APP_NAME}"
-# _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")"
-# _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")"
-# _VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0")
-# _LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")"
-# _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
-# _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
-# _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
-# _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Linux, MacOS, Windows")"
-# _PLATFORMS_SUPPORTED="$(printf '%s ' "${_PLATFORMS_SUPPORTED[*]//
-# /, }")" # Converts to comma-separated list
 
 _ROOT_DIR="${_ROOT_DIR:-}"
 _APP_NAME="${_APP_NAME:-}"
@@ -37,6 +21,7 @@ _LICENSE="${_LICENSE:-}"
 _REPOSITORY="${_REPOSITORY:-}"
 _PRIVATE_REPOSITORY="${_PRIVATE_REPOSITORY:-}"
 _VERSION_GO="${_VERSION_GO:-}"
+_PLATFORMS_SUPPORTED="${_PLATFORMS_SUPPORTED:-}"
 
 _MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
 
@@ -57,9 +42,10 @@ __get_values_from_manifest() {
   _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
   _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
   _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
-  _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Linux, MacOS, Windows")"
+  _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "linux, macOS, windows")"
   _PLATFORMS_SUPPORTED="$(printf '%s ' "${_PLATFORMS_SUPPORTED[*]//
-  /, }")" # Converts to comma-separated list
+/, }")" # Converts to comma-separated list
+  _PLATFORMS_SUPPORTED="${_PLATFORMS_SUPPORTED,,}"  # Converts to lowercase
 
   return 0
 }

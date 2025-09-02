@@ -11,7 +11,7 @@ shopt -s inherit_errexit # Inherit the errexit option in functions
 IFS=$'\n\t'
 
 # Define the relative path to the manifest file
-_MANIFEST_SUBPATH='internal/module/info/manifest.json'
+_MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
 
 # Define environment variables for the current platform and architecture
 # Converts to lowercase for compatibility
@@ -94,11 +94,6 @@ show_about() {
   _about_origin="  Author: ${_AUTHOR:-}
   License: ${_LICENSE:-}
   Organization: https://github.com/${_OWNER:-}"
-
-  if [[ "${_QUIET:-false}" != "true" && -n "${_platform:-}" && -n "${_arch:-}" ]]; then
-    _about_origin+="
-    Build target: ${_build_target}"
-  fi
 
   if [[ "${_QUIET:-false}" == "true" ]]; then
     # _about_origin=""

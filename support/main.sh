@@ -552,23 +552,13 @@ main() {
     }
   fi
 
-if [[ "${_RUN_PRE_SCRIPTS:-false}" == "true" ]]; then
-  __run_custom_scripts "pre" "$@" || log fatal "Failed to execute pre-installation scripts."
-fi
+  __secure_logic_elapsed_time="$(($(date +%s) - __secure_logic_init_timestamp))"
 
   if [[ "${MYNAME_VERBOSE:-false}" == "true" || "${_DEBUG:-false}" == "true" ]]; then
     log info "Script executed in ${__secure_logic_elapsed_time} seconds."
   fi
 }
 
-if [[ "${_RUN_POST_SCRIPTS:-false}" == "true" ]]; then
-  __run_custom_scripts "post" "$@" || log fatal "Failed to execute post-installation scripts."
-fi
-
-__secure_logic_elapsed_time="$(($(date +%s) - __secure_logic_init_timestamp))"
-
-if [[ "${MYNAME_VERBOSE:-false}" == "true" || "${_DEBUG:-false}" == "true" ]]; then
-  log info "Script executed in ${__secure_logic_elapsed_time} seconds."
-fi
+main "${_main_args[@]}"
 
 # End of script logic

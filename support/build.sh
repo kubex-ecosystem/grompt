@@ -475,7 +475,7 @@ build_binary() {
 
   # Check for cross-compilation mode
   # Only enter cross-compilation if no specific platform is provided
-  if [[ "${_platform_args:-__CROSS_COMPILE__}" == "__CROSS_COMPILE__" ]] || [[ -z "${_platform_args}" && -z "${_arch_args}" ]]; then
+  if [[ "${_platform_args:-all}" == "all" ]] || [[ "${_platform_args:-__CROSS_COMPILE__}" == "__CROSS_COMPILE__" ]] || [[ -z "${_platform_args}" && -z "${_arch_args}" ]]; then
     log info "Cross-compilation mode: building for all platforms in manifest.json"
 
     # Discover main packages once
