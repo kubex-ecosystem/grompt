@@ -468,7 +468,7 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 	// Use default model if not specified
 	model := req.Model
 	if model == "" {
-		model = "gemini-2.5-flash"
+		model = "gemini-2.0-flash"
 	}
 
 	response, err := h.geminiAPI.Complete(prompt, req.MaxTokens, model)

@@ -2,7 +2,7 @@ import { Code, Copy, Download, Edit, FileText, Shield, Trash2, User } from 'luci
 import { useRouter, useSearchParams } from 'next/dist/client/components/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
- 
+
 
 const AgentView = () => {
   const { t } = useTranslation();
@@ -50,7 +50,7 @@ const AgentView = () => {
     const loadAgent = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/agents/${id}`);
+        const response = await fetch(`/agents/${id}`);
         if (!response.ok) throw new Error('Failed to load agent');
         const data = await response.json();
         setAgent(data);
@@ -69,7 +69,7 @@ const AgentView = () => {
     if (!window.confirm(t('agents.confirmDelete'))) return;
 
     try {
-      const response = await fetch(`/api/agents/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/agents/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete agent');
       router.push('/agents');
     } catch (err) {

@@ -5,17 +5,57 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiKeysVault, clearVault, exportStoredEnvelope, importStoredEnvelope, saveVault, unlockVault } from '../hooks/useApiKeys';
 import { ProviderId, testProvider } from '../lib/providers';
 
+
+var _window: Window | undefined = typeof window !== 'undefined' ? window : undefined;
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
 
+function getProcessPort() {
+  if (_window && _window.location) {
+    const m = _window.location.href.match(/^(https?:\/\/[^\/]+)/);
+    if (m) {
+      const url = new URL(m[1]);
+      return url.port;
+    }
+  }
+  return `${process.env.PORT || ''}`;
+}
+
+function getProcessHost() {
+  if (_window && _window.location) {
+    const m = _window.location.href.match(/^(https?:\/\/[^\/]+)/);
+    if (m) {
+      return m[1];
+    }
+  }
+  return `${process.env.HOST || '127.0.0.1'}`;
+}
+
+function getProcessPath() {
+  if (_window && _window.location) {
+    const m = _window.location.href.match(/^(https?:\/\/[^\/]+)/);
+    if (m) {
+      const url = new URL(m[1]);
+      return url.pathname;
+    }
+  }
+  return `${process.env.PATH || ''}`;
+}
+
 function getBaseURL() {
-  if (process.env.NODE_ENV === 'development')
-    return `http://localhost:${process.env.PORT || 8080}`;
-  // const m = window.location.href.match(/^(https?:\/\/[^\/]+)/);
-  // if (m) return m[1];
-  return '';
+  const port = getProcessPort();
+  const host = getProcessHost();
+  const path = getProcessPath();
+  const baseUrlParts = [host, `:${port}`, path].filter(Boolean);
+  try {
+    const sanitizedUrl = new URL(baseUrlParts.join('').replaceAll('//', '/'));
+    return sanitizedUrl.href;
+  } catch {
+    return '';
+  }
 }
 
 export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
@@ -246,7 +286,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
               onChange={(e) => setVault({ ...vault, gemini: { apiKey: e.target.value } })}
             />
             <input
-              type="text" placeholder="Default model (ex.: gemini-1.5-flash)"
+              type="text" placeholder="Default model (ex.: gemini-2.0-flash)"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
               value={vault.gemini?.defaultModel || ''}
               onChange={(e) => setVault({ ...vault, gemini: { apiKey: vault.gemini?.apiKey ?? '', defaultModel: e.target.value } })}

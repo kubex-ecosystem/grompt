@@ -20,12 +20,15 @@ go.work
 # Node.js
 .next/
 out/
+build/*.js
+build/*.css
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # React
+!build/index.html
 frontend/build/
 frontend/.env.local
 frontend/.env.development.local
@@ -65,3 +68,5 @@ bkp/
 grompt
 docs/prompt/
 support/docs/site/
+internal/services/server/build/*
+!internal/services/server/build/style.css

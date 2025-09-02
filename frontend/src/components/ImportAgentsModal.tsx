@@ -91,7 +91,7 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }: { isOpen: bo
     setErrors([]);
 
     try {
-      const response = await fetch('/api/agents/validate', {
+      const response = await fetch('/agents/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ const ImportAgentsModal = ({ isOpen, onClose, onImport, darkMode }: { isOpen: bo
     setStep('importing');
 
     try {
-      const response = await fetch('/api/agents/import', {
+      const response = await fetch('/agents/import', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

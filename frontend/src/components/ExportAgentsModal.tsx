@@ -85,7 +85,7 @@ const ExportAgentsModal = ({ isOpen, onClose, agents, darkMode }: { isOpen: bool
     setLoading(true);
 
     try {
-      const response = await fetch('/api/agents/export-advanced', {
+      const response = await fetch('/agents/export-advanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

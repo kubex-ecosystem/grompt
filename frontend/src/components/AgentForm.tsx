@@ -83,7 +83,7 @@ const AgentForm = () => {
     const loadAgent = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/agents/${id}`);
+        const response = await fetch(`/agents/${id}`);
         if (!response.ok) throw new Error('Failed to load agent');
         const agent = await response.json();
         setFormData({
@@ -165,7 +165,7 @@ const AgentForm = () => {
       setSaving(true);
       setError(null);
 
-      const url = isEdit ? `/api/agents/${id}` : '/api/agents';
+      const url = isEdit ? `/agents/${id}` : '/agents';
       const method = isEdit ? 'PUT' : 'POST';
 
       const response = await fetch(url, {

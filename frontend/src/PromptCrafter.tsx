@@ -28,12 +28,25 @@ const PromptCrafter = () => {
     chatgpt_available: false,
     demo_mode: true,
     available_models: {
-      openai: [],
+      openai: [
+        'gpt-5',
+        'gpt-4',
+        'gpt-3.5-turbo',
+        'gpt-3.5-turbo-16k',
+      ],
       deepseek: [],
-      claude: [],
+      claude: [
+        'claude-3-0',
+        'claude-3-5'
+      ],
       ollama: [],
-      gemini: [],
-      chatgpt: []
+      gemini: [
+        'gemini-2.0-flash'
+      ],
+      chatgpt: [
+        'gpt-4',
+        'gpt-3.5-turbo'
+      ]
     }
   });
   const [connectionStatus, setConnectionStatus] = useState('checking');
@@ -73,20 +86,66 @@ const PromptCrafter = () => {
   // =========================================
   // CONFIGURAÇÃO DE URL BASE
   // =========================================
-  const getBaseURL = () => {
-    // Se estamos em desenvolvimento (npm start), usar proxy ou porta específica
-    if (process.env.NODE_ENV === 'development') {
-      return 'http://localhost:8080'; // Servidor Go
+  function getProcessPort() {
+    if (window) {
+      const m = window.location.href.match(/^(https?:\/\/[^\/]+)/);
+      if (m) {
+        const url = new URL(m[1]);
+        return url.port;
+      }
     }
-    // Se estamos em produção (servido pelo Go), usar URL relativa
-    return '';
-  };
+    return `${process.env.PORT || ''}`;
+  }
+
+  function getProcessHost() {
+    if (window) {
+      const m = window.location.href.match(/^(https?:\/\/[^\/]+)/);
+      if (m) {
+        return m[1];
+      }
+    }
+    return `${process.env.HOST || '127.0.0.1'}`;
+  }
+
+  function getProcessPath() {
+    if (window) {
+      const m = window.location.href.match(/^(https?:\/\/[^\/]+)/);
+      if (m) {
+        const url = new URL(m[1]);
+        return url.pathname;
+      }
+    }
+    return `${process.env.PATH || ''}`;
+  }
+
+  function getBaseURL() {
+    const port = getProcessPort();
+    const host = getProcessHost();
+    const path = getProcessPath();
+    const baseUrlParts = [host, `:${port}`, path].filter(Boolean);
+    try {
+      const sanitizedUrl = new URL(baseUrlParts.join('').replaceAll('//', '/'));
+      return sanitizedUrl.href;
+    } catch {
+      return '';
+    }
+  }
 
   const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-    const baseURL: string = getBaseURL();
+    const baseURL: string = [(
+      getBaseURL() ||
+      `${window.location.origin ||
+      (
+        (window as any).URL.createObjectURL(
+          new Blob([''], { type: 'application/json' })
+        ) || ''
+      ).replace(/\/+$/, '')}`
+    ), 'api'].join('/');
+
+
     const url = `${baseURL}${endpoint}`;
 
-    console.log(`🔗 Fazendo requisição para: ${url}`);
+    console.log(`🔗 Fazendo requisição para: ${url} `);
 
     let defaultOptions: RequestInit = {
       headers: {
@@ -99,7 +158,7 @@ const PromptCrafter = () => {
       const response = await fetch(url, defaultOptions);
       return response;
     } catch (error) {
-      console.error(`❌ Erro na requisição para ${url}:`, error);
+      console.error(`❌ Erro na requisição para ${url}: `, error);
       throw error;
     }
   };
@@ -146,7 +205,7 @@ const PromptCrafter = () => {
       console.log('🔍 Verificando disponibilidade das APIs...');
 
       // Primeiro, verificar se o servidor Go está rodando
-      const healthResponse = await apiCall('/api/health');
+      const healthResponse = await apiCall('/health');
 
       if (healthResponse.ok) {
         const healthData = await healthResponse.json();
@@ -155,7 +214,7 @@ const PromptCrafter = () => {
       }
 
       // Verificar configuração das APIs
-      const configResponse = await apiCall('/api/config');
+      const configResponse = await apiCall('/config');
 
       if (configResponse.ok) {
         const config = await configResponse.json();
@@ -217,7 +276,7 @@ const PromptCrafter = () => {
 
         console.log('✅ APIs disponíveis (merged):', merged);
       } else {
-        throw new Error(`Servidor retornou status ${configResponse.status}`);
+        throw new Error(`Servidor retornou status ${configResponse.status} `);
       }
     } catch (error) {
       console.error('❌ Erro ao verificar APIs:', error);
@@ -326,7 +385,7 @@ const PromptCrafter = () => {
       return `# ${t('output.title')} - ${purposeText}
         ## 🎯 ${t('demo.context')}
         ${t('demo.contextDesc', { purpose: purposeText.toLowerCase() })}
-      `;
+    `;
     }
 
     return `# ${t('output.title')} - ${purposeText}
@@ -349,15 +408,15 @@ const PromptCrafter = () => {
 
       ## ⚙️ ${t('demo.technicalConfig')}
 
-      - ${t('demo.maxChars')}: ${maxLength.toLocaleString()}
-      - ${t('demo.purpose')}: ${purposeText}
-      - ${t('demo.totalIdeas')}: ${ideas.length}
-      - ${t('demo.mode')}: ${connectionStatus === 'connected' ? t('demo.modeConnected') : t('demo.modeOffline')}
+    - ${t('demo.maxChars')}: ${maxLength.toLocaleString()}
+    - ${t('demo.purpose')}: ${purposeText}
+    - ${t('demo.totalIdeas')}: ${ideas.length}
+    - ${t('demo.mode')}: ${connectionStatus === 'connected' ? t('demo.modeConnected') : t('demo.modeOffline')}
 
-      ---
+    ---
 
-      *${t('demo.footer')}*
-      *${connectionStatus === 'connected' ? t('demo.footerConnected') : t('demo.footerOffline')}*`
+      * ${t('demo.footer')}*
+      * ${connectionStatus === 'connected' ? t('demo.footerConnected') : t('demo.footerOffline')}* `
       .replaceAll('      ', '')
   };
 
@@ -371,28 +430,28 @@ const PromptCrafter = () => {
       : purpose;
 
     const engineeringPrompt = `
-Você é um eintelligencea em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
+Você é um eintelligencea em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering.Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
 
-CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
+      CONTEXTO: O usuário inseriu as seguintes notas / ideias brutas:
 ${ideas.map((idea, index) => `${index + 1}. "${idea.text}"`).join('\n')}
 
 PROPÓSITO DO PROMPT: ${purposeText}
 TAMANHO MÁXIMO: ${maxLength} caracteres
 
 INSTRUÇÕES PARA ESTRUTURAÇÃO:
-1. Analise todas as ideias e identifique o objetivo principal
-2. Organize as informações de forma lógica e hierárquica
-3. Aplique técnicas de engenharia de prompt como:
-   - Definição clara de contexto e papel
-   - Instruções específicas e mensuráveis
-   - Exemplos quando apropriado
-   - Formato de saída bem definido
-   - Chain-of-thought se necessário
-4. Use markdown para estruturação clara
-5. Seja preciso, objetivo e profissional
-6. Mantenha o escopo dentro do limite de caracteres
+    1. Analise todas as ideias e identifique o objetivo principal
+    2. Organize as informações de forma lógica e hierárquica
+    3. Aplique técnicas de engenharia de prompt como:
+    - Definição clara de contexto e papel
+      - Instruções específicas e mensuráveis
+        - Exemplos quando apropriado
+          - Formato de saída bem definido
+            - Chain - of - thought se necessário
+    4. Use markdown para estruturação clara
+    5. Seja preciso, objetivo e profissional
+    6. Mantenha o escopo dentro do limite de caracteres
 
-IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais ou texto introdutório. O prompt deve ser completo e pronto para uso.
+    IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais ou texto introdutório.O prompt deve ser completo e pronto para uso.
 `;
 
     try {
@@ -417,7 +476,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           setIsGenerating(false);
           return;
         } else {
-          result = await apiCall('/api/claude', {
+          result = await apiCall('/claude', {
             method: 'POST',
             body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength })
           });
@@ -425,7 +484,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -446,7 +505,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           setIsGenerating(false);
           return;
         } else {
-          result = await apiCall('/api/openai', {
+          result = await apiCall('/openai', {
             method: 'POST',
             body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-3.5-turbo' })
           });
@@ -454,7 +513,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -475,7 +534,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           setIsGenerating(false);
           return;
         } else {
-          result = await apiCall('/api/deepseek', {
+          result = await apiCall('/deepseek', {
             method: 'POST',
             body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'deepseek-chat' })
           });
@@ -483,7 +542,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -503,7 +562,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           setIsGenerating(false);
           return;
         } else {
-          result = await apiCall('/api/ollama', {
+          result = await apiCall('/ollama', {
             method: 'POST',
             body: JSON.stringify({ model: selectedModel || 'llama2', prompt: engineeringPrompt, stream: false })
           });
@@ -511,7 +570,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -528,18 +587,19 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           result = await directCall('gemini', vr.vault || {}, {
             prompt: engineeringPrompt,
             max_tokens: maxLength,
-            model: selectedModel || 'gemini-1.5-pro'
+            model: selectedModel || 'gemini-2.0-flash'
           });
         } else {
-          result = await apiCall('/api/gemini', {
+
+          result = await apiCall('/gemini', {
             method: 'POST',
-            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gemini-1.5-pro' })
+            body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gemini-2.0-flash' })
           });
         }
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -559,7 +619,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
           setIsGenerating(false);
           return;
         } else {
-          result = await apiCall('/api/chatgpt', {
+          result = await apiCall('/chatgpt', {
             method: 'POST',
             body: JSON.stringify({ prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-4' })
           });
@@ -567,7 +627,7 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
 
         if (!result.ok) {
           const errorText = await result.text();
-          throw new Error(`Erro HTTP ${result.status}: ${errorText}`);
+          throw new Error(`Erro HTTP ${result.status}: ${errorText} `);
         }
 
         const data = await result.json();
@@ -581,22 +641,23 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicaç�
       console.error('❌ Erro ao gerar prompt:', error);
       setGeneratedPrompt(`# Erro ao Gerar Prompt
 
-**Erro:** ${error.message}
+      ** Erro:** ${error.message}
 
-**Detalhes:** Não foi possível conectar com a API selecionada.
+** Detalhes:** Não foi possível conectar com a API selecionada.
 
 ## 🔍 Verificações:
-- **Status do servidor:** ${connectionStatus}
-- **Modo atual:** ${process.env.NODE_ENV || 'production'}
-- **Provider selecionado:** ${apiProvider}
-- **Base URL:** ${getBaseURL()}
+- ** Status do servidor:** ${connectionStatus}
+      - ** Modo atual:** ${process.env.NODE_ENV || 'production'}
+- ** Provider selecionado:** ${apiProvider}
+- ** Model selecionado:** ${selectedModel || 'default'}
+- ** Base URL:** ${getBaseURL() || 'desconhecida'}
 
 ## 💡 Soluções:
-1. **Se em desenvolvimento:** Certifique-se de que o servidor Go está rodando na porta 8080
-2. **Se em produção:** Verifique se as APIs estão configuradas corretamente
-3. **Tente usar o modo demo** como alternativa
+    1. ** Se em desenvolvimento:** Certifique - se de que o servidor Go está rodando na porta 8080
+    2. ** Se em produção:** Verifique se as APIs estão configuradas corretamente
+    3. ** Tente usar o modo demo ** como alternativa
 
-**Comando para iniciar servidor Go:**
+      ** Comando para iniciar servidor Go:**
 \`\`\`
 go run .
 # ou
@@ -935,8 +996,8 @@ make run
             {apiProvider !== 'demo' && (
               <input
                 title="Custom model (optional)"
-                placeholder={apiProvider === 'gemini' ? 'e.g., gemini-1.5-flash, gemini-1.5-flash-8b' : 'custom model (optional)'}
-                value={selectedModel}
+                placeholder={apiProvider === 'gemini' ? 'e.g., gemini-2.0-flash, gemini-2.0-flash-8b' : 'custom model (optional)'}
+                value={(selectedModel || '').trim()}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className={`px-3 py-2 rounded-lg ${currentTheme.input} border focus:ring-2 focus:ring-blue-500 w-full md:w-auto flex-1 min-w-[220px]`}
               />

@@ -37,7 +37,7 @@ export default function ConfigModal({ isOpen, onClose, onSave }: ConfigModalProp
 
   const loadConfig = async () => {
     try {
-      const response = await fetch('/api/config');
+      const response = await fetch('/config');
       if (response.ok) {
         const data = await response.json();
         setConfig(data);
@@ -50,7 +50,7 @@ export default function ConfigModal({ isOpen, onClose, onSave }: ConfigModalProp
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/config', {
+      const response = await fetch('/config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
