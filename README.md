@@ -1,11 +1,12 @@
 # ![Grompt Logo](docs/assets/top_banner_c.png)
 
+[![Version](https://img.shields.io/badge/Version-1.0.7-purple.svg)](https://github.com/rafa-mori/grompt/releases/latest)
+[![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
-[![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
-[![GitHub Stars](https://img.shields.io/github/stars/rafa-mori/grompt?style=social)](https://github.com/rafa-mori/grompt/stargazers)
+[![NextJS](https://img.shields.io/badge/NextJS-15+-blue.svg)](https://nextjs.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-34d058.svg)](docs/CONTRIBUTING.md)
+[![License](https://img.shields.io/badge/License-MIT-34d058.svg)](LICENSE)
 
 ---
 
