@@ -68,6 +68,5 @@ bkp/
 grompt
 docs/prompt/
 support/docs/site/
-!internal/services/server/build/index.html
 internal/services/server/build/*
-
+!internal/services/server/build/style.css
