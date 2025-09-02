@@ -20,6 +20,9 @@ go.work
 # Node.js
 .next/
 out/
+build/*.js
+build/*.css
+!build/*.html
 node_modules/
 npm-debug.log*
 yarn-debug.log*
