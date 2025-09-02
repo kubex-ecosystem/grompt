@@ -7,8 +7,6 @@
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TARGET_MANIFEST = $(ROOT_DIR)internal/module/info/manifest.json
 APP_NAME := $(shell jq -r '.name' < $(TARGET_MANIFEST))
-_RUN_PRE_SCRIPTS := $(shell echo "true")
-_RUN_POST_SCRIPTS := $(shell echo "true")
 
 ifeq ($(APP_NAME),)
 APP_NAME := $(shell  echo $(basename $(CURDIR)) | tr '[:upper:]' '[:lower:]')
@@ -70,31 +68,31 @@ ARGS := $(filter-out $(strip $(CMD_STR)), $(ARGUMENTS))
 
 # Build the binary using the install script.
 build:
-	@bash $(INSTALL_SCRIPT) build $(ARGS)
+	@bash $(INSTALL_SCRIPT) build $(ARGS) _RUN_PRE_SCRIPTS=true _RUN_POST_SCRIPTS=true
 	$(shell exit 0)
 
 build-dev:
-	@bash $(INSTALL_SCRIPT) build-dev $(ARGS)
+	@bash $(INSTALL_SCRIPT) build-dev $(ARGS) _RUN_PRE_SCRIPTS=true _RUN_POST_SCRIPTS=true
 	$(shell exit 0)
 
 # Install the binary and configure the environment.
 install:
-	@bash $(INSTALL_SCRIPT) install $(ARGS)
+	@bash $(INSTALL_SCRIPT) install $(ARGS) _RUN_PRE_SCRIPTS=true _RUN_POST_SCRIPTS=true
 	$(shell exit 0)
 
 # Uninstall the binary and clean up.
 uninstall:
-	@bash $(INSTALL_SCRIPT) uninstall $(ARGS)
+	@bash $(INSTALL_SCRIPT) uninstall $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
 	$(shell exit 0)
 
 # Clean up build artifacts.
 clean:
-	@bash $(INSTALL_SCRIPT) clean $(ARGS)
+	@bash $(INSTALL_SCRIPT) clean $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
 	$(shell exit 0)
 
 # Run tests.
 test:
-	@bash $(INSTALL_SCRIPT) test $(ARGS)
+	@bash $(INSTALL_SCRIPT) test $(ARGS) _RUN_PRE_SCRIPTS=false _RUN_POST_SCRIPTS=false
 	$(shell exit 0)
 
 # Platform-specific targets (prevent wildcard capture)

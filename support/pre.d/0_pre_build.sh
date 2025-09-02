@@ -33,6 +33,11 @@ __source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || {
 build_frontend() {
   local _ROOT_DIR="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}"
 
+  if [[ ! -d "${_ROOT_DIR}/frontend" ]]; then
+      echo "Frontend directory does not exist."
+      exit 1
+  fi
+
   cd "${_ROOT_DIR}/frontend" || {
     log fatal "Failed to change directory to ${_ROOT_DIR}/frontend" || echo "Failed to change directory to ${_ROOT_DIR}/frontend" >&2
     exit 1
@@ -72,14 +77,23 @@ build_frontend() {
           exit 1
       }
 
+<<<<<<< HEAD
       log success "Frontend build moved to server directory successfully." true
+=======
+      echo "Frontend build moved to server directory successfully."
+>>>>>>> main/main
   else
       log fatal "npm is not installed. Please install Node.js and npm to continue." true
       exit 1
   fi
 }
 
+<<<<<<< HEAD
 (build_frontend) || {
   log fatal "An error occurred during the pre-build process." || echo "An error occurred during the pre-build process." >&2
+=======
+build_frontend || {
+  echo "An error occurred during the pre-build process."
+>>>>>>> main/main
   exit 1
 }
