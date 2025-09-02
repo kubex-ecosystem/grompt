@@ -22,13 +22,13 @@ go.work
 out/
 build/*.js
 build/*.css
-!build/*.html
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # React
+!build/index.html
 frontend/build/
 frontend/.env.local
 frontend/.env.development.local
