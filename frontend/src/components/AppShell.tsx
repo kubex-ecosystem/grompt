@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Menu, Sparkles, X, KeyRound, Sun, Moon, Users } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
+import { useTranslation } from 'react-i18next';
 import ApiKeysDrawer from './ApiKeysDrawer';
 import HistoryDrawer from './HistoryDrawer';
 
 type Props = { children: React.ReactNode };
 
 export default function AppShell({ children }: Props) {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showKeysDrawer, setShowKeysDrawer] = useState(false);
@@ -63,7 +65,7 @@ export default function AppShell({ children }: Props) {
             <button
               onClick={() => setShowHistoryDrawer(true)}
               className={`p-2 rounded ${theme.buttonSecondary}`}
-              title="Histórico"
+              title={t('history.title')}
             >
               {/* Simple clock/history icon via emoji to avoid extra deps */}
               <span role="img" aria-label="hist">🕘</span>

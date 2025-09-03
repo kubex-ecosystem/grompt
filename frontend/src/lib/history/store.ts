@@ -66,7 +66,7 @@ class HistoryStore implements IHistoryAdapter {
       if (!ideasRaw && !gen) return null;
       const ideas: { id: number; text: string }[] = ideasRaw ? JSON.parse(ideasRaw) : [];
       const engineeringPrompt = `Migração localStorage -> IndexedDB\n\nNotas:\n${ideas.map((i, idx) => `${idx + 1}. ${i.text}`).join('\n')}`;
-      const session = await this.ensureDefaultSession('Migrado');
+      const session = await this.ensureDefaultSession();
       await this.saveEntry({
         sessionId: session.id,
         provider: 'demo',

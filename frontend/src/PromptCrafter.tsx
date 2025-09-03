@@ -398,7 +398,8 @@ const PromptCrafter = () => {
       }
       setGeneratedPrompt(response);
     } catch (err) {
-      setGeneratedPrompt(`Falha ao reexecutar: ${(err as any)?.message || 'erro'}`);
+      const msg = (err as any)?.message || 'error';
+      setGeneratedPrompt(t('history.reexecFailed', { message: msg }));
     }
     setIsGenerating(false);
   };
