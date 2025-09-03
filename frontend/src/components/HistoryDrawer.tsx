@@ -1,7 +1,8 @@
-import { Clock, Download, FolderPlus, History as HistoryIcon, Loader2, Trash2, X } from 'lucide-react';
+import { Clock, FolderPlus, History as HistoryIcon, Loader2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { history } from '../lib/history/store';
 import { EntryFull, EntryMeta, Session } from '../lib/history/types';
+import ProviderBadge from './ProviderBadge';
 
 type Props = {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/40" onClick={onClose} />
-      <div className={`w-full max-w-4xl h-full ${theme.bg} ${theme.text} shadow-xl p-0 overflow-hidden border-l ${theme.border}`}>
+      <div className={`w-full max-w-6xl h-full ${theme.bg} ${theme.text} shadow-xl p-0 overflow-hidden border-l ${theme.border}`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-4 border-b ${theme.border}`}>
           <div className="flex items-center gap-2">
@@ -107,18 +108,53 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
           <aside className={`w-64 h-full border-r ${theme.border} p-3`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-300">Sessões</span>
-              <button
-                className={`p-1 rounded ${theme.buttonSecondary}`}
-                title="Nova sessão"
-                onClick={async () => {
-                  const name = prompt('Nome da sessão');
-                  if (!name) return;
-                  await history.createSession(name);
-                  await loadSessions();
-                }}
-              >
-                <FolderPlus className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedSessionId && (
+                  <>
+                    <button
+                      className={`p-1 rounded ${theme.buttonSecondary}`}
+                      title="Limpar sessão (apaga entradas)"
+                      onClick={async () => {
+                        if (!confirm('Limpar todas as entradas desta sessão?')) return;
+                        await history.clearSession(selectedSessionId);
+                        await loadEntries(selectedSessionId);
+                      }}
+                    >
+                      🧹
+                    </button>
+                    <button
+                      className={`p-1 rounded ${theme.buttonSecondary}`}
+                      title="Excluir sessão"
+                      onClick={async () => {
+                        if (!confirm('Excluir a sessão e todas as entradas?')) return;
+                        const sid = selectedSessionId;
+                        await history.deleteSession(sid);
+                        await loadSessions();
+                        const first = (await history.listSessions())[0];
+                        setSelectedSessionId(first ? first.id : null);
+                        if (first) await loadEntries(first.id);
+                        else setEntries([]);
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </>
+                )}
+                <button
+                  className={`p-1 rounded ${theme.buttonSecondary}`}
+                  title="Nova sessão"
+                  onClick={async () => {
+                    const name = prompt('Nome da sessão');
+                    if (!name) return;
+                    const s = await history.createSession(name);
+                    await loadSessions();
+                    setSelectedSessionId(s.id);
+                    await loadEntries(s.id);
+                  }}
+                >
+                  <FolderPlus className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="space-y-1 overflow-auto max-h-[calc(100vh-8rem)]">
               {sessions.length === 0 && (
@@ -206,9 +242,14 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
                       className={`w-full text-left p-2 rounded border ${theme.border} hover:bg-gray-800`}
                       title={`${e.provider} ${e.model || ''}`}
                     >
-                      <div className="text-xs text-gray-400">{e.provider} {e.model ? `· ${e.model}` : ''}</div>
-                      <div className="text-sm truncate">{e.promptPreview}</div>
-                      <div className="text-[10px] text-gray-500">{new Date(e.createdAt).toLocaleString()}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ProviderBadge provider={e.provider} />
+                          {e.model && <span className="text-[10px] text-gray-400">{e.model}</span>}
+                        </div>
+                        <div className="text-[10px] text-gray-500">{new Date(e.createdAt).toLocaleString()}</div>
+                      </div>
+                      <div className="text-sm truncate mt-1">{e.promptPreview}</div>
                     </button>
                   ))}
               </div>
@@ -221,15 +262,18 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-300">{selectedEntry.provider} {selectedEntry.model ? `· ${selectedEntry.model}` : ''}</div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <ProviderBadge provider={selectedEntry.provider} showLabel={true} />
+                      {selectedEntry.model && <span className="text-xs text-gray-400">{selectedEntry.model}</span>}
+                    </div>
+                    <div className="flex items-center">
+                      {/* <button
                         className={`px-2 py-1 rounded text-xs border ${theme.border} hover:bg-gray-800`}
                         onClick={() => setShowTech(v => !v)}
                         title="Mostrar/ocultar detalhes técnicos"
                       >
                         {showTech ? 'Ocultar detalhes' : 'Mostrar detalhes'}
-                      </button>
+                      </button> */}
                       <button
                         className={`px-2 py-1 rounded text-xs border ${theme.border} hover:bg-gray-800`}
                         onClick={() => {
@@ -276,7 +320,7 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
                         }}
                         title="Editar e reexecutar"
                       >
-                        Editar + Reexec
+                        Editar
                       </button>
                       <button
                         className={`px-2 py-1 rounded text-xs border ${theme.border} hover:bg-gray-800`}
@@ -291,7 +335,7 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
                         }}
                         title="Exportar JSON"
                       >
-                        <Download className="h-3 w-3 inline mr-1" /> Exportar
+                        {/* <Download className="h-3 w-3 inline mr-1" /> */} Exportar
                       </button>
                       <button
                         className={`px-2 py-1 rounded text-xs border ${theme.border} hover:bg-gray-800 text-red-400`}
@@ -303,7 +347,7 @@ export default function HistoryDrawer({ isOpen, onClose }: Props) {
                         }}
                         title="Excluir entrada"
                       >
-                        <Trash2 className="h-3 w-3 inline mr-1" /> Excluir
+                        {/* <Trash2 className="h-3 w-3 inline mr-1" /> */} Excluir
                       </button>
                     </div>
                   </div>

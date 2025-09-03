@@ -241,11 +241,63 @@ export class IndexedDBAdapter implements IHistoryAdapter {
   async deleteEntry(id: string): Promise<void> {
     await this.init();
     const db = this.db!;
+    // delete entry and any blobs it references
+    const entry = await this.getEntry(id);
     await new Promise<void>((resolve, reject) => {
-      const t = tx(db, 'readwrite', ['entries']);
-      const req = t.objectStore('entries').delete(id);
-      req.onsuccess = () => resolve();
+      const t = tx(db, 'readwrite', ['entries', 'blobs']);
+      t.objectStore('entries').delete(id);
+      if (entry?.requestBlobId) t.objectStore('blobs').delete(entry.requestBlobId);
+      if (entry?.responseBlobId) t.objectStore('blobs').delete(entry.responseBlobId);
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
+    });
+  }
+
+  async clearSession(sessionId: string): Promise<number> {
+    await this.init();
+    const db = this.db!;
+    // collect entries for the session
+    const entries = await new Promise<EntryFull[]>((resolve, reject) => {
+      const t = tx(db, 'readonly', ['entries']);
+      const idx = t.objectStore('entries').index('by_session');
+      const req = idx.openCursor(IDBKeyRange.only(sessionId));
+      const acc: EntryFull[] = [];
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) return resolve(acc);
+        acc.push(cursor.value as EntryFull);
+        cursor.continue();
+      };
       req.onerror = () => reject(req.error);
+    });
+    if (!entries.length) return 0;
+    await new Promise<void>((resolve, reject) => {
+      const t = tx(db, 'readwrite', ['entries', 'blobs']);
+      const es = t.objectStore('entries');
+      const bs = t.objectStore('blobs');
+      for (const e of entries) {
+        es.delete(e.id);
+        if (e.requestBlobId) bs.delete(e.requestBlobId);
+        if (e.responseBlobId) bs.delete(e.responseBlobId);
+      }
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
+    });
+    return entries.length;
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.init();
+    const db = this.db!;
+    await this.clearSession(sessionId);
+    await new Promise<void>((resolve, reject) => {
+      const t = tx(db, 'readwrite', ['sessions']);
+      t.objectStore('sessions').delete(sessionId);
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
     });
   }
 }

@@ -46,6 +46,14 @@ class HistoryStore implements IHistoryAdapter {
     return this.adapter.deleteEntry(id);
   }
 
+  clearSession(sessionId: string): Promise<number> {
+    return this.adapter.clearSession(sessionId);
+  }
+
+  deleteSession(sessionId: string): Promise<void> {
+    return this.adapter.deleteSession(sessionId);
+  }
+
   async migrateFromLocalStorage(): Promise<{ created: number } | null> {
     try {
       await this.init();

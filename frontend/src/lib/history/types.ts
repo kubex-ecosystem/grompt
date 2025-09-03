@@ -56,4 +56,6 @@ export interface IHistoryAdapter {
   listEntries(sessionId: string, opts?: { limit?: number; offset?: number }): Promise<EntryMeta[]>;
   getEntry(id: string): Promise<EntryFull | undefined>;
   deleteEntry(id: string): Promise<void>;
+  clearSession(sessionId: string): Promise<number>; // deletes all entries (and blobs) in the session, returns count
+  deleteSession(sessionId: string): Promise<void>; // deletes session and its entries (and blobs)
 }

@@ -135,4 +135,19 @@ export class LocalStorageAdapter implements IHistoryAdapter {
     data.entries = data.entries.filter((e) => e.id !== id);
     save(data);
   }
+
+  async clearSession(sessionId: string): Promise<number> {
+    const data = load();
+    const before = data.entries.length;
+    data.entries = data.entries.filter((e) => e.sessionId !== sessionId);
+    save(data);
+    return before - data.entries.length;
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    const data = load();
+    data.entries = data.entries.filter((e) => e.sessionId !== sessionId);
+    data.sessions = data.sessions.filter((s) => s.id !== sessionId);
+    save(data);
+  }
 }
