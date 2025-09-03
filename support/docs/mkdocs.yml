@@ -8,6 +8,9 @@ repo_url: https://github.com/rafa-mori/grompt
 
 docs_dir: ../../docs
 
+# Permite links "Editar esta página" no GitHub
+edit_uri: edit/main/docs/
+
 theme:
   name: material
   language: pt-BR
@@ -79,9 +82,15 @@ nav:
       - Comandos CLI: user-guide/cli-commands.md
       - Configuração: user-guide/configuration.md
       - Exemplos de Uso: user-guide/usage-examples.md
+      - FAQ: user-guide/faq.md
       - API Reference: user-guide/api-reference.md
+      - Tópicos Avançados:
+          - Wrapper WRPR: pages/wrpr-wrapper.md
   - Desenvolvimento:
       - Contribuindo: development/contributing.md
+      - Testes: development/testing.md
+      - Comandos Makefile: development/makefile.md
+      - Publicando Docs: development/docs-publishing.md
       - Solução de Problemas: development/troubleshooting.md
       - Arquitetura: development/architecture.md
   - Comunidade:
