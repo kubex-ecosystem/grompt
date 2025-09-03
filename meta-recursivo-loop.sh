@@ -1,271 +1,494 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2065,SC2046,SC2317
 
-# LookAtni + Grompt Meta-Recursivo Refactor Loop
-# "O ciclo mais virtuoso de desenvolvimento que ta rolando!" 🚀
+# LookAtni + Grompt Meta-Recursive Virtuous Refactor Cycle
+# "The most virtuous development cycle that's running!" 🚀
 
-set -o nounset  # Treat unset variables as an error
-set -o errexit  # Exit immediately if a command exits with a non-zero status
-set -o pipefail # Prevent errors in a pipeline from being masked
-set -o errtrace # If a command fails, the shell will exit immediately
-set -o functrace # If a function fails, the shell will exit immediately
-shopt -s inherit_errexit # Inherit the errexit option in functions
+# Set project root path (Grompt)
+_project_root_path="${PROJECT_ROOT_PATH:-${_project_root_path:-$(printf '%s\n' "/srv/apps/LIFE/KUBEX/grompt")}}"
 
+# Keep without brakets, it is intentional, to prevent empty path and another issues
+cd "$_project_root_path" || exit 1
+
+# Set Internal Field Separator
 IFS=$'\n\t'
 
-cd /srv/apps/LIFE/KUBEX/grompt || exit 1
+# If true, adds a small delay after success messages for better readability
+_lazy_exec="${_lazy_exec:-${LAZY_EXEC:-false}}"
 
-_temp_combined_prompt=""
-_start_time=$(date +%s)
-_end_time=$(date +%s)
+# Quiet mode (no info or warning messages)
+_quiet=${_quiet:-${QUIET:-false}}
+_hide_about=${_hide_about:-${_HIDE_ABOUT:-false}}
 
-# Coloquei _ em todas as VARS pra não colidir com nenhuma do sistema mesmo,
-# que por convenção não usa esse prefixo, além de só usar uppercase, por
-# isso todas também foram convertidas para lowercase.
+# Debug mode
+_debug=${_debug:-${DEBUG:-false}}
 
-# LookAtni Settings
-_init_pattern='///'
-_end_pattern='///'
-_artifact_content=""
+# Color codes for logs
+_SUCCESS="\033[0;32m"
+_WARN="\033[0;33m"
+_ERROR="\033[0;31m"
+_INFO="\033[0;36m"
+_NOTICE="\033[0;35m"
+_FATAL="\033[0;41m"
+_TRACE="\033[0;34m"
+_NC="\033[0m"
 
-# LLM Settings
-# Markers for replace
-_max_tokens=16000
-_gemini_api_key='AIzaSyAGVRdfCOiW5HZdp09Bbtf4cwqn0mfLUv8'
+_get_stdout_alt() {
+  local _dev_null=""
+  _dev_null="/dev/null"
+  test -f "${_dev_null:-/tmp/null}" || {
+      touch "${_dev_null:-}" || {
+        _dev_null="&2"
+      }
+      test -f "${_dev_null:-}" || {
+          _dev_null="&2"
+      }
+  }
+  _dev_null=">${_dev_null:-}"
 
-# Paths
-_workspace_path="/srv/apps/LIFE/KUBEX"
+  printf '%s\n' "${_dev_null:-}"
+}
 
-_lookatni_path="${_workspace_path}/lookatni-file-markers"
-_lookatni_bin="${_lookatni_path}/dist/lookatni"
-_original_target_path="${_lookatni_path}/test-project"
+_provision() {
+  printf '%s\n' "🔧 Provisioning environment..."
+  _temp_combined_prompt="$(mktemp -t combined_prompt.XXXXXX || echo "")"
+  if [[ -n "${_temp_combined_prompt:-}" && -f "${_temp_combined_prompt:-}" ]]; then
+    rm -f "${_temp_combined_prompt:-}" || true
+  fi
+  return 0
+}
 
-_grompt_path="${_workspace_path}/grompt"
-_grompt_bin="${_grompt_path}/dist/grompt_linux_amd64"
-_output_target_path="${_grompt_path}/docs/prompt"
-_refactored_output="${_output_target_path}/refactored/test-project"
+log() {
+  local _type=${1:-info}
+  local _message=${2:-}
+  local _debug_arg=${3:-}
+  _debug_arg="${_debug_arg:-${_debug:-${DEBUG:-${_DEBUG:-false}}}}"
 
-_artifact_file="${_output_target_path}/test-project-artifact.md"
-_prompt_file="${_output_target_path}/improvement-prompt.md"
+  case $_type in
+    question|_QUESTION|-q|-Q)
+      if [[ "${_quiet:-false}" == "true" && "${_debug_arg:-false}" == "true" ]]; then
+        printf '%b[QUESTION]%b ❓  %s: ' "${_NOTICE:-\033[0;35m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    notice|_NOTICE|-n|-N)
+      if [[ "${_quiet:-false}" == "true" && "${_debug_arg:-false}" == "true" ]]; then
+        printf '%b[NOTICE]%b 📝  %s\n' "${_NOTICE:-\033[0;35m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    info|_INFO|-i|-I)
+      if [[ "${_quiet:-false}" == "true" && "${_debug_arg:-false}" == "true" ]]; then
+        printf '%b[INFO]%b ℹ️  %s\n' "${_INFO:-\033[0;36m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    warn|_WARN|-w|-W)
+      if [[ "${_quiet:-false}" == "true" && "${_debug_arg:-false}" == "true" ]]; then
+        printf '%b[WARN]%b ⚠️  %s\n' "${_WARN:-\033[0;33m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    error|_ERROR|-e|-E)
+      printf '%b[ERROR]%b ❌  %s\n' "${_ERROR:-\033[0;31m}" "${_NC:-\033[0m}" "$_message" >&2
+      ;;
+    success|_SUCCESS|-s|-S)
+       printf '%b[SUCCESS]%b ✅  %s\n' "${_SUCCESS:-\033[0;32m}" "${_NC:-\033[0m}" "$_message"
+       if [[ "${_lazy_exec:-false}" == "true" ]]; then
+         sleep 2
+       fi
+      ;;
+    fatal|_FATAL|-f|-F)
+      printf '%b[FATAL]%b 💀  %s\n' "${_FATAL:-\033[0;41m}" "${_NC:-\033[0m}" "Exiting due to fatal error: $_message" >&2
+      # clear_build_artifacts || true
+      test $(declare -f clear_script_cache >$(_get_stdout_alt)) && clear_script_cache
+      exit 1 || kill -9 $$
+      ;;
+    separator|_SEPARATOR|hr|-hr|-HR|line)
+      # if [[ "${_debug_arg:-false}" != "true" ]]; then
+        local _columns=${COLUMNS:-$(tput cols || echo 80)}
+        local _margin=$(( _columns - ( _columns / 2 ) ))
+        _message="${_message// /¬}"
+        _message="$(printf '%b%s%b %*s' "${_TRACE:-\033[0;34m}" "${_message:-}" "${_NC:-\033[0m}" "$((_columns - ( "${#_message}" + _margin )))" '')"
+        _message="${_message// /\#}"
+        _message="${_message//¬/ }"
+        printf '%s\n' "${_message:-}" >&2
+      # fi
+      ;;
+    *)
+      log "info" "$_message" "${_debug_arg:-false}" || true
+      ;;
+  esac
 
-_refactored_file="${_output_target_path}/refactored-project.md"
-_refactored_output="${_output_target_path}/refactored/test-project"
+  return 0
+}
 
+clear_screen() {
+  if [[ "${_quiet:-false}" != "true" && "${_debug:-false}" != "true" ]]; then
+    printf "\033[H\033[2J"
+  fi
+}
+
+clear_build_artifacts() {
+  test $(declare -f clear_script_cache >$(_get_stdout_alt)) && clear_script_cache
+
+  local build_dir="${_ROOT_DIR:-$(realpath '../')}/dist"
+  if [[ -d "${build_dir}" ]]; then
+    rm -rf "${build_dir}" || true
+    if [[ -d "${build_dir}" ]]; then
+      log error "Failed to remove build artifacts in ${build_dir}."
+    else
+      log success "Build artifacts removed from ${build_dir}."
+    fi
+  else
+    log notice "No build artifacts found in ${build_dir}."
+  fi
+}
+
+get_current_shell() {
+  local shell_proc
+  shell_proc=$(cat /proc/$$/comm)
+  case "${0##*/}" in
+    ${shell_proc}*)
+      local shebang
+      shebang=$(head -1 "$0")
+      printf '%s\n' "${shebang##*/}"
+      ;;
+    *)
+      printf '%s\n' "$shell_proc"
+      ;;
+  esac
+}
+
+_ensure_globals(){
+  # I added _ to all VARS to avoid colliding with any system ones,
+  # which by convention don't use this prefix, plus only use uppercase,
+  # so all were also converted to lowercase.
+  # Lets start everything now with all basic functions declared...
+
+  _example_artifact="${_example_artifact:-}" || true
+  _artifact_content="${_artifact_content:-}" || true
+
+  _refactored_content="${_refactored_content:-}" || true
+  _refactored_output="${_refactored_output:-}" || true
+
+  _grompt_generated_prompt="${_grompt_generated_prompt:-}" || true
+  _grompt_ask="${_grompt_ask:-}" || true
+
+  _combined_prompt="${_combined_prompt:-}" || true
+  _prompt_content="${_prompt_content:-}" || true
+  _example_prompt="${_example_prompt:-}" || true
+
+  _duration="${_duration:-}" || true
+  _start_time="${_start_time:-}" || true
+  _end_time="${_end_time:-}" || true
+
+  _start_time=$(date +%s)                                             # SCRIPT START TIME VAR INITIALIZATION
+  readonly _start_time                                                # SCRIPT START TIME LOCK
+  _end_time=$(date +%s)                                               # SCRIPT END TIME VAR INITIALIZATION
+
+  _temp_combined_prompt=""                                            # SCRIPT TEMPORARY PROMPT VAR INITIALIZATION
+
+  # LookAtni Settings
+  _artifact_content=""                                                # LOOKATNI ARTIFACT CONTENT VAR INITIALIZATION
+
+  # LLM Settings
+  # Markers for replace
+  _llm_provider="gemini"                                              # LLM PROVIDER
+  _llm_model="gemini-2.0-flash"                                       # LLM MODEL
+  _llm_api_key='AIzaSyAGVRdfCOiW5HZdp09Bbtf4cwqn0mfLUv8'              # GEMINI API KEY [OPTIONAL, CAN BE SET AS ENV VAR]
+  _max_tokens=32000                                                   # MAX TOKENS (GEMINI-2.0-FLASH SUPPORTS UP TO 32000)
+
+  # Workspace Path
+  _workspace_path="/srv/apps/LIFE/KUBEX"                              # WORKSPACE PATH [OPTIONAL]
+
+  # LookAtni Paths
+  _lookatni_path="${_workspace_path:-$(pwd)}/lookatni-file-markers"   # LOOKATNI ROOT PATH
+  _lookatni_bin="${_lookatni_path:-}/dist/lookatni"                   # LOOKATNI BINARY
+
+  # Grompt Paths
+  _grompt_path="${_workspace_path:-$(pwd)}/grompt"                    # GROMPT ROOT PATH
+  _grompt_bin="${_grompt_path}/dist/grompt_linux_amd64"               # GROMPT BINARY
+
+  # Examples Path
+  _example_parent="${_grompt_path}/docs/examples/virt-cycles"         # TARGET TEST PARENT FOLDER
+
+  # Example Project Paths
+  _example_project="${_example_parent:-$(pwd)}/test-project"            # 1: TEST TARGET
+  _example_artifact="${_example_parent}/test-project-artifact.md"       # 2: LOOKATNI ARTIFACT
+  _example_prompt="${_example_parent}/improvement-prompt.md"            # 3: GROMPT GENERATED SCREENING PROMPT
+  _example_result="${_example_parent}/test-project-refactored"          # 4: PROJECT REFACTORED, ALREADY RE-EXPANDED WITH LOOKATNI
+  _example_res_artifact="${_example_parent}/test-project-refactored.md" # 5: PROJECT ARTIFACT REFACTORED
+}
+
+_clear_globals() {
+  unset _example_artifact || true
+  unset _artifact_content || true
+
+  unset _refactored_content || true
+  unset _refactored_output || true
+
+  unset _grompt_generated_prompt || true
+  unset _grompt_ask || true
+
+  unset _combined_prompt || true
+  unset _prompt_content || true
+  unset _example_prompt || true
+
+  unset _example_res_artifact || true
+
+  unset _duration || true
+  unset _start_time || true
+  unset _end_time || true
+}
+
+# Creates a temporary directory for cache
+_provision || log fatal "Provisioning failed!"
+
+# Ensure global variables are initialized
+_ensure_globals || log fatal "Failed to ensure global variables!"
+
+# Set a trap to clear script cache on exit
+set_trap() {
+  local current_shell=""
+  current_shell=$(get_current_shell)
+
+  # Check the shell type and set options accordingly
+  case "${current_shell}" in
+    *ksh|*zsh|*bash)
+
+      declare -a FULL_SCRIPT_ARGS=("$@")
+      if [[ "${FULL_SCRIPT_ARGS[*]}" == *--debug* ]]; then
+          set -x
+      fi
+
+      # Enable strict mode
+      if [[ "${current_shell}" == "bash" ]]; then
+        set -o nounset  # Treat unset variables as an error
+        set -o errexit  # Exit immediately if a command exits with a non-zero status
+        set -o pipefail # Prevent errors in a pipeline from being masked
+        set -o errtrace # If a command fails, the shell will exit immediately
+        set -o functrace # If a function fails, the shell will exit immediately
+        shopt -s inherit_errexit # Inherit the errexit option in functions
+      fi
+
+      # Set a trap to clear the script cache on exit
+      trap 'clear_script_cache' EXIT HUP INT QUIT ABRT ALRM TERM
+      ;;
+  esac
+}
+
+# Clear global variables and temporary files
 cleanup() {
-  # Não fazer o PC nem ngm perder tempo... rsrs
+  # Clean the script trap to avoid "gremlins"
+  trap - EXIT HUP INT QUIT ABRT ALRM TERM
+
+  # Don't make the PC or anyone waste time... lol
   if [[ -n "${_temp_combined_prompt:-}" && -f "${_temp_combined_prompt:-}" ]]; then
     rm -f "${_temp_combined_prompt:-}" || true
   fi
 
-  # Limpa a trap do script pra evitar "gremlins"
-  trap - EXIT
+  # Clear globals if the function exists
+  if test $(declare -f clear_script_cache >$(_get_stdout_alt)); then
+    _clear_globals || true
+    unset -f _clear_globals || true
+  fi
 
   return 0
 }
 
-trap cleanup EXIT
-
-provision() {
-  printf '%s\n' "🔧 Provisionando ambiente..."
-  _temp_combined_prompt="$(mktemp -t combined_prompt.XXXXXX || echo "")"
-  test -f "${_temp_combined_prompt:-}" || {
-      printf '%s\n' "❌ Falha ao gerar prompt combinado!" >&2
-      return 1
-  }
-  return 0
+set_trap "$@" || {
+  log fatal "Failed to set trap!"
 }
 
 first_step() {
-  printf '%s\n' "📦 PASSO 1: Gerando artefato do projeto..." >&2
-  "${_lookatni_bin}" generate "${_original_target_path:-}" "${_artifact_file:-}"
+  log info "📦 STEP 1: Generating project artifact..." true
 
-  # Verificar se o artefato foi gerado
-  test -f "$_artifact_file" && printf '%s\n' "✅ Artefato gerado: ${_artifact_file:-}" >&2 || return 1
-  sleep 2
+  "${_lookatni_bin}" generate "${_example_parent:-}" "${_example_artifact:-}"
+
+  # Check if artifact was generated
+  test -f "$_example_artifact" || {
+    log fatal "Artifact generation failed!" true
+  }
+
+  log success "Artifact generated: ${_example_artifact:-}" &&
 
   return 0
 }
 
 second_step() {
-  printf '%s\n' "🧠 PASSO 2: Gerando prompt profissional..." >&2
+  log info "🧠 STEP 2: Generating professional prompt..."
 
   _grompt_generated_prompt=$("${_grompt_bin:-}" generate \
-      --provider gemini \
-      --apikey "${_gemini_api_key:-${GEMINI_API_KEY:-}}" \
-      --model 'gemini-2.0-flash' \
-      --ideas 'Analise este projeto Go e identifique melhorias de código seguindo Go best practices' \
-      --ideas 'Foque em: error handling, naming conventions, código idiomático, performance' \
-      --ideas 'Mantenha a estrutura de arquivos LookAtni (markers //<ASCII[28]>/ filename /<ASCII[28]>//)' \
-      --ideas 'O placeholder <ASCII[28]> representa o caractere ASCII 28 (File Separator - ) e deve ser IMPRESSO no resultado apresentado.' \
-      --ideas 'Retorne o código refatorado completo com explicações das mudanças, sem título ou rodapé, mas explicações em comentários no próprio código.' \
-      --max-tokens 10000 \
+      --provider "${_llm_provider:-gemini}" \
+      --apikey "${_llm_api_key:-${GEMINI_API_KEY:-}}" \
+      --model "${_llm_model:-gemini-2.0-flash}" \
+      --ideas 'Analyze this Go project and identify code improvements following Go best practices' \
+      --ideas 'Focus on: error handling, naming conventions, idiomatic code, performance' \
+      --ideas 'Maintain LookAtni file structure (markers //<ASCII[28]>/ filename /<ASCII[28]>//)' \
+      --ideas 'The placeholder <ASCII[28]> represents ASCII character 28 (File Separator - ) and must be PRINTED in the presented result.' \
+      --ideas 'Return the complete refactored code with explanations of changes, without title or footer, but explanations in comments within the code itself.' \
+      --max-tokens "${_max_tokens:-10240}" \
       --purpose 'code')
 
   test -n "${_grompt_generated_prompt:-}" || {
-      printf '%s\n' "❌ Prompt falhou!" >&2
-      return 1
+      log fatal "Prompt generation failed!" true
   }
 
-  printf '%s\n' "${_grompt_generated_prompt:-}" > "${_prompt_file:-}"
-  test -f "${_prompt_file:-}" || {
-    printf '%s\n' "❌ Falha ao salvar prompt!" >&2
-    return 1
+  printf '%s\n' "${_grompt_generated_prompt:-}" > "${_example_prompt:-}"
+  test -f "${_example_prompt:-}" || {
+    log fatal "Failed to save generated prompt!" true
   }
 
   return 0
 }
 
 third_step() {
-  printf '%s\n' "🤖 PASSO 3: Executando refatoração com IA..." >&2
+  log info "🤖 STEP 3: Executing AI refactoring..."
 
-  # # Criar prompt combinado
-  _artifact_content="$(cat "${_artifact_file:-}" --show-nonprinting)"
+  # Create combined prompt
+  _artifact_content="$(cat "${_example_artifact:-}" --show-nonprinting)"
   test -n "${_artifact_content}" || {
-    printf '%s\n' "❌ Falha ao ler artefato!" >&2
-    return 1
+    log fatal "Failed to read artifact!"
   }
 
   if [[ " ${#_artifact_content} " -lt $(( _max_tokens / 2 - 1000 )) ]]; then
-      _combined_prompt="$(printf '%s\nTARGET CONTENT:\n%s\n%s\n%s\n' "$(cat "${_prompt_file:-}" --show-nonprinting)" '```plaintext' "${_artifact_content:-}" '```')"
+      _combined_prompt="$(printf '%s\nTARGET CONTENT:\n%s\n%s\n%s\n' "$(cat "${_example_prompt:-}" --show-nonprinting)" '```plaintext' "${_artifact_content:-}" '```')"
   else
-      _combined_prompt="$(printf '%s\n' "$(cat "${_prompt_file:-}" --show-nonprinting)")"
+      _combined_prompt="$(printf '%s\n' "$(cat "${_example_prompt:-}" --show-nonprinting)")"
   fi
 
-  # Agora salvo no temporário de verdade pra não incomodar caso dê algo errado.. hehe
+  # Now save to the real temporary file so it doesn't bother if something goes wrong.. hehe
   printf '%s\n' "${_combined_prompt:-}" > "${_temp_combined_prompt:-}"
 
   test -f "${_temp_combined_prompt:-}" || {
-      printf '%s\n' "❌ Falha ao gerar prompt combinado!" >&2
-      return 1
+      log fatal "Failed to generate combined prompt!"
   }
 
-  printf '%s\n' "✅ Prompt combinado gerado: ${_temp_combined_prompt:-}" >&2
-  sleep 2
+  log success "Combined prompt generated: ${_temp_combined_prompt:-}" && sleep 2
 
-  # # Executar com Gemini (usando arquivo temporário para contornar limite de input)
+  # Execute with Gemini (using temporary file to work around input limit)
   _grompt_ask="$("${_grompt_bin:-}" ask \
       --prompt "$(cat "${_temp_combined_prompt:-}" --show-nonprinting)" \
-      --provider 'gemini' \
-      --apikey "${_gemini_api_key:-${GEMINI_API_KEY:-}}" \
-      --max-tokens 8000 && true || echo '')" # Só pra um ensure pica esse true...
+      --provider "${_llm_provider:-gemini}" \
+      --apikey "${_llm_api_key:-${GEMINI_API_KEY:-}}" \
+      --max-tokens "${_max_tokens:-8000}" && true || echo '')" # Just for a cool ensure with this true...
 
-  # Checa se tá preenchido
+  # Check if it's filled
   test -n "${_grompt_ask:-}" || {
-      printf '%s\n' "❌ Refatoração falhou!"
-      return 1
+      log fatal "Refactoring failed!"
   }
 
-  # Preenche o arquivo
-  printf '%s\n' "${_grompt_ask:-}" > "${_refactored_file:-}"
+  # Fill the file
+  printf '%s\n' "${_grompt_ask:-}" > "${_example_res_artifact:-}"
 
-  # Checa se o arquivo foi preenchido
-  test -f "${_refactored_file:-}"|| {
-      printf '%s\n' "❌ Refatoração falhou!"
-      return 1
+  # Check if the file was filled
+  test -f "${_example_res_artifact:-}"|| {
+      log fatal "Refactoring failed!"
   }
 
-  # Tudo ok? Printa!
-  printf '%s\n' "✅ Refatoração concluída: ${_refactored_file:-}"
+  # Everything ok? Print it!
+  log success "✅ Refactoring completed: ${_example_res_artifact:-}" && sleep 2
 
   return 0
 }
 
 fourth_step() {
-  # To inserindo o printf pra garantir que o caracter invisível será impresso sem
-  # nenhuma espécie de expansão, etc....
-  # O cat é bom manter com o --show-nonprinting pra garantir que o caracter invisível
-  _exemplo="$(cat "${_refactored_file:-}" --show-nonprinting)"
+  # I'm adding printf to ensure the invisible character will be printed without
+  # any kind of expansion, etc...
+  # The cat is good to keep with --show-nonprinting to ensure the invisible character
+  _exemplo="$(cat "${_example_res_artifact:-}" --show-nonprinting)"
   _exemplo="${_exemplo#*\`\`\`go}"
   _exemplo="${_exemplo//\/\/<ASCII\[28\]>\//$(printf "//\x1C/")}"
   _exemplo="${_exemplo//\/<ASCII\[28\]>\/\//$(printf "/\x1C//")}"
 
-  printf '%b\n' "${_exemplo:-}" > "${_refactored_file:-}" || {
-    printf '%s\n' "❌ Falha ao processar marcadores!"
-    return 1
+  printf '%b\n' "${_exemplo:-}" > "${_example_res_artifact:-}" || {
+    log fatal "Failed to process markers!"
   }
 
-  test -f "${_refactored_file:-}" || {
-    printf '%s\n' "❌ Artefato refatorado não encontrado!"
-    return 1
+  test -f "${_example_res_artifact:-}" || {
+    log fatal "Refactored artifact not found!"
   }
 
-  # Pra isso aqui passar falta o seguinte:
-  # 1: Remover a última linha do arquivo $_refactored_file gerado.
-  # 2: Substituir o caracter ␜ pelo  real
+  # For this to pass we need the following:
+  # 1: Remove the last line of the generated $_example_res_artifact file.
+  # 2: Replace the ␜ character with the real one
 
-  if ! "${_lookatni_bin:-}" validate "${_refactored_file:-}"; then
-    printf '%s\n' "❌ Validação falhou!"
-    return 1
+  if ! "${_lookatni_bin:-}" validate "${_example_res_artifact:-}"; then
+    log fatal "Validation failed!"
   fi
 
-  printf '%s\n' "📁 PASSO 4: Extraindo projeto refatorado..."
+  log info "📁 STEP 4: Extracting refactored project..."
 
-  "${_lookatni_bin:-}" extract "${_refactored_file:-}" "${_refactored_output:-}" --overwrite --create-dirs
-  test -d "${_refactored_output:-}" || {
-    printf '%s\n' "❌ Extração falhou!"
-    return 1
+  "${_lookatni_bin:-}" extract "${_example_res_artifact:-}" "${_example_result:-}" --overwrite --create-dirs
+
+  test -d "${_example_result:-}" || {
+    log fatal "Extraction failed!"
   }
 
-  printf '%s\n' "✅ Projeto refatorado extraído: ${_refactored_output}"
+  log success "✅ Refactored project extracted: ${_example_result:-}"
+
   return 0
 }
 
 print_summary() {
-  printf '\n%s\n' "🎉 META-RECURSIVIDADE COMPLETA!" >&2
-  printf '%s\n' "================================" >&2
-  printf '%s\n' "📂 Projeto original: ${_original_target_path}" >&2
-  printf '%s\n' "📄 Artefato: ${_artifact_file}" >&2
-  printf '%s\n' "🧠 Prompt: ${_prompt_file}" >&2
-  printf '%s\n' "🤖 Refatorado: ${_refactored_file}" >&2
-  printf '%s\n' "📁 Projeto final: ${_refactored_output}" >&2
-  printf '\n%s\n' "🔥 BOOM! SÓ ALEGRIA E EVOLUÇÃO NO CICLO MAIS VIRTUOSO! 🚀" >&2
-  printf '%s\n' "================================" >&2
 
+  local _key=""
+  if [[ -n "${_key}" && ${#_key} -gt 8 ]]; then
+    _key=${_llm_api_key:-}
+    _key="${_key:0:4}****${_key: -4}"
+  fi
+
+  log success "🎉 META-RECURSIVITY COMPLETE!"
+  log hr
+  log success "📂 Workspace: ${_workspace_path:-}"
+  log success "📂 Original project: ${_example_project:-}"
+  log success "📄 Artifact: ${_example_artifact:-}"
+  log success "📁 Result: ${_example_result:-}"
+  log success "📁 Refactored: ${_example_res_artifact:-}"
+  log hr
+  log success "📂 Provider: ${_llm_provider:-gemini}"
+  log success "📄 Model: ${_llm_model:-gemini-2.0-flash}"
+  log success "📝 Max Tokens: ${_max_tokens:-10240}"
+  log success "🔑 API Key: ${_key:-[None]}"
+  log success "🧠 Prompt: ${_example_prompt:-}"
+  log hr
+  log success "🔥 End of Virtuous Cycle! 🚀"
   _end_time=$(date +%s)
   _duration=$(( _end_time - _start_time ))
   if [ "$_duration" -gt 60 ]; then
-    printf '%s\n' "⏱️ Duração total: $(( _duration / 60 )) minutos e $(( _duration % 60 )) segundos" >&2
+    log notice "⏱️ Time elapsed: $(( _duration / 60 )) minutes and $(( _duration % 60 )) seconds" true
   else
-    printf '%s\n' "⏱️ Duração total: ${_duration} segundos" >&2
+    log notice "⏱️ Time elapsed: ${_duration} seconds" true
   fi
+  log hr
+
+  return 0
 }
 
 main() {
-  printf '\n%s\n' "=================================================" >&2
-  printf '%s\n' "🚀 INICIANDO META-RECURSIVIDADE DO LOOKATNI + GROMPT!" >&2
-  printf '%s\n' "=================================================" >&2
+  _provision || log fatal "Provisioning failed!"
 
-  provision || {
-    printf '%s\n' "❌ Falha no provisionamento!" >&2
-    exit 1
-  }
+  # Cleanup before begin [OPTIONAL]
+  #_cleanup || log fatal "Cleanup failed!"
+
+  log hr
+  log info "🚀 STARTING LOOKATNI + GROMPT META-RECURSIVITY!"
+  log hr
 
   first_step || {
-    printf '%s\n' "❌ Falha no passo 1!" >&2
-    exit 1
+    log fatal "Step 1 failed!"
   }
   second_step || {
-    printf '%s\n' "❌ Falha no passo 2!" >&2
-    exit 1
+    log fatal "Step 2 failed!"
   }
   third_step || {
-    printf '%s\n' "❌ Falha no passo 3!" >&2
-    exit 1
+    log fatal "Step 3 failed!"
   }
   fourth_step || {
-    printf '%s\n' "❌ Falha no passo 4!" >&2
-    exit 1
+    log fatal "Step 4 failed!"
   }
-  cleanup || {
-    printf '%s\n' "❌ Falha na limpeza!" >&2
-    exit 1
+  print_summary || {
+    log fatal "Summary printing failed!"
   }
-
-
 }
 
 main || {
-  printf '%s\n' "❌ Falha na execução do script!" >&2
-  exit 1
+  log fatal "Script execution failed!"
 }
-
-print_summary
