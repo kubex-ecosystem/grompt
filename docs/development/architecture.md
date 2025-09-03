@@ -60,6 +60,47 @@ Interface React com:
 User Input → Validation → Engine → AI Provider → Response → UI
 ```
 
+## 📈 Diagrama (Mermaid)
+
+```mermaid
+flowchart LR
+  subgraph CLI
+    C[cmd/cli]
+  end
+
+  subgraph Core
+    E[internal/engine.Engine]
+    TPL[factory/templates.Manager]
+    P[internal/providers + types.ProviderImpl]
+    CFG[internal/types IConfig]
+    API[internal/types IAPIConfig]
+  end
+
+  C --> E
+  E --> TPL
+  E --> P
+  E <---> CFG
+  P -->|VAPI| API
+
+  subgraph APIs
+    OA[OpenAI]
+    CL[Claude]
+    GM[Gemini]
+    DS[DeepSeek]
+    OL[Ollama]
+    CG[ChatGPT]
+  end
+
+  API --> OA
+  API --> CL
+  API --> GM
+  API --> DS
+  API --> OL
+  API --> CG
+
+  E --> H[(History)]
+```
+
 ## 🚀 Deployment
 
 - **Desenvolvimento:** `make dev`

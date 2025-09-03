@@ -3,18 +3,19 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LogViewer from './components/LogViewer';
 import { logger, useFetchLogger, useNavigationLogger } from './utils/logger';
+import { usePersistentState } from './hooks/usePersistentState';
 
 const PromptCrafter = () => {
   const { t } = useTranslation();
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = usePersistentState<boolean>('grompt.ui.darkMode', true);
   const [currentInput, setCurrentInput] = useState('');
-  const [ideas, setIdeas] = useState<{ id: number; text: string }[]>([]);
+  const [ideas, setIdeas] = usePersistentState<{ id: number; text: string }[]>('grompt.prompt.ideas', []);
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const [purpose, setPurpose] = useState('Outros');
-  const [customPurpose, setCustomPurpose] = useState('');
-  const [maxLength, setMaxLength] = useState(5000);
-  const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [purpose, setPurpose] = usePersistentState<string>('grompt.prompt.purpose', 'Outros');
+  const [customPurpose, setCustomPurpose] = usePersistentState<string>('grompt.prompt.customPurpose', '');
+  const [maxLength, setMaxLength] = usePersistentState<number>('grompt.prompt.maxLength', 5000);
+  const [generatedPrompt, setGeneratedPrompt] = usePersistentState<string>('grompt.prompt.generated', '');
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [apiProvider, setApiProvider] = useState('demo');
