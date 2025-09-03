@@ -25,11 +25,7 @@ GET /api/health
 **Response:**
 
 ```json
-{
-  "status": "ok",
-  "version": "1.0.0",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
+{ "status": "ok", "version": "<semver>", "timestamp": 1730580000 }
 ```
 
 ### Configuração
@@ -59,7 +55,7 @@ GET /api/config
     }
   },
   "defaultProvider": "demo",
-  "maxTokens": 2000
+  "max_tokens": 2000
 }
 ```
 
@@ -79,19 +75,19 @@ GET /api/models
     "gpt-4": {
       "name": "GPT-4",
       "description": "Most capable model",
-      "maxTokens": 8192
+      "max_tokens": 8192
     },
     "gpt-3.5-turbo": {
       "name": "GPT-3.5 Turbo",
       "description": "Fast and efficient",
-      "maxTokens": 4096
+      "max_tokens": 4096
     }
   },
   "claude": {
     "claude-3-sonnet": {
       "name": "Claude 3 Sonnet",
       "description": "Balanced performance",
-      "maxTokens": 200000
+      "max_tokens": 200000
     }
   }
 }
@@ -120,7 +116,7 @@ POST /api/unified
   "purpose": "code",
   "provider": "openai",
   "model": "gpt-4",
-  "maxTokens": 2000,
+  "max_tokens": 2000,
   "temperature": 0.7
 }
 ```
@@ -133,24 +129,13 @@ POST /api/unified
 | `purpose` | `string` | ❌ | Propósito: `code`, `analysis`, `creative`, `general` |
 | `provider` | `string` | ❌ | Provedor de IA (padrão: `demo`) |
 | `model` | `string` | ❌ | Modelo específico |
-| `maxTokens` | `number` | ❌ | Limite de tokens (padrão: 1000) |
+| `max_tokens` | `number` | ❌ | Limite de tokens (padrão: 1000) |
 | `temperature` | `number` | ❌ | Criatividade 0.0-1.0 (padrão: 0.7) |
 
 **Response:**
 
 ```json
-{
-  "success": true,
-  "data": {
-    "prompt": "Crie uma API REST com as seguintes especificações:\n\n**Objetivo Principal:** Desenvolver uma API robusta usando Node.js...",
-    "metadata": {
-      "provider": "openai",
-      "model": "gpt-4",
-      "tokensUsed": 156,
-      "processingTime": "1.2s"
-    }
-  }
-}
+{ "response": "...texto...", "provider": "openai", "model": "gpt-4o-mini" }
 ```
 
 ### Pergunta Direta
@@ -168,25 +153,14 @@ POST /api/ask
   "question": "Como implementar cache Redis em Node.js?",
   "provider": "claude",
   "model": "claude-3-sonnet",
-  "maxTokens": 1500
+  "max_tokens": 1500
 }
 ```
 
 **Response:**
 
 ```json
-{
-  "success": true,
-  "data": {
-    "answer": "Para implementar cache Redis em Node.js, você pode seguir estes passos...",
-    "metadata": {
-      "provider": "claude",
-      "model": "claude-3-sonnet",
-      "tokensUsed": 892,
-      "processingTime": "2.1s"
-    }
-  }
-}
+{ "response": "...texto...", "provider": "claude", "model": "claude-3-5-sonnet-20241022" }
 ```
 
 ### Geração de Squad
@@ -210,31 +184,7 @@ POST /api/squad
 **Response:**
 
 ```json
-{
-  "success": true,
-  "data": {
-    "agents": [
-      {
-        "name": "Frontend Developer Bot",
-        "role": "Desenvolver interface React",
-        "skills": ["React", "TypeScript", "CSS"],
-        "responsibilities": ["Componentes UI", "Estado global", "Responsividade"]
-      },
-      {
-        "name": "Backend Developer Bot",
-        "role": "Desenvolver API REST",
-        "skills": ["Node.js", "Express", "PostgreSQL"],
-        "responsibilities": ["Endpoints", "Autenticação", "Banco de dados"]
-      }
-    ],
-    "summary": "Squad completo para desenvolvimento de e-commerce",
-    "metadata": {
-      "provider": "openai",
-      "model": "gpt-4",
-      "tokensUsed": 345
-    }
-  }
-}
+{ "agents": [{ "name": "Frontend", "role": "React", "skills": ["React", "TS"] }], "markdown": "# Squad..." }
 ```
 
 ## 🔧 Endpoints Específicos por Provedor
@@ -290,7 +240,7 @@ class GromptClient {
         purpose: options.purpose || 'general',
         provider: options.provider || 'demo',
         model: options.model,
-        maxTokens: options.maxTokens || 1000,
+        max_tokens: options.maxTokens || 1000,
         temperature: options.temperature || 0.7
       });
 
@@ -306,7 +256,7 @@ class GromptClient {
         question,
         provider: options.provider || 'demo',
         model: options.model,
-        maxTokens: options.maxTokens || 1000
+        max_tokens: options.maxTokens || 1000
       });
 
       return response.data;
@@ -379,7 +329,7 @@ class GromptClient:
             "purpose": options.get("purpose", "general"),
             "provider": options.get("provider", "demo"),
             "model": options.get("model"),
-            "maxTokens": options.get("max_tokens", 1000),
+            "max_tokens": options.get("max_tokens", 1000),
             "temperature": options.get("temperature", 0.7)
         }
 
@@ -392,7 +342,7 @@ class GromptClient:
             "question": question,
             "provider": options.get("provider", "demo"),
             "model": options.get("model"),
-            "maxTokens": options.get("max_tokens", 1000)
+            "max_tokens": options.get("max_tokens", 1000)
         }
 
         response = requests.post(f"{self.base_url}/ask", json=payload)

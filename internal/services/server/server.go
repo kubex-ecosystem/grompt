@@ -77,46 +77,42 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes() {
-	buildFS, err := fs.Sub(reactApp, "build")
-	if err != nil {
-		log.Printf("⚠️ build embed não encontrado: %v", err)
-		s.setupFallbackRoutes()
-		return
-	}
+    buildFS, err := fs.Sub(reactApp, "build")
+    if err != nil {
+        log.Printf("⚠️ build embed não encontrado: %v", err)
+        s.setupFallbackRoutes()
+        return
+    }
 
-	s.router.HandleFunc("/", s.handlers.HandleRoot(buildFS))
+    s.router.HandleFunc("/", s.handlers.HandleRoot(buildFS))
 
-	// Rotas de API
-	s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
-	s.router.HandleFunc("/api/models", s.handlers.HandleModels)
-	s.router.HandleFunc("/api/claude", s.handlers.HandleClaude)
-	s.router.HandleFunc("/api/ollama", s.handlers.HandleOllama)
-	s.router.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
-	s.router.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
-	s.router.HandleFunc("/api/gemini", s.handlers.HandleGemini)
-	s.router.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
-	s.router.HandleFunc("/api/unified", s.handlers.HandleUnified)
-	s.router.HandleFunc("/api/agents", s.handlers.HandleAgents)
-	s.router.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
-	s.router.HandleFunc("/api/agents/", s.handlers.HandleAgent)
-	s.router.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
+    // Rotas de API (organizadas por categoria) usando builder encadeável
+    // ------------------------------------------------------------------
+    // 1) Núcleo / Saúde / Configuração
+    s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
+    s.Route("/api/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
+    s.Route("/api/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+    s.Route("/api/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
+    s.Route("/api/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
 
-	// Config route
-	// This route returns the server's configuration, such as API keys and endpoints.
-	// It is useful for clients to know how to interact with the server's APIs.
-	s.router.HandleFunc("/api/config", s.handlers.HandleConfig)
+    // 2) Provedores (diretos)
+    s.Route("/api/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
 
-	// Test route
-	// This route is used to test the server's API functionality.
-	// It can be used to verify that the server is running and responding correctly.
-	s.router.HandleFunc("/api/test", s.handlers.HandleTest)
+    // 3) Geração Unificada e Atalhos
+    s.Route("/api/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
 
-	// Health check route
-	// This route checks the health of the server and returns a simple JSON response.
-	// It is useful for monitoring and ensuring the server is running correctly.
-	s.router.HandleFunc("/api/health", s.handlers.HandleHealth)
+    // 4) Agentes / Squad
+    s.Route("/api/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+    s.Route("/api/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
+    s.Route("/api/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
+    s.Route("/api/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
 
 	// Página de teste para WASM
 	s.router.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {
