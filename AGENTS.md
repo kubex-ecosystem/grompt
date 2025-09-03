@@ -6,7 +6,7 @@
 - `internal`: core packages (engine, types, module, providers).
 - `factory`: public-facing abstractions (providers, templates, engine shims).
 - `mocks`: centralized test doubles for `types.IAPIConfig` and `types.IConfig`.
-- `tests_*`: external test packages (e.g., `tests_types`, `tests_engine`).
+- `tests/tests_*`: external test packages (e.g., `tests_types`, `tests_engine`).
 - `docs`, `frontend`, `dist`, `support`: documentation, UI, build artifacts, scripts.
 
 ## Build, Test, and Development Commands
@@ -21,7 +21,7 @@
 
 - Language: Go 1.25; use `gofmt` (tabs, standard imports).
 - Packages: keep cohesive, use `internal/*` for non-public.
-- Test packages: place in `tests_[package]`, name as `package <target>_test`.
+- Test packages: place in `tests/tests_[package]`, name as `package <target>_test`.
 - Import aliases in tests: use stable, descriptive aliases (e.g., `t "github.com/rafa-mori/grompt/internal/types"`, `eng`, `prov`, `tpl`, `cli`, `mod`, `m` for `mocks`).
 
 ## Testing Guidelines
@@ -46,7 +46,7 @@
 ## Agent-Specific Instructions
 
 - When adding tests for new providers, reuse `mocks.APIConfigMock` and validate via `types.ProviderImpl` to exercise shared contracts.
-- Prefer adding reusable helpers to `mocks/` rather than duplicating setup logic across `tests_*` packages.
+- Prefer adding reusable helpers to `mocks/` rather than duplicating setup logic across `tests/tests_*` packages.
 
 ## Architecture Overview (Checkpoint)
 
@@ -57,6 +57,7 @@
 - CLI/Module: Cobra commands in `cmd/cli`; `internal/module` sets usage, logging, and aggregates subcommands.
 
 Architecture checkpoints
+
 - Data flow: Config -> Engine -> ProviderImpl(VAPI) -> API client -> Response -> History.
 - Injection: prefer `IConfig`/`IAPIConfig` at boundaries; keep network in API clients only.
 - Tests: mock at `IAPIConfig` layer; avoid real network unless explicitly gated via env.

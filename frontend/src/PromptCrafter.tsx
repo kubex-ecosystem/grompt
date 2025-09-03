@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LogViewer from './components/LogViewer';
 import { logger, useFetchLogger, useNavigationLogger } from './utils/logger';
+import { history } from './lib/history/store';
 import { usePersistentState } from './hooks/usePersistentState';
 
 const PromptCrafter = () => {
@@ -174,6 +175,233 @@ const PromptCrafter = () => {
   useEffect(() => {
     document.documentElement.className = darkMode ? 'dark' : '';
   }, [darkMode]);
+
+  // History drawer integration: load entry into editor and re-execute
+  useEffect(() => {
+    const onLoad = (e: any) => {
+      const entry = e?.detail || {};
+      try {
+        if (entry.params) {
+          if (typeof entry.params.maxLength === 'number') setMaxLength(entry.params.maxLength);
+          if (typeof entry.params.purpose === 'string') setPurpose(entry.params.purpose);
+          if (typeof entry.params.customPurpose === 'string') setCustomPurpose(entry.params.customPurpose);
+        }
+        if (entry.provider) setApiProvider(String(entry.provider));
+        if (entry.model) setSelectedModel(String(entry.model));
+        setGeneratedPrompt(entry.responseText || '');
+        setIsInputCollapsed(true);
+        setIsOutputCollapsed(false);
+      } catch {}
+    };
+    const onLoadDraft = (e: any) => {
+      const entry = e?.detail || {};
+      try {
+        if (entry.params) {
+          if (typeof entry.params.maxLength === 'number') setMaxLength(entry.params.maxLength);
+          if (typeof entry.params.purpose === 'string') setPurpose(entry.params.purpose);
+          if (typeof entry.params.customPurpose === 'string') setCustomPurpose(entry.params.customPurpose);
+        }
+        if (entry.provider) setApiProvider(String(entry.provider));
+        if (entry.model) setSelectedModel(String(entry.model));
+        if (Array.isArray(entry.ideas)) setIdeas(entry.ideas);
+        setGeneratedPrompt('');
+        setIsInputCollapsed(false);
+        setIsOutputCollapsed(true);
+      } catch {}
+    };
+    const onReexec = async (e: any) => {
+      const entry = e?.detail || {};
+      try {
+        const p = String(entry.provider || apiProvider || 'demo');
+        const m = entry.model ? String(entry.model) : '';
+        setApiProvider(p);
+        setSelectedModel(m);
+        await reexecuteWith(entry.requestText || '', p, m);
+      } catch {}
+    };
+    const onEditReexec = (e: any) => {
+      const entry = e?.detail || {};
+      try {
+        if (entry.params) {
+          if (typeof entry.params.maxLength === 'number') setMaxLength(entry.params.maxLength);
+          if (typeof entry.params.purpose === 'string') setPurpose(entry.params.purpose);
+          if (typeof entry.params.customPurpose === 'string') setCustomPurpose(entry.params.customPurpose);
+        }
+        if (entry.provider) setApiProvider(String(entry.provider));
+        if (entry.model) setSelectedModel(String(entry.model));
+        if (Array.isArray(entry.ideas)) setIdeas(entry.ideas);
+        setGeneratedPrompt('');
+        setIsInputCollapsed(false);
+        setIsOutputCollapsed(true);
+      } catch {}
+    };
+    window.addEventListener('grompt:history-load' as any, onLoad as any);
+    window.addEventListener('grompt:history-load-draft' as any, onLoadDraft as any);
+    window.addEventListener('grompt:history-reexec' as any, onReexec as any);
+    window.addEventListener('grompt:history-edit-reexec' as any, onEditReexec as any);
+    return () => {
+      window.removeEventListener('grompt:history-load' as any, onLoad as any);
+      window.removeEventListener('grompt:history-load-draft' as any, onLoadDraft as any);
+      window.removeEventListener('grompt:history-reexec' as any, onReexec as any);
+      window.removeEventListener('grompt:history-edit-reexec' as any, onEditReexec as any);
+    };
+  }, [apiProvider]);
+
+  const reexecuteWith = async (promptText: string, provider: string, model: string) => {
+    if (!promptText) return;
+    setIsGenerating(true);
+    try {
+      const saveGenerated = async (finalText: string) => {
+        try {
+          await history.init();
+          await history.saveEntry({
+            provider,
+            model: model || undefined,
+            params: { maxLength, purpose, customPurpose, ideasCount: ideas.length },
+            requestText: promptText,
+            responseText: finalText,
+            status: 'ok',
+            ideas,
+          });
+        } catch {}
+      };
+
+      let response: any = '';
+      if (provider === 'demo' || connectionStatus === 'offline') {
+        await new Promise(r => setTimeout(r, 500));
+        response = '(demo) ' + promptText.slice(0, maxLength);
+        await saveGenerated(response);
+      } else if (provider === 'claude') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('anthropic', vr.vault || {})) {
+          setGeneratedPrompt('');
+          let acc = '';
+          await streamDirectCall('anthropic', vr.vault || {}, { prompt: promptText, max_tokens: maxLength }, (delta) => {
+            acc += delta;
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          await saveGenerated(acc);
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/claude', { method: 'POST', body: JSON.stringify({ prompt: promptText, max_tokens: maxLength }) });
+          if (!result.ok) throw new Error(await result.text());
+          const data = await result.json();
+          response = data.response || data.content || '';
+          await saveGenerated(response);
+        }
+      } else if (provider === 'openai') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('openai', vr.vault || {})) {
+          setGeneratedPrompt('');
+          let acc = '';
+          await streamDirectCall('openai', vr.vault || {}, { prompt: promptText, max_tokens: maxLength, model: model || 'gpt-3.5-turbo' }, (delta) => {
+            acc += delta;
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          await saveGenerated(acc);
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/openai', { method: 'POST', body: JSON.stringify({ prompt: promptText, max_tokens: maxLength, model: model || 'gpt-3.5-turbo' }) });
+          if (!result.ok) throw new Error(await result.text());
+          const data = await result.json();
+          response = data.response || '';
+          await saveGenerated(response);
+        }
+      } else if (provider === 'deepseek') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('deepseek', vr.vault || {})) {
+          setGeneratedPrompt('');
+          let acc = '';
+          await streamDirectCall('deepseek', vr.vault || {}, { prompt: promptText, max_tokens: maxLength, model: model || 'deepseek-chat' }, (delta) => {
+            acc += delta;
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          await saveGenerated(acc);
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/deepseek', { method: 'POST', body: JSON.stringify({ prompt: promptText, max_tokens: maxLength, model: model || 'deepseek-chat' }) });
+          if (!result.ok) throw new Error(await result.text());
+          const data = await result.json();
+          response = data.response || '';
+          await saveGenerated(response);
+        }
+      } else if (provider === 'ollama') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('ollama', vr.vault || {})) {
+          setGeneratedPrompt('');
+          let acc = '';
+          await streamDirectCall('ollama', vr.vault || {}, { prompt: promptText, model: model || 'llama2', stream: true }, (delta) => {
+            acc += delta;
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          await saveGenerated(acc);
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/ollama', { method: 'POST', body: JSON.stringify({ prompt: promptText, model: model || 'llama2', stream: false }) });
+          if (!result.ok) throw new Error(await result.text());
+          const data = await result.json();
+          response = data.response || '';
+          await saveGenerated(response);
+        }
+      } else if (provider === 'gemini') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { directCall, hasByok } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('gemini', vr.vault || {})) {
+          result = await directCall('gemini', vr.vault || {}, { prompt: promptText, max_tokens: maxLength, model: model || 'gemini-2.0-flash' });
+        } else {
+          result = await apiCall('/gemini', { method: 'POST', body: JSON.stringify({ prompt: promptText, max_tokens: maxLength, model: model || 'gemini-2.0-flash' }) });
+        }
+        if (!result.ok) throw new Error(await result.text());
+        const data = await result.json();
+        response = data.response || '';
+        await saveGenerated(response);
+      } else if (provider === 'chatgpt') {
+        const { unlockVault } = await import('./hooks/useApiKeys');
+        const { hasByok, streamDirectCall } = await import('./lib/providers');
+        const vr = await unlockVault();
+        let result: Response;
+        if (hasByok('chatgpt', vr.vault || {})) {
+          setGeneratedPrompt('');
+          let acc = '';
+          await streamDirectCall('chatgpt', vr.vault || {}, { prompt: promptText, max_tokens: maxLength, model: model || 'gpt-4' }, (delta) => {
+            acc += delta;
+            setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
+          });
+          await saveGenerated(acc);
+          setIsGenerating(false);
+          return;
+        } else {
+          result = await apiCall('/chatgpt', { method: 'POST', body: JSON.stringify({ prompt: promptText, max_tokens: maxLength, model: model || 'gpt-4' }) });
+          if (!result.ok) throw new Error(await result.text());
+          const data = await result.json();
+          response = data.response || '';
+          await saveGenerated(response);
+        }
+      }
+      setGeneratedPrompt(response);
+    } catch (err) {
+      setGeneratedPrompt(`Falha ao reexecutar: ${(err as any)?.message || 'erro'}`);
+    }
+    setIsGenerating(false);
+  };
 
   // Ao trocar provider, carregar default model do BYOK (se existir)
   useEffect(() => {
@@ -457,11 +685,29 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
     try {
       let response;
+      const saveGenerated = async (finalText: string) => {
+        try {
+          await history.init();
+          const params = { maxLength, purpose, customPurpose, ideasCount: ideas.length };
+          await history.saveEntry({
+            provider: apiProvider,
+            model: selectedModel || undefined,
+            params,
+            requestText: engineeringPrompt,
+            responseText: finalText,
+            status: 'ok',
+            ideas,
+          });
+        } catch (e) {
+          console.warn('History save failed', e);
+        }
+      };
 
       if (apiProvider === 'demo' || connectionStatus === 'offline') {
         // Simular delay para parecer real
         await new Promise(resolve => setTimeout(resolve, 2000));
         response = generateDemoPrompt();
+        await saveGenerated(response);
       } else if (apiProvider === 'claude') {
         console.log('🤖 Enviando para Claude API...');
         // Prefer direct BYOK call (streaming)
@@ -471,9 +717,12 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
         let result: Response;
         if (hasByok('anthropic', vr.vault || {})) {
           setGeneratedPrompt('');
+          let acc = '';
           await streamDirectCall('anthropic', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength }, (delta) => {
+            acc += delta;
             setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
           });
+          await saveGenerated(acc);
           setIsGenerating(false);
           return;
         } else {
@@ -490,6 +739,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || data.content || 'Resposta vazia do servidor';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do Claude');
 
       } else if (apiProvider === 'openai') {
@@ -500,9 +750,12 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
         let result: Response;
         if (hasByok('openai', vr.vault || {})) {
           setGeneratedPrompt('');
+          let acc = '';
           await streamDirectCall('openai', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-3.5-turbo' }, (delta) => {
+            acc += delta;
             setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
           });
+          await saveGenerated(acc);
           setIsGenerating(false);
           return;
         } else {
@@ -519,6 +772,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || 'Resposta vazia do OpenAI';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do OpenAI');
 
       } else if (apiProvider === 'deepseek') {
@@ -529,9 +783,12 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
         let result: Response;
         if (hasByok('deepseek', vr.vault || {})) {
           setGeneratedPrompt('');
+          let acc = '';
           await streamDirectCall('deepseek', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'deepseek-chat' }, (delta) => {
+            acc += delta;
             setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
           });
+          await saveGenerated(acc);
           setIsGenerating(false);
           return;
         } else {
@@ -548,6 +805,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || 'Resposta vazia do DeepSeek';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do DeepSeek');
       } else if (apiProvider === 'ollama') {
         console.log('🦙 Enviando para Ollama...');
@@ -557,9 +815,12 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
         let result: Response;
         if (hasByok('ollama', vr.vault || {})) {
           setGeneratedPrompt('');
+          let acc = '';
           await streamDirectCall('ollama', vr.vault || {}, { prompt: engineeringPrompt, model: selectedModel || 'llama2', stream: true }, (delta) => {
+            acc += delta;
             setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
           });
+          await saveGenerated(acc);
           setIsGenerating(false);
           return;
         } else {
@@ -576,6 +837,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || 'Resposta vazia do Ollama';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do Ollama');
 
       } else if (apiProvider === 'gemini') {
@@ -605,6 +867,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || 'Resposta vazia do Gemini';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do Gemini');
       } else if (apiProvider === 'chatgpt') {
         console.log('🤖 Enviando para ChatGPT...');
@@ -614,9 +877,12 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
         let result: Response;
         if (hasByok('chatgpt', vr.vault || {})) {
           setGeneratedPrompt('');
+          let acc = '';
           await streamDirectCall('chatgpt', vr.vault || {}, { prompt: engineeringPrompt, max_tokens: maxLength, model: selectedModel || 'gpt-4' }, (delta) => {
+            acc += delta;
             setGeneratedPrompt(prev => (prev + delta).slice(0, maxLength));
           });
+          await saveGenerated(acc);
           setIsGenerating(false);
           return;
         } else {
@@ -633,6 +899,7 @@ INSTRUÇÕES PARA ESTRUTURAÇÃO:
 
         const data = await result.json();
         response = data.response || 'Resposta vazia do ChatGPT';
+        await saveGenerated(response);
         console.log('✅ Resposta recebida do ChatGPT');
 
       }
@@ -665,10 +932,23 @@ go run .
 make run
 \`\`\`
 `);
+      try {
+        await history.init();
+        await history.saveEntry({
+          provider: apiProvider,
+          model: selectedModel || undefined,
+          params: { maxLength, purpose, customPurpose, ideasCount: ideas.length },
+          requestText: engineeringPrompt,
+          responseText: '',
+          status: 'error',
+          error: (error as any)?.message || 'unknown',
+          ideas,
+        });
+      } catch {}
     }
 
-    setIsGenerating(false);
-  };
+      setIsGenerating(false);
+    };
 
   const copyToClipboard = async () => {
     try {
