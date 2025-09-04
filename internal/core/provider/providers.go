@@ -1,5 +1,5 @@
-// Package providers provides concrete implementations of AI providers.
-package providers
+// Package provider provides concrete implementations of AI providers.
+package provider
 
 import (
 	"github.com/rafa-mori/grompt/internal/types"
