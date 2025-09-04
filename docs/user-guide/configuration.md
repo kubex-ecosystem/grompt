@@ -2,6 +2,21 @@
 
 Este guia detalha como configurar o Grompt para trabalhar com diferentes provedores de IA, personalizar o ambiente e otimizar seu fluxo de trabalho.
 
+## 🧭 Matriz de Provedores (Cheat Sheet)
+
+| Provedor | Variável | Padrão do Endpoint/Chave | Modelo padrão (endpoints) | Exemplos de modelos |
+|---|---|---|---|---|
+| OpenAI | `OPENAI_API_KEY` | chave secreta | `gpt-4o-mini` | `gpt-4o`, `gpt-4`, `gpt-3.5-turbo` |
+| Claude | `CLAUDE_API_KEY` | chave secreta | `claude-3-5-sonnet-20241022` | `claude-3-sonnet-20240229`, `claude-3-5-haiku-20241022` |
+| DeepSeek | `DEEPSEEK_API_KEY` | chave secreta | `deepseek-chat` | `deepseek-coder`, `deepseek-math`, `deepseek-reasoner` |
+| Gemini | `GEMINI_API_KEY` | chave secreta | `gemini-1.5-flash` | `gemini-2.0-flash`, `gemini-2.0-pro`, `gemini-1.5-pro` |
+| ChatGPT | `CHATGPT_API_KEY` | chave secreta | `gpt-4o-mini` | `gpt-4o`, `gpt-4`, `gpt-3.5-turbo` |
+| Ollama | `OLLAMA_ENDPOINT` | `http://localhost:11434` | `llama3.2` | `mistral`, `codellama`, `llama3.1`, `llama2` |
+
+Observações:
+- Configure as variáveis no ambiente ou em `~/.gromptrc` (permissões 600).
+- Endpoints HTTP do servidor: `PORT` (padrão `8080`) e `BindAddr` (padrão `localhost`).
+
 ## 🔧 Configuração de Provedores de IA
 
 ### OpenAI (GPT)
@@ -38,7 +53,7 @@ echo 'OPENAI_API_KEY=sk-proj-...' >> ~/.gromptrc
 # Pergunta simples
 grompt ask "Como implementar cache em Redis?" \
   --provider openai \
-  --model gpt-4
+  --model gpt-4o-mini
 
 # Geração de prompt
 grompt generate \
@@ -72,9 +87,9 @@ echo 'CLAUDE_API_KEY=sk-ant-...' >> ~/.gromptrc
 
 | Modelo | Descrição | Uso Recomendado |
 |--------|-----------|-----------------|
-| `claude-3-opus` | Mais avançado | Análises complexas, raciocínio |
-| `claude-3-sonnet` | Balanceado | Uso geral, desenvolvimento |
-| `claude-3-haiku` | Rápido, eficiente | Tarefas simples, iteração rápida |
+| `claude-3-5-sonnet-20241022` | Avançado recente | Análises complexas, raciocínio |
+| `claude-3-sonnet-20240229` | Balanceado | Uso geral, desenvolvimento |
+| `claude-3-5-haiku-20241022` | Rápido, eficiente | Tarefas simples, iteração rápida |
 
 #### Exemplo de Uso (Claude)
 
@@ -109,8 +124,9 @@ echo 'GEMINI_API_KEY=AIza...' >> ~/.gromptrc
 
 | Modelo | Descrição | Uso Recomendado |
 |--------|-----------|-----------------|
-| `gemini-pro` | Modelo principal | Uso geral, desenvolvimento |
-| `gemini-pro-vision` | Com suporte a imagens | Análise visual (futuro) |
+| `gemini-1.5-flash` | Rápido | Uso geral, prototipagem |
+| `gemini-2.0-flash` | Equilíbrio | Uso geral |
+| `gemini-2.0-pro` | Capaz | Tarefas complexas |
 
 #### Exemplo de Uso (Gemini)
 
@@ -188,10 +204,10 @@ export OLLAMA_ENDPOINT="http://localhost:11434"
 
 | Modelo | Tamanho | Descrição |
 |--------|---------|-----------|
-| `llama2` | 7B/13B/70B | Uso geral |
+| `llama3.2` | 1B/3B/11B | Uso geral |
 | `codellama` | 7B/13B/34B | Programação |
 | `mistral` | 7B | Rápido e eficiente |
-| `dolphin-mixtral` | 8x7B | Conversação |
+| `llama3.1`, `llama2` | vários | Alternativas |
 
 #### Exemplo de Uso (Ollama)
 
@@ -272,23 +288,7 @@ export REQUEST_TIMEOUT=30
 export CONNECTION_TIMEOUT=10
 ```
 
-#### Rate Limiting
-
-```bash
-# Limites de requisições
-export RATE_LIMIT_REQUESTS=100      # Requests por minuto
-export RATE_LIMIT_TOKENS=50000      # Tokens por hora
-export RATE_LIMIT_BURST=10          # Burst requests
-```
-
-#### Cache
-
-```bash
-# Cache de respostas
-export CACHE_ENABLED=true
-export CACHE_TTL=3600               # 1 hora
-export CACHE_SIZE=100               # Máximo de entries
-```
+> Nota: funcionalidades como rate limiting e cache não estão expostas via variáveis de ambiente na versão atual.
 
 ## 🔒 Segurança
 
@@ -308,20 +308,9 @@ ls -la ~/.gromptrc
 # Deve mostrar: -rw------- (600)
 ```
 
-### Configuração de Produção
+### Produção
 
-```bash
-# Desabilitar debug em produção
-export DEBUG=false
-
-# Limitar origins CORS
-export CORS_ORIGINS="https://meuapp.com,https://api.meuapp.com"
-
-# Configurar HTTPS (se necessário)
-export TLS_CERT="/path/to/cert.pem"
-export TLS_KEY="/path/to/key.pem"
-export PORT=443
-```
+> Nota: Use um reverse proxy (Nginx/Caddy) para TLS/CORS. O binário não expõe TLS nativo.
 
 ### Rotação de Chaves
 
@@ -339,87 +328,13 @@ sed -i 's/OPENAI_API_KEY=.*/OPENAI_API_KEY=nova-chave/' ~/.gromptrc
 grompt ask "teste" --provider openai --dry-run
 ```
 
-## 🎨 Personalização da Interface
-
-### Temas
-
-```bash
-# Via variáveis de ambiente
-export THEME=dark          # dark, light, auto
-export ACCENT_COLOR=blue   # blue, green, purple, red
-
-# Via interface web
-# Vá para Configurações > Aparência
-```
-
-### Idiomas
-
-```bash
-# Configurar idioma
-export LANGUAGE=pt-BR      # pt-BR, en-US, es-ES
-
-# Na interface web
-# Vá para Configurações > Idioma
-```
-
-### Layout
-
-```bash
-# Configurações de layout
-export SIDEBAR_COLLAPSED=false
-export EDITOR_THEME=monokai
-export FONT_SIZE=14
-export LINE_NUMBERS=true
-```
+## 🎨 Personalização
+No momento, não há personalização via variáveis de ambiente.
 
 ## 📊 Monitoramento e Logs
-
-### Configuração de Logs
-
-```bash
-# Nível de log
-export LOG_LEVEL=info       # debug, info, warn, error
-
-# Formato de log
-export LOG_FORMAT=json      # json, text
-
-# Arquivo de log
-export LOG_FILE=/var/log/grompt.log
-```
-
-### Métricas
-
-```bash
-# Habilitar métricas
-export METRICS_ENABLED=true
-export METRICS_PORT=9090
-
-# Endpoint de métricas: http://localhost:9090/metrics
-```
-
-### Health Check
-
-```bash
-# Configurar health check
-export HEALTH_CHECK_ENABLED=true
-export HEALTH_CHECK_INTERVAL=30
-
-# Endpoint: http://localhost:8080/api/health
-```
+Sem variáveis dedicadas para logs/métricas. Use o health `GET /api/health` e observabilidade do seu proxy.
 
 ## 🔧 Configuração para Desenvolvimento
-
-### Hot Reload
-
-```bash
-# Modo desenvolvimento
-make dev
-
-# Ou manualmente
-export NODE_ENV=development
-export HOT_RELOAD=true
-grompt --debug
-```
 
 ### Configuração de Teste
 
@@ -433,18 +348,8 @@ export MOCK_PROVIDERS=true
 cp .env .env.test
 ```
 
-### Debug Avançado
-
-```bash
-# Debug detalhado
-export DEBUG=true
-export VERBOSE=true
-export TRACE_REQUESTS=true
-
-# Log de requests HTTP
-export LOG_HTTP_REQUESTS=true
-export LOG_HTTP_RESPONSES=true
-```
+### Debug
+Sem flags dedicadas; valide chamadas com `make test` e providers via `/api/test?provider=...`.
 
 ## 🚀 Configuração para Produção
 

@@ -4,6 +4,7 @@ import { CheckCircle, Download, KeyRound, Lock, PlugZap, Trash2, Unlock, Upload,
 import { useEffect, useMemo, useState } from 'react';
 import { ApiKeysVault, clearVault, exportStoredEnvelope, importStoredEnvelope, saveVault, unlockVault } from '../hooks/useApiKeys';
 import { ProviderId, testProvider } from '../lib/providers';
+import ProviderBadge from './ProviderBadge';
 
 
 var _window: Window | undefined = typeof window !== 'undefined' ? window : undefined;
@@ -215,7 +216,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
         {/* Providers fields */}
         <div className="space-y-4">
           <section className="p-3 bg-gray-800 rounded border border-gray-700">
-            <h3 className="font-medium mb-2">OpenAI</h3>
+            <h3 className="font-medium mb-2 flex items-center gap-2"><ProviderBadge provider="openai" /> OpenAI</h3>
             <input
               type="text" placeholder="sk-..."
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
@@ -254,7 +255,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
           </section>
 
           <section className="p-3 bg-gray-800 rounded border border-gray-700">
-            <h3 className="font-medium mb-2">Anthropic (Claude)</h3>
+            <h3 className="font-medium mb-2 flex items-center gap-2"><ProviderBadge provider="anthropic" /> Anthropic (Claude)</h3>
             <input
               type="text" placeholder="sk-ant-..."
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
@@ -278,7 +279,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
           </section>
 
           <section className="p-3 bg-gray-800 rounded border border-gray-700">
-            <h3 className="font-medium mb-2">Gemini</h3>
+            <h3 className="font-medium mb-2 flex items-center gap-2"><ProviderBadge provider="gemini" /> Gemini</h3>
             <input
               type="text" placeholder="AIza..."
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
@@ -302,7 +303,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
           </section>
 
           <section className="p-3 bg-gray-800 rounded border border-gray-700">
-            <h3 className="font-medium mb-2">DeepSeek</h3>
+            <h3 className="font-medium mb-2 flex items-center gap-2"><ProviderBadge provider="deepseek" /> DeepSeek</h3>
             <input
               type="text" placeholder="sk-..."
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"
@@ -326,7 +327,7 @@ export default function ApiKeysDrawer({ isOpen, onClose }: Props) {
           </section>
 
           <section className="p-3 bg-gray-800 rounded border border-gray-700">
-            <h3 className="font-medium mb-2">Ollama</h3>
+            <h3 className="font-medium mb-2 flex items-center gap-2"><ProviderBadge provider="ollama" /> Ollama</h3>
             <input
               type="text" placeholder="http://localhost:11434"
               className="w-full mb-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded"

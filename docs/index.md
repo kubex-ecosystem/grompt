@@ -5,7 +5,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/rafa-mori/grompt/blob/main/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/rafa-mori/grompt/blob/main/docs/CONTRIBUTING.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](development/contributing.md)
 [![GitHub Stars](https://img.shields.io/github/stars/rafa-mori/grompt?style=social)](https://github.com/rafa-mori/grompt/stargazers)
 
 ---
