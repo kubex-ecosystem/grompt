@@ -1,4 +1,4 @@
-package providers
+package integrations
 
 import (
 	"bytes"
@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
 )
 
-type ClaudeAPI struct{ *APIConfig }
+type ClaudeAPI struct{ *pt.APIConfig }
 
 type ClaudeRequest struct {
 	Prompt    string `json:"prompt"`
@@ -31,12 +33,12 @@ type ClaudeAPIResponse struct {
 	} `json:"content"`
 }
 
-func NewClaudeAPI(apiKey string) IAPIConfig {
+func NewClaudeAPI(apiKey string) pt.IAPIConfig {
 	return &ClaudeAPI{
-		APIConfig: &APIConfig{
-			apiKey:  apiKey,
-			baseURL: "https://api.anthropic.com/v1/messages",
-			httpClient: &http.Client{
+		APIConfig: &pt.APIConfig{
+			ApiKey:  apiKey,
+			BaseURL: "https://api.anthropic.com/v1/messages",
+			HTTPClient: &http.Client{
 				Timeout: 30 * time.Second,
 			},
 		},
@@ -45,7 +47,7 @@ func NewClaudeAPI(apiKey string) IAPIConfig {
 
 // Complete sends a completion request to the Claude API
 func (c *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
-	if c.apiKey == "" {
+	if c.ApiKey == "" {
 		return "", fmt.Errorf("API key não configurada")
 	}
 
@@ -68,16 +70,16 @@ func (c *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string
 		return "", fmt.Errorf("erro ao serializar request: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", c.apiKey)
+	req.Header.Set("x-api-key", c.ApiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição: %v", err)
 	}
@@ -106,7 +108,7 @@ func (c *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string
 
 // IsAvailable checks if the Claude API is available
 func (c *ClaudeAPI) IsAvailable() bool {
-	if c.apiKey == "" {
+	if c.ApiKey == "" {
 		return false
 	}
 
@@ -130,13 +132,13 @@ func (c *ClaudeAPI) IsAvailable() bool {
 		return false
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", c.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return false
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Authorization", "Bearer "+c.ApiKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -151,20 +153,20 @@ func (c *ClaudeAPI) IsAvailable() bool {
 
 // ListModels retrieves the list of available models from the Claude API
 func (c *ClaudeAPI) ListModels() ([]string, error) {
-	if c.apiKey == "" {
+	if c.ApiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
 
-	req, err := http.NewRequest("GET", c.baseURL+"/models", nil)
+	req, err := http.NewRequest("GET", c.BaseURL+"/models", nil)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao criar request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", c.apiKey)
+	req.Header.Set("x-api-key", c.ApiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("erro na requisição: %v", err)
 	}
@@ -196,7 +198,7 @@ func (c *ClaudeAPI) GetCommonModels() []string {
 }
 
 // GetVersion returns the version of the API
-func (c *ClaudeAPI) GetVersion() string { return c.version }
+func (c *ClaudeAPI) GetVersion() string { return c.Version }
 
 // IsDemoMode indicates if the API is in demo mode
-func (c *ClaudeAPI) IsDemoMode() bool { return c.demoMode }
+func (c *ClaudeAPI) IsDemoMode() bool { return c.DemoMode }

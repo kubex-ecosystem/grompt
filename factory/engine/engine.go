@@ -2,10 +2,10 @@
 package engine
 
 import (
-	"github.com/rafa-mori/grompt/internal/engine"
-	"github.com/rafa-mori/grompt/internal/types"
+	"github.com/rafa-mori/grompt/internal/core/engine"
+	"github.com/rafa-mori/grompt/internal/core/provider"
 )
 
 type Engine = engine.IEngine
 
-func NewEngine(config types.IConfig) engine.IEngine { return engine.NewEngine(config) }
+func NewEngine(config provider.IConfig) engine.IEngine { return engine.NewEngine(config) }

@@ -11,6 +11,7 @@ import (
 	"github.com/rafa-mori/grompt/utils"
 	"gopkg.in/yaml.v3"
 
+	iit "github.com/rafa-mori/grompt/internal/core/provider"
 	s "github.com/rafa-mori/grompt/internal/services/server"
 	t "github.com/rafa-mori/grompt/internal/types"
 	l "github.com/rafa-mori/logz"
@@ -71,7 +72,7 @@ func startServer() *cobra.Command {
 				return
 			}
 
-			var cfg t.IConfig
+			var cfg iit.IConfig
 			var err error
 
 			if configFilePath != "" {
@@ -81,7 +82,7 @@ func startServer() *cobra.Command {
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
-				cfg = t.NewConfig(
+				cfg = iit.NewConfig(
 					utils.GetEnvOr("BIND_ADDR", bindAddr),
 					utils.GetEnvOr("PORT", port),
 					utils.GetEnvOr("OPENAI_API_KEY", openAIKey),
@@ -147,7 +148,6 @@ func startServerService() *cobra.Command {
 		geminiKey,
 		chatGPTKey string
 
-
 	var startCmd = &cobra.Command{
 		Use: "start",
 		Annotations: GetDescriptions([]string{
@@ -161,7 +161,7 @@ func startServerService() *cobra.Command {
 				gl.SetDebug(true)
 			}
 
-			var cfg t.IConfig
+			var cfg iit.IConfig
 			var err error
 
 			if configFilePath != "" {
@@ -171,7 +171,7 @@ func startServerService() *cobra.Command {
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
-				cfg = t.NewConfig(
+				cfg = iit.NewConfig(
 					utils.GetEnvOr("BIND_ADDR", bindAddr),
 					utils.GetEnvOr("PORT", port),
 					utils.GetEnvOr("OPENAI_API_KEY", openAIKey),
@@ -220,7 +220,6 @@ func startServerService() *cobra.Command {
 	startCmd.Flags().StringVarP(&claudeKey, "claude-key", "C", "", "Claude API key")
 	startCmd.Flags().StringVarP(&geminiKey, "gemini-key", "G", "", "Gemini API key")
 	startCmd.Flags().StringVarP(&chatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
-
 
 	return startCmd
 }

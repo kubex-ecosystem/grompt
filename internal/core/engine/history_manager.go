@@ -1,23 +1,25 @@
 package engine
 
+import "github.com/rafa-mori/grompt/internal/types"
+
 // IHistoryManager defines the interface for history management
 type IHistoryManager interface {
 	// Add adds a result to history
-	Add(result Result)
+	Add(result types.Result)
 	// GetHistory returns the prompt history
-	GetHistory() []Result
+	GetHistory() []types.Result
 }
 
 // HistoryManager manages prompt history and versioning
 type HistoryManager struct {
-	entries    []Result
+	entries    []types.Result
 	maxEntries int
 }
 
 // NewHistoryManager creates a new history manager
 func newHistoryManager(maxEntries int) *HistoryManager {
 	return &HistoryManager{
-		entries:    make([]Result, 0),
+		entries:    make([]types.Result, 0),
 		maxEntries: maxEntries,
 	}
 }
@@ -28,7 +30,7 @@ func NewHistoryManager(maxEntries int) IHistoryManager {
 }
 
 // Add adds a result to history
-func (h *HistoryManager) Add(result Result) {
+func (h *HistoryManager) Add(result types.Result) {
 	if h == nil {
 		return
 	}
@@ -42,7 +44,7 @@ func (h *HistoryManager) Add(result Result) {
 }
 
 // GetHistory returns the prompt history
-func (h *HistoryManager) GetHistory() []Result {
+func (h *HistoryManager) GetHistory() []types.Result {
 	if h == nil {
 		return nil
 	}

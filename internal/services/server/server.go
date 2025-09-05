@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	iit "github.com/rafa-mori/grompt/internal/core/provider"
 	t "github.com/rafa-mori/grompt/internal/types"
 )
 
@@ -34,7 +35,7 @@ type ReactApp struct {
 	WasmRoutes  map[string]string
 }
 
-func NewServer(cfg t.IConfig) *Server {
+func NewServer(cfg iit.IConfig) *Server {
 	handlers := NewHandlers(cfg)
 	return &Server{
 		config:   cfg.(*t.Config),
@@ -73,46 +74,46 @@ func (s *Server) Start() error {
 		openBrowser(url)
 	}()
 
-	return http.ListenAndServe(net.JoinHostPort(s.config.BindAddr, s.config.Port), s.router)
+	return http.ListenAndServe(net.JoinHostPort("0.0.0.0", s.config.Port), s.router)
 }
 
 func (s *Server) setupRoutes() {
-    buildFS, err := fs.Sub(reactApp, "build")
-    if err != nil {
-        log.Printf("⚠️ build embed não encontrado: %v", err)
-        s.setupFallbackRoutes()
-        return
-    }
+	buildFS, err := fs.Sub(reactApp, "build")
+	if err != nil {
+		log.Printf("⚠️ build embed não encontrado: %v", err)
+		s.setupFallbackRoutes()
+		return
+	}
 
-    s.router.HandleFunc("/", s.handlers.HandleRoot(buildFS))
+	s.router.HandleFunc("/", s.handlers.HandleRoot(buildFS))
 
-    // Rotas de API (organizadas por categoria) usando builder encadeável
-    // ------------------------------------------------------------------
-    // 1) Núcleo / Saúde / Configuração
-    s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
-    s.Route("/api/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
-    s.Route("/api/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-    s.Route("/api/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
-    s.Route("/api/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
+	// Rotas de API (organizadas por categoria) usando builder encadeável
+	// ------------------------------------------------------------------
+	// 1) Núcleo / Saúde / Configuração
+	s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
+	s.Route("/api/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
+	s.Route("/api/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+	s.Route("/api/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
+	s.Route("/api/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
 
-    // 2) Provedores (diretos)
-    s.Route("/api/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
+	// 2) Provedores (diretos)
+	s.Route("/api/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
 
-    // 3) Geração Unificada e Atalhos
-    s.Route("/api/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
+	// 3) Geração Unificada e Atalhos
+	s.Route("/api/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
 
-    // 4) Agentes / Squad
-    s.Route("/api/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-    s.Route("/api/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
-    s.Route("/api/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
-    s.Route("/api/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
+	// 4) Agentes / Squad
+	s.Route("/api/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+	s.Route("/api/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
+	s.Route("/api/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
 
 	// Página de teste para WASM
 	s.router.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {

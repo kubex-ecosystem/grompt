@@ -78,11 +78,11 @@ type IAPIConfig interface {
 }
 
 type APIConfig struct {
-	apiKey     string
-	baseURL    string
-	version    string
-	httpClient *http.Client
-	demoMode   bool
+	ApiKey     string
+	BaseURL    string
+	Version    string
+	HTTPClient *http.Client
+	DemoMode   bool
 }
 
 type IConfig interface {
@@ -129,18 +129,18 @@ func (c *Config) GetAPIConfig(provider string) IAPIConfig {
 		return nil
 	}
 	switch provider {
-	case "openai":
-		return NewOpenAIAPI(c.GetAPIKey("openai"))
-	case "deepseek":
-		return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
-	case "ollama":
-		return NewOllamaAPI(c.GetAPIEndpoint("ollama"))
-	case "claude":
-		return NewClaudeAPI(c.GetAPIKey("claude"))
-	case "gemini":
-		return NewGeminiAPI(c.GetAPIKey("gemini"))
-	case "chatgpt":
-		return NewChatGPTAPI(c.GetAPIKey("chatgpt"))
+	// case "openai":
+	// 	return NewOpenAIAPI(c.GetAPIKey("openai"))
+	// case "deepseek":
+	// 	return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
+	// case "ollama":
+	// 	return NewOllamaAPI(c.GetAPIEndpoint("ollama"))
+	// case "claude":
+	// 	return NewClaudeAPI(c.GetAPIKey("claude"))
+	// case "gemini":
+	// 	return NewGeminiAPI(c.GetAPIKey("gemini"))
+	// case "chatgpt":
+	// 	return NewChatGPTAPI(c.GetAPIKey("chatgpt"))
 	default:
 		return nil
 	}

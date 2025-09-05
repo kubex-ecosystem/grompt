@@ -1,4 +1,4 @@
-package providers
+package integrations
 
 import (
 	"bytes"
@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
 )
 
-type ChatGPTAPI struct{ *APIConfig }
+type ChatGPTAPI struct{ *pt.APIConfig }
 
 type ChatGPTRequest struct {
 	Prompt    string `json:"prompt"`
@@ -59,12 +61,12 @@ type ChatGPTErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewChatGPTAPI(apiKey string) IAPIConfig {
+func NewChatGPTAPI(apiKey string) pt.IAPIConfig {
 	return &ChatGPTAPI{
-		APIConfig: &APIConfig{
-			apiKey:  apiKey,
-			baseURL: "https://api.chatgpt.com/v1/chat/completions",
-			httpClient: &http.Client{
+		APIConfig: &pt.APIConfig{
+			ApiKey:  apiKey,
+			BaseURL: "https://api.chatgpt.com/v1/chat/completions",
+			HTTPClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
 		},
@@ -72,7 +74,7 @@ func NewChatGPTAPI(apiKey string) IAPIConfig {
 }
 
 func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
-	if o.apiKey == "" {
+	if o.ApiKey == "" {
 		return "", fmt.Errorf("API key não configurada")
 	}
 
@@ -99,15 +101,15 @@ func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (strin
 		return "", fmt.Errorf("erro ao serializar request: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", o.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", o.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.ApiKey)
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição: %v", err)
 	}
@@ -140,7 +142,7 @@ func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (strin
 }
 
 func (o *ChatGPTAPI) IsAvailable() bool {
-	if o.apiKey == "" {
+	if o.ApiKey == "" {
 		return false
 	}
 
@@ -161,13 +163,13 @@ func (o *ChatGPTAPI) IsAvailable() bool {
 		return false
 	}
 
-	req, err := http.NewRequest("POST", o.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", o.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return false
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.ApiKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -184,7 +186,7 @@ func (o *ChatGPTAPI) IsAvailable() bool {
 
 // Listar modelos disponíveis
 func (o *ChatGPTAPI) ListModels() ([]string, error) {
-	if o.apiKey == "" {
+	if o.ApiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
 
@@ -194,9 +196,9 @@ func (o *ChatGPTAPI) ListModels() ([]string, error) {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.ApiKey)
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +244,7 @@ func (o *ChatGPTAPI) GetCommonModels() []string {
 }
 
 // GetVersion returns the version of the API
-func (o *ChatGPTAPI) GetVersion() string { return o.version }
+func (o *ChatGPTAPI) GetVersion() string { return o.Version }
 
 // IsDemoMode indicates if the API is in demo mode
-func (o *ChatGPTAPI) IsDemoMode() bool { return o.demoMode }
+func (o *ChatGPTAPI) IsDemoMode() bool { return o.DemoMode }

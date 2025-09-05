@@ -6,14 +6,15 @@ import (
 	"os"
 	"path/filepath"
 
-	providersPkg "github.com/rafa-mori/grompt/internal/providers"
+	providersFct "github.com/rafa-mori/grompt/factory/providers"
+	providersPkg "github.com/rafa-mori/grompt/internal/core/provider"
 	"github.com/rafa-mori/grompt/internal/types"
 	"gopkg.in/yaml.v3"
 
 	l "github.com/rafa-mori/logz"
 )
 
-type Config = types.IConfig
+type Config = providersPkg.IConfig
 
 func NewConfig(
 	bindAddr,
@@ -25,8 +26,8 @@ func NewConfig(
 	geminiKey,
 	chatGPTKey string,
 	logger l.Logger,
-) types.IConfig {
-	return types.NewConfig(
+) providersPkg.IConfig {
+	return providersPkg.NewConfig(
 		bindAddr,
 		port,
 		openAIKey,
@@ -39,7 +40,7 @@ func NewConfig(
 	)
 }
 
-func NewConfigFromFile(filePath string) types.IConfig {
+func NewConfigFromFile(filePath string) providersPkg.IConfig {
 	var cfg types.Config
 	if _, statErr := os.Stat(filePath); statErr != nil {
 		return &types.Config{}
@@ -81,7 +82,7 @@ func readYAMLFile(filePath string, cfg *types.Config) error {
 	return decoder.Decode(cfg)
 }
 
-func NewProvider(name, apiKey, version string) providersPkg.Provider {
-	cfg := types.NewConfig("", "", "", "", "", "", "", "", nil)
-	return providersPkg.NewProvider(name, apiKey, version, cfg)
+func NewProvider(name, apiKey, version string) any /* providersPkg.Provider */ {
+	cfg := providersPkg.NewConfig("", "", "", "", "", "", "", "", nil)
+	return providersFct.NewProvider(name, apiKey, version, cfg)
 }

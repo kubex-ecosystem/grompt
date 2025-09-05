@@ -7,25 +7,25 @@ import (
 
 	"github.com/rafa-mori/grompt/factory/providers"
 	"github.com/rafa-mori/grompt/factory/templates"
-	concreteProviders "github.com/rafa-mori/grompt/internal/providers"
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
 	"github.com/rafa-mori/grompt/internal/types"
 )
 
 type IEngine interface {
 	// ProcessPrompt processes a prompt with variables and returns the result
-	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
+	ProcessPrompt(template string, vars map[string]interface{}) (*types.Result, error)
 
 	// GetProviders returns available providers
 	GetProviders() []providers.Provider
 
 	// GetHistory returns the prompt history
-	GetHistory() []Result
+	GetHistory() []types.Result
 
 	// SaveToHistory saves a prompt/response pair to history
 	SaveToHistory(prompt, response string) error
 
 	// BatchProcess processes multiple prompts concurrently
-	BatchProcess(prompts []string, vars map[string]interface{}) ([]Result, error)
+	BatchProcess(prompts []string, vars map[string]interface{}) ([]types.Result, error)
 }
 
 // Engine represents the core prompt engineering engine
@@ -33,11 +33,11 @@ type Engine struct {
 	providers []providers.Provider
 	templates templates.Manager
 	history   IHistoryManager
-	config    types.IConfig
+	config    pt.IConfig
 }
 
 // NewEngine creates a new IEngine instance with initialized providers
-func NewEngine(config types.IConfig) IEngine {
+func NewEngine(config pt.IConfig) IEngine {
 	engine := &Engine{
 		providers: make([]providers.Provider, 0),
 		templates: templates.NewManager("./templates"), // Default templates path
@@ -54,36 +54,36 @@ func NewEngine(config types.IConfig) IEngine {
 // initializeProviders initializes all available concrete providers
 func (e *Engine) initializeProviders() {
 	// Initialize OpenAI provider
-	if apiKey := e.config.GetAPIKey("openai"); apiKey != "" {
-		provider := concreteProviders.NewOpenAIProvider(apiKey)
-		e.providers = append(e.providers, provider)
-	}
+	// if apiKey := e.config.GetAPIKey("openai"); apiKey != "" {
+	// 	provider := pt.NewOpenAIProvider(apiKey)
+	// 	e.providers = append(e.providers, provider)
+	// }
 
-	// Initialize Claude provider
-	if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
-		provider := concreteProviders.NewClaudeProvider(apiKey)
-		e.providers = append(e.providers, provider)
-	}
+	// // Initialize Claude provider
+	// if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
+	// 	provider := pt.NewClaudeProvider(apiKey)
+	// 	e.providers = append(e.providers, provider)
+	// }
 
-	// Initialize DeepSeek provider
-	if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
-		provider := concreteProviders.NewDeepSeekProvider(apiKey)
-		e.providers = append(e.providers, provider)
-	}
+	// // Initialize DeepSeek provider
+	// if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
+	// 	provider := pt.NewDeepSeekProvider(apiKey)
+	// 	e.providers = append(e.providers, provider)
+	// }
 
-	// Initialize Ollama provider (local - no API key needed)
-	provider := concreteProviders.NewOllamaProvider()
-	e.providers = append(e.providers, provider)
+	// // Initialize Ollama provider (local - no API key needed)
+	// provider := pt.NewOllamaProvider()
+	// e.providers = append(e.providers, provider)
 
-	// Initialize Gemini provider
-	if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
-		provider := concreteProviders.NewGeminiProvider(apiKey)
-		e.providers = append(e.providers, provider)
-	}
+	// // Initialize Gemini provider
+	// if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
+	// 	provider := pt.NewGeminiProvider(apiKey)
+	// 	e.providers = append(e.providers, provider)
+	// }
 }
 
 // ProcessPrompt processes a prompt with variables and returns the result
-func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*Result, error) {
+func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*types.Result, error) {
 	if e == nil {
 		return nil, fmt.Errorf("engine is nil")
 	}
@@ -108,7 +108,7 @@ func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*R
 	}
 
 	// Create result
-	result := &Result{
+	result := &types.Result{
 		ID:        generateID(),
 		Prompt:    processedPrompt,
 		Response:  response,
@@ -132,7 +132,7 @@ func (e *Engine) GetProviders() []providers.Provider {
 }
 
 // GetHistory returns the prompt history
-func (e *Engine) GetHistory() []Result {
+func (e *Engine) GetHistory() []types.Result {
 	if e == nil || e.history == nil {
 		return nil
 	}
@@ -145,7 +145,7 @@ func (e *Engine) SaveToHistory(prompt, response string) error {
 		return fmt.Errorf("engine or history is nil")
 	}
 
-	result := Result{
+	result := types.Result{
 		ID:        generateID(),
 		Prompt:    prompt,
 		Response:  response,
@@ -158,12 +158,12 @@ func (e *Engine) SaveToHistory(prompt, response string) error {
 }
 
 // BatchProcess processes multiple prompts concurrently
-func (e *Engine) BatchProcess(prompts []string, vars map[string]interface{}) ([]Result, error) {
+func (e *Engine) BatchProcess(prompts []string, vars map[string]interface{}) ([]types.Result, error) {
 	if e == nil {
 		return nil, fmt.Errorf("engine is nil")
 	}
 
-	results := make([]Result, len(prompts))
+	results := make([]types.Result, len(prompts))
 	errors := make([]error, len(prompts))
 
 	// Process prompts concurrently

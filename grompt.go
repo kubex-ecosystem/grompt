@@ -4,7 +4,7 @@ package grompt
 
 import (
 	"github.com/rafa-mori/grompt/factory/providers"
-	"github.com/rafa-mori/grompt/internal/engine"
+	"github.com/rafa-mori/grompt/internal/core/provider"
 	m "github.com/rafa-mori/grompt/internal/module"
 	st "github.com/rafa-mori/grompt/internal/module/control"
 	"github.com/rafa-mori/grompt/internal/types"
@@ -62,12 +62,13 @@ func NewGrompt() Grompt {
 
 // NewPromptEngine creates a new prompt engineering engine for library use
 func NewPromptEngine(config Config) PromptEngine {
-	return engine.NewEngine(config)
+	// return engine.NewEngine(config)
+	return nil
 }
 
 // DefaultConfig returns a default configuration for the prompt engine
 func DefaultConfig(configFilePath string) Config {
-	return &types.Config{
+	return &provider.Config{
 		Port:           "8080",
 		ClaudeAPIKey:   "",
 		OpenAIAPIKey:   "",
@@ -82,15 +83,15 @@ func DefaultConfig(configFilePath string) Config {
 // Exposed types for external use - avoid interface{} in consumer code
 
 // Result exposes the engine.Result type
-type Result = engine.Result
+type Result = types.Result
 
 // Config exposes the types.Config interface
-type Config = types.IConfig
+type Config = provider.IConfig
 
 // Provider exposes the providers.Provider interface
 type Provider = providers.Provider
 
-type APIConfig = types.IAPIConfig
+type APIConfig = provider.IAPIConfig
 
 // --- Bitflags de Segurança ---
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	iit "github.com/rafa-mori/grompt/internal/core/provider"
 	gl "github.com/rafa-mori/grompt/internal/module/logger"
 	t "github.com/rafa-mori/grompt/internal/types"
 	"github.com/rafa-mori/grompt/utils"
@@ -24,8 +25,8 @@ func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
 }
 
 // setupConfig creates configuration with proper API key distribution
-func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig, error) {
-	var cfg t.IConfig
+func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (iit.IConfig, error) {
+	var cfg iit.IConfig
 	var err error
 
 	if configFile != "" {
@@ -35,7 +36,7 @@ func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig
 		}
 		gl.Log("info", "Configuration loaded from file.")
 	} else {
-		cfg = t.NewConfig(
+		cfg = iit.NewConfig(
 			utils.GetEnvOr("BIND_ADDR", ""),
 			utils.GetEnvOr("PORT", ""),
 			utils.GetEnvOr("OPENAI_API_KEY", getProviderAPIKey("openai", provider, apiKey)),
@@ -56,7 +57,7 @@ func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig
 }
 
 // setupProvider initializes and validates the AI provider
-func setupProvider(cfg t.IConfig, provider, apiKey string) (t.IAPIConfig, string, error) {
+func setupProvider(cfg iit.IConfig, provider, apiKey string) (iit.IAPIConfig, string, error) {
 	if provider == "" {
 		provider = getDefaultProvider(cfg)
 	}
@@ -324,7 +325,7 @@ Examples:
 				gl.GetLogger[l.Logger](nil)
 				gl.SetDebug(true)
 			}
-			var cfg t.IConfig
+			var cfg iit.IConfig
 			var err error
 
 			if configFile != "" {
@@ -334,7 +335,7 @@ Examples:
 				}
 				gl.Log("info", "Configuration loaded from file.")
 			} else {
-				cfg = t.NewConfig(
+				cfg = iit.NewConfig(
 					utils.GetEnvOr("BIND_ADDR", ""),
 					utils.GetEnvOr("PORT", ""),
 					utils.GetEnvOr("OPENAI_API_KEY", apiKey),
@@ -452,7 +453,7 @@ Examples:
 }
 
 // getDefaultProvider returns the first available provider
-func getDefaultProvider(cfg t.IConfig) string {
+func getDefaultProvider(cfg iit.IConfig) string {
 	providers := []string{"gemini", "claude", "openai", "deepseek", "ollama", "chatgpt"}
 
 	for _, provider := range providers {

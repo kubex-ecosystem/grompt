@@ -1,4 +1,4 @@
-package providers
+package integrations
 
 import (
 	"bytes"
@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
 )
 
-type OllamaAPI struct{ *APIConfig }
+type OllamaAPI struct{ *pt.APIConfig }
 
 type OllamaRequest struct {
 	Model  string `json:"model"`
@@ -24,9 +26,9 @@ type OllamaResponse struct {
 
 func NewOllamaAPI(baseURL string) *OllamaAPI {
 	return &OllamaAPI{
-		APIConfig: &APIConfig{
-			baseURL: baseURL,
-			httpClient: &http.Client{
+		APIConfig: &pt.APIConfig{
+			BaseURL: baseURL,
+			HTTPClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
 		},
@@ -34,7 +36,7 @@ func NewOllamaAPI(baseURL string) *OllamaAPI {
 }
 
 func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, error) {
-	endpoint := fmt.Sprintf("%s/api/generate", o.baseURL)
+	endpoint := fmt.Sprintf("%s/api/generate", o.BaseURL)
 
 	requestBody := OllamaRequest{
 		Model:  model,
@@ -54,7 +56,7 @@ func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, e
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição para Ollama: %v", err)
 	}
@@ -78,9 +80,9 @@ func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, e
 }
 
 func (o *OllamaAPI) IsAvailable() bool {
-	endpoint := fmt.Sprintf("%s/api/tags", o.baseURL)
+	endpoint := fmt.Sprintf("%s/api/tags", o.BaseURL)
 
-	resp, err := o.httpClient.Get(endpoint)
+	resp, err := o.HTTPClient.Get(endpoint)
 	if err != nil {
 		return false
 	}
@@ -107,6 +109,6 @@ func (o *OllamaAPI) ListModels() ([]string, error) {
 	}, nil
 }
 
-func (o *OllamaAPI) GetVersion() string { return o.version }
+func (o *OllamaAPI) GetVersion() string { return o.Version }
 
-func (o *OllamaAPI) IsDemoMode() bool { return o.demoMode }
+func (o *OllamaAPI) IsDemoMode() bool { return o.DemoMode }

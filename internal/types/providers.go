@@ -1,6 +1,10 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
+)
 
 // Capabilities describes what a provider can do
 type Capabilities struct {
@@ -22,8 +26,8 @@ type Pricing struct {
 type ProviderImpl struct {
 	VName    string
 	VVersion string
-	VAPI     IAPIConfig
-	VConfig  IConfig
+	VAPI     pt.IAPIConfig
+	VConfig  pt.IConfig
 }
 
 // Name returns the provider name
@@ -147,7 +151,7 @@ func getPricingForProvider(providerName string) *Pricing {
 }
 
 // NewProviders creates all available providers based on configuration
-func NewProviders(config IConfig) []*ProviderImpl {
+func NewProviders(config pt.IConfig) []*ProviderImpl {
 	var activeProviders []*ProviderImpl
 
 	// List of all supported providers
@@ -181,62 +185,81 @@ func NewProviders(config IConfig) []*ProviderImpl {
 	return activeProviders
 }
 
+func GetAPIConfig(provider string, config pt.IConfig) pt.IAPIConfig {
+	switch provider {
+	// case "openai":
+	// 	return NewOpenAIAPI(config.GetAPIKey("openai"))
+	// case "deepseek":
+	// 	return NewDeepSeekAPI(config.GetAPIKey("deepseek"))
+	// case "ollama":
+	// 	return NewOllamaAPI(config.GetAPIEndpoint("ollama"))
+	// case "claude":
+	// 	return NewClaudeAPI(config.GetAPIKey("claude"))
+	// case "gemini":
+	// 	return NewGeminiAPI(config.GetAPIKey("gemini"))
+	// case "chatgpt":
+	// 	return NewChatGPTAPI(config.GetAPIKey("chatgpt"))
+	default:
+		return nil
+	}
+}
+
 // Individual provider constructors for engine initialization
 
 // NewOpenAIProvider creates a new OpenAI provider
-func NewOpenAIProvider(apiKey string) *ProviderImpl {
-	api := NewOpenAIAPI(apiKey)
-	return &ProviderImpl{
-		VName: "openai",
-		VAPI:  api,
-	}
-}
+// func NewOpenAIProvider(apiKey string) *ProviderImpl {
+// 	api := NewOpenAIAPI(apiKey)
+// 	return &ProviderImpl{
+// 		VName: "openai",
+// 		VAPI:  api,
+// 	}
+// }
 
-// NewClaudeProvider creates a new Claude provider
-func NewClaudeProvider(apiKey string) *ProviderImpl {
-	api := NewClaudeAPI(apiKey)
-	return &ProviderImpl{
-		VName: "claude",
-		VAPI:  api,
-	}
-}
+// // NewClaudeProvider creates a new Claude provider
+// func NewClaudeProvider(apiKey string) *ProviderImpl {
+// 	api := NewClaudeAPI(apiKey)
+// 	return &ProviderImpl{
+// 		VName: "claude",
+// 		VAPI:  api,
+// 	}
+// }
 
-// NewGeminiProvider creates a new Gemini provider
-func NewGeminiProvider(apiKey string) *ProviderImpl {
-	api := NewGeminiAPI(apiKey)
-	return &ProviderImpl{
-		VName: "gemini",
-		VAPI:  api,
-	}
-}
+// // NewGeminiProvider creates a new Gemini provider
+// func NewGeminiProvider(apiKey string) *ProviderImpl {
+// 	api := NewGeminiAPI(apiKey)
+// 	return &ProviderImpl{
+// 		VName: "gemini",
+// 		VAPI:  api,
+// 	}
+// }
 
-// NewDeepSeekProvider creates a new DeepSeek provider
-func NewDeepSeekProvider(apiKey string) *ProviderImpl {
-	api := NewDeepSeekAPI(apiKey)
-	return &ProviderImpl{
-		VName: "deepseek",
-		VAPI:  api,
-	}
-}
+// // NewDeepSeekProvider creates a new DeepSeek provider
+// func NewDeepSeekProvider(apiKey string) *ProviderImpl {
+// 	api := NewDeepSeekAPI(apiKey)
+// 	return &ProviderImpl{
+// 		VName: "deepseek",
+// 		VAPI:  api,
+// 	}
+// }
 
-// NewOllamaProvider creates a new Ollama provider
-func NewOllamaProvider() *ProviderImpl {
-	api := NewOllamaAPI("http://localhost:11434")
-	return &ProviderImpl{
-		VName: "ollama",
-		VAPI:  api,
-	}
-}
+// // NewOllamaProvider creates a new Ollama provider
+// func NewOllamaProvider() *ProviderImpl {
+// 	api := NewOllamaAPI("http://localhost:11434")
+// 	return &ProviderImpl{
+// 		VName: "ollama",
+// 		VAPI:  api,
+// 	}
+// }
 
-func NewChatGPTProvider(apiKey string) *ProviderImpl {
-	api := NewChatGPTAPI(apiKey)
-	return &ProviderImpl{
-		VName: "chatgpt",
-		VAPI:  api,
-	}
-}
+// func NewChatGPTProvider(apiKey string) *ProviderImpl {
+// 	api := NewChatGPTAPI(apiKey)
+// 	return &ProviderImpl{
+// 		VName: "chatgpt",
+// 		VAPI:  api,
+// 	}
+// }
 
-func NewProvider(name, apiKey string, cfg IConfig) *ProviderImpl {
+func NewProvider(name, apiKey string, cfg pt.IConfig) *ProviderImpl {
 	return &ProviderImpl{
 		VName:   name,
 		VAPI:    cfg.GetAPIConfig(name),

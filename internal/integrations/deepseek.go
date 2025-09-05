@@ -1,4 +1,4 @@
-package providers
+package integrations
 
 import (
 	"bytes"
@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	pt "github.com/rafa-mori/grompt/internal/core/provider"
 )
 
-type DeepSeekAPI struct{ *APIConfig }
+type DeepSeekAPI struct{ *pt.APIConfig }
 
 type DeepSeekRequest struct {
 	Prompt    string `json:"prompt"`
@@ -63,10 +65,10 @@ type DeepSeekErrorResponse struct {
 
 func NewDeepSeekAPI(apiKey string) *DeepSeekAPI {
 	return &DeepSeekAPI{
-		APIConfig: &APIConfig{
-			apiKey:  apiKey,
-			baseURL: "https://api.deepseek.com/chat/completions",
-			httpClient: &http.Client{
+		APIConfig: &pt.APIConfig{
+			ApiKey:  apiKey,
+			BaseURL: "https://api.deepseek.com/chat/completions",
+			HTTPClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
 		},
@@ -74,7 +76,7 @@ func NewDeepSeekAPI(apiKey string) *DeepSeekAPI {
 }
 
 func (d *DeepSeekAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
-	if d.apiKey == "" {
+	if d.ApiKey == "" {
 		return "", fmt.Errorf("API key não configurada")
 	}
 
@@ -102,16 +104,16 @@ func (d *DeepSeekAPI) Complete(prompt string, maxTokens int, model string) (stri
 		return "", fmt.Errorf("erro ao serializar request: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", d.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", d.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+d.apiKey)
+	req.Header.Set("Authorization", "Bearer "+d.ApiKey)
 	req.Header.Set("User-Agent", "PromptCrafter/1.0")
 
-	resp, err := d.httpClient.Do(req)
+	resp, err := d.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição: %v", err)
 	}
@@ -144,7 +146,7 @@ func (d *DeepSeekAPI) Complete(prompt string, maxTokens int, model string) (stri
 }
 
 func (d *DeepSeekAPI) IsAvailable() bool {
-	if d.apiKey == "" {
+	if d.ApiKey == "" {
 		return false
 	}
 
@@ -165,13 +167,13 @@ func (d *DeepSeekAPI) IsAvailable() bool {
 		return false
 	}
 
-	req, err := http.NewRequest("POST", d.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", d.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return false
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+d.apiKey)
+	req.Header.Set("Authorization", "Bearer "+d.ApiKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -196,7 +198,7 @@ func (d *DeepSeekAPI) GetAvailableModels() []string {
 
 // HealthCheck Lightweight health check to verify API key and basic connectivity
 func (d *DeepSeekAPI) HealthCheck() error {
-	if d.apiKey == "" {
+	if d.ApiKey == "" {
 		return fmt.Errorf("API key não configurada")
 	}
 
@@ -206,7 +208,7 @@ func (d *DeepSeekAPI) HealthCheck() error {
 		return err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+d.apiKey)
+	req.Header.Set("Authorization", "Bearer "+d.ApiKey)
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
@@ -249,10 +251,10 @@ func (d *DeepSeekAPI) EstimateCost(promptTokens, completionTokens int, model str
 }
 
 // GetVersion returns the version of the API
-func (d *DeepSeekAPI) GetVersion() string { return d.version }
+func (d *DeepSeekAPI) GetVersion() string { return d.Version }
 
 // IsDemoMode indicates if the API is in demo mode
-func (d *DeepSeekAPI) IsDemoMode() bool { return d.demoMode }
+func (d *DeepSeekAPI) IsDemoMode() bool { return d.DemoMode }
 
 // ListModels retrieves the list of available models from the DeepSeek API
 func (d *DeepSeekAPI) ListModels() ([]string, error) {

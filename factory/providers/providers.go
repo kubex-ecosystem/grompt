@@ -2,6 +2,7 @@
 package providers
 
 import (
+	"github.com/rafa-mori/grompt/internal/core/provider"
 	"github.com/rafa-mori/grompt/internal/types"
 	"github.com/rafa-mori/logz"
 )
@@ -26,7 +27,7 @@ type Provider interface {
 
 type Capabilities = types.Capabilities
 
-func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
+func NewProvider(name, apiKey, version string, cfg provider.IConfig) Provider {
 	return &types.ProviderImpl{
 		VName:    name,
 		VVersion: version,
@@ -59,7 +60,7 @@ func Initialize(
 		return []Provider{}
 	}
 
-	var cfg = types.NewConfig(
+	var cfg = provider.NewConfig(
 		bindAddr,
 		"8080",
 		openAIKey,
