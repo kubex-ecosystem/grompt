@@ -1,0 +1,2197 @@
+# LookAtni Code - Gerado automaticamente
+# Data: 2025-09-06T14:54:20.267Z
+# Fonte: ./support
+# Total de arquivos: 12
+
+/// action_validation.sh ///
+#!/usr/bin/env bash
+
+set -euo pipefail
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o posix
+IFS=$'\n\t'
+
+_SOURCED=false
+
+ensure_marker() {
+  local MARKER_PATH="${1:-}"
+  if [[ -z "$MARKER_PATH" ]]; then
+    printf '%s\n' "❌ Marker path is not set. Cannot proceed."
+    return 1
+  fi
+  if [[ ! -f "$MARKER_PATH" ]]; then
+    touch "$MARKER_PATH" || {
+      printf '%s\n' "❌ Failed to create marker file: $MARKER_PATH"
+      return 1
+    }
+    chmod 644 "$MARKER_PATH"
+    printf '%d\n' "COUNT=0" > "$MARKER_PATH"
+  fi
+  return 0
+}
+
+get_git_tag(){
+  get_tag_local_git(){
+    git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"
+  }
+  get_tag_env_git(){
+    echo "${GITHUB_REF:-"$(get_tag_local_git)"}"
+  }
+  get_tag_remote_git(){
+    git ls-remote --tags origin | grep -o 'refs/tags/v[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V | tail -n1 || echo "v0.0.0"
+  }
+  local TAG="${1:-}"
+  if [[ -z "$TAG" ]]; then
+    TAG="$(get_tag_env_git)"
+  fi
+  if [[ "$TAG" == "v0.0.0" ]]; then
+    TAG="$(get_tag_local_git)"
+  fi
+  if [[ "$TAG" == "v0.0.0" ]]; then
+    TAG="$(get_tag_remote_git)"
+  fi
+  if [[ "$TAG" == "v0.0.0" ]]; then
+    printf '%s\n' "❌ No valid tag found. Please ensure you have tags in your repository."
+    exit 1
+  fi
+  printf '%s\n' "$TAG"
+}
+
+sanitize_version(){
+  local VERSION="${1:-"${REF:-"${GITHUB_REF:-"refs/tags/v0.0.0"}"}"}"
+
+  VERSION="${VERSION##*tags/}"
+  VERSION="${VERSION##*v}"
+  VERSION="${VERSION%%-*}" # Remove any pre-release suffix
+  VERSION="${VERSION%%+*}" # Remove any build metadata
+  VERSION="${VERSION//[^0-9.]/}" # Remove any non-numeric characters
+
+  printf '%s\n' "$VERSION"
+}
+
+get_version_hash(){
+  # Generate a hash for the version
+  printf '%s\n' "$(sanitize_version "$(get_git_tag "${1:-}")")" | sha256sum | awk '{print $1}'
+}
+
+parse_vars(){
+  # Marker directory by default
+  local MARKER_DIR="docs/vsctl"
+
+  # Check if the marker directory is set and exists
+  if [[ ! -d "${MARKER_DIR:-}" ]]; then
+    mkdir -p "${MARKER_DIR:-}" && chmod 755 "${MARKER_DIR:-}" || {
+      printf '%s\n' "❌ Failed to create marker directory: ${MARKER_DIR:-}"
+      return 1
+    }
+  fi
+
+  # Repo vars
+  local REPO=""
+  local ACTOR=""
+  local EVENT=""
+  local IS_FORK=""
+  local REF=""
+  local CONTRIBUTORS=""
+  local VERSION=""
+
+  # Marker vars
+  local MARKER_NAME=""
+  local MARKER_PATH=""
+  local CUR_TIMESTAMP=""
+
+  # Control variables
+  local WILL_PROCEED=false
+  local COUNT=0
+
+  # Extract version from the first argument or fallback to GITHUB_REF
+  VERSION="$(sanitize_version "${1:-"${VERSION:-"${GITHUB_REF:-"refs/tags/v0.0.0"}"}"}")"
+
+  # Create a associative array to hold the arguments
+  declare -A _ARGS_LIST=(
+    ["version"]="${VERSION}"
+    ["version_hash"]="$(get_version_hash "${_ARGS_LIST["version"]}")"
+    ["repo"]="${2:-"${REPO:-${GITHUB_REPOSITORY:-$(git config --get remote.origin.url | sed 's|.*://||; s|\.git$||')}}"}"
+    ["actor"]="${3:-"${ACTOR:-$(git config --get user.name)}"}"
+    ["event"]="${4:-"${EVENT:-${GITHUB_EVENT_NAME:-"unknown"}}"}"
+    ["is_fork"]="${5:-"${IS_FORK:-"$(git config --get remote.origin.url | grep -q 'fork' && echo "true" || echo "false")"}"}"
+    ["ref"]="${6:-"${REF:-${GITHUB_REF:-"refs/tags/v0.0.0"}}"}"
+  )
+  
+  # Get MARKER's directory and absolute path for current repo based on the version hash and version
+  MARKER_NAME=".kubex_publish_marker_${_ARGS_LIST["version"]}_${_ARGS_LIST["version_hash"]}"
+  MARKER_PATH="${MARKER_DIR}/${MARKER_NAME}"
+
+  # Internal function to validate context with shared scope
+  validate_context(){
+    # Check if actor is in contributors
+    # shellcheck disable=SC2076
+    if [[ ! " $CONTRIBUTORS " =~ " $ACTOR " ]]; then
+      printf '%s\n' "❌ Actor '$ACTOR' is not an authorized contributor."
+      return 1
+    fi
+    # Check event type and repository fork status
+    if [[ -z "$EVENT" ]]; then
+      printf '%s\n' "❌ EVENT is not set. Cannot proceed."
+      return 1
+    fi
+    # Check if the event is a push or workflow_dispatch
+    if [[ "$EVENT" != "push" && "$EVENT" != "workflow_dispatch" ]]; then
+      printf '%s\n' "❌ Only 'push' or manual dispatch allowed. Got '$EVENT'."
+      return 1
+    fi
+    # Check if the repository is a fork
+    if [[ "$IS_FORK" == "true" ]]; then
+      printf '%s\n' "❌ Workflow cannot run from a fork."
+      return 1
+    fi
+    # Check if the ref who triggered the workflow
+    if [[ -z "$REF" ]]; then
+      printf '%s\n' "❌ REF is not set. Cannot proceed."
+      return 1
+    fi
+    # Check if the ref is a tag and matches the semver format
+    if [[ ! "$REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      printf '%s\n' "❌ Tag does not match semver format: $REF"
+      return 1
+    fi
+    # Check if the version is set
+    if [[ -z "$VERSION" ]]; then
+      printf '%s\n' "❌ Version is not set. Cannot proceed."
+      return 1
+    fi
+    
+    return 0
+  }
+
+  validate_marker() {
+    # Extract repository contributors username list
+    CONTRIBUTORS="$(gh api repos/"${_ARGS_LIST["repo"]}"/contributors --jq '.[].login' 2>/dev/null || true)"
+    # Remove trailing space
+    CONTRIBUTORS="$(echo "${CONTRIBUTORS:-}" | sed 's/[[:space:]]*$//')"
+
+    # Initialize control variables
+    WILL_PROCEED=false
+    COUNT=0
+
+    if [ -n "${MARKER_PATH}" ]; then
+      # Check for existing marker file
+      if test -f "${MARKER_PATH}"; then
+        # Read the count from the marker file
+        COUNT=$(cat "${MARKER_PATH}" | grep '^COUNT=' | awk -F'=' '{print $2}')
+
+        # Increment the count
+        COUNT=$((COUNT + 1))
+        printf '%s\n' "COUNT=$COUNT" > "${MARKER_PATH}"
+
+        # Output the current count
+        printf '%s\n' "📊 Current publish marker count for ${VERSION}: $COUNT"
+        printf '%s\n' "🗓️ Last execution: $(date -d "@${CUR_TIMESTAMP}" +"%Y-%m-%d %H:%M:%S")"
+
+        # If count exceeds 2, abort the publication
+        # and inform the user
+        if [ $COUNT -ge 2 ]; then
+          WILL_PROCEED=false
+          printf '%s\n' "❌ Publish marker count for ${VERSION} has reached $COUNT executions. Aborting deployment."
+          printf '%s\n' "Please check the marker file: ${MARKER_PATH}"
+          printf '%s\n' "If you want to reset the count, please remove the marker file manually."
+        else
+          WILL_PROCEED=true
+        fi
+      else
+        WILL_PROCEED=true
+      fi
+    else 
+      WILL_PROCEED=true
+    fi
+
+    if test "$WILL_PROCEED" = true; then
+      # Log the deployment proceeding
+      printf '%s\n' "✅ Proceeding with deployment for version ${VERSION}."
+
+      # Ensure the marker file exists
+      # and create/set the initial count if it doesn't exist
+      ensure_marker "${MARKER_PATH}" || {
+        printf '%s\n' "❌ Failed to ensure marker file: ${MARKER_PATH}"
+        return 1
+      }
+
+      # After ensuring the marker file, this condition NEEDS to be checked again and pass
+      if test -f "${MARKER_PATH}"; then
+        # Read the count from the marker file
+        COUNT=$(grep '^COUNT=' "${MARKER_PATH}" | awk -F'=' '{print $2}')
+
+        # Read the timestamp from the marker file and check if it is older than 24 hours
+        TIMESTAMP=$(grep '^TIMESTAMP=' "${MARKER_PATH}" | awk -F'=' '{print $2}')
+        CURRENT_TIMESTAMP=$(date +%s)
+        MARKER_TIMESTAMP=$(date -d "$TIMESTAMP" +%s)
+        TIME_DIFF=$((CURRENT_TIMESTAMP - MARKER_TIMESTAMP))
+
+        if [ $TIME_DIFF -gt 86400 ]; then
+          # If the marker is older than 24 hours, reset the count
+          printf '%s\n' "🕒 Marker file is older than 24 hours. Removing marker file, allowing runners again over this tag."
+          rm -f "${MARKER_PATH}"
+          COUNT=0
+        else
+          # Increment the count
+          COUNT=$((COUNT + 1))
+        fi
+      else 
+        printf '%s\n' "❌ Error ensuring marker file: ${MARKER_PATH}"
+        return 1
+      fi
+
+      # Update the marker file with the new count and timestamp
+      CUR_TIMESTAMP=$(date +%s)
+      printf '%s\n' "COUNT=${COUNT}" > "${MARKER_PATH}"
+      printf '%s\n' "TIMESTAMP=$(date -d "@${CUR_TIMESTAMP}" +"%Y-%m-%d %H:%M:%S")" >> "${MARKER_PATH}"
+
+      # Add the marker file to git
+      if [ $COUNT -gt 0 ]; then
+          git add "${MARKER_PATH}" || true
+      else
+          git rm "${MARKER_PATH}" || true
+      fi
+
+      git commit -m "add publish marker for version ${VERSION}, count: ${COUNT}" || true
+      git push origin HEAD:main
+    else
+      printf '%s\n' "❌ Deployment will not proceed due to marker validation failure."
+      return 1
+    fi
+
+    return 0
+  }
+
+  # Validate the context variables in the shared scope
+  validate_context || {
+    printf '%s\n' "❌ Context validation failed. Cannot proceed."
+    return 1
+  }
+
+  validate_marker || {
+    printf '%s\n' "❌ Marker validation failed. Cannot proceed."
+    return 1
+  }
+}
+
+# 1: steps.extract_info.outputs.version
+# 2: steps.extract_info.outputs.will_proceed
+# 3: steps.extract_info.outputs.marker
+# 4: steps.extract_info.outputs.count
+main () {
+  # Store all arguments in an array
+  # This allows us to pass them to the function
+  # without losing the original arguments, and this sanitizes them
+  # to avoid issues with special characters or spaces
+  local args=()
+
+  # Check if the script is run with arguments in enlaced mode
+  # If no arguments are provided, print usage and return an error
+  if [[ $# -eq 0 ]]; then
+    printf '%s\n' "❌ No arguments provided."
+    printf '%s\n' "Usage: $0 <version> <will_proceed> <marker> <count>"
+    return 1
+  else 
+    args=("$@")
+  fi
+
+  # Shift all arguments to the left, leaving an empty array
+  shift $(( $# )) 
+
+  declare -a _cmd=(
+    validate_marker 
+    "${args[@]}"
+  )
+
+  # If the script is run directly, execute the command
+  # Otherwise, export the function for later use
+  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Sanitize input arguments
+    if [[ $# -eq 0 ]]; then
+      printf '%s\n' "Usage: $0 <version> <will_proceed> <marker> <count>"
+      return 1
+    fi
+
+    "${_cmd[@]}" || {
+      printf '%s\n' "❌ Error: Validation failed."
+      return 1
+    }
+  else
+    # If the script is sourced, we don't want to exit
+    _SOURCED=true
+
+    # If sourced, define the function for later use
+    export -f validate_marker
+  fi
+}
+
+main "${@:-}"
+
+# If the script is sourced, we don't want to exit
+# shellcheck disable=SC2319
+test $_SOURCED = false && exit $?
+
+# End of script
+
+/// apply_manifest.sh ///
+#!/usr/bin/env bash
+
+# set -o posix
+set -o nounset  # Treat unset variables as an error
+set -o errexit  # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Prevent errors in a pipeline from being masked
+set -o errtrace # If a command fails, the shell will exit immediately
+set -o functrace # If a function fails, the shell will exit immediately
+shopt -s inherit_errexit # Inherit the errexit option in functions
+IFS=$'\n\t'
+
+_ROOT_DIR="${_ROOT_DIR:-}"
+_APP_NAME="${_APP_NAME:-}"
+_DESCRIPTION="${_DESCRIPTION:-}"
+_OWNER="${_OWNER:-}"
+_BINARY_NAME="${_BINARY_NAME:-}"
+_PROJECT_NAME="${_PROJECT_NAME:-}"
+_AUTHOR="${_AUTHOR:-}"
+_VERSION="${_VERSION:-}"
+_LICENSE="${_LICENSE:-}"
+_REPOSITORY="${_REPOSITORY:-}"
+_PRIVATE_REPOSITORY="${_PRIVATE_REPOSITORY:-}"
+_VERSION_GO="${_VERSION_GO:-}"
+_PLATFORMS_SUPPORTED="${_PLATFORMS_SUPPORTED:-}"
+
+_MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
+
+__get_values_from_manifest() {
+  # # Define the root directory (assuming this script is in lib/ under the root)
+  _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+  # shellcheck disable=SC2005
+  _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR:-}")")"
+  _DESCRIPTION="$(jq -r '.description' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "No description provided.")"
+  _OWNER="$(jq -r '.organization' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori")"
+  _OWNER="${_OWNER,,}"  # Converts to lowercase
+  _BINARY_NAME="${_APP_NAME}"
+  _PROJECT_NAME="$(jq -r '.name' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$_APP_NAME")"
+  _AUTHOR="$(jq -r '.author' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "Rafa Mori")"
+  _VERSION=$(jq -r '.version' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "v0.0.0")
+  _LICENSE="$(jq -r '.license' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "MIT")"
+  _REPOSITORY="$(jq -r '.repository' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "rafa-mori/${_APP_NAME}")"
+  _PRIVATE_REPOSITORY="$(jq -r '.private' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "false")"
+  _VERSION_GO=$(grep '^go ' "$_ROOT_DIR/go.mod" | awk '{print $2}')
+  _PLATFORMS_SUPPORTED="$(jq -r '.platforms[]' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "linux, macOS, windows")"
+  _PLATFORMS_SUPPORTED="$(printf '%s ' "${_PLATFORMS_SUPPORTED[*]//
+/, }")" # Converts to comma-separated list
+  _PLATFORMS_SUPPORTED="${_PLATFORMS_SUPPORTED,,}"  # Converts to lowercase
+
+  return 0
+}
+
+__replace_project_name() {
+  local _old_bin_name="gobe"
+  local _new_bin_name="${_BINARY_NAME}"
+
+  if [[ ! -d "$_ROOT_DIR/bkp" ]]; then
+    mkdir -p "$_ROOT_DIR/bkp"
+  fi
+
+  # Backup the original files before making changes
+  tar --exclude='bkp' --exclude='*.tar.gz' --exclude='go.sum' -czf "$_ROOT_DIR/bkp/$(date +%Y%m%d_%H%M%S)_goforge_backup.tar.gz" -C "$_ROOT_DIR" . || {
+    log fatal "Could not create backup. Please check if the directory exists and is writable." true
+    return 1
+  }
+
+  local _files_to_remove=(
+    "$_ROOT_DIR/README.md"
+    "$_ROOT_DIR/CHANGELOG.md"
+    "$_ROOT_DIR/docs/README.md"
+    "$_ROOT_DIR/docs/assets/*"
+    "$_ROOT_DIR/go.sum"
+  )
+  for _file in "${_files_to_remove[@]}"; do
+    if [[ -f "$_file" ]]; then
+      rm -f "$_file" || {
+        log error "Could not remove $_file. Please check if the file exists and is writable." true
+        continue
+      }
+      log info "Removed $_file"
+    else
+      log warn "File $_file does not exist, skipping."
+    fi
+  done
+
+  local _files_to_rename=(
+    "$_ROOT_DIR/go${_old_bin_name}.go"
+    "$_ROOT_DIR/"**"/${_old_bin_name}.go"
+  )
+  for _file in "${_files_to_rename[@]}"; do
+    if [[ -f "$_file" ]]; then
+      local _new_file="${_file//${_old_bin_name}/$_BINARY_NAME}"
+      mv "$_file" "$_new_file" || {
+        log error "Could not rename $_file to $_new_file. Please check if the file exists and is writable." true
+        continue
+      }
+      log info "Renamed $_file to $_new_file"
+    else
+      log warn "File $_file does not exist, skipping."
+    fi
+  done
+
+  local _files_to_update=(
+    "$_ROOT_DIR/go.mod"
+    "$_ROOT_DIR/"**/*.go
+    "$_ROOT_DIR/"**/*.md
+    "$_ROOT_DIR/"*/*.go
+    "$_ROOT_DIR/"*.md
+  )
+  for _file in "${_files_to_update[@]}"; do
+    if [[ -f "$_file" ]]; then
+      sed -i "s/$_old_bin_name/$_new_bin_name/g" "$_file" || {
+        log error "Could not update $_file. Please check if the file exists and is writable." true
+        continue
+      }
+      log info "Updated $_file"
+    else
+      log warn "File $_file does not exist, skipping."
+    fi
+  done
+
+  cd "$_ROOT_DIR" || {
+    log error "Could not change directory to $_ROOT_DIR. Please check if the directory exists." true
+    return 1
+  }
+
+  go mod tidy || {
+    log error "Could not run 'go mod tidy'. Please check if Go is installed and configured correctly." true
+    return 1
+  }
+
+  return 0
+}
+
+change_project_name() {
+  __replace_project_name || return 1
+  return 0
+}
+
+apply_manifest() {
+  __get_values_from_manifest || return 1
+  return 0
+}
+
+export -f apply_manifest
+export -f change_project_name
+
+/// config.sh ///
+#!/usr/bin/env bash
+# shellcheck disable=SC2005
+
+# set -o posix
+set -o nounset  # Treat unset variables as an error
+set -o errexit  # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Prevent errors in a pipeline from being masked
+set -o errtrace # If a command fails, the shell will exit immediately
+set -o functrace # If a function fails, the shell will exit immediately
+shopt -s inherit_errexit # Inherit the errexit option in functions
+IFS=$'\n\t'
+
+# Define the relative path to the manifest file
+_MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
+
+# Define environment variables for the current platform and architecture
+# Converts to lowercase for compatibility
+_CURRENT_PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
+_CURRENT_ARCH="$(uname -m | tr '[:upper:]' '[:lower:]')"
+
+# Define variables to hold manifest values
+_ROOT_DIR="${_ROOT_DIR:-}"
+_APP_NAME="${_APP_NAME:-}"
+_DESCRIPTION="${_DESCRIPTION:-}"
+_OWNER="${_OWNER:-}"
+_BINARY_NAME="${_BINARY_NAME:-}"
+_PROJECT_NAME="${_PROJECT_NAME:-}"
+_AUTHOR="${_AUTHOR:-}"
+_VERSION="${_VERSION:-}"
+_LICENSE="${_LICENSE:-}"
+_REPOSITORY="${_REPOSITORY:-}"
+_PRIVATE_REPOSITORY="${_PRIVATE_REPOSITORY:-}"
+_VERSION_GO="${_VERSION_GO:-}"
+_PLATFORMS_SUPPORTED="${_PLATFORMS_SUPPORTED:-}"
+
+__source_script_if_needed() {
+  local _check_declare="${1:-}"
+  local _script_path="${2:-}"
+  # shellcheck disable=SC2065
+  if test -z "$(declare -f "${_check_declare:-}")" >/dev/null; then
+    # shellcheck source=/dev/null
+    source "${_script_path:-}" || {
+      echo "Error: Could not source ${_script_path:-}. Please ensure it exists." >&2
+      return 1
+    }
+  fi
+  return 0
+}
+
+# Quiet, force, debug, hide about, dry run
+_QUIET="${QUIET:-${_QUIET:-false}}"
+_FORCE="${FORCE:-${_FORCE:-false}}"
+_DEBUG="${DEBUG:-${_DEBUG:-false}}"
+_HIDE_ABOUT="${HIDE_ABOUT:-${_HIDE_ABOUT:-false}}"
+_DRY_RUN="${DRY_RUN:-${_DRY_RUN:-false}}"
+_NON_INTERACTIVE="${NON_INTERACTIVE:-${_NON_INTERACTIVE:-n}}"
+
+# Paths for the build
+_CMD_PATH="${_ROOT_DIR:-}/cmd"
+_BUILD_PATH="$(dirname "${_CMD_PATH:-}")"
+_BINARY="${_BUILD_PATH:-}/${_APP_NAME:-}"
+_LOCAL_BIN="${HOME:-"~"}/.local/bin"
+_GLOBAL_BIN="/usr/local/bin"
+
+_SCRIPT_DIR="$(cd "$(dirname "${0:-${BASH_SOURCE[0]}}")" && pwd)"
+__source_script_if_needed "apply_manifest" "${_SCRIPT_DIR:-}/apply_manifest.sh" || exit 1
+__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || exit 1
+
+
+if [[ -z "${_ROOT_DIR:-}" || -z "${_APP_NAME:-}" || -z "${_DESCRIPTION:-}" || -z "${_OWNER:-}" || -z "${_OWNER:-}" || -z "${_BINARY_NAME:-}" || -z "${_PROJECT_NAME:-}" || -z "${_AUTHOR:-}" || -z "${_VERSION:-}" || -z "${_LICENSE:-}" || -z "${_REPOSITORY:-}" || -z "${_PRIVATE_REPOSITORY:-}" || -z "${_VERSION_GO:-}" ]]; then
+  apply_manifest "$@" || return 1
+fi
+
+show_about() {
+  local _build_target=""
+  _build_target="${BUILD_TARGET:-${_BUILD_TARGET:-}}"
+  _build_target="${_build_target:-${_BUILD_TARGET:-}}"
+
+  local _about=""
+  local _about_origin=""
+  local _about_repo=""
+
+  local _platform="${_PLATFORM:-}"
+  local _arch="${_ARCH:-}"
+
+  _about_repo="  Repository: ${_REPOSITORY:-}
+  Version: ${_VERSION:-}
+  Description: ${_DESCRIPTION:-}
+  Supported OS: ${_PLATFORMS_SUPPORTED:-}
+  Notes:
+  - The binary is compiled with Go ${_VERSION_GO:-}
+  - To report issues, visit: ${_REPOSITORY:-}/issues"
+
+  _about_origin="  Author: ${_AUTHOR:-}
+  License: ${_LICENSE:-}
+  Organization: https://github.com/${_OWNER:-}"
+
+  if [[ "${_QUIET:-false}" == "true" ]]; then
+    # _about_origin=""
+    _about_repo=""
+  fi
+
+  _about="  Name: ${_PROJECT_NAME:-} (${_APP_NAME:-})
+${_about_origin:-}
+${_about_repo:-}"
+
+  if [[ "${_HIDE_ABOUT:-false}" == "true" ]]; then
+    _about=""
+  fi
+
+  _about=$(printf '%s\n\n' "${_about:-}")
+
+  log hr " "
+
+  printf '%s\n' "${_about:-}" >&2 || true
+
+  log hr " "
+}
+
+show_banner() {
+  if [[ "${_QUIET:-false}" != "true" && "${_HIDE_BANNER:-false}" != "true" ]]; then
+    printf '%s\n' "#####################################################
+
+               ██   ██ ██     ██ ██████   ████████ ██     ██
+              ░██  ██ ░██    ░██░█░░░░██ ░██░░░░░ ░░██   ██
+              ░██ ██  ░██    ░██░█   ░██ ░██       ░░██ ██
+              ░████   ░██    ░██░██████  ░███████   ░░███
+              ░██░██  ░██    ░██░█░░░░ ██░██░░░░     ██░██
+              ░██░░██ ░██    ░██░█    ░██░██        ██ ░░██
+              ░██ ░░██░░███████ ░███████ ░████████ ██   ░░██
+              ░░   ░░  ░░░░░░░  ░░░░░░░  ░░░░░░░░ ░░     ░░" >&2
+  fi
+}
+
+show_headers() {
+  show_banner || return 1
+  show_about || return 1
+}
+
+show_summary() {
+  local install_dir="$_BINARY"
+  local _cmd_executed=
+  check_path "$install_dir"
+}
+
+export -f show_about
+export -f show_banner
+export -f show_headers
+export -f show_summary
+
+/// docs/mkdocs.yml ///
+site_name: Grompt
+site_url: https://rafa-mori.github.io/grompt/
+site_description: "CLI poderosa para gerenciar e transformar prompts com práticas de engenharia — Go 1.25, React 19, Next 15."
+site_author: "Rafael Mori"
+
+repo_name: "rafa-mori/grompt"
+repo_url: https://github.com/rafa-mori/grompt
+
+docs_dir: ../../docs
+
+# Permite links "Editar esta página" no GitHub
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    primary: "indigo"
+    accent: "indigo"
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.instant
+    - navigation.expand
+    - navigation.sections
+    - navigation.tracking
+    - navigation.tabs.sticky
+    - content.code.copy
+    - content.tabs.link
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      linenums: true
+  - toc:
+      permalink: true
+      title: Nesta página
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - smarty
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: rafa-mori
+      repo: grompt
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+nav:
+  - Início: index.md
+  - Primeiros Passos:
+      - Instalação: getting-started/installation.md
+      - Início Rápido: getting-started/quickstart.md
+  - Guia do Usuário:
+      - Comandos CLI: user-guide/cli-commands.md
+      - Configuração: user-guide/configuration.md
+      - Exemplos de Uso: user-guide/usage-examples.md
+      - FAQ: user-guide/faq.md
+      - API Reference: user-guide/api-reference.md
+      - Tópicos Avançados:
+          - Wrapper WRPR: pages/wrpr-wrapper.md
+  - Desenvolvimento:
+      - Contribuindo: development/contributing.md
+      - Testes: development/testing.md
+      - Comandos Makefile: development/makefile.md
+      - Publicando Docs: development/docs-publishing.md
+      - Solução de Problemas: development/troubleshooting.md
+      - Arquitetura: development/architecture.md
+  - Comunidade:
+      - Código de Conduta: community/code-of-conduct.md
+      - Suporte: community/support.md
+      - Autores: community/authors.md
+  - Informações do Projeto:
+      - Licença: project-info/license.md
+      - Aviso Legal: project-info/notice.md
+      - Política de Segurança: project-info/security.md
+      - Changelog: project-info/changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rafa-mori/grompt
+      name: Grompt on GitHub
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/rafa-mori/
+      name: Rafael Mori on LinkedIn
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/faelOmori
+      name: Rafael Mori on Twitter
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: G-7HLY17F3DK
+
+plugins:
+  - search:
+      lang: pt
+  - git-revision-date-localized:
+      type: datetime
+      timezone: America/Sao_Paulo
+      locale: pt_BR
+      fallback_to_build_date: true
+  # - linkcheck:
+  #     fail_on_dead_links: true
+  #     timeout: 10
+  #     retry_count: 2
+
+/// docs/requirements.txt ///
+mkdocs>=1.5.0
+mkdocs-material>=9.4.0
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+pymdown-extensions>=10.3.0
+
+/// go_version.sh ///
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ====== Go Version Management ======
+# Ensures exact Go version match with go.mod
+# Integrates with GoSetup for installation
+
+get_required_go_version() {
+  local go_mod_path="${1:-go.mod}"
+
+  if [[ ! -f "${go_mod_path}" ]]; then
+    echo "1.21" # fallback
+    return
+  fi
+
+  # Extract go version from go.mod
+  awk '/^go / {print $2; exit}' "${go_mod_path}"
+}
+
+get_current_go_version() {
+  if ! command -v go >/dev/null 2>&1; then
+    echo "not-installed"
+    return
+  fi
+
+  go version | awk '{print $3}' | sed 's/go//'
+}
+
+check_go_version_compatibility() {
+  local required_version current_version
+
+  required_version="${1:-$(get_required_go_version "go.mod")}"
+  current_version="${2:-$(get_current_go_version)}"
+
+  if [[ "${current_version}" == "not-installed" ]]; then
+    log error "Go is not installed"
+    return 1
+  fi
+
+  if [[ "${current_version}" != "${required_version}" ]]; then
+    log warn "Go version mismatch:"
+    log warn "  Required: ${required_version} (from go.mod)"
+    log warn "  Current:  ${current_version}"
+    log warn "  Use GoSetup to install: gosetup --version ${required_version}"
+    return 1
+  fi
+
+  log info "Go version OK: ${current_version}"
+  return 0
+}
+
+auto_install_go_with_gosetup() {
+  local required_version go_setup_url
+
+  required_version="${1:-$(get_required_go_version "go.mod")}"
+  go_setup_url='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
+
+  log info "Installing Go ${required_version} using GoSetup..."
+
+  local go_installation_output
+  if [[ -t 0 ]]; then
+    # Interactive mode
+    go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "${required_version}" 2>&1)"
+  else
+    # Non-interactive mode
+    go_installation_output="$(export NON_INTERACTIVE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "${required_version}" 2>&1)"
+  fi
+
+  # shellcheck disable=SC2181
+  if [[ $? -eq 0 ]]; then
+    log success "Go ${required_version} installed successfully via GoSetup"
+    log info "GoSetup output: ${go_installation_output}"
+    return 0
+  else
+    log error "Failed to install Go ${required_version} via GoSetup"
+    log error "Output: ${go_installation_output}"
+    return 1
+  fi
+}
+
+# Export functions
+export -f get_required_go_version
+export -f get_current_go_version
+export -f check_go_version_compatibility
+export -f auto_install_go_with_gosetup
+
+/// install_funcs.sh ///
+#!/usr/bin/env bash
+# lib/install_funcs.sh – Functions for installing binaries and managing paths
+
+install_upx() {
+    if ! command -v upx &> /dev/null; then
+        if ! sudo -v &> /dev/null; then
+            log error "You do not have permission to install UPX."
+            log warn "If you want binary packing, please install UPX manually."
+            log warn "See: https://upx.github.io/"
+            return 1
+        fi
+        if [[ "$(uname)" == "Darwin" ]]; then
+            brew install upx >/dev/null
+        elif command -v apt-get &> /dev/null; then
+            sudo apt-get install -y upx >/dev/null
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y upx >/dev/null
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y upx >/dev/null
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm upx >/dev/null
+        elif command -v zypper &> /dev/null; then
+            sudo zypper install -y upx >/dev/null
+        elif command -v apk &> /dev/null; then
+            sudo apk add upx >/dev/null
+        elif command -v port &> /dev/null; then
+            sudo port install upx >/dev/null
+        elif command -v snap &> /dev/null; then
+            sudo snap install upx >/dev/null
+        elif command -v flatpak &> /dev/null; then
+            sudo flatpak install flathub org.uptane.upx -y >/dev/null
+        else
+            log warn "If you want binary packing, please install UPX manually."
+            log warn "See: https://upx.github.io/"
+            return 1
+        fi
+    fi
+
+    return 0
+}
+detect_shell_rc() {
+    local shell_rc_file
+    local user_shell
+    user_shell=$(basename "$SHELL")
+
+    case "$user_shell" in
+        bash) shell_rc_file="${HOME:-~}/.bashrc" ;;
+        zsh) shell_rc_file="${HOME:-~}/.zshrc" ;;
+        sh) shell_rc_file="${HOME:-~}/.profile" ;;
+        fish) shell_rc_file="${HOME:-~}/.config/fish/config.fish" ;;
+        *)
+            log warn "Unsupported shell: $user_shell"
+            log warn "Please add the path manually to your shell configuration file."
+            log warn "Supported shells: bash, zsh, sh, fish"
+            return 1
+            ;;
+    esac
+
+    if [ ! -f "$shell_rc_file" ]; then
+        log error "Configuration file not found: ${shell_rc_file}"
+        return 1
+    fi
+
+    echo "$shell_rc_file"
+
+    return 0
+}
+add_to_path() {
+    local target_path="${1:-}"
+
+    local shell_rc_file=""
+
+    local path_expression=""
+
+    path_expression="export PATH=\"${target_path}:\$PATH\""
+
+    shell_rc_file="$(detect_shell_rc)"
+
+    if [[ -z "$shell_rc_file" ]]; then
+        log error "Could not identify the shell configuration file."
+        return 1
+    fi
+    if grep -q "${path_expression}" "$shell_rc_file" 2>/dev/null; then
+        log success "$target_path is already in PATH for $shell_rc_file."
+        return 0
+    fi
+
+    if [[ -z "${target_path}" ]]; then
+        log error "Target path not provided."
+        return 1
+    fi
+
+    if [[ ! -d "${target_path}" ]]; then
+        log error "Target path is not a valid directory: $target_path"
+        return 1
+    fi
+
+    if [[ ! -f "${shell_rc_file}" ]]; then
+        log error "Configuration file not found: ${shell_rc_file}"
+        return 1
+    fi
+
+    # echo "export PATH=${target_path}:\$PATH" >> "$shell_rc_file"
+    printf '%s\n' "${path_expression}" | tee -a "$shell_rc_file" >/dev/null || {
+        log error "Failed to add $target_path to PATH in $shell_rc_file."
+        return 1
+    }
+
+    log success "Added $target_path to PATH in $shell_rc_file."
+
+    "$SHELL" -c "source ${shell_rc_file}" || {
+        log warn "Failed to reload shell. Please run 'source ${shell_rc_file}' manually."
+    }
+
+    return 0
+}
+install_binary() {
+    local SUFFIX="${_PLATFORM_WITH_ARCH}"
+    local BINARY_TO_INSTALL="${_BINARY/\/${_APP_NAME}/\/${_APP_NAME}\/dist}${SUFFIX:+_${SUFFIX}}"
+    log info "Installing binary: '${BINARY_TO_INSTALL}' as '$_APP_NAME'"
+
+    if [[ "$(id -u)" -ne 0 ]]; then
+        log info "Non-root user detected. Installing to ${_LOCAL_BIN}..."
+        mkdir -p "$_LOCAL_BIN"
+        cp "$BINARY_TO_INSTALL" "$_LOCAL_BIN/$_APP_NAME" || exit 1
+        add_to_path "$_LOCAL_BIN"
+    else
+        log info "Root user detected. Installing to ${_GLOBAL_BIN}..."
+        cp "$BINARY_TO_INSTALL" "$_GLOBAL_BIN/$_APP_NAME" || exit 1
+        add_to_path "$_GLOBAL_BIN"
+    fi
+
+    if [[ -n "$shell_rc_file" ]]; then
+      # shellcheck source=/dev/null
+      . "${shell_rc_file:-$(detect_shell_rc)}" || {
+          log warn "Failed to reload shell configuration. Please run 'source ${shell_rc_file}' manually."
+      }
+    fi
+}
+uninstall_binary() {
+    log info "Uninstalling binary: '$_APP_NAME'"
+
+    if [ "$(id -u)" -ne 0 ]; then
+        log info "Non-root user detected. Uninstalling from ${_LOCAL_BIN}..."
+        rm -f "$_LOCAL_BIN/$_APP_NAME"
+    else
+        log info "Root user detected. Uninstalling from ${_GLOBAL_BIN}..."
+        rm -f "$_GLOBAL_BIN/$_APP_NAME"
+    fi
+
+    log success "Binary '$_APP_NAME' uninstalled successfully."
+
+    local shell_rc_file=""
+    shell_rc_file="$(detect_shell_rc)"
+
+    if [[ -n "$shell_rc_file" ]]; then
+      # shellcheck source=/dev/null
+      . "${shell_rc_file:-$(detect_shell_rc)}" || {
+          log warn "Failed to reload shell configuration. Please run 'source ${shell_rc_file}' manually."
+      }
+    fi
+
+    return 0
+}
+download_binary() {
+    if [[ "${_PRIVATE_REPOSITORY:-}" == "true" ]]; then
+        log error "It is not possible to download from a private repository." true
+        log error "Please clone the repository and build the binary locally." true
+        return 1
+    fi
+    if ! what_platform; then
+        log error "Failed to detect platform."
+        return 1
+    fi
+    if [[ -z "${_PLATFORM}" ]]; then
+        log error "Unsupported platform: ${_PLATFORM}"
+        return 1
+    fi
+    local version
+    if [[ -z "${_VERSION}" ]]; then
+        version="${_REPOSITORY}/releases/latest"  # Use latest release if version is not specified
+    else
+        version="${_REPOSITORY}/releases/tag/${_VERSION}"
+    fi
+    if [ -z "$version" ]; then
+        log error "Failed to determine latest version."
+        return 1
+    fi
+
+    local release_url
+    release_url=$(get_release_url)
+    log info "Downloading binary ${_APP_NAME} for OS=${_PLATFORM}, ARCH=${_ARCH}, Version=${version}..."
+    log info "Release URL: ${release_url}"
+
+    local archive_path="${_TEMP_DIR}/${_APP_NAME}.tar.gz"
+    if ! curl -L -o "${archive_path}" "${release_url}"; then
+        log error "Failed to download binary from: ${release_url}"
+        return 1
+    fi
+    log success "Binary downloaded successfully."
+
+    log info "Extracting binary to: $(dirname "${_BINARY}")"
+    if ! tar -xzf "${archive_path}" -C "$(dirname "${_BINARY}")"; then
+        log error "Failed to extract binary from: ${archive_path}"
+        rm -rf "${_TEMP_DIR}"
+        return 1
+    fi
+
+    rm -rf "${_TEMP_DIR}"
+    log success "Binary extracted successfully."
+
+    if [ ! -f "$_BINARY" ]; then
+        log error "Binary not found after extraction: ${_BINARY}"
+        return 1
+    fi
+    log success "Download and extraction of ${_APP_NAME} completed successfully!"
+    return 0
+}
+install_from_release() {
+    download_binary || return 1
+    install_binary || return 1
+}
+check_path() {
+    log info "Checking if $1 is in PATH..."
+    if ! echo "$PATH" | grep -q "$1"; then
+        log warn "$1 is not in PATH."
+        log warn "Add: export PATH=$1:\$PATH"
+    else
+        log success "$1 is already in PATH."
+    fi
+}
+
+export -f install_upx
+export -f detect_shell_rc
+export -f add_to_path
+export -f install_binary
+export -f download_binary
+export -f install_from_release
+export -f check_path
+
+/// instructions/go.md ///
+# Golang Craftsmanship Standards
+
+Use Go Modules for dependency management. Keep `go.mod` and `go.sum` clean and minimal. Avoid indirect dependencies when possible.
+
+Organize projects using idiomatic structure: `cmd/`, `cmd/cli/`, `internal/`, `internal/types`, `internal/interfaces`, `api/`, `support/`, `support/instructions`, `tests/`.  
+
+Place the main CLI entrypoint in `cmd/main.go` and the library entrypoint in the root withe package at the same name of project.
+
+Every package must contain a comment describing its purpose before the package declaration in one line. Use `// Package <name> ...` format.
+
+Write **table-driven tests** with the standard `testing` package. For complex assertions, use `testify`. Coverage should be high on business logic, especially for error paths.
+
+Mock dependencies via interfaces — never via `globals` or side effects. Benchmark performance-sensitive functions. Keep tests fast and deterministic.
+
+Naming: `CamelCase` for exported, `camelCase` for internal. Avoid stutter in package names (e.g., `user.User` is wrong).
+
+Functions must be small and cohesive. Return early. Nesting is a code smell. Handle errors explicitly. Don’t ignore them — even temporarily.
+
+Favor **composition over inheritance**. Accept interfaces, return concrete structs. Document behavior at interface boundaries.
+
+Always use `context.Context` for cancellation, timeouts, and tracing. Pass it explicitly — do not store it in structs.
+
+Exported types, functions, and packages MUST include **godoc-compatible comments**. Start with the function/type name. Include usage examples when applicable.
+
+README must be clear, technical and up to date. Include build instructions, feature summary, and example usage. If possible, add architecture diagrams and CLI reference.
+
+Be consistent. Be happy. Be fast. Be safe.
+
+/// main.sh ///
+#!/usr/bin/env bash
+# shellcheck disable=SC2015,SC1091
+
+# Script Metadata
+__secure_logic_version="1.0.0"
+__secure_logic_date="$( date +%Y-%m-%d )"
+__secure_logic_author="Rafael Mori"
+__secure_logic_use_type="exec"
+__secure_logic_init_timestamp="$(date +%s)"
+__secure_logic_elapsed_time=0
+
+# Check if verbose mode is enabled
+if [[ "${MYNAME_VERBOSE:-false}" == "true" ]]; then
+  set -x  # Enable debugging
+fi
+
+IFS=$'\n\t'
+
+declare -a _main_args=( "$@" )
+
+__secure_logic_sourced_name() {
+  local _self="${BASH_SOURCE-}"
+  _self="${_self//${_kbx_root:-$()}/}"
+  _self="${_self//\.sh/}"
+  _self="${_self//\-/_}"
+  _self="${_self//\//_}"
+  echo "_was_sourced_${_self//__/_}"
+  return 0
+}
+
+__get_output_tty() {
+  if [[ -t 1 ]]; then
+    echo '/dev/tty'
+  else
+    echo '&2'
+  fi
+}
+
+__first(){
+  if [ "$EUID" -eq 0 ] || [ "$UID" -eq 0 ]; then
+    echo "Please do not run as root." >__get_output_tty
+    exit 1
+  elif [ -n "${SUDO_USER:-}" ]; then
+    echo "Please do not run as root, but with sudo privileges." > __get_output_tty
+    exit 1
+  else
+    # shellcheck disable=SC2155
+    local _ws_name="$(__secure_logic_sourced_name)"
+
+    if test "${BASH_SOURCE-}" != "${0}"; then
+      if test ${__secure_logic_use_type:-} != "lib"; then
+        echo "This script is not intended to be sourced." > __get_output_tty
+        echo "Please run it directly." > __get_output_tty
+        exit 1
+      fi
+      # If the script is sourced, we set the variable to true
+      # and export it to the environment without changing
+      # the shell options.
+      export "${_ws_name:-}"="true"
+    else
+      if test ${__secure_logic_use_type:-} != "exec"; then
+        echo "This script is not intended to be executed directly." > __get_output_tty
+        echo "Please source it instead." > __get_output_tty
+        exit 1
+      fi
+      # If the script is executed directly, we set the variable to false
+      # and export it to the environment. We also set the shell options
+      # to ensure a safe execution.
+      export "${_ws_name:-}"="false"
+      set -o errexit # Exit immediately if a command exits with a non-zero status
+      set -o nounset # Treat unset variables as an error when substituting
+      set -o pipefail # Return the exit status of the last command in the pipeline that failed
+      set -o errtrace # If a command fails, the shell will exit immediately
+      set -o functrace # If a function fails, the shell will exit immediately
+      shopt -s inherit_errexit # Inherit the errexit option in functions
+
+      if [[ "${_DEBUG:-}" == "true" ]]; then
+        set -x
+      fi
+    fi
+  fi
+}
+
+_QUIET=${_QUIET:-${QUIET:-false}}
+_DEBUG=${_DEBUG:-${DEBUG:-false}}
+_HIDE_ABOUT=${_HIDE_ABOUT:-${HIDE_ABOUT:-false}}
+_SCRIPT_DIR="$(dirname "${0}")"
+
+__first "${_main_args[@]}" >&2 || {
+  echo "Error: This script must be run directly, not sourced." >&2
+  exit 1
+}
+
+
+__source_script_if_needed() {
+  local _check_declare="${1:-}"
+  local _script_path="${2:-}"
+  # shellcheck disable=SC2065
+  if test -z "$(declare -f "${_check_declare:-}")" >/dev/null; then
+    # shellcheck source=/dev/null
+    source "${_script_path:-}" || {
+      echo "Error: Could not source ${_script_path:-}. Please ensure it exists." >&2
+      return 1
+    }
+  fi
+  return 0
+}
+
+# Load library files
+_SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+__source_script_if_needed "show_summary" "${_SCRIPT_DIR:-}/config.sh" || exit 1
+__source_script_if_needed "apply_manifest" "${_SCRIPT_DIR:-}/apply_manifest.sh" || exit 1
+__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || exit 1
+__source_script_if_needed "what_platform" "${_SCRIPT_DIR:-}/platform.sh" || exit 1
+__source_script_if_needed "check_dependencies" "${_SCRIPT_DIR:-}/validate.sh" || exit 1
+__source_script_if_needed "detect_shell_rc" "${_SCRIPT_DIR:-}/install_funcs.sh" || exit 1
+__source_script_if_needed "build_binary" "${_SCRIPT_DIR:-}/build.sh" || exit 1
+
+# Initialize traps
+set_trap "${_main_args[@]}"
+
+clear_screen
+
+__run_custom_scripts() {
+  local _STAGE="${1:-post}"
+  if test -d "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"; then
+    if ls -1A "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"*.sh >/dev/null 2>&1; then
+      local _CUSTOM_SCRIPTS=()
+      local _print_stage_header=false
+
+      # shellcheck disable=SC2011
+      _CUSTOM_SCRIPTS=( "$(ls -1A "${_SCRIPT_DIR:-}/${_STAGE:-}.d/"*.sh | xargs -I{} basename {} || true)" )
+      local _CUSTOM_SCRIPTS_LEN="${#_CUSTOM_SCRIPTS[@]}"
+
+      if [[ $_CUSTOM_SCRIPTS_LEN -gt 0 ]]; then
+        log info "${_CUSTOM_SCRIPTS_LEN} ${_STAGE} custom scripts found..." true
+
+        if [[ $_CUSTOM_SCRIPTS_LEN -gt 1 ]]; then
+          _print_stage_header=true
+        fi
+
+        test ${_print_stage_header:-false} = true && log hr "[BEGIN CUSTOM STAGE: ${_STAGE}] " || true
+
+        for _CUSTOM_SCRIPT in "${_CUSTOM_SCRIPTS[@]}"; do
+          if [[ -f "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
+            log hr "[STAGE: ${_STAGE} - START SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+            log notice "Executing script: ${_CUSTOM_SCRIPT}"
+            # Ensure the script is executable
+            if [[ ! -x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" ]]; then
+              log info "Making script executable: ${_CUSTOM_SCRIPT:-}"
+              chmod +x "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
+                log error "Failed to make script executable: ${_CUSTOM_SCRIPT:-}" true
+                log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+                test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+                return 1
+              }
+              log notice "Made script executable: ${_CUSTOM_SCRIPT:-}"
+            fi
+
+            # Execute the script without passing build arguments
+            "${_SCRIPT_DIR:-}/${_STAGE:-}.d/${_CUSTOM_SCRIPT:-}" || {
+              log error "Script execution failed: ${_CUSTOM_SCRIPT:-}" true
+              log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+              test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+              return 1
+            }
+            log success "Script executed successfully: ${_CUSTOM_SCRIPT:-}"
+          else
+            log warn "Script not found: ${_CUSTOM_SCRIPT:-}" true
+            log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+            test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+            return 1
+          fi
+
+          log hr "[STAGE: ${_STAGE} - END SCRIPT: $(basename "${_CUSTOM_SCRIPT:-}")] " || true
+        done
+
+        test ${_print_stage_header:-false} = true && log hr "[END CUSTOM STAGE: ${_STAGE}] " || true
+
+        return 0
+      fi
+    fi
+  fi
+
+  return 0
+}
+
+__main() {
+  if ! what_platform; then
+    log error "Platform could not be determined." true
+    return 1
+  fi
+
+  local _arrArgs=( "${_main_args[@]}" )
+  # local _arrArgs=( "${_args[@]::$#}" )
+
+  local _command="${_arrArgs[0]:-help}"
+  local _platform_arg="${_arrArgs[1]:-}"
+  local _arch_arg="${_arrArgs[2]:-}"
+
+  # If no platform specified, use cross-compilation mode
+  if [[ -z "${_platform_arg}" ]]; then
+    _platform_arg="__CROSS_COMPILE__"  # Special flag for cross-compilation
+  fi
+
+  # Set defaults only for specific platform requests
+  if [[ "${_platform_arg}" != "__CROSS_COMPILE__" ]]; then
+    _arch_arg="${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  fi
+
+  local _force="${_FORCE:-${FORCE:-n}}"
+  local _will_upx_pack_binary="${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}"
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_CMD_PATH:-${CMD_PATH:-${_root_dir}/cmd}}"
+  local _binary_name="${_BINARY_NAME:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
+  local _app_name="${_APP_NAME:-${APP_NAME:-$(basename "${_root_dir}")}}"
+  local _version="${_VERSION:-${VERSION:-$(git describe --tags)}}"
+
+  local _platform="${_PLATFORM:-${_CURRENT_PLATFORM:-}}"
+  local _arch="${_ARCH:-${_CURRENT_ARCH:-}}"
+  local _build_target="${_BUILD_TARGET:-${_platform}-${_arch}}"
+
+  if [[ "${_platform_arg}" == "__CROSS_COMPILE__" ]]; then
+    _platform_arg=""
+  fi
+
+  case "${_command:-}" in
+    # Help
+    # Main command dispatcher
+    help|HELP|-h|-H)
+      log info "Help:"
+      echo "Usage: make {build|build-dev|install|build-docs|clean|test|help}"
+      echo "Commands:"
+      echo "  build    - Compiles the binary for the specified platform and architecture."
+      echo "  install  - Installs the binary, either by downloading a pre-compiled version or building it locally."
+      echo "  build-dev - Builds the binary in development mode (without compression)."
+      echo "  build-docs - Builds the documentation for the project."
+      echo "  test     - Runs the tests for the project."
+      echo "  clean    - Cleans up build artifacts."
+      echo "  help     - Displays this help message."
+
+      return 0
+      ;;
+    build-dev|BUILD-DEV|-bd|-BD)
+      log info "Preparing to build the binary..."
+      if ! validate_versions; then
+        log error "Required dependencies are missing. Please install them and try again." true
+        return 1
+      fi
+      log info "Running build command in development mode..." true
+      build_binary "${_platform_arg:-}" "${_arch_arg:-}" "${_force:-}" "false"
+      return 0
+      ;;
+    build|BUILD|-b|-B)
+      # validate_versions
+      log info "Preparing to build the binary..."
+      if ! validate_versions; then
+        log error "Required dependencies are missing. Please install them and try again." true
+        return 1
+      fi
+      log info "Running build command..."
+      build_binary "${_platform_arg:-__CROSS_COMPILE__}" "${_arch_arg:-}" "${_force:-}" "${_will_upx_pack_binary:-true}"
+      return 0
+      ;;
+    install|INSTALL|-i|-I)
+      log info "Running install command..."
+      log info "How do you want to install the binary? [d/b/c] (10 seconds to respond, default: cancel)" true
+      log question "(d)ownload pre-compiled binary, (b)uild locally, (c)ancel" true
+      local choice
+      read -t 10 -r -n 1 -p "" choice || choice='c'
+      echo ""  # Move to the next line after reading input
+      choice="${choice,,}"  # Convert to lowercase
+      if [[ $choice =~ [dD] ]]; then
+          log info "Downloading pre-compiled binary..."
+          install_from_release || {
+            log error "Failed to download pre-compiled binary." true
+            return 1
+          }
+      elif [[ ${choice:-} =~ [bB] ]]; then
+          log info "Building locally..."
+          log info "Preparing to build the binary..."
+          if ! validate_versions; then
+            log error "Required dependencies are missing. Please install them and try again." true
+            return 1
+          fi
+          build_binary "${_platform_arg:-}" "${_arch_arg:-}" || return 1
+          install_binary || {
+            log error "Failed to install the binary." true
+            return 1
+          }
+      else
+          log info "Installation cancelled." true
+          return 0
+      fi
+      show_summary "${_arrArgs[@]}" || return 1
+      ;;
+
+    # CLEAN
+    # Clean up build artifacts
+    clear|clean|CLEAN|-c|-C)
+      log info "Running clean command..."
+      clean_artifacts || return 1
+      log success "Clean completed successfully."
+      ;;
+
+    # UNINSTALL
+    # Uninstallation of the binary
+    uninstall|UNINSTALL|-u|-U)
+      log info "Running uninstall command..."
+      uninstall_binary || return 1
+      ;;
+
+    # TEST
+    # Run tests for the project
+    test|TEST|-t|-T)
+      log info "Running test command..."
+      if ! check_dependencies; then
+        log error "Required dependencies are missing. Please install them and try again." true
+        return 1
+      fi
+      if ! go test ./...; then
+        log error "Tests failed. Please check the output for details." true
+        return 1
+      fi
+      log success "All tests passed successfully."
+      ;;
+
+    # BUILD-DOCS
+    # Build documentation for the project
+    build-docs|BUILD-DOCS|-bdc|-BDC)
+      log info "Generating Documentation..."
+
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}"
+        return 1
+      }
+
+      # Validate uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
+        if ! command -v uv >/dev/null 2>&1; then
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
+        fi
+
+        # Validate if .venv exists
+
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
+        fi
+      fi
+
+      # Generate the documentation
+      mkdocs build -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" -q || {
+        log error "Failed to generate documentation."
+        return 1
+      }
+
+      log success "Documentation generated successfully."
+      ;;
+
+    # SERVE-DOCS
+    # Serve the generated documentation
+    serve-docs|SERVE-DOCS|-sdc|-SDC)
+      log info "Serving Documentation..."
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs"
+        return 1
+      }
+
+      # Validate uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
+        if ! command -v uv >/dev/null 2>&1; then
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
+        fi
+
+        # Validate if .venv exists
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
+        fi
+      fi
+
+      mkdocs serve -a "0.0.0.0:8081" -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" --dirtyreload -q || {
+        log error "Failed to serve documentation."
+        return 1
+      }
+
+      log success "Documentation server successfully ran at http://localhost:8081/docs"
+      ;;
+
+    pub-docs|PUB-DOCS|-pd|-PD)
+      log info "Publishing Documentation..."
+      cd "${_ROOT_DIR:-}/docs" || {
+        log error "Failed to change directory to ${_ROOT_DIR:-}/docs"
+        return 1
+      }
+
+      # Validate uv
+      if [[ -t 1 && ! ${NON_INTERACTIVE:-} && ! ${CI:-} && -e /dev/tty ]]; then
+        if ! command -v uv >/dev/null 2>&1; then
+          apt-get update && apt-get install -y uv
+          if ! command -v uv >/dev/null 2>&1; then
+            log error "The 'uv' tool is required to build documentation. Please install it and try again."
+            return 1
+          fi
+        fi
+
+        # Validate if .venv exists
+        if [[ ! -d ".venv" ]]; then
+          uv --no-progress --quiet venv
+          . .venv/bin/activate
+          uv --no-progress --quiet pip install -r "${_ROOT_DIR:-}/support/docs/requirements.txt"
+        else
+          . .venv/bin/activate
+        fi
+      fi
+
+      mkdocs gh-deploy -f "${_ROOT_DIR:-}/support/docs/mkdocs.yml" -d "${_ROOT_DIR:-}/dist/docs" --force --no-history -q || {
+        log error "Failed to publish documentation."
+        return 1
+      }
+
+      log success "Documentation published successfully."
+      ;;
+
+    # DEFAULT
+    # Default command handler
+    *)
+      log error "Invalid command: ${_arrArgs[0]:-}" true
+      echo "Usage: make {build|build-dev|install|build-docs|clean|test|help}"
+      ;;
+  esac
+}
+
+# Função para limpar artefatos de build
+clean_artifacts() {
+    log info "Cleaning up build artifacts..."
+    local _platforms=("windows" "darwin" "linux")
+    local _archs=("amd64" "386" "arm64")
+    for _platform in "${_platforms[@]}"; do
+        for _arch in "${_archs[@]}"; do
+            local _output_name
+            _output_name=$(printf '%s_%s_%s' "${_BINARY:-}" "${_platform:-}" "${_arch:-}")
+            if [[ "${_platform:-}" != "windows" ]]; then
+                local _compress_name="${_output_name:-}.tar.gz"
+            else
+                _output_name="${_output_name:-}.exe"
+                local _compress_name="${_BINARY:-}_${_platform:-}_${_arch:-}.zip"
+            fi
+            rm -f "${_output_name:-}" || true
+            rm -f "${_compress_name:-}" || true
+        done
+    done
+    log success "Build artifacts removed."
+}
+
+__secure_logic_main() {
+  local _ws_name
+  _ws_name="$(__secure_logic_sourced_name)"
+  local _ws_name_val
+  _ws_name_val=$(eval "echo \${${_ws_name:-}}")
+  if test "${_ws_name_val:-}" != "true"; then
+    __main "${_main_args[@]}"
+    return $?
+  else
+    # If the script is sourced, we export the functions
+    log error "This script is not intended to be sourced." true
+    log error "Please run it directly." true
+    return 1
+  fi
+}
+
+_show_info() {
+  if ! what_platform; then
+    log error "Platform could not be determined." true
+    return 1
+  fi
+
+  local _arrArgs=( "${_main_args[@]}" )
+
+  local _command="${_arrArgs[0]:-help}"
+  local _platform_arg="${_arrArgs[1]:-}"
+  local _arch_arg="${_arrArgs[2]:-}"
+
+  # If no platform specified, use cross-compilation mode
+  if [[ -z "${_platform_arg}" ]]; then
+    _platform_arg="__CROSS_COMPILE__"  # Special flag for cross-compilation
+  fi
+
+  # Set defaults only for specific platform requests
+  if [[ "${_platform_arg}" != "__CROSS_COMPILE__" ]]; then
+    _arch_arg="${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+  fi
+
+  local _force="${_FORCE:-${FORCE:-n}}"
+  local _will_upx_pack_binary="${_WILL_UPX_PACK_BINARY:-${WILL_UPX_PACK_BINARY:-true}}"
+  local _root_dir="${_ROOT_DIR:-${ROOT_DIR:-$(git rev-parse --show-toplevel)}}"
+  local _cmd_path="${_CMD_PATH:-${CMD_PATH:-${_root_dir}/cmd}}"
+  local _binary_name="${_BINARY_NAME:-${BINARY_NAME:-$(basename "${_cmd_path}" .go)}}"
+  local _app_name="${_APP_NAME:-${APP_NAME:-$(basename "${_root_dir}")}}"
+  local _version="${_VERSION:-${VERSION:-$(git describe --tags)}}"
+
+  local _platform="${_PLATFORM:-${_CURRENT_PLATFORM:-}}"
+  local _arch="${_ARCH:-${_CURRENT_ARCH:-}}"
+  local _build_target="${_BUILD_TARGET:-${_platform}-${_arch}}"
+
+  if [[ "${_platform_arg}" == "__CROSS_COMPILE__" ]]; then
+    _platform_arg=""
+  fi
+
+  log notice "Command: ${_command:-}"
+  log notice "Platform: $(_get_os_from_args "${_platform_arg:-$(uname -s | tr '[:upper:]' '[:lower:]')}" )"
+  log notice "Architecture: $(_get_arch_from_args "${_platform_arg:-$(uname -s | tr '[:upper:]' '[:lower:]')}" "${_arch_arg:-$(uname -m | tr '[:upper:]' '[:lower:]')}" )"
+
+  show_headers || log fatal "Failed to display headers." true
+}
+
+main() {
+  _show_info "${_main_args[@]}" || {
+    log fatal "Failed to display process information." true
+  }
+
+  if [[ "${_RUN_PRE_SCRIPTS:-true}" != "false" ]]; then
+    __run_custom_scripts "pre" "${_main_args[@]}" || {
+      log error "pre-installation scripts: $?"
+      log fatal "Failed to execute pre-installation scripts." true
+    }
+  fi
+
+  __secure_logic_main "${_main_args[@]}" || {
+    log fatal "Script execution failed." true
+  }
+
+  if [[ "${_RUN_POST_SCRIPTS:-true}" != "false" ]]; then
+    __run_custom_scripts "post" "${_main_args[@]}" || {
+      log error "post-installation scripts: $?"
+      log fatal "Failed to execute post-installation scripts." true
+    }
+  fi
+
+  __secure_logic_elapsed_time="$(($(date +%s) - __secure_logic_init_timestamp))"
+
+  if [[ "${MYNAME_VERBOSE:-false}" == "true" || "${_DEBUG:-false}" == "true" ]]; then
+    log info "Script executed in ${__secure_logic_elapsed_time} seconds."
+  fi
+}
+
+main "${_main_args[@]}"
+
+# End of script logic
+
+/// platform.sh ///
+#!/usr/bin/env bash
+
+# set -o posix
+set -o nounset  # Treat unset variables as an error
+set -o errexit  # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Prevent errors in a pipeline from being masked
+set -o errtrace # If a command fails, the shell will exit immediately
+set -o functrace # If a function fails, the shell will exit immediately
+shopt -s inherit_errexit # Inherit the errexit option in functions
+IFS=$'\n\t'
+
+get_release_url() {
+    local os="${_PLATFORM%%-*}"
+    local format
+    if [[ "$os" == "windows" ]]; then
+      format="zip"
+    else
+      format="tar.gz"
+    fi
+    local arch="${_PLATFORM##*-}"
+    local release_url="${_REPOSITORY}/releases/download/${_VERSION}/${_APP_NAME}_${_VERSION}_${os}_${arch}.${format}"
+    echo "${release_url}"
+}
+
+what_platform() {
+  local _os
+  _os="$(uname -s)"
+  local _arch
+  _arch="$(uname -m)"
+  local platform=""
+
+  case "${_os}" in
+  *Linux*|*Nix*)
+    _os="linux"
+    case "${_arch}" in
+      "x86_64") _arch="amd64" ;;
+      "armv6") _arch="armv6l" ;;
+      "armv8"|"aarch64") _arch="arm64" ;;
+      *386*) _arch="386" ;;
+    esac
+    platform="linux-${_arch}"
+    ;;
+  *Darwin*)
+    _os="darwin"
+    case "${_arch}" in
+      "x86_64") _arch="amd64" ;;
+      "arm64") _arch="arm64" ;;
+    esac
+    platform="darwin-${_arch}"
+    ;;
+  MINGW*|MSYS*|CYGWIN*|Win*)
+    _os="windows"
+    case "${_arch}" in
+      "x86_64") _arch="amd64" ;;
+      "arm64") _arch="arm64" ;;
+    esac
+    platform="windows-${_arch}"
+    ;;
+  *)
+    log error "Unsupported OS: ${_os} with architecture: ${_arch}"
+    log error "Please report this issue to the project maintainers."
+    return 1
+    ;;
+  esac
+
+  export _PLATFORM_WITH_ARCH="${platform//-/_}"
+  export _PLATFORM="${_os}"
+  export _ARCH="${_arch}"
+
+  return 0
+}
+
+_get_os_arr_from_args() {
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform}" in
+    all|ALL|a|A|-a|-A)
+      echo "windows darwin linux"
+      return 0
+    ;;
+
+    win|WIN|windows|WINDOWS|w|W|-w|-W)
+      echo "windows"
+      return 0
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      echo "linux"
+      return 0
+    ;;
+
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      echo "darwin"
+      return 0
+    ;;
+
+    *)
+      local _argArr=( "${_platform}" )
+      for arg in "${_argArr[@]}"; do
+        echo "${arg}"
+      done
+    ;;
+  esac
+}
+
+_get_arch_arr_from_args() {
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+  local _arch="${2:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}" in
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64"
+          return 0
+          ;;
+        arm64|ARM64|aarch64|AARCH64)
+          echo "arm64"
+          return 0
+          ;;
+        amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '$_arch'. Valid options: amd64, arm64."
+          return 1
+          ;;
+      esac
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A|amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '$_arch'. Valid options: amd64."
+          return 1
+          ;;
+      esac
+    ;;
+
+    windows|WINDOWS|w|W|-w|-W)
+      case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64"
+          return 0
+          ;;
+        arm64|ARM64|aarch64|AARCH64)
+          echo "arm64"
+          return 0
+          ;;
+        amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          return 0
+          ;;
+        *)
+          log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, arm64." true
+          return 1
+          ;;
+      esac
+    ;;
+
+    *)
+      log fatal "${_arch:-} is invalid for ${_platform:-}." true
+    ;;
+  esac
+
+  return 1
+}
+
+_get_os_from_args() {
+  local _platform="${1:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}"
+
+  case "${_platform:-"$(uname -s | tr '[:upper:]' '[:lower:]')"}" in
+    all|ALL|a|A|-a|-A)
+      echo "all"
+    ;;
+
+    win|WIN|windows|WINDOWS|w|W|-w|-W)
+      echo "windows"
+    ;;
+
+    linux|LINUX|l|L|-l|-L)
+      echo "linux"
+    ;;
+
+    darwin|DARWIN|macOS|MACOS|m|M|-m|-M)
+      echo "darwin"
+    ;;
+
+    *)
+      log fatal "Invalid platform: '${_platform:-}'. Valid options: windows, linux, darwin, all."
+    ;;
+
+  esac
+}
+
+_get_arch_from_args() {
+  local _platform="${1:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
+  local _arch="${2:-$(uname -m | tr '[:upper:]' '[:lower:]')}"
+
+  # Normalize common arch names
+  case "${_arch}" in
+    x86_64|X86_64) echo "amd64" ;;
+    aarch64|AARCH64) echo "arm64" ;;
+    i386|I386) echo "386" ;;
+    all|ALL|a|A|-a|-A) echo "all" ;;
+    amd64|arm64|386) echo "${_arch}" ;;
+    *) echo "${_arch}" ;;
+  esac
+}
+
+export -f _get_os_arr_from_args
+export -f _get_arch_arr_from_args
+export -f _get_os_from_args
+export -f _get_arch_from_args
+export -f get_release_url
+export -f what_platform
+
+/// utils.sh ///
+#!/usr/bin/env bash
+# lib/utils.sh – Utility functions
+
+# set -o posix
+set -o nounset  # Treat unset variables as an error
+set -o errexit  # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Prevent errors in a pipeline from being masked
+set -o errtrace # If a command fails, the shell will exit immediately
+set -o functrace # If a function fails, the shell will exit immediately
+shopt -s inherit_errexit # Inherit the errexit option in functions
+IFS=$'\n\t'
+
+# Color codes for logs
+_SUCCESS="\033[0;32m"
+_WARN="\033[0;33m"
+_ERROR="\033[0;31m"
+_INFO="\033[0;36m"
+_NOTICE="\033[0;35m"
+_FATAL="\033[0;41m"
+_TRACE="\033[0;34m"
+_NC="\033[0m"
+
+log() {
+  local _type=${1:-info}
+  local _message=${2:-}
+  local _debug=${3:-}
+  _debug="${_debug:-${DEBUG:-${_DEBUG:-false}}}"
+
+  case $_type in
+    question|_QUESTION|-q|-Q)
+      if [[ "${_debug:-false}" == "true" ]]; then
+        printf '%b[QUESTION]%b ❓  %s: ' "${_NOTICE:-\033[0;35m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    notice|_NOTICE|-n|-N)
+      if [[ "${_debug:-false}" == "true" ]]; then
+        printf '%b[NOTICE]%b 📝  %s\n' "${_NOTICE:-\033[0;35m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    info|_INFO|-i|-I)
+      if [[ "${_debug:-false}" == "true" ]]; then
+        printf '%b[INFO]%b ℹ️  %s\n' "${_INFO:-\033[0;36m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    warn|_WARN|-w|-W)
+      if [[ "${_debug:-false}" == "true" ]]; then
+        printf '%b[WARN]%b ⚠️  %s\n' "${_WARN:-\033[0;33m}" "${_NC:-\033[0m}" "$_message"
+      fi
+      ;;
+    error|_ERROR|-e|-E)
+      printf '%b[ERROR]%b ❌  %s\n' "${_ERROR:-\033[0;31m}" "${_NC:-\033[0m}" "$_message" >&2
+      ;;
+    success|_SUCCESS|-s|-S)
+      printf '%b[SUCCESS]%b ✅  %s\n' "${_SUCCESS:-\033[0;32m}" "${_NC:-\033[0m}" "$_message"
+      ;;
+    fatal|_FATAL|-f|-F)
+      printf '%b[FATAL]%b 💀  %s\n' "${_FATAL:-\033[0;41m}" "${_NC:-\033[0m}" "Exiting due to fatal error: $_message" >&2
+      clear_build_artifacts || true
+      clear_script_cache || true
+
+      # shellcheck disable=SC2317
+      exit 1 || kill -9 $$
+      ;;
+    separator|_SEPARATOR|hr|-hr|-HR|line)
+      # if [[ "${_debug:-false}" != "true" ]]; then
+        local _columns=${COLUMNS:-$(tput cols || echo 80)}
+        local _margin=$(( _columns - ( _columns / 2 ) ))
+        _message="${_message// /¬}"
+        _message="$(printf '%b%s%b %*s' "${_TRACE:-\033[0;34m}" "${_message:-}" "${_NC:-\033[0m}" "$((_columns - ( "${#_message}" + _margin )))" '')"
+        _message="${_message// /\#}"
+        _message="${_message//¬/ }"
+        printf '%s\n' "${_message:-}" >&2
+      # fi
+      ;;
+    *)
+      log "info" "$_message" "${_debug:-false}" || true
+      ;;
+  esac
+
+  return 0
+}
+
+clear_screen() {
+  if [[ "${_QUIET:-false}" != "true" && "${_DEBUG:-false}" != "true" ]]; then
+    printf "\033[H\033[2J"
+  fi
+}
+
+get_current_shell() {
+  local shell_proc
+  shell_proc=$(cat /proc/$$/comm)
+  case "${0##*/}" in
+    ${shell_proc}*)
+      local shebang
+      shebang=$(head -1 "$0")
+      printf '%s\n' "${shebang##*/}"
+      ;;
+    *)
+      printf '%s\n' "$shell_proc"
+      ;;
+  esac
+}
+
+# Creates a temporary directory for cache
+_TEMP_DIR="${_TEMP_DIR:-$(mktemp -d)}"
+if [[ -d "${_TEMP_DIR:-}" ]]; then
+    log info "Temporary directory created: ${_TEMP_DIR:-}"
+else
+    log error "Failed to create the temporary directory."
+fi
+
+clear_script_cache() {
+  trap - EXIT HUP INT QUIT ABRT ALRM TERM
+  if [[ ! -d "${_TEMP_DIR:-}" ]]; then
+    return 0
+  fi
+  rm -rf "${_TEMP_DIR:-}" || true
+  if [[ -d "${_TEMP_DIR:-}" ]] && sudo -v 2>/dev/null; then
+    sudo rm -rf "${_TEMP_DIR:-}"
+    if [[ -d "${_TEMP_DIR:-}" ]]; then
+      printf '%b[ERROR]%b ❌  %s\n' "${_ERROR:-\033[0;31m}" "${_NC:-\033[0m}" "Failed to remove the temporary directory: ${_TEMP_DIR:-}"
+    else
+      printf '%b[SUCCESS]%b ✅  %s\n' "${_SUCCESS:-\033[0;32m}" "${_NC:-\033[0m}" "Temporary directory removed: ${_TEMP_DIR:-}"
+    fi
+  fi
+  return 0
+}
+
+
+clear_build_artifacts() {
+  clear_script_cache
+  local build_dir="${_ROOT_DIR:-$(realpath '../')}/dist"
+  if [[ -d "${build_dir}" ]]; then
+    rm -rf "${build_dir}" || true
+    if [[ -d "${build_dir}" ]]; then
+      log error "Failed to remove build artifacts in ${build_dir}."
+    else
+      log success "Build artifacts removed from ${build_dir}."
+    fi
+  else
+    log notice "No build artifacts found in ${build_dir}."
+  fi
+}
+
+set_trap() {
+  local current_shell=""
+  current_shell=$(get_current_shell)
+  case "${current_shell}" in
+    *ksh|*zsh|*bash)
+      declare -a FULL_SCRIPT_ARGS=("$@")
+      if [[ "${FULL_SCRIPT_ARGS[*]}" == *--debug* ]]; then
+          set -x
+      fi
+      if [[ "${current_shell}" == "bash" ]]; then
+        set -o errexit
+        set -o pipefail
+        set -o errtrace
+        set -o functrace
+        shopt -s inherit_errexit
+      fi
+      trap 'clear_script_cache' EXIT HUP INT QUIT ABRT ALRM TERM
+      ;;
+  esac
+}
+
+export -f log
+export -f clear_screen
+export -f get_current_shell
+export -f clear_script_cache
+export -f clear_build_artifacts
+export -f set_trap
+
+/// validate.sh ///
+#!/usr/bin/env bash
+# lib/validate.sh – Validação da versão do Go e dependências
+
+# Source go version management functions
+# shellcheck disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/go_version.sh"
+
+validate_versions() {
+    local go_setup_url='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
+    local current_version required_version
+
+    # Use modular functions for version checking
+    current_version="$(get_current_go_version)"
+    required_version="$(get_required_go_version)"
+
+    if [[ "${current_version}" == "not-installed" ]]; then
+        log error "Go is not installed or not found in PATH."
+        return 1
+    fi
+
+    if [[ -z "$required_version" ]]; then
+        log error "Could not determine the target Go version from go.mod."
+        return 1
+    fi
+
+    # Check version compatibility
+    if [[ "$current_version" != "$required_version" ]]; then
+        log warn "Go version mismatch: current=${current_version}, required=${required_version}"
+
+        local go_installation_output
+        if [[ -t 0 ]]; then
+            go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+        else
+            go_installation_output="$(export NON_INTERACTIVE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+        fi
+
+        # shellcheck disable=SC2181
+        if [[ $? -ne 0 ]]; then
+            log error "Failed to install Go version ${required_version}. Output: ${go_installation_output}"
+            return 1
+        fi
+    fi
+
+    # Validate other dependencies from manifest
+    local dependencies manifest_file
+    manifest_file="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-/internal/module/info/manifest.json}"
+
+    if [[ -f "${manifest_file}" ]]; then
+        mapfile -t dependencies < <(jq -r '.dependencies[]?' "${manifest_file}")
+        check_dependencies "${dependencies[@]}" || return 1
+    fi
+    return 0
+}
+
+check_dependencies() {
+  for dep in "$@"; do
+    if ! command -v "$dep" > /dev/null; then
+      if ! dpkg -l --selected-only "$dep" | grep "$dep" -q >/dev/null; then
+        log error "$dep is not installed." true
+        if [[ -z "${_NON_INTERACTIVE:-}" ]]; then
+          log warn "$dep is required for this script to run." true
+          local answer=""
+          if [[ -z "${_FORCE:-}" ]]; then
+            log question "Would you like to install it now? (y/n)" true
+            read -r -n 1 -t 10 answer || answer="n"
+          elif [[ "${_FORCE:-n}" == [Yy] ]]; then
+            log warn "Force mode is enabled. Installing $dep without confirmation."
+            answer="y"
+          fi
+          if [[ $answer =~ ^[Yy]$ ]]; then
+            sudo apt-get install -y "$dep" || {
+              log error "Failed to install $dep. Please install it manually."
+              return 1
+            }
+            log info "$dep has been installed successfully."
+          fi
+        else
+          log warn "$dep is required for this script to run. Installing..." true
+          if [[ "${_FORCE:-}" =~ ^[Yy]$ ]]; then
+            log warn "Force mode is enabled. Installing $dep without confirmation."
+            sudo apt-get install -y "$dep" || {
+            log error "Failed to install $dep. Please install it manually."
+              return 1
+            }
+            log info "$dep has been installed successfully."
+          else
+            log error "Failed to install $dep. Please install it manually before running this script."
+            return 1
+          fi
+        fi
+      fi
+    fi
+  done
+}
+
+export -f validate_versions
+export -f check_dependencies
