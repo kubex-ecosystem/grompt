@@ -1,0 +1,13 @@
+Este arquivo seria a fonte da verdade para o internal/config/loader.go
+Mantendo a estrutura que definimos anteriormente.
+[settings]
+model_reasoning_summary = "concise"
+
+[manifests]
+paths = [
+".kubex/docs/brand/kubex_brand_visual_spec.v0.0.1.md",
+".kubex/docs/architecture/Resilience-by-Design.md",
+".kubex/docs/governance/KUBEX_MANIFESTO.md"
+]
+
+... resto da configuração ...

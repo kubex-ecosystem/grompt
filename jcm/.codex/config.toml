@@ -1,0 +1,71 @@
+[settings]
+model_reasoning_summary = "concise"
+user_intent_summary     = "detailed"
+project_summary         = "detailed"
+default_max_tokens_out  = 700
+fail_fast               = true
+temperature             = 0.1
+
+[manifests]
+# cada repo terá estes princípios leves sempre no contexto
+paths = [
+  "docs/brand/**/kubex_brand_visual_spec*.md",
+  "docs/architecture/**/Resilience-by-Design*.md",
+  "docs/governance/**/KUBEX_MANIFESTO*.md"
+]
+max_tokens = 300
+update_strategy = "incremental"
+priority = "high"
+
+[context]
+scopes = [
+  { name = "objective",   max_tokens = 120, summarization = "bullet_goals" },
+  { name = "constraints", max_tokens = 120, summarization = "hard_rules"   },
+  { name = "facts",       max_tokens = 200, summarization = "code_facts"   },
+  { name = "delta",       max_tokens = 180, summarization = "git_diff"     },
+  { name = "plan",        max_tokens = 160, summarization = "step_plan"    },
+  { name = "exec",        max_tokens = 120, summarization = "checklist"    }
+]
+eviction_order = ["exec", "plan", "delta"]
+
+[output]
+style = "succinct_actionable"
+postamble = "✅ Valide: build/test passam e objetivo foi atendido."
+# foco em produto: não deixar “relatórios de tarefa” no repo
+generate_task_summaries = false
+allow_repo_writing_of_reports = false
+
+# ajuste a confiança conforme o repo
+[projects]
+# exemplo: substitua <REPO_NAME> ou remova se preferir deteção automática
+"/<ABS_PATH>/<REPO_NAME>" = { trust_level = "trusted" }
+
+[guards]
+dangerous_patterns    = ["rm -rf", "dd if=", "mkfs", "drop table", "helm uninstall --all"]
+require_confirmation  = true
+auto_dry_run          = true
+
+[behaviors]
+goal_driven_context   = true
+prefer_recent_diffs   = true
+refuse_when_unsafe    = true
+
+[summarizers]
+bullet_goals = """
+- 3–5 bullets com verbo imperativo + artefato esperado.
+"""
+hard_rules = """
+- Restrições duras (build tags, compatibilidade, lint), sem opinião estética.
+"""
+code_facts = """
+- Fatos verificáveis do código (assinaturas, tipos, caminhos), sem interpretação.
+"""
+git_diff = """
+- Mudanças por arquivo; +funções, -removidas, contratos alterados; destaque breaking.
+"""
+step_plan = """
+- 3–6 passos atômicos, cada um com checagem objetiva.
+"""
+checklist = """
+- Checklist [ ] executável.
+"""
