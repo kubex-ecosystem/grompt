@@ -12,7 +12,7 @@ Este projeto usa MkDocs (Material) com a configuração em `support/docs/mkdocs.
 2. Atualize a navegação em `support/docs/mkdocs.yml` (se necessário).
 3. Rode `make pub-docs` para buildar e publicar no GitHub Pages.
 
-O site é servido em: `https://rafa-mori.github.io/grompt/`.
+O site é servido em: `https://kubex-ecosystem.github.io/grompt/`.
 
 ## Estrutura
 

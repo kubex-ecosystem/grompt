@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/kubex-ecosystem/grompt/blob/main/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](development/contributing.md)
-[![GitHub Stars](https://img.shields.io/github/stars/rafa-mori/grompt?style=social)](https://github.com/kubex-ecosystem/grompt/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/kubex-ecosystem/grompt?style=social)](https://github.com/kubex-ecosystem/grompt/stargazers)
 
 ---
 

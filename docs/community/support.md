@@ -20,7 +20,7 @@ Para discussões, dúvidas e compartilhar experiências:
 
 Consulte primeiro nossa documentação completa:
 
-**🔗 [rafa-mori.github.io/grompt](https://rafa-mori.github.io/grompt/)**
+**🔗 [kubex-ecosystem.github.io/grompt](https://kubex-ecosystem.github.io/grompt/)**
 
 ## 🐛 Reportando Bugs
 

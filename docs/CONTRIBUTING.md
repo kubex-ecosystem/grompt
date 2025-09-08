@@ -41,7 +41,7 @@ You can install Go using one of the following methods:
 - [A super easy way to install Go](https://github.com/kubex-ecosystem/gosetup)
 
   ```shell
-    bash -c "$(curl -fsSL https://raw.githubusercontent.com/rafa-mori/gosetup/main/install.sh)"
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/install.sh)"
   ```
 
 - [Convencional way to download Go](https://go.dev/dl/)
@@ -135,16 +135,16 @@ Commits should be clear and descriptive. Examples:
 
 ## **Best Practices**
 
-1. **Be Respectful and Welcoming**  
+1. **Be Respectful and Welcoming**
    This is an open-source project for everyone. Respect other contributors and collaborate constructively.
 
-2. **Document Your Changes**  
+2. **Document Your Changes**
    Update the `README.md` or documentation, if necessary, to include your changes.
 
-3. **Add Tests When Possible**  
+3. **Add Tests When Possible**
    Ensure any new functionality is accompanied by tests.
 
-4. **Be Clear in Issue Reports**  
+4. **Be Clear in Issue Reports**
    When opening an issue, be detailed and provide as much context as possible.
 
 ---

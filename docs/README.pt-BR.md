@@ -339,7 +339,7 @@ go install github.com/kubex-ecosystem/grompt@latest
 ### Via Docker
 
 ```bash
-docker run -it --rm ghcr.io/rafa-mori/grompt:latest
+docker run -it --rm ghcr.io/kubex-ecosystem/grompt:latest
 ```
 
 ### Via Binaries

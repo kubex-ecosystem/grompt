@@ -140,7 +140,7 @@ jobs:
         run: |
           GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
 
-          bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh')" -s --version "$GO_VERSION"
+          bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s --version "$GO_VERSION"
 
           # Verify installation
           go version
@@ -273,7 +273,7 @@ jobs:
   #       run: |
   #         GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
 
-  #         bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh')" -s --version "${GO_VERSION:-1.24.5}"
+  #         bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s --version "${GO_VERSION:-1.24.5}"
 
   #         # Verify installation
   #         go version

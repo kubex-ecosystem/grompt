@@ -1,7 +1,7 @@
 {
   "name": "Kubex - Grompt",
   "application": "grompt",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": false,
   "published": true,
   "aliases": [
@@ -15,7 +15,7 @@
   "main": "cmd/main.go",
   "bin": "grompt",
   "author": "Rafael Mori <faelmori@gmail.com>",
-  "organization": "rafa-mori",
+  "organization": "kubex-ecosystem",
   "license": "MIT",
   "keywords": [
     "grompt",
