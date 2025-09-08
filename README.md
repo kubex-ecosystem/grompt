@@ -1,7 +1,7 @@
 # ![Grompt Logo](docs/assets/top_banner_z_2_md.png)
 
-[![Version](https://img.shields.io/badge/Version-1.0.7-purple.svg)](https://github.com/rafa-mori/grompt/releases/latest)
-[![Kubex Go Dist CI](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/rafa-mori/grompt/actions/workflows/kubex_go_release.yml)
+[![Version](https://img.shields.io/badge/Version-1.0.7-purple.svg)](https://github.com/kubex-ecosystem/grompt/releases/latest)
+[![Kubex Go Dist CI](https://github.com/kubex-ecosystem/grompt/actions/workflows/kubex_go_release.yml/badge.svg)](https://github.com/kubex-ecosystem/grompt/actions/workflows/kubex_go_release.yml)
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
 [![NextJS](https://img.shields.io/badge/NextJS-15+-blue.svg)](https://nextjs.org)
@@ -88,18 +88,18 @@ Create a generic TypeScript function that:
 
 Grab the latest release for your platform:
 
-- [Linux amd64](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_linux_amd64)
-- [macOS Intel](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_amd64)
-- [macOS Apple Silicon](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_darwin_arm64)
-- [Windows](https://github.com/rafa-mori/grompt/releases/latest/download/grompt_windows_amd64.exe)
+- [Linux amd64](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64)
+- [macOS Intel](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_amd64)
+- [macOS Apple Silicon](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_arm64)
+- [Windows](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe)
 
-Or see all options in the [Releases Page](https://github.com/rafa-mori/grompt/releases).
+Or see all options in the [Releases Page](https://github.com/kubex-ecosystem/grompt/releases).
 
 ### Option 2: Download and Run (Terminal)
 
 ```bash
 # Download the latest release for your platform
-curl -L https://github.com/rafa-mori/grompt/releases/latest/download/grompt-linux-amd64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt-linux-amd64 -o grompt
 chmod +x grompt
 ./grompt
 
@@ -109,7 +109,7 @@ chmod +x grompt
 ### Option 3: Build from Source
 
 ```bash
-git clone https://github.com/rafa-mori/grompt
+git clone https://github.com/kubex-ecosystem/grompt
 cd grompt
 make build
 ./dist/grompt -h
@@ -118,7 +118,7 @@ make build
 Or you can install directly from make command:
 
 ```bash
-git clone https://github.com/rafa-mori/grompt
+git clone https://github.com/kubex-ecosystem/grompt
 cd grompt
 make install
 grompt -h
@@ -585,7 +585,6 @@ echo "✅ Finished $(basename "$0")"
 ### 🚧 Current Development
 
 - [ ] **Prompt Templates Library** - Pre-built templates for common use cases
-- [ ] **Prompt History & Versioning** - Save and track prompt iterations
 - [ ] **Batch Processing** - Process multiple ideas simultaneously
 
 ### ⚡️ Future Features
@@ -594,11 +593,6 @@ echo "✅ Finished $(basename "$0")"
 - [ ] **API Rate Limiting** - Built-in rate limiting for API providers
 - [ ] **Integration Webhooks** - Connect with external tools and workflows
 - [ ] **Prompt Testing Framework** - A/B test different prompt variations
-
-### 💭 Under Consideration
-
-- [ ] **Prompt Marketplace** - Community-driven prompt sharing
-- [ ] **Mobile App** - Native mobile applications
 
 ---
 
@@ -668,8 +662,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ***Open source lives and grows in the open — by the people, for the people. ❤️***
 
-[⭐ Star this project](https://github.com/rafa-mori/grompt/stargazers)\
-[🐛 Report Bug](https://github.com/rafa-mori/grompt/issues)\
-[✨ Request Feature](https://github.com/rafa-mori/grompt/issues)
+[⭐ Star this project](https://github.com/kubex-ecosystem/grompt/stargazers)\
+[🐛 Report Bug](https://github.com/kubex-ecosystem/grompt/issues)\
+[✨ Request Feature](https://github.com/kubex-ecosystem/grompt/issues)
 
 *Transform your ideas into powerful prompts today!*

@@ -3,7 +3,7 @@ package types_test
 import (
     "testing"
 
-    typesx "github.com/rafa-mori/grompt/internal/types"
+    typesx "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 func TestGetAPIConfig_KnownProviders_NotNil(t *testing.T) {

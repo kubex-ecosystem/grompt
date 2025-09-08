@@ -9,8 +9,8 @@
     "krompt",
     "kbxprompt"
   ],
-  "repository": "https://github.com/rafa-mori/grompt",
-  "homepage": "https://github.com/rafa-mori/grompt",
+  "repository": "https://github.com/kubex-ecosystem/grompt",
+  "homepage": "https://github.com/kubex-ecosystem/grompt",
   "description": "Kubex - Grompt is a profissional AI prompt context object kind like: agents, prompts, API calls, and more.",
   "main": "cmd/main.go",
   "bin": "grompt",
