@@ -1,6 +1,6 @@
 module github.com/kubex-ecosystem/grompt
 
-go 1.25
+go 1.25.1
 
 require (
 	github.com/kubex-ecosystem/logz v1.5.0

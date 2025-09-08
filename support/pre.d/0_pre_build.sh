@@ -60,7 +60,7 @@ build_frontend() {
           exit 1
       fi
 
-      if [[ -d './build' ]]; then
+      if [[ -d './dist' ]]; then
           log success "Frontend assets built successfully." true
       else
           log fatal "Build directory does not exist." true
@@ -72,7 +72,7 @@ build_frontend() {
           rm -rf "${_ROOT_DIR}/internal/services/server/build"
       fi
 
-      mv './build' "${_ROOT_DIR}/internal/services/server/build" || {
+      mv './dist' "${_ROOT_DIR}/internal/services/server/build" || {
           log fatal "Failed to move build directory to server." true
           exit 1
       }

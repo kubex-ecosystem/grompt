@@ -23,13 +23,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
             <h1 className="text-3xl font-bold font-orbitron text-sky-500 light-shadow-sky dark:text-[#00f0ff] dark:neon-glow-cyan tracking-widest uppercase">
               Grompt
             </h1>
+            {/*
+            <!-- Não exibir versão por ora -->
             <span className="text-xs bg-gradient-to-r from-emerald-500 to-sky-500 dark:from-[#00e676] dark:to-[#00f0ff] text-white dark:text-black px-2 py-1 rounded-full font-bold">
-              v2.0
-            </span>
+              v1.0.8
+            </span> */}
           </div>
           <h2 className="text-lg text-slate-500 dark:text-[#90a4ae] font-medium font-plex-mono">
             {t('promptCrafter')}
           </h2>
+          {/*
+          <!-- Desativado por ora... Não há landing page ainda, então essa está na raiz -->
           <a
             href="https://kubex.world"
             target="_blank"
@@ -37,12 +41,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
             className="text-xs text-sky-600 dark:text-[#00f0ff]/80 hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200 font-plex-mono"
           >
             ← Back to Kubex Ecosystem
-          </a>
+          </a> */}
         </div>
       </div>
       <div className="flex items-center gap-3">
         <LanguageSelector />
         <button
+          type='button'
+          title={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
           onClick={toggleTheme}
           className="p-2 rounded-full bg-slate-200/50 dark:bg-[#10151b] text-slate-600 dark:text-[#90a4ae] hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
           aria-label={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
