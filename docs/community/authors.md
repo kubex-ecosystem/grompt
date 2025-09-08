@@ -6,7 +6,7 @@ Conheça as pessoas por trás do Grompt.
 
 ### Rafael Mori
 
-**GitHub:** [@rafa-mori](https://github.com/rafa-mori)
+**GitHub:** [@rafa-mori](https://github.com/kubex-ecosystem)
 **LinkedIn:** [Rafael Mori](https://www.linkedin.com/in/rafa-mori/)
 **Twitter:** [@faelOmori](https://twitter.com/faelOmori)
 
@@ -16,7 +16,7 @@ Rafael é o criador e mantenedor principal do Grompt. Desenvolvedor apaixonado p
 
 Agradecemos a todos que contribuíram para o projeto:
 
-**🔗 [Lista completa de contribuidores](https://github.com/rafa-mori/grompt/contributors)**
+**🔗 [Lista completa de contribuidores](https://github.com/kubex-ecosystem/grompt/contributors)**
 
 ### Como Contribuir
 
@@ -81,7 +81,7 @@ Se você usar o Grompt em sua pesquisa ou projeto, considere citar:
 @software{grompt2024,
   author = {Rafael Mori},
   title = {Grompt: Professional Prompt Engineering Tool},
-  url = {https://github.com/rafa-mori/grompt},
+  url = {https://github.com/kubex-ecosystem/grompt},
   year = {2024}
 }
 ```

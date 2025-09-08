@@ -9,10 +9,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	gl "github.com/rafa-mori/grompt/internal/module/logger"
-	t "github.com/rafa-mori/grompt/internal/types"
-	"github.com/rafa-mori/grompt/utils"
-	l "github.com/rafa-mori/logz"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	t "github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/utils"
+	l "github.com/kubex-ecosystem/logz"
 )
 
 // getProviderAPIKey returns the API key only for the matching provider

@@ -3,8 +3,8 @@ package types_test
 import (
     "testing"
 
-    m "github.com/rafa-mori/grompt/mocks"
-    typesx "github.com/rafa-mori/grompt/internal/types"
+    m "github.com/kubex-ecosystem/grompt/mocks"
+    typesx "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 func TestNewProviders_FiltersByConfiguredAndAvailable(t *testing.T) {

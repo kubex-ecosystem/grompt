@@ -431,9 +431,9 @@ Ao contribuir, você concorda que suas contribuições serão licenciadas sob a 
 
 ## 📞 Contato
 
-- **GitHub Issues:** [github.com/rafa-mori/grompt/issues](https://github.com/rafa-mori/grompt/issues)
-- **GitHub Discussions:** [github.com/rafa-mori/grompt/discussions](https://github.com/rafa-mori/grompt/discussions)
-- **Email:** [através do GitHub](https://github.com/rafa-mori)
+- **GitHub Issues:** [github.com/kubex-ecosystem/grompt/issues](https://github.com/kubex-ecosystem/grompt/issues)
+- **GitHub Discussions:** [github.com/kubex-ecosystem/grompt/discussions](https://github.com/kubex-ecosystem/grompt/discussions)
+- **Email:** [através do GitHub](https://github.com/kubex-ecosystem)
 
 ---
 

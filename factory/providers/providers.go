@@ -2,8 +2,8 @@
 package providers
 
 import (
-	"github.com/rafa-mori/grompt/internal/types"
-	"github.com/rafa-mori/logz"
+	"github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/logz"
 )
 
 // Provider represents an AI provider interface

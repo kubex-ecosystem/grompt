@@ -4,7 +4,7 @@ import (
     "strings"
     "testing"
 
-    mod "github.com/rafa-mori/grompt/internal/module"
+    mod "github.com/kubex-ecosystem/grompt/internal/module"
 )
 
 func TestModule_CommandAnnotationsAndExamples(t *testing.T) {

@@ -70,3 +70,36 @@ docs/prompt/
 support/docs/site/
 internal/services/server/build/*
 !internal/services/server/build/style.css
+
+# Anything with spaces in the name
+* *
+
+# Anything with parentheses in the name
+*(*)
+
+# Anything with special characters
+*[^a-zA-Z0-9._-]*
+
+# Any compressed files
+*.zip
+*.tar
+*.gz
+*.bz2
+*.7z
+
+# Any database files
+*.db
+*.sql
+*.sqlite
+
+# Any binary files
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Any LookAtni file
+*.lkxt
+*.ltk
+*.*.txt
