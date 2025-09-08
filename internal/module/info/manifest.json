@@ -1,7 +1,7 @@
 {
   "name": "Kubex - Grompt",
   "application": "grompt",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": false,
   "published": true,
   "aliases": [
@@ -27,6 +27,7 @@
   "platforms": [
     "linux/amd64",
     "linux/arm64",
+    "linux/386",
     "darwin/amd64",
     "darwin/arm64",
     "windows/amd64",

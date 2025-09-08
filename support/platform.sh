@@ -33,9 +33,9 @@ what_platform() {
   *Linux*|*Nix*)
     _os="linux"
     case "${_arch}" in
-      "x86_64") _arch="amd64" ;;
+      "x86_64"|"amd64") _arch="amd64" ;;
       "armv6") _arch="armv6l" ;;
-      "armv8"|"aarch64") _arch="arm64" ;;
+      "armv8"|"aarch64"|"arm64") _arch="arm64" ;;
       *386*) _arch="386" ;;
     esac
     platform="linux-${_arch}"
@@ -43,16 +43,16 @@ what_platform() {
   *Darwin*)
     _os="darwin"
     case "${_arch}" in
-      "x86_64") _arch="amd64" ;;
-      "arm64") _arch="arm64" ;;
+      "x86_64"|"amd64") _arch="amd64" ;;
+      "armv8"|"aarch64"|"arm64") _arch="arm64" ;;
     esac
     platform="darwin-${_arch}"
     ;;
   MINGW*|MSYS*|CYGWIN*|Win*)
     _os="windows"
     case "${_arch}" in
-      "x86_64") _arch="amd64" ;;
-      "arm64") _arch="arm64" ;;
+      "x86_64"|"amd64") _arch="amd64" ;;
+      "armv8"|"aarch64"|"arm64") _arch="arm64" ;;
     esac
     platform="windows-${_arch}"
     ;;
@@ -114,7 +114,7 @@ _get_arch_arr_from_args() {
           echo "amd64 arm64"
           return 0
           ;;
-        arm64|ARM64|aarch64|AARCH64)
+        armv8|arm64|ARM64|aarch64|AARCH64)
           echo "arm64"
           return 0
           ;;
@@ -131,12 +131,24 @@ _get_arch_arr_from_args() {
 
     linux|LINUX|l|L|-l|-L)
       case "${_arch:-"$(uname -m | tr '[:upper:]' '[:lower:]')"}" in
-        all|ALL|a|A|-a|-A|amd64|AMD64|x86_64|X86_64|x64|X64)
-          echo "amd64"
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64 armv6l 386"
           return 0
           ;;
+        armv8|arm64|ARM64|aarch64|AARCH64)
+          echo "arm64"
+          ;;
+        amd64|AMD64|x86_64|X86_64|x64|X64)
+          echo "amd64"
+          ;;
+        386|I386)
+          echo "386"
+          ;;
+        armv6l|ARMV6L)
+          echo "armv6l"
+          ;;
         *)
-          log fatal "Invalid architecture: '$_arch'. Valid options: amd64."
+          log fatal "Invalid architecture: '$_arch'. Valid options: amd64, arm64, 386, armv6l."
           return 1
           ;;
       esac
@@ -148,16 +160,12 @@ _get_arch_arr_from_args() {
           echo "amd64 arm64"
           return 0
           ;;
-        arm64|ARM64|aarch64|AARCH64)
-          echo "arm64"
-          return 0
-          ;;
         amd64|AMD64|x86_64|X86_64|x64|X64)
           echo "amd64"
           return 0
           ;;
         *)
-          log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, arm64." true
+          log fatal "Invalid architecture: '${_arch:-}'. Valid options: amd64, 386." true
           return 1
           ;;
       esac
@@ -204,12 +212,17 @@ _get_arch_from_args() {
 
   # Normalize common arch names
   case "${_arch}" in
+    # First we handle with different names
     x86_64|X86_64) echo "amd64" ;;
-    aarch64|AARCH64) echo "arm64" ;;
+    armv8|aarch64|AARCH64) echo "arm64" ;;
     i386|I386) echo "386" ;;
+    ARMV6L) echo "armv6l" ;;
+
+    # Then we handle with common names, including all option
     all|ALL|a|A|-a|-A) echo "all" ;;
-    amd64|arm64|386) echo "${_arch}" ;;
-    *) echo "${_arch}" ;;
+
+    amd64|arm64|386|armv6l) echo "${_arch}" ;;
+    *) uname -m | tr '[:upper:]' '[:lower:]' ;; # "${_arch}" ;;
   esac
 }
 

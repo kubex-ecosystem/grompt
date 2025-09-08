@@ -113,6 +113,9 @@ darwin:
 arm64:
 	@echo "Process finished for architecture: arm64"
 
+armv6l:
+	@echo "Process finished for architecture: armv6l"
+
 386:
 	@echo "Process finished for architecture: 386"
 

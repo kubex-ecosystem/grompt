@@ -88,6 +88,9 @@ load_platforms_from_manifest() {
 
   # Fallback to default platforms
   echo "linux/amd64"
+  echo "linux/arm64"
+  echo "linux/armv6l"
+  echo "linux/386"
   echo "darwin/amd64"
   echo "darwin/arm64"
   echo "windows/amd64"
@@ -123,8 +126,9 @@ compute_build_matrix() {
 
   # Normalize architecture
   case "${_arch_arg}" in
-    x86_64|X86_64) _arch_arg="amd64" ;;
-    aarch64|AARCH64) _arch_arg="arm64" ;;
+    x86_64|amd64) _arch_arg="amd64" ;;
+    armv8|aarch64|arm64) _arch_arg="arm64" ;;
+    armv6l|armv7l) _arch_arg="armv6l" ;;
     i386|I386) _arch_arg="386" ;;
   esac
 
@@ -135,14 +139,14 @@ compute_build_matrix() {
   case "${_platform_arg}" in
     all|ALL)
       PLATFORMS=("linux" "darwin" "windows")
-      GOPLT_MAP[linux]="amd64"
+      GOPLT_MAP[linux]="amd64 arm64 armv6l 386"
       GOPLT_MAP[darwin]="amd64 arm64"
       GOPLT_MAP[windows]="amd64 386"
       ;;
     linux|LINUX)
       PLATFORMS=("linux")
       case "${_arch_arg}" in
-        all|ALL) GOPLT_MAP[linux]="amd64" ;;
+        all|ALL) GOPLT_MAP[linux]="amd64 arm64 armv6l 386" ;;
         *) GOPLT_MAP[linux]="${_arch_arg}" ;;
       esac
       ;;
@@ -204,6 +208,8 @@ prepare_build_flags() {
     host_arch="$(uname -m)"
     [[ "${host_arch}" == "x86_64" ]] && host_arch="amd64"
     [[ "${host_arch}" == "aarch64" ]] && host_arch="arm64"
+    [[ "${host_arch}" == "armv6l" ]] && host_arch="armv6l"
+    [[ "${host_arch}" == "i386" ]] && host_arch="386"
 
     if [[ "${_os}" == "${host_os}" && "${_arch}" == "${host_arch}" ]]; then
       _build_args+=("-race")
@@ -338,7 +344,8 @@ build_for_arch() {
   # Normalize architecture
   case "${_arch_pos}" in
     x86_64|X86_64) _arch_pos="amd64" ;;
-    aarch64|AARCH64) _arch_pos="arm64" ;;
+    armv8|aarch64|AARCH64) _arch_pos="arm64" ;;
+    armv6l|ARMV6L) _arch_pos="armv6l" ;;
     i386|I386) _arch_pos="386" ;;
   esac
 
@@ -384,7 +391,7 @@ is_valid_platform_arch() {
   case "${_platform}" in
     linux)
       case "${_arch}" in
-        amd64) return 0 ;;
+        amd64|arm64|armv6l|386) return 0 ;;
         *) return 1 ;;
       esac
       ;;
@@ -516,7 +523,8 @@ build_binary() {
     # Normalize arch for single builds
     case "${_arch_args}" in
       x86_64|X86_64) _arch_args="amd64" ;;
-      aarch64|AARCH64) _arch_args="arm64" ;;
+      armv8|aarch64|AARCH64) _arch_args="arm64" ;;
+      armv6l|ARMV6L) _arch_args="armv6l" ;;
       i386|I386) _arch_args="386" ;;
     esac
 
@@ -671,7 +679,8 @@ _get_arch_arr_from_args() {
   # Normalize architecture names
   case "${_arch}" in
     x86_64|X86_64) _arch="amd64" ;;
-    aarch64|AARCH64) _arch="arm64" ;;
+    armv8|aarch64|AARCH64) _arch="arm64" ;;
+    armv6l|ARMV6L) _arch="armv6l" ;;
     i386|I386) _arch="386" ;;
   esac
 
@@ -692,11 +701,14 @@ _get_arch_arr_from_args() {
       ;;
     linux|LINUX)
       case "${_arch}" in
-        all|ALL|a|A|-a|-A|amd64)
-          echo "amd64"
+        all|ALL|a|A|-a|-A)
+          echo "amd64 arm64 armv6l 386"
+          ;;
+        amd64|arm64|armv6l|386)
+          echo "${_arch}"
           ;;
         *)
-          log error "Invalid architecture '${_arch}' for linux. Valid: amd64"
+          log error "Invalid architecture '${_arch}' for linux. Valid: amd64, arm64, armv6l, 386"
           return 1
           ;;
       esac
@@ -704,13 +716,13 @@ _get_arch_arr_from_args() {
     windows|WINDOWS)
       case "${_arch}" in
         all|ALL|a|A|-a|-A)
-          echo "amd64 arm64"
+          echo "amd64 386"
           ;;
-        amd64|arm64)
+        amd64|386)
           echo "${_arch}"
           ;;
         *)
-          log error "Invalid architecture '${_arch}' for windows. Valid: amd64, arm64"
+          log error "Invalid architecture '${_arch}' for windows. Valid: amd64, 386"
           return 1
           ;;
       esac
@@ -755,10 +767,11 @@ _get_arch_from_args() {
   # Normalize common arch names
   case "${_arch}" in
     x86_64|X86_64) echo "amd64" ;;
-    aarch64|AARCH64) echo "arm64" ;;
+    armv8|aarch64|AARCH64) echo "arm64" ;;
     i386|I386) echo "386" ;;
+    ARMV6L|aa) echo "armv6l" ;;
     all|ALL|a|A|-a|-A) echo "all" ;;
-    amd64|arm64|386) echo "${_arch}" ;;
+    amd64|arm64|386|armv6l) echo "${_arch}" ;;
     *) echo "${_arch}" ;;
   esac
 }
