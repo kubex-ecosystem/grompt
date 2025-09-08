@@ -11,12 +11,17 @@ on:
         required: false
         type: string
       debug:
-        description: 'Enable debug mode'
+        description: 'Enable/Disable debug mode'
         required: false
         default: false
         type: boolean
+      quiet:
+        description: 'Enable/Disable quiet mode'
+        required: false
+        default: true
+        type: boolean
       dry_run:
-        description: 'Enable dry run mode'
+        description: 'Enable/Disable dry run mode'
         required: false
         default: false
         type: boolean
@@ -34,6 +39,7 @@ permissions:
 env:
   NON_INTERACTIVE: true
   FORCE: y
+  QUIET: true
   CI: true
 
 jobs:
@@ -183,11 +189,12 @@ jobs:
               continue
             fi
             # Set environment variables
-            export NON_INTERACTIVE=${NON_INTERACTIVE:-${{ github.event.env.NON_INTERACTIVE }}}
-            export FORCE=${FORCE:-${{ github.event.env.FORCE }}}
-            export CI=${CI:-${{ github.event.env.CI }}}
+            export NON_INTERACTIVE=${NON_INTERACTIVE:-${{ github.env.NON_INTERACTIVE }}}
+            export FORCE=${FORCE:-${{ github.env.FORCE }}}
+            export CI=${CI:-${{ github.env.CI }}}
             export DRY_RUN=${DRY_RUN:-${{ github.event.inputs.dry_run }}}
             export DEBUG=${DEBUG:-${{ github.event.inputs.debug }}}
+            export QUIET=${QUIET:-${{ github.event.inputs.quiet }}}
             echo "🔨 Building for $OS/$ARCH..."
             make build "${OS:-}" "${ARCH:-}"
           done
@@ -339,6 +346,8 @@ jobs:
             # Add platform-specific information
             case "$platform" in
               "linux/amd64"|"linux-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🐧 **Linux (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+              "linux/arm64"|"linux-arm64") PLATFORM_LIST="$PLATFORM_LIST          - 🐧 **Linux (ARM64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
+              "linux/386"|"linux-386") PLATFORM_LIST="$PLATFORM_LIST          - 🐧 **Linux (386)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
               "windows/amd64"|"windows-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🪟 **Windows (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.zip\`" ;;
               "windows/i386"|"windows-i386") PLATFORM_LIST="$PLATFORM_LIST          - 🪟 **Windows (i386)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.zip\`" ;;
               "darwin/amd64"|"darwin-amd64") PLATFORM_LIST="$PLATFORM_LIST          - 🍎 **macOS (AMD64)**: \`${MODULE_NAME:-}_${OS:-}_${ARCH:-}.tar.gz\`" ;;
@@ -423,6 +432,8 @@ jobs:
           for platform in $PLATFORMS; do
             case "$platform" in
               "linux/amd64"|"linux-amd64") echo "- 🐧 Linux AMD64" >> $GITHUB_STEP_SUMMARY ;;
+              "linux/arm64"|"linux-arm64") echo "- 🐧 Linux ARM64" >> $GITHUB_STEP_SUMMARY ;;
+              "linux/386"|"linux-386") echo "- 🐧 Linux 386" >> $GITHUB_STEP_SUMMARY ;;
               "windows/amd64"|"windows-amd64") echo "- 🪟 Windows AMD64" >> $GITHUB_STEP_SUMMARY ;;
               "windows/i386"|"windows-i386") echo "- 🪟 Windows i386" >> $GITHUB_STEP_SUMMARY ;;
               "darwin/amd64"|"darwin-amd64") echo "- 🍎 macOS AMD64" >> $GITHUB_STEP_SUMMARY ;;
