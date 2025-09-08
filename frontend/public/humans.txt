@@ -1,0 +1,24 @@
+/* TEAM */
+Creator & Lead Developer: Rafael Mori
+Contact: faelmori [at] live.com
+From: Brasil
+GitHub: https://github.com/rafa-mori
+
+/* THANKS */
+AI Assistant: GitHub Copilot
+Community: Open Source Contributors
+Inspiration: The need for truly free, no-lock-in developer tools
+
+/* SITE */
+Last update: 2025/09/08
+Standards: HTML5, CSS3, ES2023, TypeScript
+Components: React 19, Vite 6, Tailwind CSS
+Software: VS Code, GitHub, Vercel
+AI Models: Google Gemini (optional)
+
+/* KUBEX PRINCIPLES */
+Radical Simplicity: One command = one result
+Modularity: Well-structured, reusable components
+No Cages: Platform-agnostic, open formats, no vendor lock-in
+
+CODE FAST. OWN EVERYTHING.

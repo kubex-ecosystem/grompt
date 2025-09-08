@@ -1,0 +1,28 @@
+{
+  "extends": [
+    "development"
+  ],
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not ios_saf <= 15.8"
+  ],
+  "hints": {
+    "compat-api/html": [
+      "default",
+      {
+        "ignore": [
+          "meta[name=theme-color]"
+        ]
+      }
+    ],
+    "no-inline-styles": "off",
+    "axe/aria": [
+      "default",
+      {
+        "aria-valid-attr-value": "off"
+      }
+    ],
+    "apple-touch-icons": "off"
+  }
+}

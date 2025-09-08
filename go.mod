@@ -23,7 +23,7 @@ require (
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 )
 
 require (

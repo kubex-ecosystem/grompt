@@ -4,90 +4,21 @@ import { Idea } from '../types';
 const API_KEY = process.env.API_KEY;
 
 if (!API_KEY) {
-  console.warn("Gemini API key not found. Running in demo mode with simulated responses.");
+  console.warn("Gemini API key not found. Using mock data. Please set the API_KEY environment variable.");
 }
 
-// Function to get user's API key from localStorage
-const getUserApiKey = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('userApiKey');
-  }
-  return null;
-};
-
-// Function to get active API key (user's key takes precedence)
-const getActiveApiKey = (): string | null => {
-  return getUserApiKey() || API_KEY || null;
-};
-
-const createAIInstance = (apiKey: string) => {
-  return new GoogleGenAI({ apiKey });
-};
-
+const ai = new GoogleGenAI({ apiKey: API_KEY! });
 // FIX: Updated model to 'gemini-2.5-flash' to comply with guidelines.
 const model = 'gemini-2.5-flash';
 
 export interface PromptGenerationResult {
   prompt: string;
-  // FIX: Made token count properties optional to match the Gemini API response type.
   usageMetadata?: {
     promptTokenCount?: number;
     candidatesTokenCount?: number;
     totalTokenCount?: number;
   };
 }
-
-// Demo mode simulation
-const generateDemoPrompt = (ideas: Idea[], purpose: string): PromptGenerationResult => {
-  const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
-
-  const demoPrompt = `# ${purpose} Expert Assistant
-
-## Primary Objective
-Transform the provided ideas into actionable ${purpose.toLowerCase()} solutions following Kubex principles of radical simplicity and modularity.
-
-## User Requirements
-${ideasText}
-
-## Task Instructions
-You are an expert ${purpose.toLowerCase()} specialist. Based on the requirements above, provide a comprehensive solution that:
-
-### Key Requirements:
-- Follow KUBEX principles: Radical Simplicity, Modularity, No Cages
-- Use clear, anti-jargon language
-- Provide modular, reusable components
-- Ensure outputs are platform-agnostic
-
-### Expected Output Format:
-- Use Markdown for clear structure
-- Include code examples when applicable
-- Provide step-by-step instructions
-- Add relevant comments and documentation
-
-### Constraints:
-- Avoid vendor lock-in solutions
-- Keep complexity minimal
-- Focus on practical, implementable solutions
-- Use open standards and formats
-
-## Context
-This prompt was generated using Grompt, part of the Kubex Ecosystem, following principles of radical simplicity and avoiding technological cages.
-
----
-*Generated in demo mode - Connect your AI provider API key for enhanced AI-powered prompts*`;
-
-  // Simulate token usage for demo
-  const estimatedTokens = Math.floor(demoPrompt.length / 4); // Rough estimation: 1 token ≈ 4 characters
-
-  return {
-    prompt: demoPrompt,
-    usageMetadata: {
-      promptTokenCount: Math.floor(estimatedTokens * 0.3),
-      candidatesTokenCount: Math.floor(estimatedTokens * 0.7),
-      totalTokenCount: estimatedTokens
-    }
-  };
-};
 
 const createMetaPrompt = (ideas: Idea[], purpose: string): string => {
   const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
@@ -123,8 +54,8 @@ Return ONLY the generated prompt in Markdown. Do not include any introductory te
 `;
 };
 
-const MAX_RETRIES = parseInt(process.env.MAX_RETRIES || "3", 10);
-const RETRY_DELAY_MS = parseInt(process.env.RETRY_DELAY_MS || "1000", 10);
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
 
 /**
  * Checks if an error is likely a transient network issue and thus retryable.
@@ -158,35 +89,43 @@ const formatApiError = (error: any): string => {
   return "An unknown error occurred while communicating with the Gemini API. Please check your connection and try again.";
 };
 
+
 export const generateStructuredPrompt = async (ideas: Idea[], purpose: string): Promise<PromptGenerationResult> => {
-  const activeApiKey = getActiveApiKey();
+  if (!API_KEY) {
+    // Mock response for environments without an API key
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const ideasText = ideas.map((idea, index) => `- ${idea.text}`).join('\n');
+    const mockPrompt = `
+**Persona:** You are a mock AI assistant.
 
-  // If no API key available, use demo mode
-  if (!activeApiKey) {
-    return generateDemoPrompt(ideas, purpose);
+**Primary Objective:** Demonstrate a structured prompt based on user input.
+
+**Context:** This is a mock response because the Gemini API key is not configured.
+
+**User's Ideas Provided:**
+${ideasText}
+
+**Stated Purpose:**
+${purpose}
+
+**Expected Output (Mock):**
+- A well-formatted response that addresses each of the user's ideas.
+- Clear structure using Markdown.
+- Adherence to the requested purpose.
+`;
+    // Mock token counts
+    const inputTokens = Math.floor(mockPrompt.length / 4);
+    const outputTokens = Math.floor(ideasText.length / 4);
+
+    return {
+      prompt: mockPrompt,
+      usageMetadata: {
+        promptTokenCount: inputTokens,
+        candidatesTokenCount: outputTokens,
+        totalTokenCount: inputTokens + outputTokens
+      }
+    };
   }
-
-  const ai = createAIInstance(activeApiKey);
-
-  const isRetryableError = (error: any): boolean => {
-    if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-      return true;
-    }
-    if (error.status === 429 || error.status === 500 || error.status === 502 || error.status === 503) {
-      return true;
-    }
-    return false;
-  };
-
-  const formatApiError = (error: any): string => {
-    if (error.message?.includes('API key')) {
-      return "API key issue. Please check your Gemini API key configuration.";
-    }
-    if (error.message?.includes('rate limit') || error.message?.includes('quota')) {
-      return "Rate limit exceeded. Please try again later.";
-    }
-    return `Gemini API error: ${error.message || 'Unknown error occurred'}`;
-  };
 
   let lastError: any = null;
 
@@ -202,14 +141,9 @@ export const generateStructuredPrompt = async (ideas: Idea[], purpose: string): 
           topK: 40,
         }
       });
-
-      const generatedText = response.text;
-      if (!generatedText) {
-        throw new Error("Empty response received from Gemini API");
-      }
-
       return {
-        prompt: generatedText,
+        // FIX: Using response.text directly as per Gemini API guidelines.
+        prompt: response.text || '',
         usageMetadata: response.usageMetadata
       };
     } catch (error) {

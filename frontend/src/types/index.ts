@@ -1,15 +1,23 @@
-// FIX: Removed self-import of Idea which conflicts with the interface declaration below.
+export type Theme = 'light' | 'dark';
+export type Language = 'en' | 'es' | 'zh' | 'pt';
+
 export interface Idea {
   id: string;
   text: string;
 }
 
 export interface HistoryItem {
-  id:string;
+  id: string;
   prompt: string;
   purpose: string;
   ideas: Idea[];
   timestamp: number;
   inputTokens?: number;
   outputTokens?: number;
+  totalTokens?: number;
+}
+
+export interface Draft {
+  ideas: Idea[];
+  purpose: string;
 }
