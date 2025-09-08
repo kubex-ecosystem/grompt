@@ -1,10 +1,10 @@
 site_name: Grompt
-site_url: https://rafa-mori.github.io/grompt/
+site_url: https://kubex-ecosystem.github.io/grompt/
 site_description: "CLI poderosa para gerenciar e transformar prompts com práticas de engenharia — Go 1.25, React 19, Next 15."
 site_author: "Rafael Mori"
 
-repo_name: "rafa-mori/grompt"
-repo_url: https://github.com/rafa-mori/grompt
+repo_name: "kubex-ecosystem/grompt"
+repo_url: https://github.com/kubex-ecosystem/grompt
 
 docs_dir: ../../docs
 
@@ -58,7 +58,7 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: rafa-mori
+      user: kubex-ecosystem
       repo: grompt
   - pymdownx.mark
   - pymdownx.smartsymbols
@@ -106,7 +106,7 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/rafa-mori/grompt
+      link: https://github.com/kubex-ecosystem/grompt
       name: Grompt on GitHub
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/rafa-mori/

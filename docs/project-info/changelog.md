@@ -26,7 +26,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 Para ver todas as versões publicadas, acesse:
 
-**🔗 [GitHub Releases](https://github.com/rafa-mori/grompt/releases)**
+**🔗 [GitHub Releases](https://github.com/kubex-ecosystem/grompt/releases)**
 
 ## 🔄 Tipos de Mudança
 

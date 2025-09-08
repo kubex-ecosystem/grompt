@@ -8,19 +8,19 @@ Precisa de ajuda com o Grompt? Aqui estão os canais de suporte disponíveis.
 
 Para reportar bugs ou solicitar funcionalidades:
 
-**🔗 [github.com/rafa-mori/grompt/issues](https://github.com/rafa-mori/grompt/issues)**
+**🔗 [github.com/kubex-ecosystem/grompt/issues](https://github.com/kubex-ecosystem/grompt/issues)**
 
 ### GitHub Discussions
 
 Para discussões, dúvidas e compartilhar experiências:
 
-**🔗 [github.com/rafa-mori/grompt/discussions](https://github.com/rafa-mori/grompt/discussions)**
+**🔗 [github.com/kubex-ecosystem/grompt/discussions](https://github.com/kubex-ecosystem/grompt/discussions)**
 
 ### Documentação
 
 Consulte primeiro nossa documentação completa:
 
-**🔗 [rafa-mori.github.io/grompt](https://rafa-mori.github.io/grompt/)**
+**🔗 [kubex-ecosystem.github.io/grompt](https://kubex-ecosystem.github.io/grompt/)**
 
 ## 🐛 Reportando Bugs
 

@@ -1,0 +1,5 @@
+{
+  "name": "Grompt",
+  "description": "An AI-powered tool that transforms raw, unstructured ideas into professional, well-structured prompts for large language models, following the Kubex design principles.",
+  "requestFramePermissions": []
+}

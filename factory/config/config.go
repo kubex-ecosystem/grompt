@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	providersPkg "github.com/rafa-mori/grompt/internal/providers"
-	"github.com/rafa-mori/grompt/internal/types"
+	providersPkg "github.com/kubex-ecosystem/grompt/internal/providers"
+	"github.com/kubex-ecosystem/grompt/internal/types"
 	"gopkg.in/yaml.v3"
 
-	l "github.com/rafa-mori/logz"
+	l "github.com/kubex-ecosystem/logz"
 )
 
 type Config = types.IConfig

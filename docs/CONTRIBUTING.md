@@ -1,12 +1,12 @@
 # **Contributing to Grompt**
 
-Thank you for your interest in contributing to **[Grompt](https://github.com/rafa-mori/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
+Thank you for your interest in contributing to **[Grompt](https://github.com/kubex-ecosystem/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
 
 ---
 
 ## **How to Contribute**
 
-There are several ways to contribute to [Grompt](https://github.com/rafa-mori/grompt):
+There are several ways to contribute to [Grompt](https://github.com/kubex-ecosystem/grompt):
 
 1. **Report Issues**
    - Found bugs or issues in the code? Open an issue detailing the problem.
@@ -29,7 +29,7 @@ There are several ways to contribute to [Grompt](https://github.com/rafa-mori/gr
 ### 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/rafa-mori/grompt.git
+git clone https://github.com/kubex-ecosystem/grompt.git
 cd grompt
 ```
 
@@ -38,10 +38,10 @@ cd grompt
 Make sure you have Go installed:
 You can install Go using one of the following methods:
 
-- [A super easy way to install Go](https://github.com/rafa-mori/gosetup)
+- [A super easy way to install Go](https://github.com/kubex-ecosystem/gosetup)
 
   ```shell
-    bash -c "$(curl -fsSL https://raw.githubusercontent.com/rafa-mori/gosetup/main/install.sh)"
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/install.sh)"
   ```
 
 - [Convencional way to download Go](https://go.dev/dl/)
@@ -135,16 +135,16 @@ Commits should be clear and descriptive. Examples:
 
 ## **Best Practices**
 
-1. **Be Respectful and Welcoming**  
+1. **Be Respectful and Welcoming**
    This is an open-source project for everyone. Respect other contributors and collaborate constructively.
 
-2. **Document Your Changes**  
+2. **Document Your Changes**
    Update the `README.md` or documentation, if necessary, to include your changes.
 
-3. **Add Tests When Possible**  
+3. **Add Tests When Possible**
    Ensure any new functionality is accompanied by tests.
 
-4. **Be Clear in Issue Reports**  
+4. **Be Clear in Issue Reports**
    When opening an issue, be detailed and provide as much context as possible.
 
 ---

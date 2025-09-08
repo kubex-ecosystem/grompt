@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rafa-mori/grompt/internal/services/agents"
-	"github.com/rafa-mori/grompt/internal/services/squad"
-	ii "github.com/rafa-mori/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/internal/services/agents"
+	"github.com/kubex-ecosystem/grompt/internal/services/squad"
+	ii "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type Handlers struct {
@@ -50,10 +50,10 @@ type UnifiedResponse struct {
 }
 
 type UsageInfo struct {
-    PromptTokens     int     `json:"prompt_tokens,omitempty"`
-    CompletionTokens int     `json:"completion_tokens,omitempty"`
-    TotalTokens      int     `json:"total_tokens,omitempty"`
-    EstimatedCost    float64 `json:"estimated_cost,omitempty"`
+	PromptTokens     int     `json:"prompt_tokens,omitempty"`
+	CompletionTokens int     `json:"completion_tokens,omitempty"`
+	TotalTokens      int     `json:"total_tokens,omitempty"`
+	EstimatedCost    float64 `json:"estimated_cost,omitempty"`
 }
 
 var llmKeyMap map[string]string
@@ -700,118 +700,132 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 
 // HandleAsk provides a simpler alias to ask a direct question to a provider.
 // Request JSON:
-// {
-//   "question": "...",            // required
-//   "provider": "openai|claude|...", // optional (auto-pick if omitted)
-//   "model": "gpt-4o-mini",       // optional
-//   "max_tokens": 1000             // optional
-// }
+//
+//	{
+//	  "question": "...",            // required
+//	  "provider": "openai|claude|...", // optional (auto-pick if omitted)
+//	  "model": "gpt-4o-mini",       // optional
+//	  "max_tokens": 1000             // optional
+//	}
+//
 // Response JSON matches UnifiedResponse: { response, provider, model }
 func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
-    h.setCORSHeaders(w)
+	h.setCORSHeaders(w)
 
-    if r.Method == "OPTIONS" {
-        return
-    }
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
+	if r.Method == "OPTIONS" {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-    var req struct {
-        Question  string `json:"question"`
-        Provider  string `json:"provider,omitempty"`
-        Model     string `json:"model,omitempty"`
-        MaxTokens int    `json:"max_tokens,omitempty"`
-        Lang      string `json:"lang,omitempty"`
-    }
+	var req struct {
+		Question  string `json:"question"`
+		Provider  string `json:"provider,omitempty"`
+		Model     string `json:"model,omitempty"`
+		MaxTokens int    `json:"max_tokens,omitempty"`
+		Lang      string `json:"lang,omitempty"`
+	}
 
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid JSON", http.StatusBadRequest)
-        return
-    }
-    if strings.TrimSpace(req.Question) == "" {
-        http.Error(w, "'question' is required", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if strings.TrimSpace(req.Question) == "" {
+		http.Error(w, "'question' is required", http.StatusBadRequest)
+		return
+	}
 
-    prompt := req.Question
-    provider := strings.TrimSpace(req.Provider)
-    model := strings.TrimSpace(req.Model)
-    maxTokens := req.MaxTokens
-    if maxTokens <= 0 {
-        maxTokens = 1000
-    }
+	prompt := req.Question
+	provider := strings.TrimSpace(req.Provider)
+	model := strings.TrimSpace(req.Model)
+	maxTokens := req.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = 1000
+	}
 
-    var response string
-    var err error
+	var response string
+	var err error
 
-    // If provider not specified, pick the first available in a sensible order
-    if provider == "" {
-        for _, p := range []string{"openai", "claude", "deepseek", "ollama", "gemini", "chatgpt"} {
-            if h.isAPIEnabled(p) {
-                provider = p
-                break
-            }
-        }
-        if provider == "" {
-            http.Error(w, "No AI provider configured", http.StatusServiceUnavailable)
-            return
-        }
-    }
+	// If provider not specified, pick the first available in a sensible order
+	if provider == "" {
+		for _, p := range []string{"openai", "claude", "deepseek", "ollama", "gemini", "chatgpt"} {
+			if h.isAPIEnabled(p) {
+				provider = p
+				break
+			}
+		}
+		if provider == "" {
+			http.Error(w, "No AI provider configured", http.StatusServiceUnavailable)
+			return
+		}
+	}
 
-    switch provider {
-    case "openai":
-        if h.config.GetAPIKey("openai") == "" {
-            http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
-            return
-        }
-        if model == "" { model = "gpt-4o-mini" }
-        response, err = h.openaiAPI.Complete(prompt, maxTokens, model)
-    case "claude":
-        if h.config.GetAPIKey("claude") == "" {
-            http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
-            return
-        }
-        if model == "" { model = "claude-3-5-sonnet-20241022" }
-        response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
-    case "deepseek":
-        if h.config.GetAPIKey("deepseek") == "" {
-            http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
-            return
-        }
-        if model == "" { model = "deepseek-chat" }
-        response, err = h.deepseekAPI.Complete(prompt, maxTokens, model)
-    case "ollama":
-        if model == "" { model = "llama3.2" }
-        response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
-    case "gemini":
-        if h.config.GetAPIKey("gemini") == "" {
-            http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
-            return
-        }
-        if model == "" { model = "gemini-1.5-flash" }
-        response, err = h.geminiAPI.Complete(prompt, maxTokens, model)
-    case "chatgpt":
-        if h.config.GetAPIKey("chatgpt") == "" {
-            http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
-            return
-        }
-        if model == "" { model = "gpt-4o-mini" }
-        response, err = h.chatGPTAPI.Complete(prompt, maxTokens, model)
-    default:
-        http.Error(w, "Unsupported provider: "+provider, http.StatusBadRequest)
-        return
-    }
+	switch provider {
+	case "openai":
+		if h.config.GetAPIKey("openai") == "" {
+			http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
+			return
+		}
+		if model == "" {
+			model = "gpt-4o-mini"
+		}
+		response, err = h.openaiAPI.Complete(prompt, maxTokens, model)
+	case "claude":
+		if h.config.GetAPIKey("claude") == "" {
+			http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
+			return
+		}
+		if model == "" {
+			model = "claude-3-5-sonnet-20241022"
+		}
+		response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
+	case "deepseek":
+		if h.config.GetAPIKey("deepseek") == "" {
+			http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
+			return
+		}
+		if model == "" {
+			model = "deepseek-chat"
+		}
+		response, err = h.deepseekAPI.Complete(prompt, maxTokens, model)
+	case "ollama":
+		if model == "" {
+			model = "llama3.2"
+		}
+		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
+	case "gemini":
+		if h.config.GetAPIKey("gemini") == "" {
+			http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
+			return
+		}
+		if model == "" {
+			model = "gemini-1.5-flash"
+		}
+		response, err = h.geminiAPI.Complete(prompt, maxTokens, model)
+	case "chatgpt":
+		if h.config.GetAPIKey("chatgpt") == "" {
+			http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
+			return
+		}
+		if model == "" {
+			model = "gpt-4o-mini"
+		}
+		response, err = h.chatGPTAPI.Complete(prompt, maxTokens, model)
+	default:
+		http.Error(w, "Unsupported provider: "+provider, http.StatusBadRequest)
+		return
+	}
 
-    if err != nil {
-        http.Error(w, fmt.Sprintf("Error in %s API: %v", provider, err), http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error in %s API: %v", provider, err), http.StatusInternalServerError)
+		return
+	}
 
-    res := UnifiedResponse{Response: response, Provider: provider, Model: model}
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(res)
+	res := UnifiedResponse{Response: response, Provider: provider, Model: model}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
 
 // HandleSquad is a stable alias that generates a squad of agents from a description,
@@ -820,58 +834,62 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 // { "description": "..." } or { "requirements": "..." }
 // Response JSON: { agents: [...], markdown: "..." }
 func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
-    h.setCORSHeaders(w)
-    if r.Method == "OPTIONS" { return }
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
+	h.setCORSHeaders(w)
+	if r.Method == "OPTIONS" {
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-    var req struct {
-        Description string `json:"description"`
-        Requirements string `json:"requirements"`
-    }
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid JSON", http.StatusBadRequest)
-        return
-    }
-    content := strings.TrimSpace(req.Requirements)
-    if content == "" { content = strings.TrimSpace(req.Description) }
-    if content == "" {
-        http.Error(w, "'description' or 'requirements' is required", http.StatusBadRequest)
-        return
-    }
+	var req struct {
+		Description  string `json:"description"`
+		Requirements string `json:"requirements"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	content := strings.TrimSpace(req.Requirements)
+	if content == "" {
+		content = strings.TrimSpace(req.Description)
+	}
+	if content == "" {
+		http.Error(w, "'description' or 'requirements' is required", http.StatusBadRequest)
+		return
+	}
 
-    // Reuse HandleAgentsGenerate inner logic via local function
-    // Build LLM function
-    llmFunc := func(prompt string) (string, error) {
-        if h.config.GetAPIKey("claude") != "" {
-            return h.claudeAPI.Complete(prompt, 4000, "claude-2")
-        }
-        if h.config.GetAPIKey("openai") != "" {
-            return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
-        }
-        if h.config.GetAPIKey("deepseek") != "" {
-            return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
-        }
-        return "", fmt.Errorf("no LLM API available")
-    }
+	// Reuse HandleAgentsGenerate inner logic via local function
+	// Build LLM function
+	llmFunc := func(prompt string) (string, error) {
+		if h.config.GetAPIKey("claude") != "" {
+			return h.claudeAPI.Complete(prompt, 4000, "claude-2")
+		}
+		if h.config.GetAPIKey("openai") != "" {
+			return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
+		}
+		if h.config.GetAPIKey("deepseek") != "" {
+			return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
+		}
+		return "", fmt.Errorf("no LLM API available")
+	}
 
-    // Use the same squad package as /api/agents/generate
-    sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    markdown := squad.GenerateMarkdown(sqAgents)
+	// Use the same squad package as /api/agents/generate
+	sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	markdown := squad.GenerateMarkdown(sqAgents)
 
-    resp := struct {
-        Agents   []squad.Agent `json:"agents"`
-        Markdown string        `json:"markdown"`
-    }{Agents: sqAgents, Markdown: markdown}
+	resp := struct {
+		Agents   []squad.Agent `json:"agents"`
+		Markdown string        `json:"markdown"`
+	}{Agents: sqAgents, Markdown: markdown}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(resp)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
@@ -1106,7 +1124,7 @@ func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	docs := map[string]string{
-		"docs": "https://github.com/rafa-mori/grompt/blob/main/README.md",
+		"docs": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1122,7 +1140,7 @@ func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	supportInfo := map[string]string{
-		"support": "https://github.com/rafa-mori/grompt/blob/main/README.md",
+		"support": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
