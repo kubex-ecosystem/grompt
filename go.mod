@@ -3,6 +3,7 @@ module github.com/kubex-ecosystem/grompt
 go 1.25.1
 
 require (
+	github.com/kubex-ecosystem/logz v1.5.0
 	github.com/spf13/cobra v1.10.1
 	gopkg.in/yaml.v3 v3.0.1
 )

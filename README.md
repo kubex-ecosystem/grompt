@@ -585,7 +585,6 @@ echo "✅ Finished $(basename "$0")"
 ### 🚧 Current Development
 
 - [ ] **Prompt Templates Library** - Pre-built templates for common use cases
-- [ ] **Prompt History & Versioning** - Save and track prompt iterations
 - [ ] **Batch Processing** - Process multiple ideas simultaneously
 
 ### ⚡️ Future Features
@@ -594,11 +593,6 @@ echo "✅ Finished $(basename "$0")"
 - [ ] **API Rate Limiting** - Built-in rate limiting for API providers
 - [ ] **Integration Webhooks** - Connect with external tools and workflows
 - [ ] **Prompt Testing Framework** - A/B test different prompt variations
-
-### 💭 Under Consideration
-
-- [ ] **Prompt Marketplace** - Community-driven prompt sharing
-- [ ] **Mobile App** - Native mobile applications
 
 ---
 
