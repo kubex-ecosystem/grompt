@@ -1,4 +1,4 @@
-package types
+package providers
 
 import (
 	"bytes"
@@ -9,49 +9,49 @@ import (
 	"time"
 )
 
-type ChatGPTAPI struct{ *APIConfig }
+type OpenAIAPI struct{ *APIConfig }
 
-type ChatGPTRequest struct {
+type OpenAIRequest struct {
 	Prompt    string `json:"prompt"`
 	MaxTokens int    `json:"max_tokens"`
 	Model     string `json:"model"`
 }
 
-type ChatGPTAPIRequest struct {
-	Model       string           `json:"model"`
-	Messages    []ChatGPTMessage `json:"messages"`
-	MaxTokens   int              `json:"max_tokens"`
-	Temperature float64          `json:"temperature"`
-	Stream      bool             `json:"stream"`
+type OpenAIAPIRequest struct {
+	Model       string    `json:"model"`
+	Messages    []Message `json:"messages"`
+	MaxTokens   int       `json:"max_tokens"`
+	Temperature float64   `json:"temperature"`
+	Stream      bool      `json:"stream"`
 }
 
-type ChatGPTMessage struct {
+type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-type ChatGPTAPIResponse struct {
-	ID      string          `json:"id"`
-	Object  string          `json:"object"`
-	Created int64           `json:"created"`
-	Model   string          `json:"model"`
-	Choices []ChatGPTChoice `json:"choices"`
-	Usage   ChatGPTUsage    `json:"usage"`
+type OpenAIAPIResponse struct {
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int64    `json:"created"`
+	Model   string   `json:"model"`
+	Choices []Choice `json:"choices"`
+	Usage   Usage    `json:"usage"`
 }
 
-type ChatGPTChoice struct {
-	Index        int            `json:"index"`
-	Message      ChatGPTMessage `json:"message"`
-	FinishReason string         `json:"finish_reason"`
+type Choice struct {
+	Index        int     `json:"index"`
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason"`
 }
 
-type ChatGPTUsage struct {
+type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
 }
 
-type ChatGPTErrorResponse struct {
+type OpenAIErrorResponse struct {
 	Error struct {
 		Message string `json:"message"`
 		Type    string `json:"type"`
@@ -59,11 +59,11 @@ type ChatGPTErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewChatGPTAPI(apiKey string) IAPIConfig {
-	return &ChatGPTAPI{
+func NewOpenAIAPI(apiKey string) *OpenAIAPI {
+	return &OpenAIAPI{
 		APIConfig: &APIConfig{
 			apiKey:  apiKey,
-			baseURL: "https://api.chatgpt.com/v1/chat/completions",
+			baseURL: "https://api.openai.com/v1/chat/completions",
 			httpClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
@@ -71,7 +71,7 @@ func NewChatGPTAPI(apiKey string) IAPIConfig {
 	}
 }
 
-func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
+func (o *OpenAIAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
 	if o.apiKey == "" {
 		return "", fmt.Errorf("API key não configurada")
 	}
@@ -81,9 +81,9 @@ func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (strin
 		model = "gpt-3.5-turbo"
 	}
 
-	requestBody := ChatGPTAPIRequest{
+	requestBody := OpenAIAPIRequest{
 		Model: model,
-		Messages: []ChatGPTMessage{
+		Messages: []Message{
 			{
 				Role:    "user",
 				Content: prompt,
@@ -119,15 +119,15 @@ func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (strin
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		// Tentar parsear erro da ChatGPT
-		var errorResp ChatGPTErrorResponse
+		// Tentar parsear erro da OpenAI
+		var errorResp OpenAIErrorResponse
 		if err := json.Unmarshal(body, &errorResp); err == nil {
-			return "", fmt.Errorf("ChatGPT API erro: %s", errorResp.Error.Message)
+			return "", fmt.Errorf("OpenAI API erro: %s", errorResp.Error.Message)
 		}
 		return "", fmt.Errorf("API retornou status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var response ChatGPTAPIResponse
+	var response OpenAIAPIResponse
 	if err := json.Unmarshal(body, &response); err != nil {
 		return "", fmt.Errorf("erro ao decodificar resposta: %v", err)
 	}
@@ -139,15 +139,15 @@ func (o *ChatGPTAPI) Complete(prompt string, maxTokens int, model string) (strin
 	return response.Choices[0].Message.Content, nil
 }
 
-func (o *ChatGPTAPI) IsAvailable() bool {
+func (o *OpenAIAPI) IsAvailable() bool {
 	if o.apiKey == "" {
 		return false
 	}
 
 	// Fazer uma requisição simples para verificar se a API está funcionando
-	testReq := ChatGPTAPIRequest{
+	testReq := OpenAIAPIRequest{
 		Model: "gpt-3.5-turbo",
-		Messages: []ChatGPTMessage{
+		Messages: []Message{
 			{
 				Role:    "user",
 				Content: "test",
@@ -183,12 +183,12 @@ func (o *ChatGPTAPI) IsAvailable() bool {
 }
 
 // Listar modelos disponíveis
-func (o *ChatGPTAPI) ListModels() ([]string, error) {
+func (o *OpenAIAPI) ListModels() ([]string, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
 
-	modelsURL := "https://api.chatgpt.com/v1/models"
+	modelsURL := "https://api.openai.com/v1/models"
 	req, err := http.NewRequest("GET", modelsURL, nil)
 	if err != nil {
 		return nil, err
@@ -206,14 +206,14 @@ func (o *ChatGPTAPI) ListModels() ([]string, error) {
 		return nil, fmt.Errorf("erro ao listar modelos: status %d", resp.StatusCode)
 	}
 
-	type ChatGPTModelsResponse struct {
+	type ModelsResponse struct {
 		Data []struct {
 			ID     string `json:"id"`
 			Object string `json:"object"`
 		} `json:"data"`
 	}
 
-	var modelsResp ChatGPTModelsResponse
+	var modelsResp ModelsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
 		return nil, err
 	}
@@ -229,8 +229,8 @@ func (o *ChatGPTAPI) ListModels() ([]string, error) {
 	return models, nil
 }
 
-// Modelos comuns da ChatGPT
-func (o *ChatGPTAPI) GetCommonModels() []string {
+// Modelos comuns da OpenAI
+func (o *OpenAIAPI) GetCommonModels() []string {
 	return []string{
 		"gpt-4",
 		"gpt-4-turbo",
@@ -242,7 +242,7 @@ func (o *ChatGPTAPI) GetCommonModels() []string {
 }
 
 // GetVersion returns the version of the API
-func (o *ChatGPTAPI) GetVersion() string { return o.version }
+func (o *OpenAIAPI) GetVersion() string { return o.version }
 
 // IsDemoMode indicates if the API is in demo mode
-func (o *ChatGPTAPI) IsDemoMode() bool { return o.demoMode }
+func (o *OpenAIAPI) IsDemoMode() bool { return o.demoMode }

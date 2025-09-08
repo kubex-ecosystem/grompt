@@ -108,7 +108,7 @@ jobs:
             echo "# Autores" > docs/community/authors.md
             echo "" >> docs/community/authors.md
             echo "## Criador Principal" >> docs/community/authors.md
-            echo "- **Rafael Mori** - [@rafa-mori](https://github.com/kubex-ecosystem)" >> docs/community/authors.md
+            echo "- **Rafael Mori** - [@kubex-ecosystem](https://github.com/kubex-ecosystem)" >> docs/community/authors.md
             echo "" >> docs/community/authors.md
             echo "## Contribuidores" >> docs/community/authors.md
             echo "Veja a lista completa de [contribuidores](https://github.com/kubex-ecosystem/grompt/contributors)." >> docs/community/authors.md

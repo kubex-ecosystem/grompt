@@ -1,5 +1,5 @@
-// Package providers provides concrete implementations of AI providers.
-package providers
+// Package provider provides concrete implementations of AI providers.
+package provider
 
 import (
 	"github.com/kubex-ecosystem/grompt/internal/types"

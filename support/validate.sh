@@ -6,7 +6,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/go_version.sh"
 
 validate_versions() {
-    local go_setup_url='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
+    local go_setup_url='https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh'
     local current_version required_version
 
     # Use modular functions for version checking
