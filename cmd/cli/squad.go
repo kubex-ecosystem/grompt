@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rafa-mori/grompt/internal/services/squad"
+	"github.com/kubex-ecosystem/grompt/internal/services/squad"
 )
 
 func SquadCmdList() []*cobra.Command {

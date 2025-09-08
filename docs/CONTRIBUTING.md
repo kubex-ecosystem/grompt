@@ -1,12 +1,12 @@
 # **Contributing to Grompt**
 
-Thank you for your interest in contributing to **[Grompt](https://github.com/rafa-mori/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
+Thank you for your interest in contributing to **[Grompt](https://github.com/kubex-ecosystem/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
 
 ---
 
 ## **How to Contribute**
 
-There are several ways to contribute to [Grompt](https://github.com/rafa-mori/grompt):
+There are several ways to contribute to [Grompt](https://github.com/kubex-ecosystem/grompt):
 
 1. **Report Issues**
    - Found bugs or issues in the code? Open an issue detailing the problem.
@@ -29,7 +29,7 @@ There are several ways to contribute to [Grompt](https://github.com/rafa-mori/gr
 ### 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/rafa-mori/grompt.git
+git clone https://github.com/kubex-ecosystem/grompt.git
 cd grompt
 ```
 
@@ -38,7 +38,7 @@ cd grompt
 Make sure you have Go installed:
 You can install Go using one of the following methods:
 
-- [A super easy way to install Go](https://github.com/rafa-mori/gosetup)
+- [A super easy way to install Go](https://github.com/kubex-ecosystem/gosetup)
 
   ```shell
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/rafa-mori/gosetup/main/install.sh)"

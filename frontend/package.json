@@ -5,7 +5,7 @@
   "description": "Krompt: A React-based Prompt Engineering Tool for AI Models",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rafa-mori/grompt.git"
+    "url": "https://github.com/kubex-ecosystem/grompt.git"
   },
   "author": "Rafael Mori",
   "license": "MIT",

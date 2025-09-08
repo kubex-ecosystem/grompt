@@ -1,6 +1,6 @@
-module github.com/rafa-mori/grompt
+module github.com/kubex-ecosystem/grompt
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/spf13/cobra v1.10.1
@@ -21,13 +21,13 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 )
 
 require (
 	github.com/fatih/color v1.18.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/rafa-mori/logz v1.4.0
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/kubex-ecosystem/logz v1.5.0
+	github.com/spf13/pflag v1.0.10 // indirect
 )

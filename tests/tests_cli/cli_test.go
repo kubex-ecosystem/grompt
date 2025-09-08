@@ -4,7 +4,7 @@ import (
     "os"
     "testing"
 
-    cli "github.com/rafa-mori/grompt/cmd/cli"
+    cli "github.com/kubex-ecosystem/grompt/cmd/cli"
 )
 
 func TestGetDescriptions_BannerAndDescription(t *testing.T) {

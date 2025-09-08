@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rafa-mori/grompt/internal/services/agents"
-	"github.com/rafa-mori/grompt/internal/services/squad"
-	ii "github.com/rafa-mori/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/internal/services/agents"
+	"github.com/kubex-ecosystem/grompt/internal/services/squad"
+	ii "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type Handlers struct {
@@ -1106,7 +1106,7 @@ func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	docs := map[string]string{
-		"docs": "https://github.com/rafa-mori/grompt/blob/main/README.md",
+		"docs": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1122,7 +1122,7 @@ func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	supportInfo := map[string]string{
-		"support": "https://github.com/rafa-mori/grompt/blob/main/README.md",
+		"support": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
 	w.Header().Set("Content-Type", "application/json")

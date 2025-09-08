@@ -3,8 +3,8 @@ package engine_test
 import (
     "testing"
 
-    m "github.com/rafa-mori/grompt/mocks"
-    eng "github.com/rafa-mori/grompt/internal/engine"
+    m "github.com/kubex-ecosystem/grompt/mocks"
+    eng "github.com/kubex-ecosystem/grompt/internal/engine"
 )
 
 func TestEngine_GetProviders_FromConfig(t *testing.T) {

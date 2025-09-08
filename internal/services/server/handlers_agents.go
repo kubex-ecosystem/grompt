@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rafa-mori/grompt/internal/services/squad"
+	"github.com/kubex-ecosystem/grompt/internal/services/squad"
 )
 
 // HandleAgents manages listing and creating agents.

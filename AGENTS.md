@@ -22,7 +22,7 @@
 - Language: Go 1.25; use `gofmt` (tabs, standard imports).
 - Packages: keep cohesive, use `internal/*` for non-public.
 - Test packages: place in `tests/tests_[package]`, name as `package <target>_test`.
-- Import aliases in tests: use stable, descriptive aliases (e.g., `t "github.com/rafa-mori/grompt/internal/types"`, `eng`, `prov`, `tpl`, `cli`, `mod`, `m` for `mocks`).
+- Import aliases in tests: use stable, descriptive aliases (e.g., `t "github.com/kubex-ecosystem/grompt/internal/types"`, `eng`, `prov`, `tpl`, `cli`, `mod`, `m` for `mocks`).
 
 ## Testing Guidelines
 

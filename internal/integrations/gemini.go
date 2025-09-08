@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	gl "github.com/rafa-mori/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
 )
 
 type GeminiAPI struct{ *APIConfig }
