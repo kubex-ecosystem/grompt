@@ -1,5 +1,5 @@
 // Package types defines the configuration and versioning for the Grompt application.
-package types
+package provider
 
 import (
 	"context"

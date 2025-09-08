@@ -1,5 +1,5 @@
 // Package types provides Google Gemini API implementation.
-package types
+package providers
 
 import (
 	"bytes"

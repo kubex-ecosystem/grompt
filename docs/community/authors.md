@@ -6,7 +6,7 @@ Conheça as pessoas por trás do Grompt.
 
 ### Rafael Mori
 
-**GitHub:** [@rafa-mori](https://github.com/kubex-ecosystem)
+**GitHub:** [@kubex-ecosystem](https://github.com/kubex-ecosystem)
 **LinkedIn:** [Rafael Mori](https://www.linkedin.com/in/rafa-mori/)
 **Twitter:** [@faelOmori](https://twitter.com/faelOmori)
 

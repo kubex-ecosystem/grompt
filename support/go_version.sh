@@ -54,7 +54,7 @@ auto_install_go_with_gosetup() {
   local required_version go_setup_url
 
   required_version="${1:-$(get_required_go_version "go.mod")}"
-  go_setup_url='https://raw.githubusercontent.com/rafa-mori/gosetup/main/go.sh'
+  go_setup_url='https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh'
 
   log info "Installing Go ${required_version} using GoSetup..."
 
