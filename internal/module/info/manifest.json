@@ -1,13 +1,11 @@
 {
   "name": "Kubex - Grompt",
   "application": "grompt",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": false,
   "published": true,
   "aliases": [
-    "grompt",
-    "krompt",
-    "kbxprompt"
+    "grompt"
   ],
   "repository": "https://github.com/kubex-ecosystem/grompt",
   "homepage": "https://github.com/kubex-ecosystem/grompt",
@@ -15,7 +13,7 @@
   "main": "cmd/main.go",
   "bin": "grompt",
   "author": "Rafael Mori <faelmori@gmail.com>",
-  "organization": "rafa-mori",
+  "organization": "kubex-ecosystem",
   "license": "MIT",
   "keywords": [
     "grompt",
@@ -28,6 +26,7 @@
   ],
   "platforms": [
     "linux/amd64",
+    "linux/arm64",
     "darwin/amd64",
     "darwin/arm64",
     "windows/amd64"

@@ -3,7 +3,8 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { LanguageContext } from '../App';
-import { generateStructuredPrompt } from '../services/geminiService';
+import { configService, type ProviderInfo } from '../services/configService';
+import { generateStructuredPrompt } from '../services/unifiedAIService';
 import { HistoryItem, Idea } from '../types';
 
 // --- IndexedDB Helpers for Autosave ---
@@ -338,8 +339,8 @@ const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(({ purpose, s
             key={p}
             onClick={() => setPurpose(p)}
             className={`p-2 rounded-md text-sm font-medium border-2 transition-all duration-200 ${purpose === p
-                ? 'bg-emerald-500/20 dark:bg-[#00e676]/20 border-emerald-500 dark:border-[#00e676] text-emerald-700 dark:text-white scale-105'
-                : 'bg-slate-100 dark:bg-[#10151b]/50 border-transparent hover:border-emerald-500/50 dark:hover:border-[#00e676]/50 text-slate-600 dark:text-slate-300'
+              ? 'bg-emerald-500/20 dark:bg-[#00e676]/20 border-emerald-500 dark:border-[#00e676] text-emerald-700 dark:text-white scale-105'
+              : 'bg-slate-100 dark:bg-[#10151b]/50 border-transparent hover:border-emerald-500/50 dark:hover:border-[#00e676]/50 text-slate-600 dark:text-slate-300'
               }`}
           >
             {t(purposeKeys[p])}
@@ -442,8 +443,47 @@ const PromptCrafter: React.FC = () => {
   const [promptHistory, setPromptHistory] = useState<HistoryItem[]>([]);
   const [viewMode, setViewMode] = useState<'preview' | 'raw'>('preview');
   const [tokenUsage, setTokenUsage] = useState<{ input: number; output: number; } | null>(null);
+
+  // Dynamic configuration from backend
+  const [availableProviders, setAvailableProviders] = useState<ProviderInfo[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [isDemoMode, setIsDemoMode] = useState(true);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
+
   const isInitialLoad = useRef(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Load configuration from backend
+  useEffect(() => {
+    const loadConfig = async () => {
+      setIsConfigLoading(true);
+      try {
+        const [providers, demoMode, defaultProvider] = await Promise.all([
+          configService.getAvailableProviders(),
+          configService.isDemoMode(),
+          configService.getDefaultProvider(),
+        ]);
+
+        setAvailableProviders(providers);
+        setIsDemoMode(demoMode);
+        setSelectedProvider(defaultProvider);
+
+        console.log('💡 Configuration loaded:', {
+          providers: providers.length,
+          demoMode,
+          defaultProvider
+        });
+      } catch (error) {
+        console.error('Failed to load configuration:', error);
+        setIsDemoMode(true);
+        setAvailableProviders([]);
+      } finally {
+        setIsConfigLoading(false);
+      }
+    };
+
+    loadConfig();
+  }, []);
 
   // Load history from localStorage
   useEffect(() => {
@@ -566,7 +606,10 @@ const PromptCrafter: React.FC = () => {
     setGeneratedPrompt('');
     setTokenUsage(null);
     try {
-      const result = await generateStructuredPrompt(ideas, purpose);
+      // Use selected provider or fallback to first available
+      const provider = selectedProvider || (availableProviders.length > 0 ? availableProviders[0].name : undefined);
+
+      const result = await generateStructuredPrompt(ideas, purpose, provider);
       setGeneratedPrompt(result.prompt);
       const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;
       const outputTokens = result.usageMetadata?.candidatesTokenCount ?? 0;
@@ -744,6 +787,31 @@ const PromptCrafter: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Provider Status Section */}
+          {!isConfigLoading && (
+            <div className="mt-4 p-3 bg-slate-50/50 dark:bg-[#0a0f14]/50 rounded-lg border border-slate-200 dark:border-slate-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {isDemoMode ? 'Demo Mode' : `Using ${selectedProvider || 'Unknown'}`}
+                  </span>
+                </div>
+                {availableProviders.length > 0 && (
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {availableProviders.length} provider{availableProviders.length !== 1 ? 's' : ''} available
+                  </div>
+                )}
+              </div>
+              {isDemoMode && (
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  Configure an AI provider API key for enhanced functionality
+                </p>
+              )}
+            </div>
+          )}
+
           <button
             onClick={handleGenerate}
             disabled={isLoading || ideas.length === 0 || !purpose.trim()}
