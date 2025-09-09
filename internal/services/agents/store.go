@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/kubex-ecosystem/gemx/grompt/internal/services/squad"
+	"github.com/kubex-ecosystem/grompt/internal/services/squad"
 )
 
 // StoredAgent wraps squad.Agent with an ID for persistence

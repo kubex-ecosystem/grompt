@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	t "github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	t "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 //go:embed all:build

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	providersPkg "github.com/kubex-ecosystem/gemx/grompt/internal/providers"
-	"github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	providersPkg "github.com/kubex-ecosystem/grompt/internal/providers"
+	"github.com/kubex-ecosystem/grompt/internal/types"
 	"gopkg.in/yaml.v3"
 
 	l "github.com/kubex-ecosystem/logz"

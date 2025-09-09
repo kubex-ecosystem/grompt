@@ -2,9 +2,9 @@
 package module
 
 import (
-	cc "github.com/kubex-ecosystem/gemx/grompt/cmd/cli"
-	gl "github.com/kubex-ecosystem/gemx/grompt/internal/module/logger"
-	vs "github.com/kubex-ecosystem/gemx/grompt/internal/module/version"
+	cc "github.com/kubex-ecosystem/grompt/cmd/cli"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/spf13/cobra"
 
 	"os"

@@ -1,4 +1,4 @@
-module github.com/kubex-ecosystem/gemx/grompt
+module github.com/kubex-ecosystem/grompt
 
 go 1.25.1
 

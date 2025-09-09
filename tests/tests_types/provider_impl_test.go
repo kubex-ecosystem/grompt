@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	typesx "github.com/kubex-ecosystem/gemx/grompt/internal/types"
-	m "github.com/kubex-ecosystem/gemx/grompt/mocks"
+	typesx "github.com/kubex-ecosystem/grompt/internal/types"
+	m "github.com/kubex-ecosystem/grompt/mocks"
 )
 
 func TestProviderImpl_NameAndVersion(t *testing.T) {

@@ -4,9 +4,9 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-blue.svg)](https://golang.org)
 [![React](https://img.shields.io/badge/React-19+-blue.svg)](https://reactjs.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/kubex-ecosystem/gemx/grompt/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/kubex-ecosystem/grompt/blob/main/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](development/contributing.md)
-[![GitHub Stars](https://img.shields.io/github/stars/kubex-ecosystem/grompt?style=social)](https://github.com/kubex-ecosystem/gemx/grompt/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/kubex-ecosystem/grompt?style=social)](https://github.com/kubex-ecosystem/grompt/stargazers)
 
 ---
 
@@ -66,16 +66,16 @@ múltiplos componentes.
 
 Baixe a versão mais recente para sua plataforma:
 
-- [Linux amd64](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_linux_amd64)
-- [macOS Intel](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_amd64)
-- [macOS Apple Silicon](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_arm64)
-- [Windows](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_windows_amd64.exe)
+- [Linux amd64](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64)
+- [macOS Intel](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_amd64)
+- [macOS Apple Silicon](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_arm64)
+- [Windows](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe)
 
 ### Opção 2: Via Terminal
 
 ```bash
 # Baixe a versão mais recente para sua plataforma
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt-linux-amd64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt-linux-amd64 -o grompt
 chmod +x grompt
 ./grompt
 
@@ -85,7 +85,7 @@ chmod +x grompt
 ### Opção 3: Compilar do Código Fonte
 
 ```bash
-git clone https://github.com/kubex-ecosystem/gemx/grompt
+git clone https://github.com/kubex-ecosystem/grompt
 cd grompt
 make build
 ./dist/grompt -h
@@ -115,12 +115,12 @@ make build
 
 - **[Contribuindo](development/contributing.md)** - Como contribuir para o projeto
 - **[Código de Conduta](community/code-of-conduct.md)** - Nossas diretrizes de comunidade
-- **[GitHub Issues](https://github.com/kubex-ecosystem/gemx/grompt/issues)** - Reporte bugs ou solicite recursos
+- **[GitHub Issues](https://github.com/kubex-ecosystem/grompt/issues)** - Reporte bugs ou solicite recursos
 
 ---
 
 *Transforme suas ideias em prompts poderosos hoje mesmo!*
 
-[⭐ Dê uma estrela no projeto](https://github.com/kubex-ecosystem/gemx/grompt/stargazers) |
-[🐛 Reportar Bug](https://github.com/kubex-ecosystem/gemx/grompt/issues) |
-[✨ Solicitar Funcionalidade](https://github.com/kubex-ecosystem/gemx/grompt/issues)
+[⭐ Dê uma estrela no projeto](https://github.com/kubex-ecosystem/grompt/stargazers) |
+[🐛 Reportar Bug](https://github.com/kubex-ecosystem/grompt/issues) |
+[✨ Solicitar Funcionalidade](https://github.com/kubex-ecosystem/grompt/issues)

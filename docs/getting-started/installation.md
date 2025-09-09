@@ -12,7 +12,7 @@ A forma mais simples de instalar o Grompt é baixando o binário pré-compilado 
 
 ```powershell
 # PowerShell
-Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_windows_amd64.exe" -OutFile "grompt.exe"
+Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe" -OutFile "grompt.exe"
 .\grompt.exe --help
 ```
 
@@ -20,7 +20,7 @@ Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/gemx/grompt/releases/
 
 ```bash
 # Download e instalação
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_linux_amd64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64 -o grompt
 chmod +x grompt
 sudo mv grompt /usr/local/bin/
 ```
@@ -29,10 +29,10 @@ sudo mv grompt /usr/local/bin/
 
 ```bash
 # macOS Intel
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_amd64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_amd64 -o grompt
 
 # macOS Apple Silicon (M1/M2)
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_arm64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_arm64 -o grompt
 
 # Tornar executável e mover para PATH
 chmod +x grompt
@@ -42,7 +42,7 @@ sudo mv grompt /usr/local/bin/
 ### Opção 2: Instalar via Make
 
 ```bash
-git clone https://github.com/kubex-ecosystem/gemx/grompt
+git clone https://github.com/kubex-ecosystem/grompt
 cd grompt
 make install
 ```
@@ -65,7 +65,7 @@ Este comando irá:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/kubex-ecosystem/gemx/grompt.git
+git clone https://github.com/kubex-ecosystem/grompt.git
 cd grompt
 
 # 2. Compilar
@@ -255,7 +255,7 @@ grompt --version
 
 ```bash
 # Download manual
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_linux_amd64 -o grompt-new
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64 -o grompt-new
 chmod +x grompt-new
 sudo mv grompt-new /usr/local/bin/grompt
 

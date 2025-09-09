@@ -17,14 +17,14 @@
   "markdown": "github",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kubex-ecosystem/gemx/grompt.git"
+    "url": "git+https://github.com/kubex-ecosystem/grompt.git"
   },
   "author": "Rafael Mori <faelmori@live.com>",
   "license": "MIT",
   "homepage": "https://kubex.world",
-  "readme": "https://github.com/kubex-ecosystem/gemx/grompt/README.md",
+  "readme": "https://github.com/kubex-ecosystem/grompt/README.md",
   "bugs": {
-    "url": "https://github.com/kubex-ecosystem/gemx/grompt/issues"
+    "url": "https://github.com/kubex-ecosystem/grompt/issues"
   },
   "type": "module",
   "scripts": {

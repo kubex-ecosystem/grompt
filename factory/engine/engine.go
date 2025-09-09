@@ -2,8 +2,8 @@
 package engine
 
 import (
-	"github.com/kubex-ecosystem/gemx/grompt/internal/engine"
-	"github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/internal/engine"
+	"github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type Engine = engine.IEngine

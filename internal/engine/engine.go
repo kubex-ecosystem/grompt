@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubex-ecosystem/gemx/grompt/factory/providers"
-	"github.com/kubex-ecosystem/gemx/grompt/factory/templates"
-	concreteProviders "github.com/kubex-ecosystem/gemx/grompt/internal/providers"
-	"github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/factory/providers"
+	"github.com/kubex-ecosystem/grompt/factory/templates"
+	concreteProviders "github.com/kubex-ecosystem/grompt/internal/providers"
+	"github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type IEngine interface {

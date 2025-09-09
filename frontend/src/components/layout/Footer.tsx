@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
           Kubex Ecosystem
         </a>
         <a
-          href="https://github.com/kubex-ecosystem/gemx/grompt"
+          href="https://github.com/kubex-ecosystem/grompt"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"

@@ -8,12 +8,12 @@ Comece a usar o Grompt em apenas 5 minutos! Este guia mostra como transformar su
 
 #### 📦 Downloads Rápidos
 
-- **Linux (amd64)** — [grompt_linux_amd64](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_linux_amd64)
-- **macOS Intel** — [grompt_darwin_amd64](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_amd64)
-- **macOS Apple Silicon** — [grompt_darwin_arm64](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_darwin_arm64)
-- **Windows (amd64)** — [grompt_windows_amd64.exe](https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_windows_amd64.exe)
+- **Linux (amd64)** — [grompt_linux_amd64](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64)
+- **macOS Intel** — [grompt_darwin_amd64](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_amd64)
+- **macOS Apple Silicon** — [grompt_darwin_arm64](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_arm64)
+- **Windows (amd64)** — [grompt_windows_amd64.exe](https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe)
 
-👉 Ou veja todas as opções na [página de Releases](https://github.com/kubex-ecosystem/gemx/grompt/releases).
+👉 Ou veja todas as opções na [página de Releases](https://github.com/kubex-ecosystem/grompt/releases).
 
 #### Verificação opcional de integridade (Linux/macOS)
 
@@ -26,14 +26,14 @@ sha256sum grompt_linux_amd64
 
 ```bash
 # Linux/macOS
-curl -L https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_linux_amd64 -o grompt
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64 -o grompt
 chmod +x grompt
 ./grompt
 ```
 
 ```powershell
 # Windows (PowerShell)
-Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/gemx/grompt/releases/latest/download/grompt_windows_amd64.exe" -OutFile "grompt.exe"
+Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe" -OutFile "grompt.exe"
 .\grompt.exe
 ```
 

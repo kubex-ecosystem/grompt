@@ -17,7 +17,7 @@ If you discover a security vulnerability in Grompt:
 
 - **Do NOT disclose it publicly** or via any public forum (including Discord).
 - Please report it through one of these private channels:
-  - [GitHub Security Advisories](https://github.com/kubex-ecosystem/gemx/grompt/security/advisories)
+  - [GitHub Security Advisories](https://github.com/kubex-ecosystem/grompt/security/advisories)
   - Or email: [maintainer@github.com/kubex-ecosystem/gemx/ghbex] (replace this with your actual security contact email)
 
 Include as much detail as possible, such as:

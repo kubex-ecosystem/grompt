@@ -431,8 +431,8 @@ Ao contribuir, você concorda que suas contribuições serão licenciadas sob a 
 
 ## 📞 Contato
 
-- **GitHub Issues:** [github.com/kubex-ecosystem/gemx/grompt/issues](https://github.com/kubex-ecosystem/gemx/grompt/issues)
-- **GitHub Discussions:** [github.com/kubex-ecosystem/gemx/grompt/discussions](https://github.com/kubex-ecosystem/gemx/grompt/discussions)
+- **GitHub Issues:** [github.com/kubex-ecosystem/grompt/issues](https://github.com/kubex-ecosystem/grompt/issues)
+- **GitHub Discussions:** [github.com/kubex-ecosystem/grompt/discussions](https://github.com/kubex-ecosystem/grompt/discussions)
 - **Email:** [através do GitHub](https://github.com/kubex-ecosystem)
 
 ---
