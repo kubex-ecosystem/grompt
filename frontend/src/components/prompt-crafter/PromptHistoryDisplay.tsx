@@ -1,8 +1,8 @@
+import { Eye, History, Trash2, XCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '../../i18n/useTranslations';
-import { HistoryItem } from '../../types';
 import { formatRelativeTime } from '../../lib/time';
-import { History, XCircle, Eye, Trash2 } from 'lucide-react';
+import { HistoryItem } from '../../types';
 
 interface PromptHistoryProps {
   history: HistoryItem[];
@@ -47,14 +47,14 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
                 </p>
               </div>
               <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
-                <button 
+                <button
                   onClick={() => onLoad(item)}
                   className="p-2 rounded-md bg-indigo-500/10 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/20 dark:hover:bg-indigo-400/30 transition-colors duration-200"
                   aria-label={t('loadPrompt')}
                 >
                   <Eye size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => onDelete(item.id)}
                   className="p-2 rounded-md bg-red-500/10 dark:bg-red-400/20 text-red-600 dark:text-red-300 hover:bg-red-500/20 dark:hover:bg-red-400/30 transition-colors duration-200"
                   aria-label={t('deletePrompt')}

@@ -97,6 +97,10 @@ test:
 	@bash $(INSTALL_SCRIPT) test $(ARGS)
 	$(shell exit 0)
 
+optimize-images:
+	@bash $(INSTALL_SCRIPT) optimize-images $(ARGS)
+	$(shell exit 0)
+
 # Platform-specific targets (prevent wildcard capture)
 linux:
 	@echo "Process finished for platform: linux"

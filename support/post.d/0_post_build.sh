@@ -12,3 +12,8 @@ shopt -s inherit_errexit # Inherit the errexit option in functions
 #_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 #echo "Root directory: ${_ROOT_DIR}" > /dev/tty
+
+
+find ui/build -type f -name '*.png' -exec pngquant --force --ext .png --quality=65-80 {} \;
+find ui/build -type f -name '*.jpg' -exec mogrify -strip -resize 1200x1200\> -quality 85 {} \;
+find ui/build -type f -name '*.svg' -exec svgo --multipass {} \;

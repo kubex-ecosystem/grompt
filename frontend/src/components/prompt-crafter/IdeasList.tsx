@@ -1,7 +1,7 @@
+import { Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '../../i18n/useTranslations';
 import { Idea } from '../../types';
-import { Trash2 } from 'lucide-react';
 
 interface IdeasListProps {
   ideas: Idea[];

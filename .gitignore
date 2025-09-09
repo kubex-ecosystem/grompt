@@ -29,7 +29,15 @@ yarn-error.log*
 
 # React
 !build/index.html
-frontend/build/
+frontend/build/*.js
+frontend/build/*.css
+frontend/build/*.html
+frontend/build/*.ico
+frontend/build/*.png
+frontend/build/*.svg
+frontend/build/*.jpg
+frontend/build/*.wasm
+
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local

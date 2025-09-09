@@ -1,6 +1,6 @@
+import { Plus } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '../../i18n/useTranslations';
-import { Plus } from 'lucide-react';
 
 interface IdeaInputProps {
   currentIdea: string;
