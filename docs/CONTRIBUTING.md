@@ -1,12 +1,12 @@
 # **Contributing to Grompt**
 
-Thank you for your interest in contributing to **[Grompt](https://github.com/kubex-ecosystem/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
+Thank you for your interest in contributing to **[Grompt](https://github.com/kubex-ecosystem/gemx/grompt)**! We are excited to have you as part of our community. This guide will help you get started and contribute effectively to the project.
 
 ---
 
 ## **How to Contribute**
 
-There are several ways to contribute to [Grompt](https://github.com/kubex-ecosystem/grompt):
+There are several ways to contribute to [Grompt](https://github.com/kubex-ecosystem/gemx/grompt):
 
 1. **Report Issues**
    - Found bugs or issues in the code? Open an issue detailing the problem.
@@ -29,7 +29,7 @@ There are several ways to contribute to [Grompt](https://github.com/kubex-ecosys
 ### 1. **Clone the Repository**
 
 ```bash
-git clone https://github.com/kubex-ecosystem/grompt.git
+git clone https://github.com/kubex-ecosystem/gemx/grompt.git
 cd grompt
 ```
 

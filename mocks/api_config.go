@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	t "github.com/kubex-ecosystem/grompt/internal/types"
+	t "github.com/kubex-ecosystem/gemx/grompt/internal/types"
 )
 
 // APIConfigMock implements t.IAPIConfig for tests.

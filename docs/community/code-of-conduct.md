@@ -38,9 +38,9 @@ Este Código de Conduta se aplica em todos os espaços da comunidade, e também 
 
 Instâncias de comportamento abusivo, de assédio ou de outro modo inaceitável podem ser relatadas aos líderes da comunidade responsáveis pela aplicação através dos seguintes canais:
 
-- **GitHub Issues:** [github.com/kubex-ecosystem/grompt/issues](https://github.com/kubex-ecosystem/grompt/issues)
+- **GitHub Issues:** [github.com/kubex-ecosystem/gemx/grompt/issues](https://github.com/kubex-ecosystem/gemx/grompt/issues)
 - **Email:** Entre em contato através do GitHub
-- **Discussões:** [github.com/kubex-ecosystem/grompt/discussions](https://github.com/kubex-ecosystem/grompt/discussions)
+- **Discussões:** [github.com/kubex-ecosystem/gemx/grompt/discussions](https://github.com/kubex-ecosystem/gemx/grompt/discussions)
 
 Todas as reclamações serão revisadas e investigadas de forma rápida e justa.
 

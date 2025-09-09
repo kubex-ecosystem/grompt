@@ -7,8 +7,8 @@
   "aliases": [
     "grompt"
   ],
-  "repository": "https://github.com/kubex-ecosystem/grompt",
-  "homepage": "https://github.com/kubex-ecosystem/grompt",
+  "repository": "https://github.com/kubex-ecosystem/gemx/grompt",
+  "homepage": "https://github.com/kubex-ecosystem/gemx/grompt",
   "description": "Kubex - Grompt is a profissional AI prompt context object kind like: agents, prompts, API calls, and more.",
   "main": "cmd/main.go",
   "bin": "grompt",

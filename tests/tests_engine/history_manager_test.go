@@ -3,7 +3,7 @@ package engine_test
 import (
 	"testing"
 
-	eng "github.com/kubex-ecosystem/grompt/internal/engine"
+	eng "github.com/kubex-ecosystem/gemx/grompt/internal/engine"
 )
 
 func TestHistoryManager_AddAndTrim(t *testing.T) {

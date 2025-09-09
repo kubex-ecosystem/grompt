@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
-	t "github.com/kubex-ecosystem/grompt/internal/types"
-	"github.com/kubex-ecosystem/grompt/utils"
+	gl "github.com/kubex-ecosystem/gemx/grompt/internal/module/logger"
+	t "github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	"github.com/kubex-ecosystem/gemx/grompt/utils"
 	l "github.com/kubex-ecosystem/logz"
 )
 

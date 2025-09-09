@@ -3,7 +3,7 @@ package cli_test
 import (
 	"testing"
 
-	cli "github.com/kubex-ecosystem/grompt/cmd/cli"
+	cli "github.com/kubex-ecosystem/gemx/grompt/cmd/cli"
 	"github.com/spf13/cobra"
 )
 

@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	typesx "github.com/kubex-ecosystem/grompt/internal/types"
+	typesx "github.com/kubex-ecosystem/gemx/grompt/internal/types"
 )
 
 func TestAPIs_Complete_ReturnsErrorWithoutKey(t *testing.T) {

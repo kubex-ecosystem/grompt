@@ -3,7 +3,7 @@ package module_test
 import (
 	"testing"
 
-	mod "github.com/kubex-ecosystem/grompt/internal/module"
+	mod "github.com/kubex-ecosystem/gemx/grompt/internal/module"
 	"github.com/spf13/cobra"
 )
 

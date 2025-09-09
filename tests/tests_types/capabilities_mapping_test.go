@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	typesx "github.com/kubex-ecosystem/grompt/internal/types"
-	m "github.com/kubex-ecosystem/grompt/mocks"
+	typesx "github.com/kubex-ecosystem/gemx/grompt/internal/types"
+	m "github.com/kubex-ecosystem/gemx/grompt/mocks"
 )
 
 func TestCapabilities_MaxTokens_ByProvider(t *testing.T) {

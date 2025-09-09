@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	manifest "github.com/kubex-ecosystem/grompt/internal/module/info"
-	"github.com/kubex-ecosystem/grompt/internal/module/logger"
+	manifest "github.com/kubex-ecosystem/gemx/grompt/internal/module/info"
+	"github.com/kubex-ecosystem/gemx/grompt/internal/module/logger"
 	"github.com/spf13/cobra"
 )
 

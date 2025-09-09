@@ -81,7 +81,7 @@ jobs:
           if [ ! -f docs/project-info/changelog.md ]; then
             echo "# Changelog" > docs/project-info/changelog.md
             echo "" >> docs/project-info/changelog.md
-            echo "Consulte o [histórico de releases](https://github.com/kubex-ecosystem/grompt/releases) para ver todas as mudanças." >> docs/project-info/changelog.md
+            echo "Consulte o [histórico de releases](https://github.com/kubex-ecosystem/gemx/grompt/releases) para ver todas as mudanças." >> docs/project-info/changelog.md
           fi
 
           # Criar páginas que faltam se não existirem
@@ -100,7 +100,7 @@ jobs:
           if [ ! -f docs/community/support.md ]; then
             echo "# Suporte" > docs/community/support.md
             echo "" >> docs/community/support.md
-            echo "Para suporte, visite nossas [GitHub Issues](https://github.com/kubex-ecosystem/grompt/issues)." >> docs/community/support.md
+            echo "Para suporte, visite nossas [GitHub Issues](https://github.com/kubex-ecosystem/gemx/grompt/issues)." >> docs/community/support.md
           fi
 
           # Authors page
@@ -111,7 +111,7 @@ jobs:
             echo "- **Rafael Mori** - [@kubex-ecosystem](https://github.com/kubex-ecosystem)" >> docs/community/authors.md
             echo "" >> docs/community/authors.md
             echo "## Contribuidores" >> docs/community/authors.md
-            echo "Veja a lista completa de [contribuidores](https://github.com/kubex-ecosystem/grompt/contributors)." >> docs/community/authors.md
+            echo "Veja a lista completa de [contribuidores](https://github.com/kubex-ecosystem/gemx/grompt/contributors)." >> docs/community/authors.md
           fi
 
           # Architecture page

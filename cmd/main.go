@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kubex-ecosystem/grompt/internal/module"
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	"github.com/kubex-ecosystem/gemx/grompt/internal/module"
+	gl "github.com/kubex-ecosystem/gemx/grompt/internal/module/logger"
 )
 
 // This file is the entry point for the Grompt CLI application.

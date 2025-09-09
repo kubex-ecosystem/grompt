@@ -3,11 +3,11 @@
 package grompt
 
 import (
-	"github.com/kubex-ecosystem/grompt/factory/providers"
-	"github.com/kubex-ecosystem/grompt/internal/engine"
-	m "github.com/kubex-ecosystem/grompt/internal/module"
-	st "github.com/kubex-ecosystem/grompt/internal/module/control"
-	"github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/gemx/grompt/factory/providers"
+	"github.com/kubex-ecosystem/gemx/grompt/internal/engine"
+	m "github.com/kubex-ecosystem/gemx/grompt/internal/module"
+	st "github.com/kubex-ecosystem/gemx/grompt/internal/module/control"
+	"github.com/kubex-ecosystem/gemx/grompt/internal/types"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ site_description: "CLI poderosa para gerenciar e transformar prompts com prátic
 site_author: "Rafael Mori"
 
 repo_name: "kubex-ecosystem/grompt"
-repo_url: https://github.com/kubex-ecosystem/grompt
+repo_url: https://github.com/kubex-ecosystem/gemx/grompt
 
 docs_dir: ../../docs
 
@@ -106,7 +106,7 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/kubex-ecosystem/grompt
+      link: https://github.com/kubex-ecosystem/gemx/grompt
       name: Grompt on GitHub
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/rafa-mori/

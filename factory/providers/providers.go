@@ -2,7 +2,7 @@
 package providers
 
 import (
-	"github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/gemx/grompt/internal/types"
 	"github.com/kubex-ecosystem/logz"
 )
 

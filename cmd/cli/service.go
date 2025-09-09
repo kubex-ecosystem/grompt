@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
-	"github.com/kubex-ecosystem/grompt/utils"
+	gl "github.com/kubex-ecosystem/gemx/grompt/internal/module/logger"
+	"github.com/kubex-ecosystem/gemx/grompt/utils"
 	"gopkg.in/yaml.v3"
 
-	s "github.com/kubex-ecosystem/grompt/internal/services/server"
-	t "github.com/kubex-ecosystem/grompt/internal/types"
+	s "github.com/kubex-ecosystem/gemx/grompt/internal/services/server"
+	t "github.com/kubex-ecosystem/gemx/grompt/internal/types"
 	l "github.com/kubex-ecosystem/logz"
 
 	"github.com/spf13/cobra"

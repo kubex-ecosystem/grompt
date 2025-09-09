@@ -1,6 +1,6 @@
 # Grompt: AI Prompt Crafter
 
-![Grompt Logo](https://github.com/kubex-ecosystem/grompt/raw/main/docs/assets/logo.png)
+![Grompt Logo](https://github.com/kubex-ecosystem/gemx/grompt/raw/main/docs/assets/logo.png)
 
 Grompt is an intelligent AI prompt crafting tool built with Kubex principles: Radical Simplicity, Modularity, and No Cages. Transform your raw ideas into professional, structured prompts for AI models.
 
