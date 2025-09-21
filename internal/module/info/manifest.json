@@ -22,7 +22,7 @@
     "control",
     "command-line",
     "tool",
-    "management"w
+    "management"
   ],
   "platforms": [
     "linux/amd64",

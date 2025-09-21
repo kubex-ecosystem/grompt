@@ -67,15 +67,15 @@ build_frontend() {
           exit 1
       fi
 
-      if [[ -d "${_ROOT_DIR}/internal/analyzer/embedded/guiweb" ]]; then
+      if [[ -d "${_ROOT_DIR}/internal/grompt/embedded/guiweb" ]]; then
           log notice "Removing old build directory..."
-          rm -rf "${_ROOT_DIR}/internal/analyzer/embedded/guiweb" || {
+          rm -rf "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
               log fatal "Failed to remove old build directory." true
               exit 1
           }
       fi
 
-      mv './dist' "${_ROOT_DIR}/internal/analyzer/embedded/guiweb" || {
+      mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
           log fatal "Failed to move build directory to embedded/guiweb." true
           exit 1
       }

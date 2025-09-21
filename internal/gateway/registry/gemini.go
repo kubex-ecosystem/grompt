@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	genai "github.com/google/generative-ai-go/genai"
+	genai "cloud.google.com/go/vertexai/genai"
 	providers "github.com/kubex-ecosystem/grompt/internal/types"
 	"google.golang.org/api/option"
 )
@@ -34,7 +34,7 @@ func NewGeminiProvider(name, baseURL, key, model string) (*geminiProvider, error
 
 	// Create a client for the entire provider instance
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(key))
+	client, err := genai.NewClient(ctx, "587138832075", "southamerica-east1", option.WithAPIKey(key))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
