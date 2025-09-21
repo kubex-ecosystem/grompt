@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/internal/config"
@@ -34,6 +35,12 @@ type httpHandlers struct {
 
 // WireHTTP sets up HTTP routes
 func WireHTTP(mux *http.ServeMux, reg *registry.Registry, prodMiddleware *middleware.ProductionMiddleware) {
+	// Initialize Grompt V1 handlers with GoBE proxy support
+	gobeBaseURL := getEnv("GOBE_BASE_URL", "")
+	gromptV1Handlers := NewGromptV1Handlers(reg, prodMiddleware, gobeBaseURL)
+
+	// Wire Grompt V1 specific routes
+	WireGromptV1Routes(mux, gromptV1Handlers)
 	// Initialize LookAtni handler
 	workDir := "./lookatni_workspace" // TODO: Make configurable
 	lookAtniHandler := lookatni.NewHandler(workDir)
@@ -584,4 +591,12 @@ func (h *httpHandlers) handleSchedulerForce(w http.ResponseWriter, r *http.Reque
 		"time":    time.Now(),
 	}
 	json.NewEncoder(w).Encode(response)
+}
+
+// getEnv returns environment variable value or default
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
