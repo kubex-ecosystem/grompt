@@ -26,7 +26,19 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
+      "tests/*": [
+        "./tests/*"
+      ],
+      "test-utils/*": [
+        "./tests/utils/*"
+      ],
+      "components/*": [
+        "./src/components/*"
+      ],
+      "hooks/*": [
+        "./src/hooks/*"
+      ],
     },
     "noEmit": true
   }

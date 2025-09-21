@@ -4,9 +4,11 @@ import {
   AIProvider,
   AIResponse,
   BaseProvider,
+  GenerateContentParams,
   MultiAIConfig,
   OpenAIModels
 } from "../types";
+
 
 export class OpenAIProvider extends BaseProvider {
   private openai: OpenAI;
@@ -31,10 +33,16 @@ export class OpenAIProvider extends BaseProvider {
   }): Promise<AIResponse> {
     const model = (params.model as OpenAIModels) || (this.defaultModel as OpenAIModels);
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      ...(params.systemInstruction ? [{ role: 'system', content: params.systemInstruction }] : []),
-      { role: 'user', content: params.prompt }
-    ];
+    const role: React.AriaRole = 'user';
+    let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+    if (params.systemInstruction) {
+      messages = [
+        { role: 'system', content: params.systemInstruction },
+        { role: 'user', content: params.prompt }
+      ];
+    } else {
+      messages = [{ role: 'user', content: params.prompt }];
+    }
 
     try {
       const completion = await this.openai.chat.completions.create({
@@ -77,10 +85,15 @@ export class OpenAIProvider extends BaseProvider {
   }): AsyncIterable<string> {
     const model = (params.model as OpenAIModels) || (this.defaultModel as OpenAIModels);
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      ...(params.systemInstruction ? [{ role: 'system', content: params.systemInstruction }] : []),
-      { role: 'user', content: params.prompt }
-    ];
+    let messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+    if (params.systemInstruction) {
+      messages = [
+        { role: 'system', content: params.systemInstruction },
+        { role: 'user', content: params.prompt }
+      ];
+    } else {
+      messages = [{ role: 'user', content: params.prompt }];
+    }
 
     try {
       const stream = await this.openai.chat.completions.create({

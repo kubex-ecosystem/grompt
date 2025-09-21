@@ -1,4 +1,4 @@
-import path from 'path';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 
@@ -25,7 +25,7 @@ const getEnvResilient = (mode: string, envDir: string) => {
   return finalEnv;
 };
 
-export default defineConfig(({ mode }: { mode: string }) => {
+export default defineConfig(({ mode }) => {
   const env: Record<string, string> = getEnvResilient(mode, process.cwd());
   return {
     root: '.',
@@ -117,7 +117,7 @@ export default defineConfig(({ mode }: { mode: string }) => {
         },
       },
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: false,
       chunkSizeWarningLimit: 900,
     },
     css: {

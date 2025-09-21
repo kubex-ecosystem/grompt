@@ -1,4 +1,4 @@
-import { GoogleGenAI as GoogleGenerativeAI, type GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import {
   AIProvider,
   BaseProvider,
@@ -6,65 +6,108 @@ import {
   type AIModel,
   type AIResponse,
   type GenerateContentParams,
-  type MultiAIConfig
+  type MultiAIConfig,
 } from "../types";
 
-export class GeminiProvider extends BaseProvider {
-  private genAI: GoogleGenerativeAI;
-  private config?: MultiAIConfig['providers'][AIProvider.GEMINI];
+function readText(resp: any): string {
+  // cobre variantes do SDK (prop direta, método, parts…)
+  return (
+    resp?.text ??
+    resp?.response?.text?.() ??
+    (Array.isArray(resp?.response?.candidates)
+      ? resp.response.candidates
+        .flatMap((c: any) => c?.content?.parts ?? [])
+        .map((p: any) => p?.text ?? "")
+        .join("")
+      : "") ??
+    ""
+  );
+}
 
-  constructor(apiKey: string, defaultModel: GeminiModels, config?: MultiAIConfig['providers'][AIProvider.GEMINI]) {
+function readUsage(resp: any) {
+  const u = resp?.usage ?? resp?.response?.usageMetadata;
+  return u
+    ? {
+      promptTokens: u.promptTokenCount,
+      completionTokens: u.candidatesTokenCount,
+      totalTokens: u.totalTokenCount,
+    }
+    : undefined;
+}
+
+export class GeminiProvider extends BaseProvider {
+  private ai: GoogleGenAI;
+  private config?: MultiAIConfig["providers"][AIProvider.GEMINI];
+
+  constructor(
+    apiKey: string,
+    defaultModel: GeminiModels,
+    config?: MultiAIConfig["providers"][AIProvider.GEMINI]
+  ) {
     super(defaultModel);
-    this.genAI = new GoogleGenerativeAI({ apiKey, });
+    this.ai = new GoogleGenAI({ apiKey });
     this.config = config;
+  }
+
+  /** monta a sessão de chat com as configs unificadas */
+  private createChat(
+    model: GeminiModels,
+    systemInstruction?: string,
+    options?: GenerateContentParams["options"]
+  ) {
+    return this.ai.chats.create({
+      model,
+      config: {
+        // geração
+        temperature:
+          options?.temperature ??
+          this.config?.options?.generationConfig?.temperature,
+        topP: options?.topP ?? this.config?.options?.generationConfig?.topP,
+        maxOutputTokens:
+          options?.maxTokens ??
+          this.config?.options?.generationConfig?.maxOutputTokens ??
+          4000,
+        stopSequences: options?.stopSequences,
+
+        // safety & system
+        safetySettings: this.config?.options?.safetySettings,
+        systemInstruction, // string direto funciona nesse layer
+      },
+    });
   }
 
   async generateContent(params: {
     prompt: string;
     systemInstruction?: string;
     model?: AIModel;
-    options?: GenerateContentParams['options'];
+    options?: GenerateContentParams["options"];
   }): Promise<AIResponse> {
-    const model = (params.model as GeminiModels) || (this.defaultModel as GeminiModels);
-
-    const generationConfig = {
-      temperature: params.options?.temperature ?? this.config?.options?.generationConfig?.temperature,
-      topP: params.options?.topP ?? this.config?.options?.generationConfig?.topP,
-      topK: this.config?.options?.generationConfig?.topK,
-      maxOutputTokens: params.options?.maxTokens
-        ?? this.config?.options?.generationConfig?.maxOutputTokens
-        ?? 4000,
-      stopSequences: params.options?.stopSequences
-    } as GetModelParameters;
-
-    const modelInstance = this.genAI.models.get({
-      model,
-      generationConfig,
-      safetySettings: this.config?.options?.safetySettings,
-      systemInstruction: params.systemInstruction
-        ? { role: "system", parts: [{ text: params.systemInstruction }] }
-        : undefined,
-    });
+    const model =
+      (params.model as GeminiModels) || (this.defaultModel as GeminiModels);
 
     try {
-      const result: GenerateContentResponse = await modelInstance.generateContent(params.prompt);
-      const response = result.response;
+      // chat efêmero por call (sem histórico compartilhado)
+      const chat = this.createChat(
+        model,
+        params.systemInstruction,
+        params.options
+      );
+      const resp = await chat.sendMessage({ message: params.prompt });
 
       return {
-        text: response?.text() ?? "",
+        text: readText(resp),
         provider: AIProvider.GEMINI,
         model,
-        usage: {
-          promptTokens: response?.usageMetadata?.promptTokenCount,
-          completionTokens: response?.usageMetadata?.candidatesTokenCount,
-          totalTokens: response?.usageMetadata?.totalTokenCount,
-        },
-        finishReason: response?.candidates?.[0]?.finishReason,
+        usage: readUsage(resp),
+        finishReason: [resp.promptFeedback?.blockReason || "Unknown", resp.promptFeedback?.blockReasonMessage || "N/A"].join(" - "),
         cached: false,
       };
     } catch (error) {
-      console.error('Gemini API error:', error);
-      throw new Error(`Gemini generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Gemini API error:", error);
+      throw new Error(
+        `Gemini generation failed: ${error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -72,33 +115,35 @@ export class GeminiProvider extends BaseProvider {
     prompt: string;
     systemInstruction?: string;
     model?: AIModel;
-    options?: GenerateContentParams['options'];
+    options?: GenerateContentParams["options"];
   }): AsyncIterable<string> {
-    const model = (params.model as GeminiModels) || (this.defaultModel as GeminiModels);
-
-    const modelInstance = this.genAI.models.get({
-      model,
-      systemInstruction: params.systemInstruction
-        ? { role: "system", parts: [{ text: params.systemInstruction }] }
-        : undefined,
-      generationConfig: {
-        temperature: params.options?.temperature ?? this.config?.options?.generationConfig?.temperature,
-        maxOutputTokens: params.options?.maxTokens
-          ?? this.config?.options?.generationConfig?.maxOutputTokens
-          ?? 4000,
-        stopSequences: params.options?.stopSequences
-      }
-    });
+    const model =
+      (params.model as GeminiModels) || (this.defaultModel as GeminiModels);
 
     try {
-      const streamResp = await modelInstance.generateContentStream(params.prompt);
-      for await (const chunk of streamResp.stream) {
-        const t = chunk.text();
+      const chat = this.createChat(
+        model,
+        params.systemInstruction,
+        params.options
+      );
+      const stream = await chat.sendMessageStream({ message: params.prompt });
+
+      // algumas versões expõem `.stream`, outras já são AsyncIterable
+      const it: AsyncIterable<any> = (stream as any).stream ?? (stream as any);
+
+      for await (const chunk of it) {
+        // chunk pode ter `text()` ou `text`
+        const t =
+          (chunk && typeof chunk.text === "function" && chunk.text()) ||
+          (typeof chunk?.text === "string" ? chunk.text : "");
         if (t) yield t;
       }
     } catch (error) {
-      console.error('Gemini streaming error:', error);
-      throw new Error(`Gemini streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Gemini streaming error:", error);
+      throw new Error(
+        `Gemini streaming failed: ${error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 }

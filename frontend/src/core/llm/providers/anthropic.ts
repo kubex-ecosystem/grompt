@@ -1,14 +1,18 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { type MessageStreamEvents } from "@anthropic-ai/sdk/lib/MessageStream";
+import { default as Anthropic } from "@anthropic-ai/sdk";
 
+const {
+  Messages,
+} = Anthropic;
+
+import { MessagesPage } from "openai/resources/beta/threads/messages";
 import {
   AIProvider,
+  AnthropicModels,
   BaseProvider,
   type AIModel,
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-  AnthropicModels,
 } from "../types";
 
 export class AnthropicProvider extends BaseProvider {
@@ -87,9 +91,12 @@ export class AnthropicProvider extends BaseProvider {
         stream: true,
       });
 
-      for await (const ev of stream as AsyncIterable<MessageStreamEvents>) {
-        if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta" && ev.delta.text) {
-          yield ev.delta.text;
+      for await (const ev of stream as AsyncIterable<MessagesPage>) {
+        const iterator = ev.getNextPage();
+        for await (const message of (await iterator).iterPages()) {
+          if (typeof message === "string") {
+            yield message;
+          }
         }
       }
     } catch (error) {
