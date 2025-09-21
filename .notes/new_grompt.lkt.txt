@@ -1,0 +1,305 @@
+/// src/core/llm/types.ts ///
+
+export type ModelFamily = "gemini" | "openai" | "anthropic";
+
+export interface LLMRequest {
+  system?: string;
+  user: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface LLMResponse {
+  text: string;
+  raw?: unknown;
+  model: string;
+  provider: ModelFamily;
+}
+
+export interface LLMProvider {
+  readonly name: ModelFamily;
+  generate(req: LLMRequest): Promise<LLMResponse>;
+}
+
+export type ProviderInit = {
+  model?: string;
+  apiKey?: string;
+  endpoint?: string;
+  headers?: Record<string,string>;
+};
+
+/// src/core/llm/index.ts ///
+
+
+import { LLMProvider, ProviderInit, ModelFamily } from "./types";
+import { GeminiProvider } from "./providers/gemini";
+import { OpenAIProvider } from "./providers/openai";
+import { AnthropicProvider } from "./providers/anthropic";
+
+export type ProviderConfig = {
+  family: ModelFamily;
+  init?: ProviderInit;
+};
+
+export function createProvider(cfg?: ProviderConfig): LLMProvider {
+  const family = cfg?.family ?? (import.meta.env.VITE_LLM_FAMILY as ModelFamily) ?? "gemini";
+
+  switch (family) {
+    case "gemini":
+      return new GeminiProvider({
+        model: cfg?.init?.model ?? (import.meta.env.VITE_GEMINI_MODEL ?? "gemini-2.0-flash"),
+        apiKey: cfg?.init?.apiKey ?? import.meta.env.VITE_GEMINI_API_KEY,
+        endpoint: cfg?.init?.endpoint // opcional; SDK usa default
+      });
+    case "openai":
+      return new OpenAIProvider({
+        model: cfg?.init?.model ?? (import.meta.env.VITE_OPENAI_MODEL ?? "gpt-4o-mini"),
+        apiKey: cfg?.init?.apiKey ?? import.meta.env.VITE_OPENAI_API_KEY,
+        endpoint: cfg?.init?.endpoint
+      });
+    case "anthropic":
+      return new AnthropicProvider({
+        model: cfg?.init?.model ?? (import.meta.env.VITE_ANTHROPIC_MODEL ?? "claude-3-5-sonnet-20240620"),
+        apiKey: cfg?.init?.apiKey ?? import.meta.env.VITE_ANTHROPIC_API_KEY,
+        endpoint: cfg?.init?.endpoint
+      });
+    default:
+      throw new Error(`Unknown LLM family: ${family}`);
+  }
+}
+
+
+/// src/core/llm/providers/gemini.ts ///
+
+
+import { LLMProvider, LLMRequest, LLMResponse, ProviderInit } from "../types";
+
+/**
+ * SDK oficial Gemini:
+ * npm i @google/generative-ai
+ */
+export class GeminiProvider implements LLMProvider {
+  readonly name = "gemini" as const;
+  private modelId: string;
+  private client: any;
+
+  constructor(init?: ProviderInit) {
+    const { GoogleGenerativeAI } = (await import("@google/generative-ai")) as any;
+    if (!init?.apiKey) throw new Error("GEMINI_API_KEY missing");
+    this.modelId = init.model ?? "gemini-2.0-flash";
+    this.client = new GoogleGenerativeAI(init.apiKey);
+  }
+
+  async generate(req: LLMRequest): Promise<LLMResponse> {
+    const model = this.client.getGenerativeModel({
+      model: this.modelId,
+      systemInstruction: req.system ?? undefined
+    });
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: req.user }]}],
+      generationConfig: {
+        temperature: req.temperature ?? 0.2,
+        maxOutputTokens: req.maxTokens ?? 2048
+      }
+    });
+
+    const text = result.response?.text?.() ?? result.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return { text, raw: result, model: this.modelId, provider: this.name };
+  }
+}
+
+
+/// src/core/llm/providers/openai.ts ///
+
+
+import { LLMProvider, LLMRequest, LLMResponse, ProviderInit } from "../types";
+
+/**
+ * SDK oficial OpenAI:
+ * npm i openai
+ */
+export class OpenAIProvider implements LLMProvider {
+  readonly name = "openai" as const;
+  private modelId: string;
+  private client: any;
+
+  constructor(init?: ProviderInit) {
+    if (!init?.apiKey) throw new Error("OPENAI_API_KEY missing");
+    this.modelId = init.model ?? "gpt-4o-mini";
+    const OpenAI = (await import("openai")).default;
+    this.client = new OpenAI({ apiKey: init.apiKey, baseURL: init.endpoint });
+  }
+
+  async generate(req: LLMRequest): Promise<LLMResponse> {
+    const r = await this.client.chat.completions.create({
+      model: this.modelId,
+      messages: [
+        ...(req.system ? [{ role: "system", content: req.system }] as const : []),
+        { role: "user", content: req.user }
+      ],
+      temperature: req.temperature ?? 0.2,
+      max_tokens: req.maxTokens ?? 2048
+    });
+
+    const text = r.choices?.[0]?.message?.content ?? "";
+    return { text, raw: r, model: this.modelId, provider: this.name };
+  }
+}
+
+
+/// src/core/llm/providers/anthropic.ts ///
+
+
+import { LLMProvider, LLMRequest, LLMResponse, ProviderInit } from "../types";
+
+/**
+ * SDK oficial Anthropic:
+ * npm i @anthropic-ai/sdk
+ */
+export class AnthropicProvider implements LLMProvider {
+  readonly name = "anthropic" as const;
+  private modelId: string;
+  private client: any;
+
+  constructor(init?: ProviderInit) {
+    if (!init?.apiKey) throw new Error("ANTHROPIC_API_KEY missing");
+    this.modelId = init.model ?? "claude-3-5-sonnet-20240620";
+    const { Anthropic } = await import("@anthropic-ai/sdk");
+    this.client = new Anthropic({ apiKey: init.apiKey, baseURL: init.endpoint });
+  }
+
+  async generate(req: LLMRequest): Promise<LLMResponse> {
+    const msg = await this.client.messages.create({
+      model: this.modelId,
+      max_tokens: req.maxTokens ?? 2048,
+      temperature: req.temperature ?? 0.2,
+      system: req.system ?? undefined,
+      messages: [{ role: "user", content: req.user }]
+    });
+
+    // Anthropic retorna content[].text
+    const text = (msg.content?.[0] as any)?.text ?? "";
+    return { text, raw: msg, model: this.modelId, provider: this.name };
+  }
+}
+
+
+/// src/utils/lookatni.ts ///
+
+`
+export type FileUnit = { path: string; content: string };
+
+export function pack(files: FileUnit[]): string {
+  return files.map(f => `/// ${f.path} ///\n${f.content}\n`).join("\n");
+}
+
+export function extractDiffFenced(text: string): string {
+  const m = text.match(/```diff([\s\S]*?)```/);
+  return (m ? m[1] : text).trim();
+}
+`
+
+/// src/services/evolver.ts ///
+
+`
+import { createProvider } from "../core/llm";
+import { pack, extractDiffFenced } from "../utils/lookatni";
+
+/** Seleciona provider a partir do env sem travar UI */
+const llm = createProvider();
+
+/** Monta o payload LookAtni a partir do VFS/FS do app. Troca por fetch('/snapshot') se preferir. */
+export async function buildLookatniBlob(grab: (p: string)=>string, include: string[]): Promise<string> {
+  const files = include.map(p => ({ path: p, content: grab(p) }));
+  return pack(files);
+}
+
+/** Pede um UNIFIED DIFF pequeno. */
+export async function requestUnifiedDiff(blob: string, task: string): Promise<string> {
+  const system = [
+    "You are a rigorous code refactorer.",
+    "Return ONLY one unified diff fenced with diff.",
+    "Small, reviewable changes. Preserve behavior and paths (a/ b/ headers)."
+  ].join("\n");
+
+  const user = [
+    "Context (LookAtni):",
+    blob,
+    "",
+    "Task:",
+    task,
+    "",
+    "Constraints:",
+    "- Keep exports stable; no broad rewrites.",
+    "- Prefer extracting helpers, removing duplication, adding small tests.",
+    "- If you add files, include proper diff headers."
+  ].join("\n");
+
+  const out = await llm.generate({ system, user, temperature: 0.15, maxTokens: 1800 });
+  return extractDiffFenced(out.text);
+}
+`
+
+/// src/App.tsx (trecho de integração do botão “Evolve”) ///
+
+`x
+import { buildLookatniBlob, requestUnifiedDiff } from "./services/evolver";
+
+// defina a lista mínima do teu app:
+const EVOLVE_INCLUDE = [
+  "index.html",
+  "src/main.tsx",
+  "src/App.tsx",
+  "src/services/geminiService.ts",   // se existir
+  "src/styles.css",
+  "vite.config.ts",
+  "package.json",
+  "tsconfig.json"
+];
+
+// Função que “pega” arquivos do runtime do teu ambiente.
+// Se não tiver __VFS__, substitui por fetch('/snapshot/<path>')
+function grabFile(path: string): string {
+  // @ts-expect-error ambiente do AI Studio/preview pode expor isso; se não, troca por fetch()
+  const b = window.__VFS__?.[path];
+  if (typeof b === "string") return b;
+  throw new Error(`VFS missing: ${path} (troque grabFile para fetch('/snapshot/${path}'))`);
+}
+
+async function handleVirtuousEvolve() {
+  setEvolveStep("generating_prompt");
+  const selfPrompt = [
+    "Perform a tiny but valuable refactor improving cohesion/clarity.",
+    "Prefer lazy-chunk UI pieces and remove any dead code.",
+    "Return ONLY a unified diff fenced with ```diff."
+  ].join("\n");
+
+  const blob = await buildLookatniBlob(grabFile, EVOLVE_INCLUDE);
+  setEvolveStep("refactoring");
+  const diff = await requestUnifiedDiff(blob, selfPrompt);
+  setEvolveDiff(diff);
+  setEvolveStep("done");
+}
+`
+
+/// .env.example ///
+
+```dotenv
+# Escolha do provedor
+VITE_LLM_FAMILY=gemini  # gemini | openai | anthropic
+
+# Gemini
+VITE_GEMINI_API_KEY=...
+VITE_GEMINI_MODEL=gemini-2.0-flash
+
+# OpenAI
+VITE_OPENAI_API_KEY=...
+VITE_OPENAI_MODEL=gpt-4o-mini
+# VITE_OPENAI_ENDPOINT=...  # opcional
+
+# Anthropic
+VITE_ANTHROPIC_API_KEY=...
+VITE_ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
+# VITE_ANTHROPIC_ENDPOINT=... # opcional
+```
