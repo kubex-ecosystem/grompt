@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { DemoMode } from '../../config/demoMode';
 
 const DemoStatusFooter: React.FC = () => {

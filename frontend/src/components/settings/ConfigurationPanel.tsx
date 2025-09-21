@@ -1,8 +1,8 @@
-import React from 'react';
-import { Info, Loader2, Wifi, WifiOff } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
+import * as React from 'react';
 import { DemoMode } from '../../config/demoMode';
-import { OutputType, AgentFramework, Purpose } from '../../hooks/usePromptCrafter';
 import { UseProvidersState } from '../../hooks/useGromptAPI';
+import { AgentFramework, OutputType, Purpose } from '../../hooks/usePromptCrafter';
 
 interface Theme {
   [key: string]: string;
@@ -61,12 +61,12 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   handleFeatureClick,
   providers
 }) => {
-  const outputTypes = [
+  const outputTypes: { value: OutputType; label: string; icon: string }[] = [
     { value: 'prompt' as const, label: '📝 Prompt', icon: '📝' },
     { value: 'agent' as const, label: '🤖 Agent', icon: '🤖' }
   ];
 
-  const agentFrameworks = [
+  const agentFrameworks: { value: AgentFramework; label: string }[] = [
     { value: 'crewai' as const, label: 'CrewAI' },
     { value: 'autogen' as const, label: 'AutoGen' },
     { value: 'langchain' as const, label: 'LangChain Agents' },
@@ -79,13 +79,13 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const providersLoading = providers?.loading || false;
   const providersError = providers?.error;
 
-  const tools = [
+  const tools: string[] = [
     'web_search', 'file_handler', 'calculator', 'email_sender',
     'database', 'api_caller', 'code_executor', 'image_generator',
     'git_ops', 'docker_manager'
   ];
 
-  const mcpServersList = [
+  const mcpServersList: { name: string; desc: string }[] = [
     { name: 'filesystem', desc: '📁 Sistema de arquivos' },
     { name: 'database', desc: '🗄️ Banco de dados' },
     { name: 'web-scraper', desc: '🕷️ Web scraping' },
@@ -150,8 +150,8 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               key={option.value}
               onClick={() => setOutputType(option.value)}
               className={`flex-1 px-4 py-3 rounded-lg text-sm border transition-all ${outputType === option.value
-                  ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
-                  : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50'
+                ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
+                : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50'
                 }`}
             >
               <div className="text-center">
@@ -170,6 +170,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
           <div>
             <label className="text-sm font-medium mb-2 text-white flex items-center">Framework do Agent</label>
             <select
+              title='Selecione o framework do agent'
               value={agentFramework}
               onChange={(e) => setAgentFramework(e.target.value as AgentFramework)}
               className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -205,6 +206,7 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             )}
 
             <select
+              title='Selecione o provider do agent'
               value={agentProvider}
               onChange={(e) => setAgentProvider(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -253,8 +255,8 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   key={tool}
                   onClick={() => handleToolToggle(tool)}
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${agentTools.includes(tool)
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                    ? 'bg-teal-600 text-white border-teal-600'
+                    : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                 >
                   {tool}
@@ -287,8 +289,8 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                     key={server.name}
                     onClick={() => handleMcpServerToggle(server.name)}
                     className={`px-3 py-2 rounded-lg text-xs border transition-colors ${mcpServers.includes(server.name)
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                       }`}
                     title={server.desc + ' (demo)'}
                   >
@@ -353,8 +355,8 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                 key={option}
                 onClick={() => setPurpose(option)}
                 className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
               >
                 {option}
@@ -380,10 +382,11 @@ const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
       {/* Max Length for Prompts */}
       {outputType === 'prompt' && (
         <div>
-          <label className="text-sm font-medium mb-2 text-white flex items-center">
+          <label className="text-sm font-medium mb-2 text-white flex items-center" htmlFor="max-length-slider">
             Tamanho Máximo: {maxLength.toLocaleString()} caracteres
           </label>
           <input
+            id='max-length-slider'
             type="range"
             min="500"
             max="130000"

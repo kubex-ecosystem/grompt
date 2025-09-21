@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import ConfigurationPanel from './components/settings/ConfigurationPanel';
 import DemoStatusFooter from './components/demo/DemoStatusFooter';
 import EducationalModal from './components/onboarding/EducationalModal';

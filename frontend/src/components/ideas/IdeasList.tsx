@@ -1,7 +1,7 @@
-import React from 'react';
-import { Edit3, Trash2, Wand2, Loader2, AlertCircle } from 'lucide-react';
-import { Idea, OutputType } from '../../hooks/usePromptCrafter';
+import { AlertCircle, Edit3, Loader2, Trash2, Wand2 } from 'lucide-react';
+import * as React from 'react';
 import { UseGeneratePromptState } from '../../hooks/useGromptAPI';
+import { Idea, OutputType } from '../../hooks/usePromptCrafter';
 
 interface Theme {
   [key: string]: string;
@@ -82,6 +82,7 @@ const IdeasList: React.FC<IdeasListProps> = ({
               {editingId === idea.id ? (
                 <div className="space-y-2">
                   <textarea
+                    title='Edite sua ideia aqui'
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     className="w-full px-2 py-1 rounded border border-gray-600 bg-gray-700/80 text-white text-sm resize-none"
@@ -107,12 +108,14 @@ const IdeasList: React.FC<IdeasListProps> = ({
                   <p className="text-sm mb-2 text-gray-300">{idea.text}</p>
                   <div className="flex justify-end gap-1">
                     <button
+                      title='Edite sua ideia aqui'
                       onClick={() => startEditing(idea.id, idea.text)}
                       className="p-1 rounded bg-gray-700/80 border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
                     >
                       <Edit3 size={14} />
                     </button>
                     <button
+                      title='Remova sua ideia aqui'
                       onClick={() => removeIdea(idea.id)}
                       className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
                     >
@@ -131,8 +134,8 @@ const IdeasList: React.FC<IdeasListProps> = ({
           onClick={generatePrompt}
           disabled={isGenerating || isAPIGenerating}
           className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r ${outputType === 'prompt'
-              ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-              : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+            ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
+            : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
             } text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg`}
         >
           {isGenerating || isAPIGenerating ? (

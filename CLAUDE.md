@@ -94,3 +94,4 @@ The project uses a sophisticated build system:
 - Docker containers supported
 - Koyeb deployment configuration included
 - Health check endpoints available at `/api/health`
+- Test build and runtime functionality and fix any remaining typescript compilation errors

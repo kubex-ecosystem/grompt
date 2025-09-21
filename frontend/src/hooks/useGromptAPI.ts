@@ -3,20 +3,23 @@
  * Provides React-friendly interface to the Grompt backend API
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   api,
+  APIError,
   GenerateRequest,
   GenerateResponse,
-  Provider,
-  ProvidersListResponse,
+  handleStreamingGeneration,
   HealthResponse,
-  APIError,
   isAPIError,
-  handleStreamingGeneration
+  Provider
 } from '../services/api'
 
 export interface UseGeneratePromptState {
+  generateStream: (request: GenerateRequest) => Promise<void>
+  generateSync: (request: GenerateRequest) => Promise<GenerateResponse>
+  cancel: () => void
+  reset: () => void
   data: GenerateResponse | null
   loading: boolean
   error: APIError | null
@@ -35,6 +38,7 @@ export interface UseProvidersState {
 }
 
 export interface UseHealthState {
+  isHealthy: boolean
   health: HealthResponse | null
   loading: boolean
   error: APIError | null
@@ -53,7 +57,11 @@ export function useGeneratePrompt() {
       isStreaming: false,
       content: '',
       usage: undefined
-    }
+    },
+    generateStream: async () => { },
+    generateSync: async () => { return Promise.resolve({} as GenerateResponse) },
+    cancel: () => { },
+    reset: () => { }
   })
 
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -221,7 +229,13 @@ export function useGeneratePrompt() {
         isStreaming: false,
         content: '',
         usage: undefined
-      }
+      },
+      generateStream,
+      generateSync,
+      cancel,
+      reset() {
+        return;
+      },
     })
   }, [cancel])
 
@@ -319,6 +333,7 @@ export function useProviders(autoFetch: boolean = true) {
  */
 export function useHealth(autoCheck: boolean = false, intervalMs: number = 60000) {
   const [state, setState] = useState<UseHealthState>({
+    isHealthy: false,
     health: null,
     loading: false,
     error: null,

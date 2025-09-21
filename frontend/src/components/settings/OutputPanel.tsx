@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Check, Copy, Download, Loader2, AlertCircle } from 'lucide-react';
 import { DemoMode } from '../../config/demoMode';
 import { OutputType, AgentFramework } from '../../hooks/usePromptCrafter';

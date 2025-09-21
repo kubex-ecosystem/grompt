@@ -1,5 +1,5 @@
-import React from 'react';
 import { X } from 'lucide-react';
+import * as React from 'react';
 import onboardingSteps from '../../constants/onboardingSteps';
 import { Theme } from '../../constants/themes';
 
@@ -26,6 +26,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-lg font-semibold text-white">{step.title}</h3>
           <button
+            title='Fechar'
             onClick={nextOnboardingStep}
             className="text-gray-400 hover:text-white"
           >

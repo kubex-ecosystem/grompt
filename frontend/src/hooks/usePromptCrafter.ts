@@ -1,3 +1,4 @@
+import { GenerateRequest } from '@/services/api';
 import { useCallback, useEffect, useState } from 'react';
 import { DemoMode, FeatureKey } from '../config/demoMode';
 import onboardingSteps from '../constants/onboardingSteps';
@@ -177,7 +178,7 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
           mcpServers: outputType === 'agent' ? mcpServers : undefined,
           maxLength: outputType === 'prompt' ? maxLength : undefined
         }
-      };
+      } as GenerateRequest; // '"code" | "creative" | "analysis" | "general" | undefined'
 
       // Use streaming by default for better UX
       if (apiGenerate?.generateStream) {
@@ -216,8 +217,8 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
     try {
       // Get content from API state or fallback to legacy state
       const contentToCopy = apiGenerate?.data?.prompt ||
-                           apiGenerate?.progress?.content ||
-                           generatedPrompt;
+        apiGenerate?.progress?.content ||
+        generatedPrompt;
 
       if (!contentToCopy) {
         console.warn('No content to copy');

@@ -20,7 +20,12 @@ export interface DemoCallResponse {
   eta: string;
 }
 
-export type FeatureKey = 'ollama' | 'openai' | 'gemini' | 'mcp_real' | 'agent_execution' | 'copilot';
+export type FeatureKey = 'autogen' | 'crewai' | 'ollama' |
+  'openai' | 'gemini' | 'mcp_real' |
+  'agent_execution' | 'copilot' | 'langchain' |
+  'semantic-kernel' | 'custom_models' | 'custom' |
+  'vectorstores' | 'tools' | 'agents' |
+  'memory' | 'chat_models' | 'embedding_models';
 
 // Demo configuration consolidated in bundle
 const DEMO_CONFIG = {

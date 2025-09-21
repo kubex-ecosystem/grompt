@@ -1,8 +1,8 @@
-import React from 'react';
 import { BookOpen, Moon, Play, Sun } from 'lucide-react';
+import * as React from 'react';
 import { DemoMode } from '../../config/demoMode';
 import { Theme } from '../../constants/themes';
-import { UseProvidersState, UseHealthState } from '../../hooks/useGromptAPI';
+import { UseHealthState, UseProvidersState } from '../../hooks/useGromptAPI';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -12,6 +12,7 @@ interface HeaderProps {
   showEducation: (topic: string) => void;
   providers?: UseProvidersState;
   health?: UseHealthState;
+  isHealthy: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -21,10 +22,11 @@ const Header: React.FC<HeaderProps> = ({
   startOnboarding,
   showEducation,
   providers,
-  health
+  health,
+  isHealthy
 }) => {
   const healthyProviders = providers?.providers?.filter(p => p.available) || [];
-  const healthStatus = health?.isHealthy?.() ? 'healthy' : 'degraded';
+  const healthStatus = isHealthy ? 'healthy' : 'degraded';
 
   return (
     <div className="flex justify-between items-center mb-8" id="header">
@@ -49,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({
             <span className={`px-2 py-1 rounded-full ${healthStatus === 'healthy'
               ? 'bg-green-900/50 text-green-200 border border-green-700'
               : 'bg-yellow-900/50 text-yellow-200 border border-yellow-700'
-            }`}>
+              }`}>
               {healthyProviders.length} providers ativos
             </span>
             {healthyProviders.length > 0 && (
@@ -82,6 +84,7 @@ const Header: React.FC<HeaderProps> = ({
 
         {/* Provider selector */}
         <select
+          title='Selecione o provedor de IA'
           className="px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
           defaultValue={healthyProviders[0]?.name || 'claude'}
         >
