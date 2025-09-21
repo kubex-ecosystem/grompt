@@ -1,9 +1,29 @@
-import * as React from 'react';
+import React from 'react';
+import { Edit3, Trash2, Wand2, Loader2, AlertCircle } from 'lucide-react';
+import { Idea, OutputType } from '../../hooks/usePromptCrafter';
+import { UseGeneratePromptState } from '../../hooks/useGromptAPI';
 
-import { AlertCircle, Edit3, Loader2, Trash2, Wand2 } from 'lucide-react';
+interface Theme {
+  [key: string]: string;
+}
 
+interface IdeasListProps {
+  ideas: Idea[];
+  editingId: number | null;
+  editingText: string;
+  setEditingText: (value: string) => void;
+  startEditing: (id: number, text: string) => void;
+  saveEdit: () => void;
+  cancelEdit: () => void;
+  removeIdea: (id: number) => void;
+  generatePrompt: () => void;
+  isGenerating: boolean;
+  outputType: OutputType;
+  currentTheme: Theme;
+  apiGenerateState?: UseGeneratePromptState;
+}
 
-const IdeasList = ({
+const IdeasList: React.FC<IdeasListProps> = ({
   ideas,
   editingId,
   editingText,
@@ -65,7 +85,7 @@ const IdeasList = ({
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     className="w-full px-2 py-1 rounded border border-gray-600 bg-gray-700/80 text-white text-sm resize-none"
-                    rows="2"
+                    rows={2}
                   />
                   <div className="flex gap-1">
                     <button
@@ -111,8 +131,8 @@ const IdeasList = ({
           onClick={generatePrompt}
           disabled={isGenerating || isAPIGenerating}
           className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r ${outputType === 'prompt'
-            ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-            : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+              ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
+              : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
             } text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg`}
         >
           {isGenerating || isAPIGenerating ? (

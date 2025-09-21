@@ -1,11 +1,19 @@
-// =============================================================================
-// 🎓 ONBOARDING STEPS
-// =============================================================================
+/**
+ * Onboarding Steps Configuration - Integrated Bundle Version
+ * Simple JavaScript object to avoid external module issues
+ */
 
-const OnboardingSteps = [
+export interface OnboardingStep {
+  id: string;
+  title: string;
+  content: string;
+  target: string;
+}
+
+export const onboardingSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Bem-vindo ao Agent Crafter! 🎉',
+    title: 'Bem-vindo ao Grompt! 🎉',
     content: 'Esta ferramenta transforma suas ideias em prompts profissionais e agents inteligentes.',
     target: 'header'
   },
@@ -29,4 +37,5 @@ const OnboardingSteps = [
   }
 ];
 
-export default OnboardingSteps;
+// Default export for compatibility
+export default onboardingSteps;

@@ -1,6 +1,7 @@
-import DemoMode from '@/config/DemoMode';
+import React from 'react';
+import { DemoMode } from '../../config/demoMode';
 
-const DemoStatusFooter = () => {
+const DemoStatusFooter: React.FC = () => {
   if (!DemoMode.isActive) return null;
 
   return (

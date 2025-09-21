@@ -1,12 +1,29 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 
-const IdeasInput = ({
+interface Theme {
+  [key: string]: string;
+}
+
+interface IdeasInputProps {
+  currentInput: string;
+  setCurrentInput: (value: string) => void;
+  addIdea: () => void;
+  currentTheme: Theme;
+}
+
+const IdeasInput: React.FC<IdeasInputProps> = ({
   currentInput,
   setCurrentInput,
   addIdea,
   currentTheme
 }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      addIdea();
+    }
+  };
+
   return (
     <div id="ideas-input">
       <h2 className="text-xl font-semibold mb-4 text-white">📝 Adicionar Ideias</h2>
@@ -16,11 +33,7 @@ const IdeasInput = ({
           onChange={(e) => setCurrentInput(e.target.value)}
           placeholder="Cole suas notas, ideias brutas ou pensamentos desorganizados aqui..."
           className="w-full h-32 px-4 py-3 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none transition-colors"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-              addIdea();
-            }
-          }}
+          onKeyDown={handleKeyDown}
         />
         <button
           onClick={addIdea}

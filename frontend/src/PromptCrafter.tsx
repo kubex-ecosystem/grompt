@@ -1,23 +1,23 @@
-import React from 'react'
-import ConfigurationPanel from './components/settings/ConfigurationPanel.jsx';
-import DemoStatusFooter from './components/demo/DemoStatusFooter.jsx';
-import EducationalModal from './components/onboarding/EducationalModal.jsx';
-import Header from './components/layout/Header.jsx';
-import IdeasInput from './components/ideas/IdeasInput.jsx';
-import IdeasList from './components/ideas/IdeasList.jsx';
-import OnboardingModal from './components/onboarding/OnboardingModal.jsx';
-import OutputPanel from './components/settings/OutputPanel.jsx';
-import { themes } from './constants/themes.js';
-import usePromptCrafter from './hooks/usePromptCrafter.js';
+import React from 'react';
+import ConfigurationPanel from './components/settings/ConfigurationPanel';
+import DemoStatusFooter from './components/demo/DemoStatusFooter';
+import EducationalModal from './components/onboarding/EducationalModal';
+import Header from './components/layout/Header';
+import IdeasInput from './components/ideas/IdeasInput';
+import IdeasList from './components/ideas/IdeasList';
+import OnboardingModal from './components/onboarding/OnboardingModal';
+import OutputPanel from './components/settings/OutputPanel';
+import { themes } from './constants/themes';
+import usePromptCrafter from './hooks/usePromptCrafter';
 import { useGromptAPI } from './hooks/useGromptAPI';
 
-const PromptCrafter = () => {
+const PromptCrafter: React.FC = () => {
   // Initialize API hooks
   const { generatePrompt: apiGenerate, providers, health } = useGromptAPI({
     autoFetchProviders: true,
     autoCheckHealth: true,
     healthCheckInterval: 60000
-  })
+  });
 
   const {
     // State

@@ -1,8 +1,26 @@
-// =============================================================================
-// 🎨 THEME DEFINITIONS
-// =============================================================================
+/**
+ * Theme definitions for Grompt UI
+ * TypeScript version with proper type definitions
+ */
 
-export const themes = {
+export interface Theme {
+  bg: string;
+  cardBg: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  input: string;
+  button: string;
+  buttonSecondary: string;
+  accent: string;
+}
+
+export interface Themes {
+  dark: Theme;
+  light: Theme;
+}
+
+export const themes: Themes = {
   dark: {
     bg: 'bg-gray-900',
     cardBg: 'bg-gray-800',

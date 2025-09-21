@@ -1,9 +1,27 @@
-import * as React from 'react';
+import React from 'react';
+import { Check, Copy, Download, Loader2, AlertCircle } from 'lucide-react';
+import { DemoMode } from '../../config/demoMode';
+import { OutputType, AgentFramework } from '../../hooks/usePromptCrafter';
+import { UseGeneratePromptState } from '../../hooks/useGromptAPI';
 
-import DemoMode from '@/config/DemoMode';
-import { AlertCircle, Check, Copy, Download, Loader2 } from 'lucide-react';
+interface Theme {
+  [key: string]: string;
+}
 
-const OutputPanel = ({
+interface OutputPanelProps {
+  generatedPrompt: string;
+  copyToClipboard: () => void;
+  copied: boolean;
+  outputType: OutputType;
+  agentFramework: AgentFramework;
+  agentProvider: string;
+  maxLength: number;
+  mcpServers: string[];
+  currentTheme: Theme;
+  apiGenerateState?: UseGeneratePromptState;
+}
+
+const OutputPanel: React.FC<OutputPanelProps> = ({
   generatedPrompt,
   copyToClipboard,
   copied,
@@ -17,13 +35,25 @@ const OutputPanel = ({
 }) => {
   // Show API prompt if available, fallback to legacy prompt
   const promptToShow = apiGenerateState?.data?.prompt ||
-    apiGenerateState?.progress?.content ||
-    generatedPrompt;
+                       apiGenerateState?.progress?.content ||
+                       generatedPrompt;
 
   const isAPILoading = apiGenerateState?.loading;
   const isAPIStreaming = apiGenerateState?.progress?.isStreaming;
   const apiError = apiGenerateState?.error;
   const apiUsage = apiGenerateState?.data?.usage || apiGenerateState?.progress?.usage;
+
+  const handleDownload = () => {
+    const blob = new Blob([promptToShow], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `grompt-${outputType}-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div>
@@ -34,8 +64,8 @@ const OutputPanel = ({
         {promptToShow && (
           <div className="flex items-center gap-2">
             <span className={`text-xs px-2 py-1 rounded-full ${outputType === 'prompt'
-              ? 'bg-purple-900/50 text-purple-200 border border-purple-700'
-              : 'bg-green-900/50 text-green-200 border border-green-700'
+                ? 'bg-purple-900/50 text-purple-200 border border-purple-700'
+                : 'bg-green-900/50 text-green-200 border border-green-700'
               }`}>
               {outputType === 'prompt' ? 'Prompt' : agentFramework} {DemoMode.isActive ? '🎪' : ''}
             </span>
@@ -115,17 +145,7 @@ const OutputPanel = ({
           {/* Download button for large prompts */}
           {promptToShow.length > 1000 && (
             <button
-              onClick={() => {
-                const blob = new Blob([promptToShow], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `grompt-${outputType}-${Date.now()}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              }}
+              onClick={handleDownload}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               <Download size={16} />

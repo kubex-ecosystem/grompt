@@ -1,8 +1,41 @@
-import DemoMode from '@/config/DemoMode';
+import React from 'react';
 import { Info, Loader2, Wifi, WifiOff } from 'lucide-react';
-import * as React from 'react';
+import { DemoMode } from '../../config/demoMode';
+import { OutputType, AgentFramework, Purpose } from '../../hooks/usePromptCrafter';
+import { UseProvidersState } from '../../hooks/useGromptAPI';
 
-const ConfigurationPanel = ({
+interface Theme {
+  [key: string]: string;
+}
+
+interface ConfigurationPanelProps {
+  outputType: OutputType;
+  setOutputType: (value: OutputType) => void;
+  agentFramework: AgentFramework;
+  setAgentFramework: (value: AgentFramework) => void;
+  agentProvider: string;
+  setAgentProvider: (value: string) => void;
+  agentRole: string;
+  setAgentRole: (value: string) => void;
+  agentTools: string[];
+  setAgentTools: (value: string[] | ((prev: string[]) => string[])) => void;
+  mcpServers: string[];
+  setMcpServers: (value: string[] | ((prev: string[]) => string[])) => void;
+  customMcpServer: string;
+  setCustomMcpServer: (value: string) => void;
+  purpose: Purpose;
+  setPurpose: (value: Purpose) => void;
+  customPurpose: string;
+  setCustomPurpose: (value: string) => void;
+  maxLength: number;
+  setMaxLength: (value: number) => void;
+  currentTheme: Theme;
+  showEducation: (topic: string) => void;
+  handleFeatureClick: (feature: string) => boolean;
+  providers?: UseProvidersState;
+}
+
+const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   outputType,
   setOutputType,
   agentFramework,
@@ -29,16 +62,16 @@ const ConfigurationPanel = ({
   providers
 }) => {
   const outputTypes = [
-    { value: 'prompt', label: '📝 Prompt', icon: '📝' },
-    { value: 'agent', label: '🤖 Agent', icon: '🤖' }
+    { value: 'prompt' as const, label: '📝 Prompt', icon: '📝' },
+    { value: 'agent' as const, label: '🤖 Agent', icon: '🤖' }
   ];
 
   const agentFrameworks = [
-    { value: 'crewai', label: 'CrewAI' },
-    { value: 'autogen', label: 'AutoGen' },
-    { value: 'langchain', label: 'LangChain Agents' },
-    { value: 'semantic-kernel', label: 'Semantic Kernel' },
-    { value: 'custom', label: 'Agent Customizado' }
+    { value: 'crewai' as const, label: 'CrewAI' },
+    { value: 'autogen' as const, label: 'AutoGen' },
+    { value: 'langchain' as const, label: 'LangChain Agents' },
+    { value: 'semantic-kernel' as const, label: 'Semantic Kernel' },
+    { value: 'custom' as const, label: 'Agent Customizado' }
   ];
 
   // Use actual providers from API with fallback
@@ -65,23 +98,60 @@ const ConfigurationPanel = ({
     { name: 'calendar', desc: '📅 Calendário' }
   ];
 
-  const purposeOptions = outputType === 'prompt'
+  const purposeOptions: Purpose[] = outputType === 'prompt'
     ? ['Código', 'Imagem', 'Análise', 'Escrita', 'Outros']
     : ['Automação', 'Análise', 'Suporte', 'Pesquisa', 'Outros'];
+
+  const handleToolToggle = (tool: string) => {
+    setAgentTools(prev =>
+      prev.includes(tool)
+        ? prev.filter(t => t !== tool)
+        : [...prev, tool]
+    );
+  };
+
+  const handleMcpServerToggle = (serverName: string) => {
+    if (DemoMode.isActive) {
+      const demoResult = DemoMode.handleDemoCall('mcp_real');
+      alert('🔌 ' + serverName + '\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
+      return;
+    }
+    setMcpServers(prev =>
+      prev.includes(serverName)
+        ? prev.filter(s => s !== serverName)
+        : [...prev, serverName]
+    );
+  };
+
+  const handleCustomMcpAdd = () => {
+    if (customMcpServer.trim()) {
+      if (DemoMode.isActive) {
+        const demoResult = DemoMode.handleDemoCall('mcp_real');
+        alert('🔌 Servidor MCP Customizado\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
+        return;
+      }
+      setMcpServers(prev => [...prev, customMcpServer.trim()]);
+      setCustomMcpServer('');
+    }
+  };
+
+  const handleMcpServerRemove = (server: string) => {
+    setMcpServers(prev => prev.filter(s => s !== server));
+  };
 
   return (
     <div className="space-y-4">
       {/* Output Type Selector */}
       <div id="output-selector">
-        <label className="block text-sm font-medium mb-2 text-white">Tipo de Saída</label>
+        <label className="text-sm font-medium mb-2 text-white flex items-center">Tipo de Saída</label>
         <div className="flex gap-2">
           {outputTypes.map((option) => (
             <button
               key={option.value}
               onClick={() => setOutputType(option.value)}
               className={`flex-1 px-4 py-3 rounded-lg text-sm border transition-all ${outputType === option.value
-                ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
-                : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50'
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
+                  : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50'
                 }`}
             >
               <div className="text-center">
@@ -98,10 +168,10 @@ const ConfigurationPanel = ({
         <div className="space-y-4 p-4 rounded-lg border border-purple-500/20 bg-purple-500/5 backdrop-blur-sm" id="mcp-section">
           {/* Framework Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-white">Framework do Agent</label>
+            <label className="text-sm font-medium mb-2 text-white flex items-center">Framework do Agent</label>
             <select
               value={agentFramework}
-              onChange={(e) => setAgentFramework(e.target.value)}
+              onChange={(e) => setAgentFramework(e.target.value as AgentFramework)}
               className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             >
               {agentFrameworks.map((framework) => (
@@ -114,7 +184,7 @@ const ConfigurationPanel = ({
 
           {/* Provider Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2 flex items-center gap-2 text-white">
+            <label className="text-sm font-medium mb-2 text-white flex items-center gap-2">
               🤖 Provider LLM
               {providersLoading && <Loader2 size={16} className="animate-spin text-blue-400" />}
               {DemoMode.isActive && (
@@ -143,17 +213,10 @@ const ConfigurationPanel = ({
               {availableProviders.length > 0 ? (
                 availableProviders.map((provider) => (
                   <option key={provider.name} value={provider.name}>
-                    {provider.available ? (
-                      <span className="flex items-center gap-2">
-                        <Wifi size={12} />
-                        {provider.name} {provider.defaultModel ? `(${provider.defaultModel})` : ''}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <WifiOff size={12} />
-                        {provider.name} (Indisponível)
-                      </span>
-                    )}
+                    {provider.available
+                      ? `${provider.name} ${provider.defaultModel ? `(${provider.defaultModel})` : ''}`
+                      : `${provider.name} (Indisponível)`
+                    }
                   </option>
                 ))
               ) : (
@@ -171,7 +234,7 @@ const ConfigurationPanel = ({
 
           {/* Agent Role */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-white">Papel do Agent</label>
+            <label className="text-sm font-medium mb-2 text-white flex items-center">Papel do Agent</label>
             <input
               type="text"
               value={agentRole}
@@ -183,21 +246,15 @@ const ConfigurationPanel = ({
 
           {/* Traditional Tools */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-white">🔧 Ferramentas Tradicionais</label>
+            <label className="text-sm font-medium mb-2 text-white flex items-center">🔧 Ferramentas Tradicionais</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tools.map((tool) => (
                 <button
                   key={tool}
-                  onClick={() => {
-                    setAgentTools(prev =>
-                      prev.includes(tool)
-                        ? prev.filter(t => t !== tool)
-                        : [...prev, tool]
-                    );
-                  }}
+                  onClick={() => handleToolToggle(tool)}
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${agentTools.includes(tool)
-                    ? 'bg-teal-600 text-white border-teal-600'
-                    : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                 >
                   {tool}
@@ -207,8 +264,8 @@ const ConfigurationPanel = ({
           </div>
 
           {/* MCP Servers */}
-          <div className="border-t border-blue-500/20 pt-4">
-            <label className="block text-sm font-medium mb-2 flex items-center gap-2 text-white">
+          <div className="border-t border-purple-500/20 pt-4">
+            <label className="text-sm font-medium mb-2 text-white flex items-center gap-2">
               🔌 Servidores MCP (Model Context Protocol)
               {DemoMode.isActive && (
                 <button
@@ -228,21 +285,10 @@ const ConfigurationPanel = ({
                 {mcpServersList.map((server) => (
                   <button
                     key={server.name}
-                    onClick={() => {
-                      if (DemoMode.isActive) {
-                        const demoResult = DemoMode.handleDemoCall('mcp_real');
-                        alert('🔌 ' + server.desc + '\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
-                        return;
-                      }
-                      setMcpServers(prev =>
-                        prev.includes(server.name)
-                          ? prev.filter(s => s !== server.name)
-                          : [...prev, server.name]
-                      );
-                    }}
+                    onClick={() => handleMcpServerToggle(server.name)}
                     className={`px-3 py-2 rounded-lg text-xs border transition-colors ${mcpServers.includes(server.name)
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                       }`}
                     title={server.desc + ' (demo)'}
                   >
@@ -260,17 +306,7 @@ const ConfigurationPanel = ({
                   className="flex-1 px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-xs"
                 />
                 <button
-                  onClick={() => {
-                    if (customMcpServer.trim()) {
-                      if (DemoMode.isActive) {
-                        const demoResult = DemoMode.handleDemoCall('mcp_real');
-                        alert('🔌 Servidor MCP Customizado\n\n' + demoResult.message + '\n\nETA: ' + demoResult.eta);
-                        return;
-                      }
-                      setMcpServers(prev => [...prev, customMcpServer.trim()]);
-                      setCustomMcpServer('');
-                    }
-                  }}
+                  onClick={handleCustomMcpAdd}
                   className="px-3 py-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs transition-colors"
                 >
                   + Adicionar 🎪
@@ -290,7 +326,7 @@ const ConfigurationPanel = ({
                       >
                         {server} 🎪
                         <button
-                          onClick={() => setMcpServers(prev => prev.filter(s => s !== server))}
+                          onClick={() => handleMcpServerRemove(server)}
                           className="hover:bg-purple-700 rounded-full w-4 h-4 flex items-center justify-center"
                         >
                           ×
@@ -307,7 +343,7 @@ const ConfigurationPanel = ({
 
       {/* Purpose Selection */}
       <div>
-        <label className="block text-sm font-medium mb-2 text-white">
+        <label className="text-sm font-medium mb-2 text-white flex items-center">
           {outputType === 'prompt' ? 'Propósito do Prompt' : 'Área de Atuação do Agent'}
         </label>
         <div className="space-y-2">
@@ -317,8 +353,8 @@ const ConfigurationPanel = ({
                 key={option}
                 onClick={() => setPurpose(option)}
                 className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
               >
                 {option}
@@ -344,7 +380,7 @@ const ConfigurationPanel = ({
       {/* Max Length for Prompts */}
       {outputType === 'prompt' && (
         <div>
-          <label className="block text-sm font-medium mb-2 text-white">
+          <label className="text-sm font-medium mb-2 text-white flex items-center">
             Tamanho Máximo: {maxLength.toLocaleString()} caracteres
           </label>
           <input
