@@ -3,8 +3,6 @@
     "target": "ES2022",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
     "module": "ESNext",
     "lib": [
       "ES2022",
@@ -12,10 +10,8 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "types": [],
-    "typeRoots": [
-      "./node_modules/@types"
+    "types": [
+      "node"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -29,15 +25,5 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.test.ts",
-    "**/*.test.tsx"
-  ],
-  "ts-node": {
-    "skipProject": true
   }
 }
