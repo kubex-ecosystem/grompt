@@ -96,10 +96,10 @@ func WireHTTP(mux *http.ServeMux, reg *registry.Registry, prodMiddleware *middle
 
 	// API endpoints (higher priority routes)
 	mux.HandleFunc("/healthz", h.healthCheck)
-	mux.HandleFunc("/v1/chat", h.chatSSE)
-	mux.HandleFunc("/v1/providers", h.listProviders)
-	mux.HandleFunc("/v1/advise", h.handleAdvise)
-	mux.HandleFunc("/v1/status", h.productionStatus)
+	mux.HandleFunc("/chat", h.chatSSE)
+	mux.HandleFunc("/providers", h.listProviders)
+	mux.HandleFunc("/advise", h.handleAdvise)
+	mux.HandleFunc("/status", h.productionStatus)
 
 	// Repository Intelligence endpoints - MERGE POINT! 🚀
 	mux.HandleFunc("/api/v1/scorecard", h.handleRepositoryScorecard)
