@@ -1,15 +1,24 @@
-import ConfigurationPanel from './components/ConfigurationPanel.jsx';
-import DemoStatusFooter from './components/DemoStatusFooter.jsx';
-import EducationalModal from './components/EducationalModal.jsx';
-import Header from './components/Header.jsx';
-import IdeasInput from './components/IdeasInput.jsx';
-import IdeasList from './components/IdeasList.jsx';
-import OnboardingModal from './components/OnboardingModal.jsx';
-import OutputPanel from './components/OutputPanel.jsx';
+import React from 'react'
+import ConfigurationPanel from './components/settings/ConfigurationPanel.jsx';
+import DemoStatusFooter from './components/demo/DemoStatusFooter.jsx';
+import EducationalModal from './components/onboarding/EducationalModal.jsx';
+import Header from './components/layout/Header.jsx';
+import IdeasInput from './components/ideas/IdeasInput.jsx';
+import IdeasList from './components/ideas/IdeasList.jsx';
+import OnboardingModal from './components/onboarding/OnboardingModal.jsx';
+import OutputPanel from './components/settings/OutputPanel.jsx';
 import { themes } from './constants/themes.js';
 import usePromptCrafter from './hooks/usePromptCrafter.js';
+import { useGromptAPI } from './hooks/useGromptAPI';
 
 const PromptCrafter = () => {
+  // Initialize API hooks
+  const { generatePrompt: apiGenerate, providers, health } = useGromptAPI({
+    autoFetchProviders: true,
+    autoCheckHealth: true,
+    healthCheckInterval: 60000
+  })
+
   const {
     // State
     darkMode,
@@ -63,81 +72,89 @@ const PromptCrafter = () => {
     startOnboarding,
     nextOnboardingStep,
     showEducation
-  } = usePromptCrafter();
+  } = usePromptCrafter({ apiGenerate });
 
-  const currentTheme = darkMode ? themes.dark : themes.light;
+  // Use dark theme always to match Analyzer design
+  const currentTheme = themes.dark;
 
   return (
-    <div className={`min-h-screen ${currentTheme.bg} ${currentTheme.text} p-4 transition-colors duration-300`}>
-      <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <Header
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        currentTheme={currentTheme}
+        startOnboarding={startOnboarding}
+        showEducation={showEducation}
+        providers={providers}
+        health={health}
+      />
 
-        {/* Header */}
-        <Header
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          currentTheme={currentTheme}
-          startOnboarding={startOnboarding}
-          showEducation={showEducation}
-        />
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        showOnboarding={showOnboarding}
+        currentStep={currentStep}
+        currentTheme={currentTheme}
+        nextOnboardingStep={nextOnboardingStep}
+      />
 
-        {/* Onboarding Modal */}
-        <OnboardingModal
-          showOnboarding={showOnboarding}
-          currentStep={currentStep}
-          currentTheme={currentTheme}
-          nextOnboardingStep={nextOnboardingStep}
-        />
+      {/* Educational Modal */}
+      <EducationalModal
+        showEducational={showEducational}
+        educationalTopic={educationalTopic}
+        currentTheme={currentTheme}
+        setShowEducational={setShowEducational}
+      />
 
-        {/* Educational Modal */}
-        <EducationalModal
-          showEducational={showEducational}
-          educationalTopic={educationalTopic}
-          currentTheme={currentTheme}
-          setShowEducational={setShowEducational}
-        />
+      {/* Main Content Grid - Following Analyzer layout patterns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Input Section */}
-          <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg`}>
+        {/* Left Column: Input and Configuration */}
+        <div className="space-y-6">
+          {/* Ideas Input Card */}
+          <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
             <IdeasInput
               currentInput={currentInput}
               setCurrentInput={setCurrentInput}
               addIdea={addIdea}
               currentTheme={currentTheme}
             />
-
-            {/* Configuration */}
-            <div className="mt-6">
-              <ConfigurationPanel
-                outputType={outputType}
-                setOutputType={setOutputType}
-                agentFramework={agentFramework}
-                setAgentFramework={setAgentFramework}
-                agentProvider={agentProvider}
-                setAgentProvider={setAgentProvider}
-                agentRole={agentRole}
-                setAgentRole={setAgentRole}
-                agentTools={agentTools}
-                setAgentTools={setAgentTools}
-                mcpServers={mcpServers}
-                setMcpServers={setMcpServers}
-                customMcpServer={customMcpServer}
-                setCustomMcpServer={setCustomMcpServer}
-                purpose={purpose}
-                setPurpose={setPurpose}
-                customPurpose={customPurpose}
-                setCustomPurpose={setCustomPurpose}
-                maxLength={maxLength}
-                setMaxLength={setMaxLength}
-                currentTheme={currentTheme}
-                showEducation={showEducation}
-                handleFeatureClick={handleFeatureClick}
-              />
-            </div>
           </div>
 
-          {/* Ideas List */}
+          {/* Configuration Panel */}
+          <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
+            <h2 className="text-xl font-semibold mb-4 text-white">⚙️ Configurações</h2>
+            <ConfigurationPanel
+              outputType={outputType}
+              setOutputType={setOutputType}
+              agentFramework={agentFramework}
+              setAgentFramework={setAgentFramework}
+              agentProvider={agentProvider}
+              setAgentProvider={setAgentProvider}
+              agentRole={agentRole}
+              setAgentRole={setAgentRole}
+              agentTools={agentTools}
+              setAgentTools={setAgentTools}
+              mcpServers={mcpServers}
+              setMcpServers={setMcpServers}
+              customMcpServer={customMcpServer}
+              setCustomMcpServer={setCustomMcpServer}
+              purpose={purpose}
+              setPurpose={setPurpose}
+              customPurpose={customPurpose}
+              setCustomPurpose={setCustomPurpose}
+              maxLength={maxLength}
+              setMaxLength={setMaxLength}
+              currentTheme={currentTheme}
+              showEducation={showEducation}
+              handleFeatureClick={handleFeatureClick}
+              providers={providers}
+            />
+          </div>
+        </div>
+
+        {/* Center Column: Ideas List */}
+        <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
           <IdeasList
             ideas={ideas}
             editingId={editingId}
@@ -151,9 +168,12 @@ const PromptCrafter = () => {
             isGenerating={isGenerating}
             outputType={outputType}
             currentTheme={currentTheme}
+            apiGenerateState={apiGenerate}
           />
+        </div>
 
-          {/* Output Panel */}
+        {/* Right Column: Output Panel */}
+        <div className="bg-gray-800/50 border border-gray-700/80 rounded-xl p-6 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/50">
           <OutputPanel
             generatedPrompt={generatedPrompt}
             copyToClipboard={copyToClipboard}
@@ -164,12 +184,13 @@ const PromptCrafter = () => {
             maxLength={maxLength}
             mcpServers={mcpServers}
             currentTheme={currentTheme}
+            apiGenerateState={apiGenerate}
           />
         </div>
-
-        {/* Demo Status Footer */}
-        <DemoStatusFooter />
       </div>
+
+      {/* Demo Status Footer */}
+      <DemoStatusFooter />
     </div>
   );
 };

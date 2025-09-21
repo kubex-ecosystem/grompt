@@ -1,5 +1,7 @@
-import { Check, Copy } from 'lucide-react';
-import DemoMode from '../config/demoMode.js';
+import * as React from 'react';
+
+import DemoMode from '@/config/DemoMode';
+import { AlertCircle, Check, Copy, Download, Loader2 } from 'lucide-react';
 
 const OutputPanel = ({
   generatedPrompt,
@@ -10,25 +12,46 @@ const OutputPanel = ({
   agentProvider,
   maxLength,
   mcpServers,
-  currentTheme
+  currentTheme,
+  apiGenerateState
 }) => {
+  // Show API prompt if available, fallback to legacy prompt
+  const promptToShow = apiGenerateState?.data?.prompt ||
+    apiGenerateState?.progress?.content ||
+    generatedPrompt;
+
+  const isAPILoading = apiGenerateState?.loading;
+  const isAPIStreaming = apiGenerateState?.progress?.isStreaming;
+  const apiError = apiGenerateState?.error;
+  const apiUsage = apiGenerateState?.data?.usage || apiGenerateState?.progress?.usage;
+
   return (
-    <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg`}>
+    <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-xl font-semibold text-white">
           {outputType === 'prompt' ? '🚀 Prompt Estruturado' : '🤖 Agent Gerado'}
         </h2>
-        {generatedPrompt && (
+        {promptToShow && (
           <div className="flex items-center gap-2">
             <span className={`text-xs px-2 py-1 rounded-full ${outputType === 'prompt'
-                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              ? 'bg-purple-900/50 text-purple-200 border border-purple-700'
+              : 'bg-green-900/50 text-green-200 border border-green-700'
               }`}>
               {outputType === 'prompt' ? 'Prompt' : agentFramework} {DemoMode.isActive ? '🎪' : ''}
             </span>
+
+            {/* Loading indicator */}
+            {(isAPILoading || isAPIStreaming) && (
+              <div className="flex items-center gap-1 text-purple-400">
+                <Loader2 size={14} className="animate-spin" />
+                <span className="text-xs">{isAPIStreaming ? 'Streaming...' : 'Gerando...'}</span>
+              </div>
+            )}
+
             <button
               onClick={copyToClipboard}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} hover:bg-opacity-80 transition-colors`}
+              disabled={!promptToShow}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? 'Copiado!' : 'Copiar'}
@@ -37,28 +60,47 @@ const OutputPanel = ({
         )}
       </div>
 
-      {generatedPrompt ? (
+      {/* Error display */}
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg flex items-center gap-2">
+          <AlertCircle size={16} className="text-red-400" />
+          <span className="text-red-400 text-sm">
+            Erro na geração: {apiError.message}
+          </span>
+        </div>
+      )}
+
+      {promptToShow ? (
         <div className="space-y-4">
-          <div className={`text-xs ${currentTheme.textSecondary} flex justify-between items-center`}>
-            <span>Caracteres: {generatedPrompt.length.toLocaleString()}</span>
+          {/* Stats and metadata */}
+          <div className="text-xs text-gray-400 flex justify-between items-center">
+            <span>Caracteres: {promptToShow.length.toLocaleString()}</span>
             <div className="flex items-center gap-4">
+              {apiUsage && (
+                <span className="bg-blue-900/50 text-blue-200 px-2 py-1 rounded-full border border-blue-700">
+                  Tokens: {apiUsage.tokens} | Custo: ${apiUsage.costUSD?.toFixed(6) || '0.000000'}
+                </span>
+              )}
               {outputType === 'agent' && (
-                <span className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
+                <span className="bg-teal-900/50 text-teal-200 px-2 py-1 rounded-full border border-teal-700">
                   {agentFramework} + {agentProvider} + MCP
                 </span>
               )}
               {outputType === 'prompt' && (
-                <span>Limite: {maxLength.toLocaleString()}</span>
+                <span className="text-gray-500">Limite: {maxLength.toLocaleString()}</span>
               )}
             </div>
           </div>
-          <div className={`max-h-96 overflow-y-auto p-4 rounded-lg border ${currentTheme.border} bg-opacity-50`}>
-            <pre className="whitespace-pre-wrap text-sm font-mono">{generatedPrompt}</pre>
+
+          {/* Content display */}
+          <div className="max-h-96 overflow-y-auto p-4 rounded-lg border border-gray-600 bg-gray-800/50 backdrop-blur-sm">
+            <pre className="whitespace-pre-wrap text-sm font-mono text-gray-300">{promptToShow}</pre>
           </div>
 
+          {/* Agent info */}
           {outputType === 'agent' && (
-            <div className={`p-3 rounded-lg border ${currentTheme.border} bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20`}>
-              <p className="text-sm text-purple-800 dark:text-purple-200">
+            <div className="p-3 rounded-lg border border-purple-500/20 bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur-sm">
+              <p className="text-sm text-purple-200">
                 🚀 <strong>Agent Avançado:</strong> Integração com {agentProvider} + MCP + Config TOML
                 {mcpServers.length > 0 && (
                   <span className="block mt-1">
@@ -69,17 +111,38 @@ const OutputPanel = ({
               </p>
             </div>
           )}
+
+          {/* Download button for large prompts */}
+          {promptToShow.length > 1000 && (
+            <button
+              onClick={() => {
+                const blob = new Blob([promptToShow], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `grompt-${outputType}-${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            >
+              <Download size={16} />
+              Baixar como arquivo
+            </button>
+          )}
         </div>
       ) : (
-        <div className={`${currentTheme.textSecondary} text-center py-12`}>
+        <div className="text-gray-400 text-center py-12">
           <div className="text-4xl mb-4">🎯</div>
-          <p className="mb-2">
+          <p className="mb-2 text-gray-300">
             {outputType === 'prompt'
               ? 'Seu prompt estruturado aparecerá aqui'
               : 'Seu agent gerado aparecerá aqui'
             }
           </p>
-          <p className="text-sm">
+          <p className="text-sm text-gray-500">
             Adicione ideias e clique em "Criar {outputType === 'prompt' ? 'Prompt' : 'Agent'}" para começar
           </p>
         </div>

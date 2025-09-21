@@ -1,5 +1,6 @@
 import { BookOpen, Moon, Play, Sun } from 'lucide-react';
-import DemoMode from '../config/demoMode.js';
+
+import DemoMode from '@/config/DemoMode';
 
 const Header = ({
   darkMode,

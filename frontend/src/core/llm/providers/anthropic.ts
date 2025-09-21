@@ -4,7 +4,6 @@ const {
   Messages,
 } = Anthropic;
 
-import { MessagesPage } from "openai/resources/beta/threads/messages";
 import {
   AIProvider,
   AnthropicModels,
@@ -13,7 +12,8 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-} from "../types";
+} from "@/types/types";
+import { MessagesPage } from "openai/resources/beta/threads/messages";
 
 export class AnthropicProvider extends BaseProvider {
   private anthropic: Anthropic;

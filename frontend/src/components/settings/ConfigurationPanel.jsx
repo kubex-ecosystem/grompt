@@ -1,5 +1,6 @@
-import { Info } from 'lucide-react';
-import DemoMode from '../config/demoMode.js';
+import DemoMode from '@/config/DemoMode';
+import { Info, Loader2, Wifi, WifiOff } from 'lucide-react';
+import * as React from 'react';
 
 const ConfigurationPanel = ({
   outputType,
@@ -24,7 +25,8 @@ const ConfigurationPanel = ({
   setMaxLength,
   currentTheme,
   showEducation,
-  handleFeatureClick
+  handleFeatureClick,
+  providers
 }) => {
   const outputTypes = [
     { value: 'prompt', label: '📝 Prompt', icon: '📝' },
@@ -39,14 +41,10 @@ const ConfigurationPanel = ({
     { value: 'custom', label: 'Agent Customizado' }
   ];
 
-  const agentProviders = [
-    { value: 'claude', label: '🎭 Claude (Anthropic) ✅', available: true },
-    { value: 'codex', label: '💻 Codex (OpenAI)', feature: 'openai' },
-    { value: 'gpt4', label: '🧠 GPT-4 (OpenAI)', feature: 'openai' },
-    { value: 'gemini', label: '💎 Gemini (Google)', feature: 'gemini' },
-    { value: 'copilot', label: '🚁 GitHub Copilot', feature: 'copilot' },
-    { value: 'ollama', label: '🦙 Ollama (Local)', feature: 'ollama' }
-  ];
+  // Use actual providers from API with fallback
+  const availableProviders = providers?.providers || [];
+  const providersLoading = providers?.loading || false;
+  const providersError = providers?.error;
 
   const tools = [
     'web_search', 'file_handler', 'calculator', 'email_sender',
@@ -75,15 +73,15 @@ const ConfigurationPanel = ({
     <div className="space-y-4">
       {/* Output Type Selector */}
       <div id="output-selector">
-        <label className="block text-sm font-medium mb-2">Tipo de Saída</label>
+        <label className="block text-sm font-medium mb-2 text-white">Tipo de Saída</label>
         <div className="flex gap-2">
           {outputTypes.map((option) => (
             <button
               key={option.value}
               onClick={() => setOutputType(option.value)}
               className={`flex-1 px-4 py-3 rounded-lg text-sm border transition-all ${outputType === option.value
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                  : `${currentTheme.buttonSecondary} ${currentTheme.border}`
+                ? 'bg-purple-600 text-white border-purple-600 shadow-lg'
+                : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white hover:border-purple-500/50'
                 }`}
             >
               <div className="text-center">
@@ -97,14 +95,14 @@ const ConfigurationPanel = ({
 
       {/* Agent Configuration */}
       {outputType === 'agent' && (
-        <div className="space-y-4 p-4 rounded-lg border border-blue-500/20 bg-blue-500/5" id="mcp-section">
+        <div className="space-y-4 p-4 rounded-lg border border-purple-500/20 bg-purple-500/5 backdrop-blur-sm" id="mcp-section">
           {/* Framework Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2">Framework do Agent</label>
+            <label className="block text-sm font-medium mb-2 text-white">Framework do Agent</label>
             <select
               value={agentFramework}
               onChange={(e) => setAgentFramework(e.target.value)}
-              className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+              className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             >
               {agentFrameworks.map((framework) => (
                 <option key={framework.value} value={framework.value}>
@@ -116,51 +114,76 @@ const ConfigurationPanel = ({
 
           {/* Provider Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+            <label className="block text-sm font-medium mb-2 flex items-center gap-2 text-white">
               🤖 Provider LLM
+              {providersLoading && <Loader2 size={16} className="animate-spin text-blue-400" />}
               {DemoMode.isActive && (
                 <button
                   onClick={() => showEducation('agents')}
-                  className="text-blue-500 hover:text-blue-600"
+                  className="text-blue-400 hover:text-blue-300"
                 >
                   <Info size={16} />
                 </button>
               )}
             </label>
+
+            {/* Provider Status */}
+            {providersError && (
+              <div className="mb-2 p-2 bg-red-900/50 border border-red-700 rounded text-red-400 text-xs">
+                Erro ao carregar providers: {providersError.message}
+              </div>
+            )}
+
             <select
               value={agentProvider}
-              onChange={(e) => {
-                if (e.target.value !== 'claude' && DemoMode.isActive) {
-                  handleFeatureClick(e.target.value);
-                  return;
-                }
-                setAgentProvider(e.target.value);
-              }}
-              className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+              onChange={(e) => setAgentProvider(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              disabled={providersLoading}
             >
-              {agentProviders.map((provider) => (
-                <option key={provider.value} value={provider.value}>
-                  {provider.available ? provider.label : DemoMode.getLabel(provider.feature, provider.label)}
-                </option>
-              ))}
+              {availableProviders.length > 0 ? (
+                availableProviders.map((provider) => (
+                  <option key={provider.name} value={provider.name}>
+                    {provider.available ? (
+                      <span className="flex items-center gap-2">
+                        <Wifi size={12} />
+                        {provider.name} {provider.defaultModel ? `(${provider.defaultModel})` : ''}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <WifiOff size={12} />
+                        {provider.name} (Indisponível)
+                      </span>
+                    )}
+                  </option>
+                ))
+              ) : (
+                <option value="">Carregando providers...</option>
+              )}
             </select>
+
+            {/* Provider Info */}
+            {availableProviders.length > 0 && (
+              <div className="mt-2 text-xs text-gray-400">
+                {availableProviders.filter(p => p.available).length} de {availableProviders.length} providers disponíveis
+              </div>
+            )}
           </div>
 
           {/* Agent Role */}
           <div>
-            <label className="block text-sm font-medium mb-2">Papel do Agent</label>
+            <label className="block text-sm font-medium mb-2 text-white">Papel do Agent</label>
             <input
               type="text"
               value={agentRole}
               onChange={(e) => setAgentRole(e.target.value)}
               placeholder="Ex: Especialista em Marketing Digital, Analista de Dados..."
-              className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+              className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
           </div>
 
           {/* Traditional Tools */}
           <div>
-            <label className="block text-sm font-medium mb-2">🔧 Ferramentas Tradicionais</label>
+            <label className="block text-sm font-medium mb-2 text-white">🔧 Ferramentas Tradicionais</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {tools.map((tool) => (
                 <button
@@ -173,8 +196,8 @@ const ConfigurationPanel = ({
                     );
                   }}
                   className={`px-3 py-1 rounded-full text-xs border transition-colors ${agentTools.includes(tool)
-                      ? 'bg-green-600 text-white border-green-600'
-                      : `${currentTheme.buttonSecondary} ${currentTheme.border}`
+                    ? 'bg-teal-600 text-white border-teal-600'
+                    : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                 >
                   {tool}
@@ -185,18 +208,18 @@ const ConfigurationPanel = ({
 
           {/* MCP Servers */}
           <div className="border-t border-blue-500/20 pt-4">
-            <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+            <label className="block text-sm font-medium mb-2 flex items-center gap-2 text-white">
               🔌 Servidores MCP (Model Context Protocol)
               {DemoMode.isActive && (
                 <button
                   onClick={() => showEducation('mcp')}
-                  className="text-blue-500 hover:text-blue-600"
+                  className="text-purple-400 hover:text-purple-300"
                 >
                   <Info size={16} />
                 </button>
               )}
             </label>
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">
+            <p className="text-xs text-purple-400 mb-3">
               Configure servidores MCP para estender as capacidades do agent
             </p>
 
@@ -218,8 +241,8 @@ const ConfigurationPanel = ({
                       );
                     }}
                     className={`px-3 py-2 rounded-lg text-xs border transition-colors ${mcpServers.includes(server.name)
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : `${currentTheme.buttonSecondary} ${currentTheme.border}`
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                       }`}
                     title={server.desc + ' (demo)'}
                   >
@@ -234,7 +257,7 @@ const ConfigurationPanel = ({
                   value={customMcpServer}
                   onChange={(e) => setCustomMcpServer(e.target.value)}
                   placeholder="Servidor MCP customizado (ex: meu-servidor-personalizado)"
-                  className={`flex-1 px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500 text-xs`}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-xs"
                 />
                 <button
                   onClick={() => {
@@ -248,7 +271,7 @@ const ConfigurationPanel = ({
                       setCustomMcpServer('');
                     }
                   }}
-                  className={`px-3 py-2 rounded-lg ${currentTheme.buttonSecondary} text-xs`}
+                  className="px-3 py-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white text-xs transition-colors"
                 >
                   + Adicionar 🎪
                 </button>
@@ -284,7 +307,7 @@ const ConfigurationPanel = ({
 
       {/* Purpose Selection */}
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label className="block text-sm font-medium mb-2 text-white">
           {outputType === 'prompt' ? 'Propósito do Prompt' : 'Área de Atuação do Agent'}
         </label>
         <div className="space-y-2">
@@ -294,8 +317,8 @@ const ConfigurationPanel = ({
                 key={option}
                 onClick={() => setPurpose(option)}
                 className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : `${currentTheme.buttonSecondary} ${currentTheme.border}`
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
               >
                 {option}
@@ -312,7 +335,7 @@ const ConfigurationPanel = ({
                   ? "Descreva o objetivo do prompt..."
                   : "Descreva a área de atuação do agent..."
               }
-              className={`w-full px-3 py-2 rounded-lg border ${currentTheme.input} focus:ring-2 focus:ring-blue-500`}
+              className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
           )}
         </div>
@@ -321,7 +344,7 @@ const ConfigurationPanel = ({
       {/* Max Length for Prompts */}
       {outputType === 'prompt' && (
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2 text-white">
             Tamanho Máximo: {maxLength.toLocaleString()} caracteres
           </label>
           <input

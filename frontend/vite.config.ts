@@ -114,6 +114,7 @@ export default defineConfig(({ mode }) => {
           ]
 
         },
+        external: ["@/config/DemoMode", "@/constants/onboardingSteps"]
       },
       outDir: 'dist',
       sourcemap: false,

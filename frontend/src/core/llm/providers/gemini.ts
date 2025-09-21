@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import {
   AIProvider,
   BaseProvider,
@@ -7,7 +6,10 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig,
-} from "../types";
+} from "@/types/types";
+
+
+import { GoogleGenAI } from "@google/genai";
 
 function readText(resp: any): string {
   // cobre variantes do SDK (prop direta, método, parts…)

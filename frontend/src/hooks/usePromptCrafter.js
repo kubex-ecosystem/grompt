@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import DemoMode from '../config/demoMode.js';
+import { useCallback, useEffect, useState } from 'react';
+import DemoMode from '../config/DemoMode';
 import OnboardingSteps from '../constants/onboardingSteps.js';
 
-const usePromptCrafter = () => {
+const usePromptCrafter = ({ apiGenerate }) => {
   // UI State
   const [darkMode, setDarkMode] = useState(true);
 
@@ -78,145 +78,88 @@ const usePromptCrafter = () => {
     setEditingText('');
   };
 
-  // Generation Logic
-  const generatePrompt = async () => {
+  // Generation Logic using new API
+  const generatePrompt = useCallback(async () => {
     if (ideas.length === 0) return;
 
     setIsGenerating(true);
 
-    const purposeText = purpose === 'Outros' && customPurpose
-      ? customPurpose
-      : purpose;
-
-    let engineeringPrompt = '';
-
-    if (outputType === 'prompt') {
-      engineeringPrompt = `
-Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
-
-CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
-${ideas.map((idea, index) => `${index + 1}. "${idea.text}"`).join('\n')}
-
-PROPÓSITO DO PROMPT: ${purposeText}
-TAMANHO MÁXIMO: ${maxLength} caracteres
-
-INSTRUÇÕES PARA ESTRUTURAÇÃO:
-1. Analise todas as ideias e identifique o objetivo principal
-2. Organize as informações de forma lógica e hierárquica
-3. Aplique técnicas de engenharia de prompt como:
-   - Definição clara de contexto e papel
-   - Instruções específicas e mensuráveis
-   - Exemplos quando apropriado
-   - Formato de saída bem definido
-   - Chain-of-thought se necessário
-4. Use markdown para estruturação clara
-5. Seja preciso, objetivo e profissional
-6. Mantenha o escopo dentro do limite de caracteres
-
-IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais ou texto introdutório. O prompt deve ser completo e pronto para uso.
-`;
-    } else if (outputType === 'agent') {
-      const toolsList = agentTools.length > 0 ? agentTools.join(', ') : 'ferramentas padrão';
-      const mcpServersList = mcpServers.length > 0 ? mcpServers.join(', ') : 'nenhum servidor MCP configurado';
-
-      engineeringPrompt = `
-Você é um especialista em desenvolvimento de agents de IA com conhecimento avançado em Model Context Protocol (MCP), arquitetura de sistemas multi-agent e integração com diversos provedores de LLM.
-
-CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas para o agent:
-${ideas.map((idea, index) => `${index + 1}. "${idea.text}"`).join('\n')}
-
-CONFIGURAÇÕES DO AGENT:
-- Framework: ${agentFramework}
-- Provider LLM: ${agentProvider}
-- Papel/Role: ${agentRole || 'A ser definido baseado nas ideias'}
-- Ferramentas Tradicionais: ${toolsList}
-- Servidores MCP: ${mcpServersList}
-- Propósito: ${purposeText}
-
-INSTRUÇÕES PARA CRIAÇÃO DO AGENT COM MCP E CONFIG TOML:
-1. Analise as ideias e defina claramente o papel e objetivo do agent
-2. Crie um agent ${agentFramework} completo e funcional
-3. Configure integração com ${agentProvider} via API ou MCP
-4. Inclua configurações MCP detalhadas e arquivo config.toml profissional
-5. Use configurações baseadas em produção:
-   - Context scoping com tokens limitados
-   - Guards contra comandos perigosos
-   - Summarizers específicos por tipo
-   - Goal-driven context management
-   - Fail-fast behaviors
-6. Gere TODOS os arquivos necessários:
-   - config.toml (configuração principal)
-   - agent.py (código do agent)
-   - requirements.txt (dependências)
-   - README.md (documentação)
-
-ESTRUTURA ESPERADA:
-\`\`\`toml
-# config.toml - Configuração principal do agent
-[settings]
-model_reasoning_summary = "concise"
-user_intent_summary = "detailed"
-# ... resto da configuração profissional
-\`\`\`
-
-\`\`\`python
-# agent.py - Implementação do agent
-# Framework: ${agentFramework}
-# Provider: ${agentProvider}
-\`\`\`
-
-IMPORTANTE: Responda com código estruturado e pronto para uso, incluindo config.toml profissional.
-`;
-    }
-
     try {
-      // Only Claude is functional - others trigger demo mode
-      if (agentProvider !== 'claude' && DemoMode.isActive) {
-        const demoResult = DemoMode.handleDemoCall(agentProvider);
-        setGeneratedPrompt('# 🎪 Demo Mode\n\n' + demoResult.message + '\n\n**ETA:** ' + demoResult.eta + '\n\n---\n\n*Configurações salvas:*\n- Framework: ' + agentFramework + '\n- Provider: ' + agentProvider + '\n- Ferramentas: ' + (agentTools.join(', ') || 'Nenhuma') + '\n- Servidores MCP: ' + (mcpServers.join(', ') || 'Nenhum') + '\n\nEssas configurações serão aplicadas quando o provider estiver disponível!');
-        setIsGenerating(false);
-        return;
+      // Clear previous results
+      setGeneratedPrompt('');
+
+      const purposeText = purpose === 'Outros' && customPurpose
+        ? customPurpose
+        : purpose;
+
+      // Prepare request for the API
+      const generateRequest = {
+        provider: agentProvider,
+        ideas: ideas.map(idea => idea.text),
+        purpose: purposeText.toLowerCase(),
+        temperature: 0.7,
+        maxTokens: maxLength,
+        context: {
+          outputType,
+          agentFramework: outputType === 'agent' ? agentFramework : undefined,
+          agentRole: outputType === 'agent' ? agentRole : undefined,
+          agentTools: outputType === 'agent' ? agentTools : undefined,
+          mcpServers: outputType === 'agent' ? mcpServers : undefined,
+          maxLength: outputType === 'prompt' ? maxLength : undefined
+        }
+      };
+
+      // Use streaming by default for better UX
+      if (apiGenerate?.generateStream) {
+        await apiGenerate.generateStream(generateRequest);
+      } else if (apiGenerate?.generateSync) {
+        const result = await apiGenerate.generateSync(generateRequest);
+        setGeneratedPrompt(result.prompt);
+      } else {
+        // Fallback to legacy generation for demo mode
+        await generatePromptLegacy(purposeText);
       }
 
-      // Real Claude API call
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
-          messages: [{ role: "user", content: engineeringPrompt }]
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('API request failed: ' + response.status);
-      }
-
-      const data = await response.json();
-      const result = data.content[0].text;
-
-      setGeneratedPrompt(result);
     } catch (error) {
       console.error('Erro ao gerar:', error);
       setGeneratedPrompt('Erro ao gerar o ' + (outputType === 'prompt' ? 'prompt' : 'agent') + '. ' + error.message);
     }
 
     setIsGenerating(false);
+  }, [ideas, purpose, customPurpose, outputType, agentProvider, agentFramework, agentRole, agentTools, mcpServers, maxLength, apiGenerate]);
+
+  // Legacy generation for fallback and demo mode
+  const generatePromptLegacy = async (purposeText) => {
+    if (agentProvider !== 'claude' && DemoMode.isActive) {
+      const demoResult = DemoMode.handleDemoCall(agentProvider);
+      setGeneratedPrompt('# 🎪 Demo Mode\n\n' + demoResult.message + '\n\n**ETA:** ' + demoResult.eta + '\n\n---\n\n*Configurações salvas:*\n- Framework: ' + agentFramework + '\n- Provider: ' + agentProvider + '\n- Ferramentas: ' + (agentTools.join(', ') || 'Nenhuma') + '\n- Servidores MCP: ' + (mcpServers.join(', ') || 'Nenhum') + '\n\nEssas configurações serão aplicadas quando o provider estiver disponível!');
+      return;
+    }
+
+    // If no API available, show fallback message
+    setGeneratedPrompt('API integration not available. Please check the backend connection.');
   };
 
   // Clipboard functionality
-  const copyToClipboard = async () => {
+  const copyToClipboard = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(generatedPrompt);
+      // Get content from API state or fallback to legacy state
+      const contentToCopy = apiGenerate?.data?.prompt ||
+        apiGenerate?.progress?.content ||
+        generatedPrompt;
+
+      if (!contentToCopy) {
+        console.warn('No content to copy');
+        return;
+      }
+
+      await navigator.clipboard.writeText(contentToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Erro ao copiar:', error);
     }
-  };
+  }, [apiGenerate, generatedPrompt]);
 
   // Feature handling
   const handleFeatureClick = (feature) => {

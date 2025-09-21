@@ -1,4 +1,4 @@
-import OnboardingSteps from '../constants/onboardingSteps.js';
+import OnboardingSteps from '@/constants/onboardingSteps';
 
 const OnboardingModal = ({
   showOnboarding,

@@ -1,4 +1,7 @@
-import { Edit3, Trash2, Wand2 } from 'lucide-react';
+import * as React from 'react';
+
+import { AlertCircle, Edit3, Loader2, Trash2, Wand2 } from 'lucide-react';
+
 
 const IdeasList = ({
   ideas,
@@ -12,37 +15,68 @@ const IdeasList = ({
   generatePrompt,
   isGenerating,
   outputType,
-  currentTheme
+  currentTheme,
+  apiGenerateState
 }) => {
+  // Show API state information
+  const isAPIGenerating = apiGenerateState?.loading || apiGenerateState?.progress?.isStreaming;
+  const apiError = apiGenerateState?.error;
+
   return (
-    <div className={`${currentTheme.cardBg} rounded-xl p-6 border ${currentTheme.border} shadow-lg`}>
-      <h2 className="text-xl font-semibold mb-4">💡 Suas Ideias ({ideas.length})</h2>
+    <div>
+      <h2 className="text-xl font-semibold mb-4 text-white">💡 Suas Ideias ({ideas.length})</h2>
+
+      {/* API Status Indicator */}
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg flex items-center gap-2">
+          <AlertCircle size={16} className="text-red-400" />
+          <span className="text-red-400 text-sm">
+            Erro na API: {apiError.message}
+          </span>
+        </div>
+      )}
+
+      {/* Streaming Progress */}
+      {apiGenerateState?.progress?.isStreaming && (
+        <div className="mb-4 p-3 bg-purple-900/50 border border-purple-700 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Loader2 size={16} className="text-purple-400 animate-spin" />
+            <span className="text-purple-400 text-sm">Gerando prompt...</span>
+          </div>
+          {apiGenerateState.progress.content && (
+            <div className="bg-gray-800/50 p-2 rounded text-xs font-mono text-gray-300 max-h-20 overflow-y-auto">
+              {apiGenerateState.progress.content}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {ideas.length === 0 ? (
-          <p className={`${currentTheme.textSecondary} text-center py-8`}>
+          <p className="text-gray-400 text-center py-8">
             Adicione suas primeiras ideias ao lado ←
           </p>
         ) : (
           ideas.map((idea) => (
-            <div key={idea.id} className={`p-3 rounded-lg border ${currentTheme.border} bg-opacity-50`}>
+            <div key={idea.id} className="p-3 rounded-lg border border-gray-600 bg-gray-700/50 backdrop-blur-sm">
               {editingId === idea.id ? (
                 <div className="space-y-2">
                   <textarea
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
-                    className={`w-full px-2 py-1 rounded border ${currentTheme.input} text-sm`}
+                    className="w-full px-2 py-1 rounded border border-gray-600 bg-gray-700/80 text-white text-sm resize-none"
                     rows="2"
                   />
                   <div className="flex gap-1">
                     <button
                       onClick={saveEdit}
-                      className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                      className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
                     >
                       Salvar
                     </button>
                     <button
                       onClick={cancelEdit}
-                      className={`px-2 py-1 rounded text-xs ${currentTheme.buttonSecondary}`}
+                      className="px-2 py-1 rounded text-xs bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
                     >
                       Cancelar
                     </button>
@@ -50,17 +84,17 @@ const IdeasList = ({
                 </div>
               ) : (
                 <>
-                  <p className="text-sm mb-2">{idea.text}</p>
+                  <p className="text-sm mb-2 text-gray-300">{idea.text}</p>
                   <div className="flex justify-end gap-1">
                     <button
                       onClick={() => startEditing(idea.id, idea.text)}
-                      className={`p-1 rounded ${currentTheme.buttonSecondary} hover:bg-opacity-80`}
+                      className="p-1 rounded bg-gray-700/80 border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
                     >
                       <Edit3 size={14} />
                     </button>
                     <button
                       onClick={() => removeIdea(idea.id)}
-                      className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
+                      className="p-1 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -75,17 +109,26 @@ const IdeasList = ({
       {ideas.length > 0 && (
         <button
           onClick={generatePrompt}
-          disabled={isGenerating}
+          disabled={isGenerating || isAPIGenerating}
           className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r ${outputType === 'prompt'
-              ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
-              : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
-            } text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105`}
+            ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'
+            : 'from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700'
+            } text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 shadow-lg`}
         >
-          <Wand2 size={20} className={isGenerating ? 'animate-spin' : ''} />
-          {isGenerating
-            ? `Gerando ${outputType === 'prompt' ? 'prompt' : 'agent'}...`
-            : `Criar ${outputType === 'prompt' ? 'Prompt' : 'Agent'} 🚀`
-          }
+          {isGenerating || isAPIGenerating ? (
+            <>
+              <Wand2 size={20} className="animate-spin" />
+              {apiGenerateState?.progress?.isStreaming
+                ? 'Gerando (Streaming)...'
+                : `Gerando ${outputType === 'prompt' ? 'prompt' : 'agent'}...`
+              }
+            </>
+          ) : (
+            <>
+              <Wand2 size={20} />
+              {`Criar ${outputType === 'prompt' ? 'Prompt' : 'Agent'} 🚀`}
+            </>
+          )}
         </button>
       )}
     </div>

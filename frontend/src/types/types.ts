@@ -1,3 +1,13 @@
+export interface PromptHistoryItem {
+  id: number;
+  prompt: string;
+  timestamp: number;
+  inputs: {
+    ideas: string[];
+    purpose: string;
+  };
+}
+
 export enum AIProvider {
   GEMINI = 'gemini',
   OPENAI = 'openai',

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 // FIX: Corrected import path for App component
-import App from './App';
+import App from './src/App';
 
 const swExceptions = [
   '//ai.studio',

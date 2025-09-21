@@ -25,7 +25,8 @@
     "jsx": "react",
     "paths": {
       "@/*": [
-        "./src/*"
+        "./src/*",
+        "./*"
       ],
       "tests/*": [
         "./tests/*"
