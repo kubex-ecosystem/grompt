@@ -1,0 +1,54 @@
+name: 'kubex-ollama-srv'
+
+services:
+  # LLM UI Service
+  llm-ui:
+    container_name: kubex-ollama-srv-llm-ui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    env_file:
+      - path: secrets/.llm.ui.dev.env
+        required: false
+      - path: secrets/.llm.ui.prd.env
+        required: false
+    networks:
+      - hub-ass-priv-net
+      - hub-ass-pub-net
+    ports:
+      - "3000:8080"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - llm-ui-vol:/app/backend/data
+    depends_on:
+      - llm-app
+
+  # LLM Server Service
+  llm-app:
+    container_name: kubex-ollama-srv-llm-app
+    image: ollama/ollama
+    restart: unless-stopped
+    privileged: true
+    mem_limit: 4096m
+    cpu_count: 4
+    env_file:
+      - path: secrets/.llm.app.dev.env
+        required: false
+      - path: secrets/.llm.app.prd.env
+        required: false
+    networks:
+      - hub-ass-priv-net
+    ports:
+      - "11434:11434"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - llm-app-vol:/root/.ollama
+
+networks:
+  hub-ass-priv-net:
+  hub-ass-pub-net:
+
+volumes:
+  llm-ui-vol:
+  llm-app-vol:

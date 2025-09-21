@@ -1,5 +1,5 @@
 {
-  "name": "Kubex - Grompt",
+  "name": "Kubex - GemX Grompt",
   "application": "grompt",
   "version": "1.0.9",
   "private": false,
@@ -9,7 +9,7 @@
   ],
   "repository": "https://github.com/kubex-ecosystem/grompt",
   "homepage": "https://github.com/kubex-ecosystem/grompt",
-  "description": "Kubex - Grompt is a profissional AI prompt context object kind like: agents, prompts, API calls, and more.",
+  "description": "Kubex - GemX Grompt is a professional AI prompt context object kind like: agents, prompts, API calls, and more.",
   "main": "cmd/main.go",
   "bin": "grompt",
   "author": "Rafael Mori <faelmori@gmail.com>",
@@ -22,16 +22,14 @@
     "control",
     "command-line",
     "tool",
-    "management"
+    "management"w
   ],
   "platforms": [
     "linux/amd64",
     "linux/arm64",
-    "linux/386",
     "darwin/amd64",
     "darwin/arm64",
-    "windows/amd64",
-    "windows/386"
+    "windows/amd64"
   ],
   "dependencies": [
     "tar",

@@ -1,0 +1,46 @@
+[app]
+name = "analyzer-gateway"
+
+[build]
+type = "docker"
+dockerfile = "Dockerfile.koyeb"
+
+[deploy]
+type = "web"
+
+[[deploy.ports]]
+port = 8080
+protocol = "http"
+
+[[deploy.env]]
+name = "CONFIG_FILE"
+value = "./config/koyeb.yml"
+
+[[deploy.env]]
+name = "PORT"
+value = "8080"
+
+# Health check configuration
+[deploy.health_check]
+grace_period = "30s"
+interval = "10s"
+restart_limit = 3
+timeout = "5s"
+
+[deploy.health_check.http]
+port = 8080
+path = "/healthz"
+
+# Instance configuration
+[deploy.instance]
+type = "nano" # Start small, can scale up
+
+# Regions (choose one)
+[deploy.regions]
+list = ["fra"] # Frankfurt - good for EU users
+
+# Auto-scaling
+[deploy.autoscaling]
+min = 1
+max = 3
+target_cpu_percent = 80

@@ -1,134 +1,185 @@
-site_name: Grompt
-site_url: https://kubex-ecosystem.github.io/grompt/
-site_description: "CLI poderosa para gerenciar e transformar prompts com práticas de engenharia — Go 1.25, React 19, Next 15."
-site_author: "Rafael Mori"
+site_name: LookAtni File Markers Project
+site_description: Advanced file organization system with unique markers for code sharing and project management
+site_author: Rafa Mori
+site_url: https://lookatni.kubex.world
 
-repo_name: "kubex-ecosystem/grompt"
-repo_url: https://github.com/kubex-ecosystem/grompt
+repo_name: kubex-ecosystem/lookatni-file-markers
+repo_url: https://github.com/kubex-ecosystem/lookatni-file-markers
+edit_uri: edit/main/docs-site/docs/
 
 docs_dir: ../../docs
-
-# Permite links "Editar esta página" no GitHub
-edit_uri: edit/main/docs/
+# site_dir: ../../docs/site
 
 theme:
   name: material
-  language: pt-BR
-  palette:
-    primary: "indigo"
-    accent: "indigo"
+  # custom_dir: overrides
   features:
-    - navigation.tabs
-    - navigation.top
-    - navigation.instant
-    - navigation.expand
-    - navigation.sections
-    - navigation.tracking
-    - navigation.tabs.sticky
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
     - content.code.copy
     - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
   font:
     text: Roboto
     code: Roboto Mono
+
+  favicon: assets/icon.png
+  logo: assets/icon.png
+
   icon:
-    repo: fontawesome/brands/github
+    logo: logo
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/kubex-ecosystem
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/faelOmori
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/rafa-mori/
+    - icon: fontawesome/solid/globe
+      link: https://github.com/faelmori
+
+  generator: false
+
+extra_images:
+  - assets/images/og-image.png
+  - assets/images/favicon.png
+  - assets/images/favicon_b.png
+  - assets/images/top_banner_md_a0.png
+  - assets/images/top_banner_md_a1.png
+  - assets/images/top_banner_md_b0.png
+  - assets/images/top_banner_md_b1.png
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/extra.js
 
 markdown_extensions:
+  - abbr
   - admonition
-  - codehilite:
-      linenums: true
-  - toc:
-      permalink: true
-      title: Nesta página
   - attr_list
   - def_list
   - footnotes
   - md_in_html
-  - smarty
-  - tables
+  - toc:
+      permalink: true
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      options:
+        custom_icons:
+          - overrides/.icons
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.magiclink:
+      normalize_issue_symbols: true
       repo_url_shorthand: true
       user: kubex-ecosystem
-      repo: grompt
+      repo: lookatni-file-markers
   - pymdownx.mark
   - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: pymdownx.superfences.fence_code_format
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
 
-nav:
-  - Início: index.md
-  - Primeiros Passos:
-      - Instalação: getting-started/installation.md
-      - Início Rápido: getting-started/quickstart.md
-  - Guia do Usuário:
-      - Comandos CLI: user-guide/cli-commands.md
-      - Configuração: user-guide/configuration.md
-      - Exemplos de Uso: user-guide/usage-examples.md
-      - FAQ: user-guide/faq.md
-      - API Reference: user-guide/api-reference.md
-      - Tópicos Avançados:
-          - Wrapper WRPR: pages/wrpr-wrapper.md
-  - Desenvolvimento:
-      - Contribuindo: development/contributing.md
-      - Testes: development/testing.md
-      - Comandos Makefile: development/makefile.md
-      - Publicando Docs: development/docs-publishing.md
-      - Solução de Problemas: development/troubleshooting.md
-      - Arquitetura: development/architecture.md
-  - Comunidade:
-      - Código de Conduta: community/code-of-conduct.md
-      - Suporte: community/support.md
-      - Autores: community/authors.md
-  - Informações do Projeto:
-      - Licença: project-info/license.md
-      - Aviso Legal: project-info/notice.md
-      - Política de Segurança: project-info/security.md
-      - Changelog: project-info/changelog.md
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/kubex-ecosystem/grompt
-      name: Grompt on GitHub
-    - icon: fontawesome/brands/linkedin
-      link: https://www.linkedin.com/in/rafa-mori/
-      name: Rafael Mori on LinkedIn
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/faelOmori
-      name: Rafael Mori on Twitter
-  version:
-    provider: mike
-  analytics:
-    provider: google
-    property: G-7HLY17F3DK
-
 plugins:
   - search:
-      lang: pt
-  - git-revision-date-localized:
-      type: datetime
-      timezone: America/Sao_Paulo
-      locale: pt_BR
-      fallback_to_build_date: true
-  # - linkcheck:
-  #     fail_on_dead_links: true
-  #     timeout: 10
-  #     retry_count: 2
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Basic Concepts: getting-started/concepts.md
+  - Features:
+      - File Extraction: features/extraction.md
+      - Marker Generation: features/generation.md
+      - Validation System: features/validation.md
+      - Visual Markers: features/visual-markers.md
+      - CLI Tools: features/cli-tools.md
+  - User Guide:
+      - Commands Reference: guide/commands.md
+      - Configuration: guide/configuration.md
+      - Workflows: guide/workflows.md
+      - Best Practices: guide/best-practices.md
+  - Advanced:
+      - TypeScript Scripts: advanced/typescript-scripts.md
+      - Extension API: advanced/api.md
+      - Architecture: advanced/architecture.md
+      - Development: advanced/development.md
+  - Examples:
+      - React Project Sharing: examples/sharing.md
+      - Backup & Restore: examples/backup-restore.md
+      - CI/CD Integration: examples/cicd.md
+      - Educational Use: examples/education.md
+  - About:
+      - Changelog: about/changelog.md
+      - Contributing: about/contributing.md
+      - License: about/license.md

@@ -1,0 +1,119 @@
+# Koyeb Production Configuration
+production:
+  # General Settings
+  logging_level: INFO
+  debug_mode: false
+
+  # Server Configuration
+  server:
+    addr: ":8080" # Koyeb maps this port
+    read_timeout_sec: 30
+    write_timeout_sec: 30
+    idle_timeout_sec: 120
+    shutdown_timeout_sec: 10
+
+    # Security Settings
+    rate_limit:
+      enabled: true
+      requests_per_minute: 200
+      burst: 50
+
+    # Access Control Settings
+    access_control:
+      enabled: true
+      allowed_ips:
+        - "0.0.0.0/0" # Allow all (Koyeb handles routing)
+      use_x_forwarded_for: true
+      allow_remote_ip: true
+
+    # Proxy Configuration
+    proxy:
+      enabled: true
+      trusted_proxies:
+        - "0.0.0.0/0" # Trust Koyeb's proxy
+      use_x_forwarded_for: true
+      use_x_real_ip: true
+
+    # CORS Configuration
+    cors:
+      allow_origins:
+        - "https://grompt.kubex.world"
+        - "https://*.kubex.world"
+        - "http://localhost:3000" # For local dev
+      allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      allow_headers:
+        - "Content-Type"
+        - "Authorization"
+        - "X-Requested-With"
+        - "X-External-API-Key"
+      allow_credentials: true
+      max_age: 600
+
+    # TLS Configuration (Koyeb handles SSL)
+    tls:
+      enabled: false
+
+# AI Provider Configuration
+providers:
+  gemini:
+    type: "gemini"
+    base_url: "https://generativelanguage.googleapis.com"
+    key_env: "GEMINI_API_KEY"
+    default_model: "gemini-2.0-flash-exp"
+
+  openai:
+    type: "openai"
+    base_url: "https://api.openai.com/v1"
+    key_env: "OPENAI_API_KEY"
+    default_model: "gpt-4"
+
+  anthropic:
+    type: "anthropic"
+    base_url: "https://api.anthropic.com"
+    key_env: "ANTHROPIC_API_KEY"
+    default_model: "claude-3-sonnet-20240229"
+
+# Rate Limiting per Provider
+rate_limiting:
+  enabled: true
+  default:
+    capacity: 100
+    refill_rate: 10
+  per_provider:
+    gemini:
+      capacity: 50
+      refill_rate: 8
+    openai:
+      capacity: 30
+      refill_rate: 5
+    anthropic:
+      capacity: 40
+      refill_rate: 6
+
+# Circuit Breaker Configuration
+circuit_breaker:
+  enabled: true
+  default:
+    failure_threshold: 5
+    timeout_sec: 60
+    max_requests: 3
+
+# Health Check Configuration
+health:
+  enabled: true
+  interval_sec: 30
+  timeout_sec: 10
+
+# Monitoring and Metrics
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
+  health_endpoint: "/healthz"
+
+# Security Settings
+security:
+  enable_https: false # Koyeb handles SSL termination
+  allowed_origins:
+    - "https://grompt.kubex.world"
+    - "https://*.kubex.world"
+  api_keys: [] # Will be set via environment variables

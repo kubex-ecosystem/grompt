@@ -4,150 +4,93 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Grompt is a modern prompt engineering tool built with Go (backend) and React 19 (frontend) that transforms unstructured thoughts into effective AI prompts. It runs as a single binary with zero dependencies and supports multiple AI providers (OpenAI, Claude, Gemini, DeepSeek, Ollama).
+Grompt is a modern prompt engineering tool built with Go backend and React frontend. It transforms messy, unstructured thoughts into clean, effective prompts for AI models. The project runs as a single binary with zero dependencies and supports multiple AI providers (OpenAI, Claude, DeepSeek, Ollama, Gemini).
 
-## Commands
+## Key Commands
 
-### Build and Development
-```bash
-# Build using Makefile (recommended)
-make build              # Build production binary to ./dist/grompt
-make build-dev          # Build development version
-make install            # Build and install binary to system PATH
-make clean              # Clean build artifacts
-make test               # Run tests
+### Building and Development
+- `make build` - Build production binary with compression
+- `make build-dev` - Build development binary without compression
+- `make install` - Interactive install (download pre-compiled or build locally)
+- `make clean` - Clean build artifacts
+- `make test` - Run Go tests
+- `make run` - Run the application
 
-# Frontend development (requires Node.js)
-cd frontend
-npm run setup           # Install dependencies
-npm run dev             # Start development server
-npm run build           # Build for production
-npm run build:static    # Build static production version
-```
-
-### Testing
-```bash
-make test               # Run Go tests
-cd frontend && npm test # Run frontend tests (if available)
-```
+### Frontend Development
+- `cd frontend && npm run setup` - Install frontend dependencies
+- `cd frontend && npm run dev` - Start Vite development server
+- `cd frontend && npm run build` - Build frontend for production
 
 ### Documentation
-```bash
-make build-docs         # Build documentation
-make serve-docs         # Start documentation server at localhost:8080/docs
-make pub-docs           # Publish documentation
-```
+- `make build-docs` - Build documentation using MkDocs
+- `make serve-docs` - Serve documentation at http://localhost:8081/docs
+- `make pub-docs` - Publish documentation to GitHub Pages
 
-### CLI Usage
-```bash
-# Direct AI queries
-./grompt ask "What is the capital of France?" --provider openai --model gpt-4
+### Internationalization (i18n)
+- `make i18n.used` - Extract used i18n keys from frontend
+- `make i18n.avail` - List available i18n keys
+- `make i18n.diff` - Compare used vs available keys
+- `make i18n.check` - Validate i18n completeness
 
-# Generate structured prompts from ideas
-./grompt generate --idea "REST API" --idea "User auth" --provider gemini
-
-# Generate AI agent recommendations
-./grompt squad "Need a backend for payments with Stripe integration"
-```
-
-## Architecture
+## Architecture Overview
 
 ### Backend (Go)
-- **Entry Point**: `cmd/main.go` - CLI application entry
-- **Library Interface**: `grompt.go` - Public API for library usage
-- **Core Modules**:
-  - `internal/engine/` - Prompt processing engine
-  - `internal/module/` - CLI command modules and registration
-  - `internal/services/` - Business logic services
-  - `internal/types/` - Type definitions and interfaces
-  - `internal/providers/` - AI provider implementations
-- **Factories**: `factory/` - Provider, config, and template factories
-- **Configuration**: Environment variables and config files
+- **Entry point**: `cmd/main.go` - Simple main that calls module system
+- **Module system**: `internal/module/` - CLI framework built on Cobra
+- **Gateway**: `internal/gateway/` - AI provider gateway with middleware, health checks, circuit breakers
+- **Services**: `internal/services/` - GitHub integration, notifications, orchestration
+- **Providers**: `internal/providers/` - AI provider implementations (OpenAI, etc.)
+- **Config**: `config/` directory contains YAML configurations
 
-### Frontend (React 19)
-- **Framework**: Vite + React 19 + TypeScript
-- **Styling**: Tailwind CSS
-- **Components**: `frontend/src/components/` - Reusable UI components
-- **Services**: `frontend/src/services/` - API communication
-- **Core**: `frontend/src/core/` - Core application logic
+### Frontend (React)
+- **Framework**: React 19 + Vite + TypeScript
+- **Styling**: TailwindCSS + PostCSS
+- **Build**: Vite bundler with embedded output in Go binary
+- **Location**: `frontend/` directory
 
-### Key Patterns
-- **Interface-based design**: Heavy use of Go interfaces for modularity
-- **Factory pattern**: For creating providers, configs, and templates
-- **Module registration**: CLI commands register themselves through `internal/module`
-- **Type safety**: Strong typing throughout with custom interfaces
-- **Security flags**: Atomic bitflag system for security controls
-- **Job states**: Atomic state management for background tasks
+### Key Architecture Patterns
 
-## API Providers
+1. **Gateway Pattern**: The `internal/gateway/` provides a unified interface to multiple AI providers with production middleware (rate limiting, circuit breakers, health checks)
 
-Support for multiple AI providers with unified interface:
-- OpenAI (GPT-4, GPT-3.5-turbo)
-- Anthropic Claude (Claude 3.5 Sonnet, Claude 3 Haiku)
-- Google Gemini (Gemini 1.5 Pro, Gemini 2.0 Flash)
-- DeepSeek (DeepSeek Chat, DeepSeek Coder)
-- Ollama (Local models)
-- Demo mode (No API key required)
+2. **Module System**: CLI commands are organized through a module pattern in `internal/module/` using Cobra framework
 
-Configuration via environment variables:
-```bash
-export OPENAI_API_KEY=sk-...
-export CLAUDE_API_KEY=sk-ant-...
-export GEMINI_API_KEY=...
-export DEEPSEEK_API_KEY=...
-export OLLAMA_ENDPOINT=http://localhost:11434
-```
+3. **Embedded Frontend**: React frontend is built and embedded into the Go binary via embed directives
 
-## Development Guidelines
+4. **Middleware Stack**: Production-ready middleware for health monitoring, rate limiting, and circuit breaking
 
-Follow the patterns established in `.github/copilot-instructions.md`:
-- Use Go modules for dependency management
-- Organize code using idiomatic Go structure
-- Write table-driven tests with standard `testing` package
-- Use interfaces for mocking, avoid globals
-- Handle errors explicitly, return early
-- Use `context.Context` for cancellation and timeouts
-- Document exported functions with godoc comments
-- Favor composition over inheritance
-
-## Build System
-
-The project uses a sophisticated Makefile that delegates to `support/main.sh` for cross-platform builds. The build system supports:
-- Custom build hooks in `support/pre.d/` (pre-build) and `support/pos.d/` (post-build)
-- Cross-platform compilation for multiple architectures
-- Metadata extraction from `internal/module/info/manifest.json`
-- Docker deployment and documentation generation
-
-## File Structure
-```
-grompt/
-├── cmd/                    # CLI entry points
-├── internal/               # Private application code
-│   ├── engine/            # Prompt processing engine
-│   ├── module/            # CLI command modules
-│   ├── services/          # Business logic
-│   └── types/             # Type definitions
-├── factory/               # Provider and config factories
-├── frontend/              # React frontend application
-├── support/               # Build scripts and hooks
-├── tests/                 # Test files
-├── docs/                  # Documentation
-├── grompt.go             # Library interface
-└── Makefile              # Build system
-```
-
-## Testing
-
-The project follows Go testing conventions:
-- Tests are located alongside source files (`*_test.go`)
-- Use table-driven tests for comprehensive coverage
-- Mock dependencies via interfaces
-- Run tests with `make test`
+5. **Provider Registry**: Pluggable AI provider system with consistent interfaces
 
 ## Configuration
 
-The application supports configuration through:
-- Environment variables for API keys and settings
-- Command-line flags for runtime options
-- Configuration files (format determined by the config factory)
-- Default values defined in `types.Config`
+- Main config: `config/config.yml` (with examples in `config/`)
+- Environment variables for API keys (OPENAI_API_KEY, CLAUDE_API_KEY, etc.)
+- Docker support with multiple Dockerfiles (dev, production, Koyeb)
+
+## Build System
+
+The project uses a sophisticated build system:
+- **Makefile**: High-level interface calling `support/main.sh`
+- **support/main.sh**: Main build script with extensive validation and cross-platform support
+- **Custom hooks**: `support/pre.d/` and `support/post.d/` for custom build steps
+- **Cross-platform**: Supports Windows, Linux, macOS with multiple architectures
+
+## Development Notes
+
+- Go version: 1.25.1+
+- Frontend: React 19 + Next.js 15 patterns
+- The project follows a monolithic architecture but with clean separation of concerns
+- Extensive use of interfaces for testability and modularity
+- GitHub integration for webhooks and automated workflows
+
+## Testing
+
+- `make test` runs the full Go test suite
+- Frontend tests use standard React testing patterns
+- Integration tests in `tests/` directory
+
+## Deployment
+
+- Single binary deployment with embedded frontend
+- Docker containers supported
+- Koyeb deployment configuration included
+- Health check endpoints available at `/api/health`

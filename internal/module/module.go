@@ -20,28 +20,25 @@ func (m *Grompt) Alias() string {
 	return ""
 }
 func (m *Grompt) ShortDescription() string {
-	return "Grompt a tool for building prompts with AI assistance."
+	return "AI tools help in the editor, but they stop antes do PR, lacking governance."
 }
 func (m *Grompt) LongDescription() string {
-	return `Grompt: A tool for building prompts with AI assistance using real engineering practices. Better prompts, better results.., Awesome prompts, AMAZING results !!!`
+	return `Grompt: An AI-powered tool that enhances code quality and governance by providing intelligent suggestions and reviews before pull requests. It integrates seamlessly into your development workflow, ensuring that your code meets the highest standards of quality and compliance.`
 }
 func (m *Grompt) Usage() string {
-	return "grompt [command] [args]"
+	return "Grompt [command] [args]"
 }
 func (m *Grompt) Examples() []string {
 	return []string{
-		"grompt start",
-		"grompt start -p 5000 -d '127.0.0.1'",
-		"grompt ask --prompt \"What is Go?\" --provider gemini",
-		"grompt generate --ideas \"API,REST,tutorial\" --purpose \"Learning\"",
-		"grompt chat --provider claude",
+		"grompt gateway serve -p '8080' -b '127.0.0.1' -f './config.yaml'",
+		"grompt gui web -f './config.yaml'",
 	}
 }
 func (m *Grompt) Active() bool {
 	return true
 }
 func (m *Grompt) Module() string {
-	return "grompt"
+	return "Grompt"
 }
 func (m *Grompt) Execute() error {
 	return m.Command().Execute()
@@ -60,9 +57,11 @@ func (m *Grompt) Command() *cobra.Command {
 		}, m.PrintBanner),
 	}
 
-	rtCmd.AddCommand(cc.ServerCmdList()...)
-	rtCmd.AddCommand(cc.SquadCmdList()...)
-	rtCmd.AddCommand(cc.AICmdList()...)
+	// Add subcommands to the root command
+	rtCmd.AddCommand(cc.GatewayCmds())
+	rtCmd.AddCommand(cc.NewDaemonCommand())
+
+	// Add more commands as needed
 	rtCmd.AddCommand(vs.CliCommand())
 
 	// Set usage definitions for the command and its subcommands

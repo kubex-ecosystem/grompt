@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 interface LoaderProps {
   size?: 'sm' | 'md' | 'lg';
@@ -14,6 +14,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'md', className = '' }) =
 
   return (
     <div
+
       className={`animate-spin rounded-full border-border border-t-primary ${sizeClasses[size]} ${className}`}
       role="status"
     >
