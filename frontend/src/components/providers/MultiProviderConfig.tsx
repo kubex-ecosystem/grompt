@@ -3,10 +3,10 @@
  * Allows users to configure API keys and settings for all available providers
  */
 
+import { AlertCircle, Check, Eye, EyeOff, Key, Settings, TestTube, X } from 'lucide-react'
 import * as React from 'react'
-import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Key, Settings, TestTube, Check, X, AlertCircle } from 'lucide-react'
-import { multiProviderService, MultiProviderConfig } from '../../services/multiProviderService'
+import { useEffect, useState } from 'react'
+import { multiProviderService, type MultiProviderConfig } from '../../services/multiProviderService'
 import { AIProvider } from '../../types/types'
 
 export interface MultiProviderConfigProps {
@@ -135,7 +135,7 @@ export function MultiProviderConfig({ isOpen, onClose, onConfigUpdate }: MultiPr
 
       // Test the provider
       const backendProviderName = provider === AIProvider.ANTHROPIC ? 'anthropic' :
-                                  provider === AIProvider.GEMINI ? 'gemini' : 'openai'
+        provider === AIProvider.GEMINI ? 'gemini' : 'openai'
       const result = await multiProviderService.testProvider(backendProviderName)
 
       updateProvider(provider, 'testResult', result)
@@ -224,6 +224,7 @@ export function MultiProviderConfig({ isOpen, onClose, onConfigUpdate }: MultiPr
               <h2 className="text-xl font-bold text-white">Configuração dos Providers</h2>
             </div>
             <button
+              title='Fechar'
               onClick={onClose}
               className="text-gray-400 hover:text-white p-2"
             >
@@ -273,6 +274,7 @@ export function MultiProviderConfig({ isOpen, onClose, onConfigUpdate }: MultiPr
                         Modelo Padrão
                       </label>
                       <input
+                        title='Digite o modelo padrão'
                         type="text"
                         value={providerState.defaultModel}
                         onChange={(e) => updateProvider(provider, 'defaultModel', e.target.value)}
@@ -309,11 +311,10 @@ export function MultiProviderConfig({ isOpen, onClose, onConfigUpdate }: MultiPr
 
                   {/* Test Result */}
                   {providerState.testResult !== undefined && (
-                    <div className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${
-                      providerState.testResult
-                        ? 'bg-green-900/50 text-green-400 border border-green-700'
-                        : 'bg-red-900/50 text-red-400 border border-red-700'
-                    }`}>
+                    <div className={`mt-3 p-3 rounded-lg flex items-center gap-2 ${providerState.testResult
+                      ? 'bg-green-900/50 text-green-400 border border-green-700'
+                      : 'bg-red-900/50 text-red-400 border border-red-700'
+                      }`}>
                       {providerState.testResult ? (
                         <>
                           <Check size={16} />

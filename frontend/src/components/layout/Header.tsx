@@ -1,9 +1,16 @@
-import { BookOpen, Moon, Play, Sun, Settings } from 'lucide-react';
+import { BookOpen, Moon, Play, Settings, Sun } from 'lucide-react';
 import * as React from 'react';
-import { MultiProviderConfig } from '../providers/MultiProviderConfig';
 import { DemoMode } from '../../config/demoMode';
 import { Theme } from '../../constants/themes';
-import { UseHealthState, UseProvidersState } from '../../hooks/useGromptAPI';
+import { useGromptAPI } from '../../hooks/useGromptAPI';
+import { MultiProviderConfig } from '../providers/MultiProviderConfig';
+
+
+const {
+  providers,
+  health
+} = useGromptAPI({});
+
 
 interface HeaderProps {
   darkMode: boolean;
@@ -11,8 +18,8 @@ interface HeaderProps {
   currentTheme: Theme;
   startOnboarding: () => void;
   showEducation: (topic: string) => void;
-  providers?: UseProvidersState;
-  health?: UseHealthState;
+  providers?: typeof providers;
+  health?: typeof health;
   isHealthy: boolean;
 }
 
