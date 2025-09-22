@@ -7,7 +7,7 @@ languages: [en, pt-BR]
 sources: ["Makefile", "frontend/package.json", "scripts/test_grompt_v1.sh"]
 assumptions: ["Go 1.25+", "Node.js 18+", "Modern development environment"]
 ---
-
+<!-- markdownlint-disable-next-line -->
 # Development Guide - Grompt V1
 
 ## TL;DR
@@ -19,12 +19,14 @@ Complete development guide for Grompt V1, covering backend Go development, React
 ### Prerequisites
 
 **System Requirements**:
+
 - Go 1.25.1+ (for backend development)
 - Node.js 18+ with npm (for frontend development)
 - Git for version control
 - Modern IDE (VS Code, GoLand, or similar)
 
 **Optional Tools**:
+
 - Docker for containerized development
 - Make utility (usually pre-installed on Unix systems)
 - jq for JSON processing in shell scripts
@@ -54,6 +56,7 @@ cd frontend && npm run typecheck && cd ..
 ### Environment Configuration
 
 **Backend Environment Variables**:
+
 ```bash
 # API Keys for providers
 export OPENAI_API_KEY="sk-your-openai-key"
@@ -69,6 +72,7 @@ export LOG_LEVEL=debug
 ```
 
 **Frontend Environment Variables** (`.env.local`):
+
 ```env
 # Development server
 VITE_APP_TITLE="Grompt Dev"
@@ -119,7 +123,7 @@ go test ./internal/providers/...  # Test provider integrations
 
 #### Backend Project Structure
 
-```
+```plaintext
 cmd/
 ├── main.go                    # Application entry point
 └── cli/                      # CLI command implementations
@@ -188,7 +192,7 @@ npm run dev:https     # HTTPS dev server for PWA testing
 
 #### Frontend Project Structure
 
-```
+```plaintext
 frontend/src/
 ├── components/              # Reusable UI components
 │   ├── layout/             # Layout components (Header, etc.)
@@ -542,6 +546,7 @@ dlv debug cmd/main.go     # Delve debugger
 #### Common Issues
 
 **Port Already in Use**:
+
 ```bash
 # Find process using port 3000
 lsof -i :3000
@@ -551,6 +556,7 @@ kill -9 $(lsof -t -i:3000)
 ```
 
 **Module Issues**:
+
 ```bash
 # Clean module cache
 go clean -modcache
@@ -559,7 +565,7 @@ go mod download
 
 ### Frontend Debugging
 
-#### Development Debugging
+#### Development Debugging (Frontend)
 
 ```bash
 cd frontend
@@ -624,6 +630,7 @@ console.log('Memory:', performance.memory)
 ### Development Workflow
 
 1. **Feature Branch Creation**
+
    ```bash
    git checkout main
    git pull origin main
@@ -637,6 +644,7 @@ console.log('Memory:', performance.memory)
    - Update documentation
 
 3. **Code Quality Checks**
+
    ```bash
    # Backend
    make test
@@ -651,6 +659,7 @@ console.log('Memory:', performance.memory)
    ```
 
 4. **Commit Standards**
+
    ```bash
    # Use conventional commits
    git commit -m "feat: add streaming coalescing for better UX"
