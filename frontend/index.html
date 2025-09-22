@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="pt-BR" class="dark">
+
   <head>
     <meta charset="UTF-8" />
 
     <!-- Basic PWA Meta Tags -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#9333ea" />
     <meta name="background-color" content="#030712" />
-    <meta name="description" content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+    <meta name="description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
 
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Grompt" />
@@ -32,7 +34,8 @@
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Grompt - AI Prompt Engineering Tool" />
-    <meta property="og:description" content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+    <meta property="og:description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
     <meta property="og:site_name" content="Grompt" />
     <meta property="og:url" content="https://grompt.kubex.dev/" />
     <meta property="og:image" content="/images/og-image.png" />
@@ -40,27 +43,37 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Grompt - AI Prompt Engineering Tool" />
-    <meta name="twitter:description" content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+    <meta name="twitter:description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
     <meta name="twitter:image" content="/images/twitter-card.png" />
 
     <!-- Title -->
     <title>Grompt - AI Prompt Engineering Tool</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background-color: #010409;
-        background-image: 
+        background-image:
           linear-gradient(rgba(11, 23, 45, 0.6) 1px, transparent 1px),
           linear-gradient(90deg, rgba(11, 23, 45, 0.6) 1px, transparent 1px);
         background-size: 20px 20px;
       }
-      .font-orbitron { font-family: 'Orbitron', sans-serif; }
-      .font-space-mono { font-family: 'Space Mono', monospace; }
+
+      .font-orbitron {
+        font-family: 'Orbitron', sans-serif;
+      }
+
+      .font-space-mono {
+        font-family: 'Space Mono', monospace;
+      }
+
       .glow-border {
         box-shadow: 0 0 2px 0px #00e5ff, 0 0 5px 0px #00e5ff, 0 0 10px 0px #00e5ff;
       }
@@ -100,14 +113,14 @@
               foreground: '#c9d1d9'
             },
             boxShadow: {
-                'neon-cyan': '0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff',
-                'neon-green': '0 0 5px #39d353, 0 0 10px #39d353, 0 0 20px #39d353',
+              'neon-cyan': '0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff',
+              'neon-green': '0 0 5px #39d353, 0 0 10px #39d353, 0 0 20px #39d353',
             }
           },
         },
       }
     </script>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
@@ -120,10 +133,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
-</head>
+    <link rel="stylesheet" href="/index.css">
+  </head>
+
   <body class="bg-background text-foreground font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
+
 </html>

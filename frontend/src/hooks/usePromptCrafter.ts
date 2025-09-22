@@ -2,12 +2,29 @@ import { GenerateRequest } from '@/services/api';
 import { useCallback, useEffect, useState } from 'react';
 import { DemoMode, FeatureKey } from '../config/demoMode';
 import onboardingSteps from '../constants/onboardingSteps';
-import { UseGeneratePromptState } from './useGromptAPI';
+import { useGromptAPI } from './useGromptAPI';
+
+
+const uuidv4 = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+const {
+  generatePrompt,
+  // Add any other functions you need from the API here
+} = useGromptAPI({
+
+})
+
 
 // Type definitions
 export interface Idea {
-  id: number;
+  id: string;
   text: string;
+  timestamp?: Date;
 }
 
 export type OutputType = 'prompt' | 'agent';
@@ -15,15 +32,15 @@ export type AgentFramework = 'crewai' | 'autogen' | 'langchain' | 'semantic-kern
 export type Purpose = 'Código' | 'Imagem' | 'Análise' | 'Escrita' | 'Automação' | 'Suporte' | 'Pesquisa' | 'Outros';
 
 export interface UsePromptCrafterProps {
-  apiGenerate?: UseGeneratePromptState;
+  apiGenerate?: typeof generatePrompt;
 }
 
 export interface UsePromptCrafterReturn {
   // State
   darkMode: boolean;
-  currentInput: string;
+  currentInput: { id: string; text: string; timestamp: Date };
   ideas: Idea[];
-  editingId: number | null;
+  editingId: string | null;
   editingText: string;
   purpose: Purpose;
   customPurpose: string;
@@ -45,7 +62,7 @@ export interface UsePromptCrafterReturn {
 
   // Setters
   setDarkMode: (value: boolean) => void;
-  setCurrentInput: (value: string) => void;
+  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
   setEditingText: (value: string) => void;
   setPurpose: (value: Purpose) => void;
   setCustomPurpose: (value: string) => void;
@@ -61,8 +78,8 @@ export interface UsePromptCrafterReturn {
 
   // Actions
   addIdea: () => void;
-  removeIdea: (id: number) => void;
-  startEditing: (id: number, text: string) => void;
+  removeIdea: (id: string) => void;
+  startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
   cancelEdit: () => void;
   generatePrompt: () => Promise<void>;
@@ -78,9 +95,9 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   const [darkMode, setDarkMode] = useState<boolean>(true);
 
   // Ideas State
-  const [currentInput, setCurrentInput] = useState<string>('');
+  const [currentInput, setCurrentInput] = useState<{ id: string; text: string; timestamp: Date }>({ id: '', text: '', timestamp: new Date() });
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
 
   // Configuration State
@@ -115,21 +132,22 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
 
   // Ideas Management
   const addIdea = useCallback((): void => {
-    if (currentInput.trim()) {
+    if (currentInput.id.trim()) {
       const newIdea: Idea = {
-        id: Date.now(),
-        text: currentInput.trim()
+        id: uuidv4().toString(),
+        text: currentInput.text.trim(),
+        timestamp: currentInput.timestamp
       };
       setIdeas(prevIdeas => [...prevIdeas, newIdea]);
-      setCurrentInput('');
+      setCurrentInput({ id: '', text: '', timestamp: new Date() });
     }
   }, [currentInput]);
 
-  const removeIdea = useCallback((id: number): void => {
+  const removeIdea = useCallback((id: string): void => {
     setIdeas(prevIdeas => prevIdeas.filter(idea => idea.id !== id));
   }, []);
 
-  const startEditing = useCallback((id: number, text: string): void => {
+  const startEditing = useCallback((id: string, text: string): void => {
     setEditingId(id);
     setEditingText(text);
   }, []);

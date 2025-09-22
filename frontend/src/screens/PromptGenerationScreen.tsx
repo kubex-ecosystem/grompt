@@ -2,17 +2,25 @@ import * as React from 'react';
 import IdeasInput from '../components/ideas/IdeasInput';
 import IdeasList from '../components/ideas/IdeasList';
 import OutputPanel from '../components/settings/OutputPanel';
+import { useGromptAPI } from '../hooks/useGromptAPI';
 import { Purpose } from '../hooks/usePromptCrafter';
-import { UseGromptAPIState } from '../hooks/useGromptAPI';
 
 interface Theme {
   [key: string]: string;
 }
 
+const {
+  generatePrompt,
+  providers,
+  health
+} = useGromptAPI({
+
+});
+
 interface PromptGenerationScreenProps {
   // Ideas state
-  currentInput: string;
-  setCurrentInput: (value: string) => void;
+  currentInput: { id: string; text: string; timestamp: Date };
+  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
   ideas: Array<{ id: string; text: string; timestamp: Date }>;
   editingId: string | null;
   editingText: string;
@@ -32,7 +40,7 @@ interface PromptGenerationScreenProps {
   copied: boolean;
 
   // Actions
-  addIdea: (text: string) => void;
+  addIdea: (idea: { id: string; text: string; timestamp: Date }) => void;
   removeIdea: (id: string) => void;
   startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
@@ -42,7 +50,7 @@ interface PromptGenerationScreenProps {
 
   // Theme and API
   currentTheme: Theme;
-  apiGenerateState: UseGromptAPIState['generatePrompt'];
+  apiGenerateState: typeof generatePrompt;
 }
 
 const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
@@ -112,11 +120,10 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          purpose === option
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                        }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                          }`}
                       >
                         {option}
                       </button>
@@ -165,7 +172,7 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
             saveEdit={saveEdit}
             cancelEdit={cancelEdit}
             removeIdea={removeIdea}
-            generatePrompt={generatePrompt}
+            generatePrompt={() => generatePrompt()}
             isGenerating={isGenerating}
             outputType="prompt"
             currentTheme={currentTheme}
@@ -181,7 +188,7 @@ const PromptGenerationScreen: React.FC<PromptGenerationScreenProps> = ({
             copied={copied}
             outputType="prompt"
             agentFramework="crewai"
-            agentProvider={agentProvider}
+            agentProvider={(providers.providers[0] || { name: 'openai' }).name}
             maxLength={maxLength}
             mcpServers={[]}
             currentTheme={currentTheme}

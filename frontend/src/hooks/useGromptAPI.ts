@@ -14,7 +14,7 @@ import {
 } from '../services/api'
 import { enhancedAPI } from '../services/enhancedAPI'
 
-export interface UseGeneratePromptState {
+interface UseGeneratePromptState {
   generateStream: (request: GenerateRequest) => Promise<void>
   generateSync: (request: GenerateRequest) => Promise<GenerateResponse>
   cancel: () => void
@@ -29,14 +29,14 @@ export interface UseGeneratePromptState {
   }
 }
 
-export interface UseProvidersState {
+interface UseProvidersState {
   providers: Provider[]
   loading: boolean
   error: APIError | null
   lastFetched: number | null
 }
 
-export interface UseHealthState {
+interface UseHealthState {
   isHealthy: boolean
   health: HealthResponse | null
   loading: boolean
@@ -47,7 +47,7 @@ export interface UseHealthState {
 /**
  * Hook for generating prompts with both sync and streaming support
  */
-export function useGeneratePrompt() {
+function useGeneratePrompt() {
   const [state, setState] = useState<UseGeneratePromptState>({
     data: null,
     loading: false,
@@ -249,7 +249,7 @@ export function useGeneratePrompt() {
 /**
  * Hook for fetching and managing providers list
  */
-export function useProviders(autoFetch: boolean = true) {
+function useProviders(autoFetch: boolean = true) {
   const [state, setState] = useState<UseProvidersState>({
     providers: [],
     loading: false,
@@ -320,7 +320,7 @@ export function useProviders(autoFetch: boolean = true) {
 /**
  * Hook for health monitoring
  */
-export function useHealth(autoCheck: boolean = false, intervalMs: number = 60000) {
+function useHealth(autoCheck: boolean = false, intervalMs: number = 60000) {
   const [state, setState] = useState<UseHealthState>({
     isHealthy: false,
     health: null,
@@ -403,7 +403,7 @@ export function useHealth(autoCheck: boolean = false, intervalMs: number = 60000
 /**
  * Hook for rate limit monitoring
  */
-export function useRateLimit() {
+function useRateLimit() {
   const [rateLimitStatus, setRateLimitStatus] = useState({
     canMakeRequest: true,
     timeUntilReset: 0

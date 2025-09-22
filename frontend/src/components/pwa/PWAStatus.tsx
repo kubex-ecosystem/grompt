@@ -3,20 +3,19 @@
  * Shows online/offline status, installation prompt, and sync status
  */
 
-import * as React from 'react';
 import {
-  Download,
-  RefreshCw,
-  Wifi,
-  WifiOff,
+  AlertCircle,
   Cloud,
   CloudOff,
+  Download,
+  RefreshCw,
   Smartphone,
-  X,
-  Check,
-  AlertCircle
+  Wifi,
+  WifiOff,
+  X
 } from 'lucide-react';
-import { usePWA, PWAUtils } from '../../hooks/usePWA';
+import * as React from 'react';
+import { PWAUtils, usePWA } from '../../hooks/usePWA';
 
 interface PWAStatusProps {
   className?: string;
@@ -151,6 +150,7 @@ const PWAStatus: React.FC<PWAStatusProps> = ({ className = '' }) => {
 
         {/* Status Toggle */}
         <button
+          title='Ver status do PWA'
           onClick={() => setShowDetails(!showDetails)}
           className="ml-auto p-1 rounded hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
         >
@@ -252,6 +252,7 @@ const PWAStatus: React.FC<PWAStatusProps> = ({ className = '' }) => {
               Limpar Cache
             </button>
             <button
+              title='Fechar'
               onClick={() => setShowDetails(false)}
               className="p-2 hover:bg-gray-700/50 text-gray-400 hover:text-white rounded transition-colors"
             >
@@ -275,8 +276,10 @@ const PWAStatus: React.FC<PWAStatusProps> = ({ className = '' }) => {
               </div>
               <div className="flex gap-2">
                 <button
+
                   onClick={() => setShowDetails(false)}
                   className="p-2 hover:bg-white/20 rounded transition-colors"
+                  title='Fechar'
                 >
                   <X size={16} />
                 </button>

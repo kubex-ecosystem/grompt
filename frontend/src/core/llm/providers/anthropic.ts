@@ -12,7 +12,7 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-} from "@/types/types";
+} from "../../../types/types";
 import { MessagesPage } from "openai/resources/beta/threads/messages";
 
 export class AnthropicProvider extends BaseProvider {

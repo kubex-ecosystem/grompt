@@ -6,7 +6,7 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   OpenAIModels
-} from "@/types/types";
+} from "../../../types/types";
 import OpenAI from "openai";
 
 

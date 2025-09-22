@@ -1,26 +1,31 @@
 import { AlertCircle, Edit3, Loader2, Trash2, Wand2 } from 'lucide-react';
 import * as React from 'react';
-import { UseGeneratePromptState } from '../../hooks/useGromptAPI';
+import { useGromptAPI } from '../../hooks/useGromptAPI';
 import { Idea, OutputType } from '../../hooks/usePromptCrafter';
 
 interface Theme {
   [key: string]: string;
 }
 
+const {
+  generatePrompt,
+} = useGromptAPI({});
+
+
 interface IdeasListProps {
   ideas: Idea[];
-  editingId: number | null;
+  editingId: string | null;
   editingText: string;
   setEditingText: (value: string) => void;
-  startEditing: (id: number, text: string) => void;
+  startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
   cancelEdit: () => void;
-  removeIdea: (id: number) => void;
+  removeIdea: (id: string) => void;
   generatePrompt: () => void;
   isGenerating: boolean;
   outputType: OutputType;
   currentTheme: Theme;
-  apiGenerateState?: UseGeneratePromptState;
+  apiGenerateState?: typeof generatePrompt;
 }
 
 const IdeasList: React.FC<IdeasListProps> = ({
@@ -131,7 +136,8 @@ const IdeasList: React.FC<IdeasListProps> = ({
 
       {ideas.length > 0 && (
         <button
-          onClick={generatePrompt}
+          title='Generate Prompt or Agent'
+          onClick={() => generatePrompt}
           disabled={isGenerating || isAPIGenerating}
           className={`w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r ${outputType === 'prompt'
             ? 'from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700'

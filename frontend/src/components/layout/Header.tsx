@@ -1,5 +1,6 @@
-import { BookOpen, Moon, Play, Sun } from 'lucide-react';
+import { BookOpen, Moon, Play, Sun, Settings } from 'lucide-react';
 import * as React from 'react';
+import { MultiProviderConfig } from '../providers/MultiProviderConfig';
 import { DemoMode } from '../../config/demoMode';
 import { Theme } from '../../constants/themes';
 import { UseHealthState, UseProvidersState } from '../../hooks/useGromptAPI';
@@ -25,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({
   health,
   isHealthy
 }) => {
+  const [showProviderConfig, setShowProviderConfig] = React.useState(false);
   const healthyProviders = providers?.providers?.filter(p => p.available) || [];
   const healthStatus = isHealthy ? 'healthy' : 'degraded';
 
@@ -109,12 +111,29 @@ const Header: React.FC<HeaderProps> = ({
         </select>
 
         <button
+          onClick={() => setShowProviderConfig(true)}
+          title="Configurar Providers"
+          className="p-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+        >
+          <Settings size={20} />
+        </button>
+
+        <button
           onClick={() => setDarkMode(!darkMode)}
           className="p-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
         >
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
+
+      <MultiProviderConfig
+        isOpen={showProviderConfig}
+        onClose={() => setShowProviderConfig(false)}
+        onConfigUpdate={(config) => {
+          // Optionally trigger a refresh of providers in parent component
+          console.log('Provider configuration updated:', config);
+        }}
+      />
     </div>
   );
 };

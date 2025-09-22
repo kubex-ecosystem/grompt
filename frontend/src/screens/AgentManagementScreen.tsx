@@ -1,20 +1,28 @@
-import * as React from 'react';
 import { Info, Settings, X } from 'lucide-react';
+import * as React from 'react';
 import IdeasInput from '../components/ideas/IdeasInput';
 import IdeasList from '../components/ideas/IdeasList';
 import OutputPanel from '../components/settings/OutputPanel';
-import { AgentFramework, Purpose } from '../hooks/usePromptCrafter';
-import { UseGromptAPIState, UseProvidersState } from '../hooks/useGromptAPI';
 import { DemoMode } from '../config/demoMode';
+import { useGromptAPI } from '../hooks/useGromptAPI';
+import { AgentFramework, Purpose } from '../hooks/usePromptCrafter';
 
 interface Theme {
   [key: string]: string;
 }
 
+const {
+  // State
+  generatePrompt,
+  providers,
+  health,
+  rateLimit
+} = useGromptAPI();
+
 interface AgentManagementScreenProps {
   // Ideas state
-  currentInput: string;
-  setCurrentInput: (value: string) => void;
+  currentInput: { id: string; text: string; timestamp: Date };
+  setCurrentInput: (value: { id: string; text: string; timestamp: Date }) => void;
   ideas: Array<{ id: string; text: string; timestamp: Date }>;
   editingId: string | null;
   editingText: string;
@@ -44,7 +52,7 @@ interface AgentManagementScreenProps {
   copied: boolean;
 
   // Actions
-  addIdea: (text: string) => void;
+  addIdea: (text: { id: string; text: string; timestamp: Date }) => void;
   removeIdea: (id: string) => void;
   startEditing: (id: string, text: string) => void;
   saveEdit: () => void;
@@ -56,8 +64,13 @@ interface AgentManagementScreenProps {
 
   // Theme, API and providers
   currentTheme: Theme;
-  apiGenerateState: UseGromptAPIState['generatePrompt'];
-  providers?: UseProvidersState;
+  apiGenerateState: typeof generatePrompt;
+  apiRateLimitState: typeof rateLimit;
+  apiHealthState: typeof health;
+  apiRateLimit?: typeof rateLimit;
+  apiHealth?: typeof health;
+  apiGenerate?: typeof generatePrompt;
+  apiProviders?: typeof providers;
 }
 
 const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
@@ -97,7 +110,8 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
   handleFeatureClick,
   currentTheme,
   apiGenerateState,
-  providers
+  apiRateLimitState,
+  apiHealthState
 }) => {
   // Modal states
   const [showConfigModal, setShowConfigModal] = React.useState(false);
@@ -264,11 +278,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                       <button
                         key={option}
                         onClick={() => setPurpose(option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          purpose === option
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                        }`}
+                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${purpose === option
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                          }`}
                       >
                         {option}
                       </button>
@@ -332,6 +345,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
             <div className="sticky top-0 bg-gray-800 p-6 border-b border-gray-700 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">⚙️ Configurações do Agent</h2>
               <button
+                title='Close Configuration'
                 onClick={() => setShowConfigModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -422,6 +436,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
             <div className="p-6 border-b border-gray-700 flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">🔧 Ferramentas Tradicionais</h3>
               <button
+                title='Close Configuration'
                 onClick={() => setShowToolsModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -435,11 +450,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={tool}
                     onClick={() => handleToolToggle(tool)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      agentTools.includes(tool)
-                        ? 'bg-teal-600 text-white border-teal-600'
-                        : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${agentTools.includes(tool)
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }`}
                   >
                     {tool}
                   </button>
@@ -460,6 +474,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   🔌 Servidores MCP (Model Context Protocol)
                   {DemoMode.isActive && (
                     <button
+                      title='Learn more about MCP'
                       onClick={() => showEducation('mcp')}
                       className="text-purple-400 hover:text-purple-300"
                     >
@@ -472,6 +487,7 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                 </p>
               </div>
               <button
+                title='Close Configuration'
                 onClick={() => setShowMcpModal(false)}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
@@ -486,11 +502,10 @@ const AgentManagementScreen: React.FC<AgentManagementScreenProps> = ({
                   <button
                     key={server.name}
                     onClick={() => handleMcpServerToggle(server.name)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                      mcpServers.includes(server.name)
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${mcpServers.includes(server.name)
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-gray-700/80 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
+                      }`}
                     title={server.desc + ' (demo)'}
                   >
                     {server.desc} 🎪

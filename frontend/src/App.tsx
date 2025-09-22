@@ -6,6 +6,7 @@
 import * as React from 'react'
 import PromptCrafter from './PromptCrafter'
 import PWAStatus from './components/pwa/PWAStatus'
+import { useMultiProvider } from './hooks/useMultiProvider'
 
 // Analyzer design system background effects
 const BackgroundEffects: React.FC = () => (
@@ -33,6 +34,9 @@ const BackgroundEffects: React.FC = () => (
 )
 
 export default function App() {
+  // Initialize multi-provider service
+  useMultiProvider()
+
   return (
     <div className="min-h-screen bg-[#030712] text-white font-sans selection:bg-purple-500/30">
       <BackgroundEffects />

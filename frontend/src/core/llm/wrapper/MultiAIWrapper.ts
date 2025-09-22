@@ -1,6 +1,6 @@
-import { AnthropicProvider } from "@/core/llm/providers/anthropic";
-import { GeminiProvider } from "@/core/llm/providers/gemini";
-import { OpenAIProvider } from "@/core/llm/providers/openai";
+import { AnthropicProvider } from "../providers/anthropic";
+import { GeminiProvider } from "../providers/gemini";
+import { OpenAIProvider } from "../providers/openai";
 import {
   AIModel,
   AIProvider,
@@ -9,7 +9,7 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   RefactorCodeParams
-} from "@/types/types";
+} from "../../../types/types";
 
 export class MultiAIWrapper {
   private providers: Map<AIProvider, { generateContent: any; streamContent?: any }>;
