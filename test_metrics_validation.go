@@ -1,5 +1,4 @@
-// Test script for validating actual metrics generation
-package main
+package grompt
 
 import (
 	"context"

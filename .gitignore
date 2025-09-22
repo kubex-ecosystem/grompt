@@ -76,3 +76,8 @@ internal/services/server/build/*
 !internal/services/server/build/style.css
 
 tasks/
+.kubex/
+CLAUDE.md
+.claude
+.codex
+.notes
