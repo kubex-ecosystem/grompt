@@ -11,7 +11,7 @@ export OPENAI_API_KEY="your-openai-api-key-here"
 
 # Start the gateway in background
 echo "Starting gateway..."
-./dist/analyzer-gw &
+./dist/grompt_linux_amd64 &
 GATEWAY_PID=$!
 
 # Wait for gateway to start

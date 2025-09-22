@@ -5,15 +5,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  api,
   APIError,
   GenerateRequest,
   GenerateResponse,
-  handleStreamingGeneration,
   HealthResponse,
   isAPIError,
   Provider
 } from '../services/api'
+import { enhancedAPI } from '../services/enhancedAPI'
 
 export interface UseGeneratePromptState {
   generateStream: (request: GenerateRequest) => Promise<void>
@@ -81,7 +80,7 @@ export function useGeneratePrompt() {
     }))
 
     try {
-      const response = await api.generatePrompt(request)
+      const response = await enhancedAPI.generatePrompt(request)
       setState(prev => ({
         ...prev,
         loading: false,
@@ -121,19 +120,9 @@ export function useGeneratePrompt() {
     }))
 
     try {
-      await handleStreamingGeneration(request, {
-        onStart: ({ provider, model, ideas }) => {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            progress: {
-              ...prev.progress,
-              isStreaming: true,
-              content: ''
-            }
-          }))
-        },
-        onChunk: (content) => {
+      await enhancedAPI.generatePromptStream(
+        request,
+        (content) => {
           setState(prev => ({
             ...prev,
             progress: {
@@ -142,7 +131,7 @@ export function useGeneratePrompt() {
             }
           }))
         },
-        onComplete: (usage) => {
+        (usage) => {
           setState(prev => {
             const finalData: GenerateResponse = {
               id: `stream_${Date.now()}`,
@@ -171,7 +160,7 @@ export function useGeneratePrompt() {
             }
           })
         },
-        onError: (error) => {
+        (error) => {
           setState(prev => ({
             ...prev,
             loading: false,
@@ -183,7 +172,7 @@ export function useGeneratePrompt() {
             }
           }))
         }
-      })
+      )
     } catch (error) {
       const apiError = isAPIError(error) ? error : new APIError(
         error instanceof Error ? error.message : 'Streaming error',
@@ -281,14 +270,14 @@ export function useProviders(autoFetch: boolean = true) {
     }))
 
     try {
-      const response = await api.listProviders()
+      const providers = await enhancedAPI.getProviders()
       setState(prev => ({
         ...prev,
         loading: false,
-        providers: response.data,
+        providers: providers,
         lastFetched: Date.now()
       }))
-      return response.data
+      return providers
     } catch (error) {
       const apiError = isAPIError(error) ? error : new APIError(
         error instanceof Error ? error.message : 'Failed to fetch providers',
@@ -350,7 +339,7 @@ export function useHealth(autoCheck: boolean = false, intervalMs: number = 60000
     }))
 
     try {
-      const health = await api.healthCheck()
+      const health = await enhancedAPI.getHealth()
       setState(prev => ({
         ...prev,
         loading: false,
@@ -415,12 +404,17 @@ export function useHealth(autoCheck: boolean = false, intervalMs: number = 60000
  * Hook for rate limit monitoring
  */
 export function useRateLimit() {
-  const [rateLimitStatus, setRateLimitStatus] = useState(() =>
-    api.getRateLimitStatus()
-  )
+  const [rateLimitStatus, setRateLimitStatus] = useState({
+    canMakeRequest: true,
+    timeUntilReset: 0
+  })
 
   const updateStatus = useCallback(() => {
-    setRateLimitStatus(api.getRateLimitStatus())
+    // Enhanced API handles rate limiting internally
+    setRateLimitStatus({
+      canMakeRequest: enhancedAPI.isConnected(),
+      timeUntilReset: 0
+    })
   }, [])
 
   // Update status periodically
@@ -453,6 +447,6 @@ export function useGromptAPI(options: {
     providers,
     health,
     rateLimit,
-    api // Direct access to API instance
+    api: enhancedAPI // Direct access to enhanced API instance
   }
 }

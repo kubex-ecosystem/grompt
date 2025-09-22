@@ -93,7 +93,7 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
   const [agentFramework, setAgentFramework] = useState<AgentFramework>('crewai');
   const [agentRole, setAgentRole] = useState<string>('');
   const [agentTools, setAgentTools] = useState<string[]>([]);
-  const [agentProvider, setAgentProvider] = useState<string>('claude');
+  const [agentProvider, setAgentProvider] = useState<string>('openai');
   const [mcpServers, setMcpServers] = useState<string[]>([]);
   const [customMcpServer, setCustomMcpServer] = useState<string>('');
 
@@ -202,7 +202,7 @@ const usePromptCrafter = ({ apiGenerate }: UsePromptCrafterProps): UsePromptCraf
 
   // Legacy generation for fallback and demo mode
   const generatePromptLegacy = async (purposeText: string): Promise<void> => {
-    if (agentProvider !== 'claude' && DemoMode.isActive) {
+    if (!['openai', 'anthropic', 'gemini'].includes(agentProvider) && DemoMode.isActive) {
       const demoResult = DemoMode.handleDemoCall(agentProvider as FeatureKey);
       setGeneratedPrompt('# 🎪 Demo Mode\n\n' + demoResult.message + '\n\n**ETA:** ' + demoResult.eta + '\n\n---\n\n*Configurações salvas:*\n- Framework: ' + agentFramework + '\n- Provider: ' + agentProvider + '\n- Ferramentas: ' + (agentTools.join(', ') || 'Nenhuma') + '\n- Servidores MCP: ' + (mcpServers.join(', ') || 'Nenhum') + '\n\nEssas configurações serão aplicadas quando o provider estiver disponível!');
       return;

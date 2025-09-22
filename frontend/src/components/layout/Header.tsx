@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
         <select
           title='Selecione o provedor de IA'
           className="px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          defaultValue={healthyProviders[0]?.name || 'claude'}
+          defaultValue={healthyProviders[0]?.name || 'openai'}
         >
           {healthyProviders.length > 0 ? (
             healthyProviders.map(provider => (
@@ -95,7 +95,11 @@ const Header: React.FC<HeaderProps> = ({
               </option>
             ))
           ) : (
-            <option value="claude">Claude API (configurar)</option>
+            <>
+              <option value="openai">OpenAI (configurar)</option>
+              <option value="anthropic">Anthropic (configurar)</option>
+              <option value="gemini">Gemini (configurar)</option>
+            </>
           )}
           {providers?.providers?.filter(p => !p.available).map(provider => (
             <option key={provider.name} value={provider.name} disabled>

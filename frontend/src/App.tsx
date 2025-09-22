@@ -1,10 +1,11 @@
 /**
  * Grompt - AI Prompt Engineering Tool
- * Main App component with integrated backend API and Analyzer design system
+ * Main App component with integrated backend API, PWA support and Analyzer design system
  */
 
 import * as React from 'react'
 import PromptCrafter from './PromptCrafter'
+import PWAStatus from './components/pwa/PWAStatus'
 
 // Analyzer design system background effects
 const BackgroundEffects: React.FC = () => (
@@ -35,6 +36,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#030712] text-white font-sans selection:bg-purple-500/30">
       <BackgroundEffects />
+
+      {/* PWA Status - Fixed position */}
+      <div className="fixed top-4 right-4 z-50">
+        <PWAStatus />
+      </div>
+
+      {/* Main Application */}
       <PromptCrafter />
     </div>
   )
