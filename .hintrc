@@ -14,7 +14,8 @@
       "default",
       {
         "ignore": [
-          "meta[name=theme-color]"
+          "meta[name=theme-color]",
+          "script[type=importmap]"
         ]
       }
     ]
