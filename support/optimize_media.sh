@@ -2,12 +2,12 @@
 # shellcheck disable=SC2015,SC1091
 
 # Script Metadata
-__secure_logic_version="1.0.0"
-__secure_logic_date="$( date +%Y-%m-%d )"
-__secure_logic_author="Rafael Mori"
-__secure_logic_use_type="lib"
-__secure_logic_init_timestamp="$(date +%s)"
-__secure_logic_elapsed_time=0
+__opt_md_secure_logic_version="1.0.0"
+__opt_md_secure_logic_date="$( date +%Y-%m-%d )"
+__opt_md_secure_logic_author="Rafael Mori"
+__opt_md_secure_logic_use_type="lib"
+__opt_md_secure_logic_init_timestamp="$(date +%s)"
+__opt_md_secure_logic_elapsed_time=0
 
 # Check if verbose mode is enabled
 if [[ "${MYNAME_VERBOSE:-false}" == "true" ]]; then
@@ -19,7 +19,7 @@ IFS=$'\n\t'
 _ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
 _ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-declare -a _main_args=( "$@" )
+declare -a _opt_md_main_args=( "$@" )
 
 __get_output_tty() {
   if [[ -t 1 ]]; then
@@ -29,7 +29,7 @@ __get_output_tty() {
   fi
 }
 
-__secure_logic_sourced_name() {
+__opt_md_secure_logic_sourced_name() {
   # prefer BASH_SOURCE[0], fallback to $0 for shells where BASH_SOURCE may be absent
   local _self="${BASH_SOURCE[0]:-$0}"
   _self="${_self//${_ROOT_DIR:-}/}"
@@ -42,7 +42,7 @@ __secure_logic_sourced_name() {
   return 0
 }
 
-__first(){
+__opt_md_first(){
   if [ "$EUID" -eq 0 ] || [ "$UID" -eq 0 ]; then
     printf '%s\n' "Please do not run as root." >"$(__get_output_tty)"
     exit 1
@@ -51,21 +51,21 @@ __first(){
     exit 1
   else
     # shellcheck disable=SC2155
-    local _ws_name="$(__secure_logic_sourced_name)"
+    local _ws_name="$(__opt_md_secure_logic_sourced_name)"
 
     # detect if script was sourced: compare BASH_SOURCE[0] (or fallback) with $0
     if [ "${BASH_SOURCE[0]:-$0}" != "$0" ]; then
-      if test ${__secure_logic_use_type:-} != "lib"; then
-        printf '%s\n' "This script is not intended to be sourced." >"$(__get_output_tty)"
-        printf '%s\n' "Please run it directly." >"$(__get_output_tty)"
-        exit 1
-      fi
+      # if test ${__opt_md_secure_logic_use_type:-} != "lib"; then
+      #   printf '%s\n' "This script is not intended to be sourced." >"$(__get_output_tty)"
+      #   printf '%s\n' "Please run it directly." >"$(__get_output_tty)"
+      #   exit 1
+      # fi
       # If the script is sourced, we set the variable to true
       # and export it to the environment without changing
       # the shell options.
       export "${_ws_name:-}"="true"
     else
-      if test ${__secure_logic_use_type:-} != "exec"; then
+      if test "${__opt_md_secure_logic_use_type:-}" != "exec"; then
         printf '%s\n' "This script is not intended to be executed directly." >"$(__get_output_tty)"
         printf '%s\n' "Please source it instead." >"$(__get_output_tty)"
         exit 1
@@ -92,12 +92,12 @@ _QUIET=${_QUIET:-${QUIET:-false}}
 _DEBUG=${_DEBUG:-${DEBUG:-false}}
 _HIDE_ABOUT=${_HIDE_ABOUT:-${HIDE_ABOUT:-false}}
 
-__first "${_main_args[@]}" >&2 || {
+__opt_md_first "${_opt_md_main_args[@]}" >&2 || {
   echo "Error: This script must be run directly, not sourced." >&2
   exit 1
 }
 
-__source_script_if_needed() {
+__opt_md_source_script_if_needed() {
   local _check_declare="${1:-}"
   local _script_path="${2:-}"
   # shellcheck disable=SC2065
@@ -112,10 +112,10 @@ __source_script_if_needed() {
 }
 
 _SCRIPT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/support"
-__source_script_if_needed "log" "${_SCRIPT_DIR}/log.sh" || exit 1
-__source_script_if_needed "__get_values_from_manifest" "${_SCRIPT_DIR}/apply_manifest.sh" || exit 1
+__opt_md_source_script_if_needed "log" "${_SCRIPT_DIR}/log.sh" || exit 1
+__opt_md_source_script_if_needed "__get_values_from_manifest" "${_SCRIPT_DIR}/apply_manifest.sh" || exit 1
 
-__main_functions() {
+__opt_md_main_functions() {
   if [[ $# -gt 0 ]]; then
     local func_name="${1:-}"
     local _full_args=( "${_main_args[@]}" )
@@ -177,13 +177,13 @@ optimize_media() {
   return 0
 }
 
-__secure_logic_main() {
+__secure_logic_opt_md_main() {
   local _ws_name
-  _ws_name="$(__secure_logic_sourced_name)"
+  _ws_name="$(__opt_md_secure_logic_sourced_name)"
   local _ws_name_val
   _ws_name_val=$(eval "echo \${${_ws_name:-}}")
   if test "${_ws_name_val:-}" != "true"; then
-    __main_functions "${_main_args[@]}"
+    __opt_md_main_functions "${_main_args[@]}"
     return $?
   else
     # shellcheck disable=SC2207
@@ -199,5 +199,5 @@ __secure_logic_main() {
   fi
 }
 
-__secure_logic_main "${_main_args[@]}"
+__secure_logic_opt_md_main "${_main_args[@]}"
 
