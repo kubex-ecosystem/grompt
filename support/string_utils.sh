@@ -92,7 +92,6 @@ _QUIET=${_QUIET:-${QUIET:-false}}
 _DEBUG=${_DEBUG:-${DEBUG:-false}}
 _HIDE_ABOUT=${_HIDE_ABOUT:-${HIDE_ABOUT:-false}}
 
-
 __first "${_main_args[@]}" >&2 || {
   echo "Error: This script must be run directly, not sourced." >&2
   exit 1

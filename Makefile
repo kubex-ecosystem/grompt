@@ -106,48 +106,24 @@ build-docker:
 	@bash $(INSTALL_SCRIPT) build-docker $(ARGS)
 	$(shell exit 0)
 
-# Platform-specific targets (prevent wildcard capture)
-linux:
-	@echo "Process finished for platform: linux"
-
-amd64:
-	@echo "Process finished for architecture: amd64"
-
-windows:
-	@echo "Process finished for platform: windows"
-
-darwin:
-	@echo "Process finished for platform: darwin"
-
-arm64:
-	@echo "Process finished for architecture: arm64"
-
-armv6l:
-	@echo "Process finished for architecture: armv6l"
-
-386:
-	@echo "Process finished for architecture: 386"
-
-all:
-	@echo "Process finished for all platforms and architectures"
-
 run:
 	@bash $(INSTALL_SCRIPT) run $(ARGS)
 	$(shell exit 0)
 
 build-docs:
-	@echo "Building documentation..."
 	@bash $(INSTALL_SCRIPT) build-docs $(ARGS)
 	$(shell exit 0)
 
 serve-docs:
-	@echo "Starting documentation server..."
 	@bash $(INSTALL_SCRIPT) serve-docs $(ARGS)
 	$(shell exit 0)
 
 pub-docs:
-	@echo "Publishing documentation..."
 	@bash $(INSTALL_SCRIPT) pub-docs $(ARGS)
+	$(shell exit 0)
+
+optimize-media:
+	@bash $(INSTALL_SCRIPT) optimize-media $(ARGS)
 	$(shell exit 0)
 
 # i18n.used:
@@ -178,6 +154,31 @@ pub-docs:
 # 	@[ ! -s i18n_missing_en.txt ]    || { echo "❌ Missing EN i18n";    exit 2; }
 # 	@[ ! -s i18n_missing_ptBR.txt ]  || { echo "❌ Missing PT-BR i18n"; exit 2; }
 # 	@echo "✅ i18n OK"
+
+# Platform-specific targets (prevent wildcard capture)
+linux:
+	@echo "Process finished for platform: linux"
+
+amd64:
+	@echo "Process finished for architecture: amd64"
+
+windows:
+	@echo "Process finished for platform: windows"
+
+darwin:
+	@echo "Process finished for platform: darwin"
+
+arm64:
+	@echo "Process finished for architecture: arm64"
+
+armv6l:
+	@echo "Process finished for architecture: armv6l"
+
+386:
+	@echo "Process finished for architecture: 386"
+
+all:
+	@echo "Process finished for all platforms and architectures"
 
 ## Run dynamic commands with arguments calling the install script.
 %:

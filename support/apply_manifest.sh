@@ -51,7 +51,7 @@ __get_values_from_manifest() {
 }
 
 __replace_project_name() {
-  local _old_bin_name="gobe"
+  local _old_bin_name="goforge"
   local _new_bin_name="${_BINARY_NAME}"
 
   if [[ ! -d "$_ROOT_DIR/bkp" ]]; then
