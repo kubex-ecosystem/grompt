@@ -124,8 +124,8 @@ func WireHTTP(mux *http.ServeMux, reg *registry.Registry, prodMiddleware *middle
 	mux.HandleFunc("/v1/webhooks/health", h.webhookHandler.HealthCheck)
 
 	log.Println("✅ LookAtni integration enabled - Code extraction and navigation ready!")
-	log.Println("🔄 Meta-recursive webhook system enabled - INSANIDADE RACIONAL activated!")
-	log.Println("🔥 AI Provider Health Monitoring enabled - ARQUITETURA QUE NÃO SE SABOTA!")
+	log.Println("🔄 Meta-recursive webhook system enabled")
+	log.Println("🔥 AI Provider Health Monitoring enabled")
 }
 
 // healthCheck provides a simple health endpoint

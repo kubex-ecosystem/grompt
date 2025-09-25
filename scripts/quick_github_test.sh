@@ -69,7 +69,7 @@ if echo "$RESPONSE" | grep -q '"id"'; then
     echo "✅ Dados reais: Disponíveis para métricas DORA"
     echo ""
     echo "🏆 Day 1 VALIDADO com dados REAIS do GitHub!"
-    echo "🚀 Pronto para implementar 'INSANIDADE RACIONAL'!"
+    echo "🚀 Pronto para implementar"
 
 else
     echo "❌ Erro na API do GitHub"
