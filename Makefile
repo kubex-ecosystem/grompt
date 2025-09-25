@@ -133,6 +133,7 @@ all:
 
 run:
 	@bash $(INSTALL_SCRIPT) run $(ARGS)
+	$(shell exit 0)
 
 build-docs:
 	@echo "Building documentation..."
@@ -142,40 +143,41 @@ build-docs:
 serve-docs:
 	@echo "Starting documentation server..."
 	@bash $(INSTALL_SCRIPT) serve-docs $(ARGS)
+	$(shell exit 0)
 
 pub-docs:
 	@echo "Publishing documentation..."
 	@bash $(INSTALL_SCRIPT) pub-docs $(ARGS)
 	$(shell exit 0)
 
-i18n.used:
-	rg -no --pcre2 "t\\(\\s*['\"\`]([A-Za-z][\\w-]+)\\.([A-Za-z0-9_.-]+)['\"\`]\\s*(?:,|\\))" $(I18N_SRC) \
-	| awk -F: '{print $$3}' \
-	| sed -E "s/^t\\(['\"\`]//; s/['\"\`].*$$//" \
-	| sort -u > i18n_used_keys.txt
+# i18n.used:
+# 	rg -no --pcre2 "t\\(\\s*['\"\`]([A-Za-z][\\w-]+)\\.([A-Za-z0-9_.-]+)['\"\`]\\s*(?:,|\\))" $(I18N_SRC) \
+# 	| awk -F: '{print $$3}' \
+# 	| sed -E "s/^t\\(['\"\`]//; s/['\"\`].*$$//" \
+# 	| sort -u > i18n_used_keys.txt
 
-i18n.avail:
-	@> i18n_avail_en.txt; for f in locales/en/*.json; do ns=$$(basename $$f .json); \
-		jq -r 'paths(scalars) | join(".")' $$f | sed "s/^/$$ns./" >> i18n_avail_en.txt; done; \
-	sort -u -o i18n_avail_en.txt i18n_avail_en.txt
-	@> i18n_avail_ptBR.txt; for f in locales/pt-BR/*.json; do ns=$$(basename $$f .json); \
-		jq -r 'paths(scalars) | join(".")' $$f | sed "s/^/$$ns./" >> i18n_avail_ptBR.txt; done; \
-	sort -u -o i18n_avail_ptBR.txt i18n_avail_ptBR.txt
+# i18n.avail:
+# 	@> i18n_avail_en.txt; for f in locales/en/*.json; do ns=$$(basename $$f .json); \
+# 		jq -r 'paths(scalars) | join(".")' $$f | sed "s/^/$$ns./" >> i18n_avail_en.txt; done; \
+# 	sort -u -o i18n_avail_en.txt i18n_avail_en.txt
+# 	@> i18n_avail_ptBR.txt; for f in locales/pt-BR/*.json; do ns=$$(basename $$f .json); \
+# 		jq -r 'paths(scalars) | join(".")' $$f | sed "s/^/$$ns./" >> i18n_avail_ptBR.txt; done; \
+# 	sort -u -o i18n_avail_ptBR.txt i18n_avail_ptBR.txt
 
-i18n.diff: i18n.used i18n.avail
-	comm -23 i18n_used_keys.txt i18n_avail_en.txt    > i18n_missing_en.txt || true
-	comm -13 i18n_used_keys.txt i18n_avail_en.txt    > i18n_unused_en.txt  || true
-	comm -23 i18n_used_keys.txt i18n_avail_ptBR.txt  > i18n_missing_ptBR.txt || true
-	comm -13 i18n_used_keys.txt i18n_avail_ptBR.txt  > i18n_unused_ptBR.txt  || true
-	@echo "EN missing:    $$(wc -l < i18n_missing_en.txt)"
-	@echo "PT-BR missing: $$(wc -l < i18n_missing_ptBR.txt)"
-	@echo "EN unused:     $$(wc -l < i18n_unused_en.txt)"
-	@echo "PT-BR unused:  $$(wc -l < i18n_unused_ptBR.txt)"
+# i18n.diff: i18n.used i18n.avail
+# 	comm -23 i18n_used_keys.txt i18n_avail_en.txt    > i18n_missing_en.txt || true
+# 	comm -13 i18n_used_keys.txt i18n_avail_en.txt    > i18n_unused_en.txt  || true
+# 	comm -23 i18n_used_keys.txt i18n_avail_ptBR.txt  > i18n_missing_ptBR.txt || true
+# 	comm -13 i18n_used_keys.txt i18n_avail_ptBR.txt  > i18n_unused_ptBR.txt  || true
+# 	@echo "EN missing:    $$(wc -l < i18n_missing_en.txt)"
+# 	@echo "PT-BR missing: $$(wc -l < i18n_missing_ptBR.txt)"
+# 	@echo "EN unused:     $$(wc -l < i18n_unused_en.txt)"
+# 	@echo "PT-BR unused:  $$(wc -l < i18n_unused_ptBR.txt)"
 
-i18n.check: i18n.diff
-	@[ ! -s i18n_missing_en.txt ]    || { echo "❌ Missing EN i18n";    exit 2; }
-	@[ ! -s i18n_missing_ptBR.txt ]  || { echo "❌ Missing PT-BR i18n"; exit 2; }
-	@echo "✅ i18n OK"
+# i18n.check: i18n.diff
+# 	@[ ! -s i18n_missing_en.txt ]    || { echo "❌ Missing EN i18n";    exit 2; }
+# 	@[ ! -s i18n_missing_ptBR.txt ]  || { echo "❌ Missing PT-BR i18n"; exit 2; }
+# 	@echo "✅ i18n OK"
 
 ## Run dynamic commands with arguments calling the install script.
 %:

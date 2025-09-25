@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154
 
 # Enhanced TypeScript i18n key extractor
 # This script parses nested TypeScript translation objects
@@ -75,15 +76,20 @@ except Exception as e:
 " >> "$lang_file"
 }
 
-# Process English files
-echo "🇺🇸 Processing English (en-US) files..."
-for f in frontend/locales/en-US/*.ts; do
-  if [[ -f "$f" && $(basename "$f") != "index.ts" ]]; then
-    ns=$(basename "$f" .ts)
-    echo "  📄 Processing $ns..."
-    extract_ts_keys "$f" "$ns" "i18n_avail_en.txt"
-  fi
-done
+
+_process_files() {
+  local _what_part_is_scanning="${1:-FRONTEND}"
+  local _lang="${2:-en-US}"
+  # Process English files
+  echo "🇺🇸 Processing English (en-US) files..."
+  for f in "${_ROOT_DIR}/${_what_part_is_scanning,,}/locales/$_lang"/*.ts; do
+    if [[ -f "$f" && $(basename "$f") != "index.ts" ]]; then
+      ns=$(basename "$f" .ts)
+      echo "  📄 Processing $ns..."
+      extract_ts_keys "$f" "$ns" "REPORT_${_what_part_is_scanning}-i18n_avail_${_lang}.txt"
+    fi
+  done
+}
 
 # Process Portuguese files
 echo "🇧🇷 Processing Portuguese (pt-BR) files..."
