@@ -1,0 +1,543 @@
+# Production Features Configuration
+production:
+  # General Settings
+  logging_level: INFO
+  debug_mode: false
+
+  # Server Configuration
+  server:
+    addr: ":8080"
+    read_timeout_sec: 15
+    write_timeout_sec: 15
+    idle_timeout_sec: 60
+    shutdown_timeout_sec: 10
+
+    # Security Settings
+    rate_limit:
+      enabled: false
+      requests_per_minute: 120 # Global rate limit
+      burst: 20 # Allow short bursts
+
+    # Access Control Settings
+    access_control:
+      enabled: true
+      allowed_ips:
+        - "0.0.0.0/0" # Allow all in dev
+      denied_ips:
+        - "" # No denied IPs in dev
+      use_x_forwarded_for: true
+      allow_remote_ip: true
+
+    # Proxy Configuration
+    proxy:
+      enabled: true
+      trusted_proxies:
+        - "0.0.0.0/0" # Allow all in dev
+      use_x_forwarded_for: true
+      use_x_real_ip: true
+
+    # CORS Configuration
+    cors:
+      allow_origins: ["*"] # em prod: ["https://kubex.world"]
+      allow_methods: ["GET", "POST", "PUT", "DELETE"]
+      allow_headers: ["Content-Type", "Authorization"]
+      allow_credentials: true
+      max_age: 600
+
+    # TLS Configuration
+    tls:
+      enabled: false
+      cert_file: "path/to/cert.pem"
+      key_file: "path/to/key.pem"
+
+    # Graceful Shutdown Configuration
+    graceful_shutdown:
+      enabled: true
+      timeout_sec: 10
+      shutdown_grace_period_sec: 5
+
+    # Health Check Endpoint
+    health_check:
+      enabled: true
+      interval_sec: 30 # Check every 30 seconds
+      timeout_sec: 10 # Timeout for health checks
+
+  # Default LLM Request Settings
+  defaults:
+    max_tokens: 2048
+    temperature: 0.7
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+    stream: false
+    timeout_sec: 30
+    tenant_id: "default"
+    user_id: "anonymous"
+
+  # Rate Limiting Configuration
+  rate_limit:
+    enabled: true
+    default:
+      capacity: 100 # Max requests in bucket
+      refill_rate: 10 # Tokens added per second
+    per_provider:
+      groq:
+        capacity: 200 # Groq is fast, allow more
+        refill_rate: 20
+      gemini:
+        capacity: 50 # Gemini has generous limits
+        refill_rate: 8
+      openai:
+        capacity: 30 # OpenAI has stricter limits
+        refill_rate: 5
+      anthropic:
+        capacity: 40 # Anthropic moderate limits
+        refill_rate: 6
+
+  # Circuit Breaker Configuration
+  circuit_breaker:
+    enabled: true
+    default:
+      max_failures: 5 # Failures before opening circuit
+      reset_timeout_sec: 60 # Time before trying half-open
+      success_threshold: 3 # Successes needed to close
+    per_provider:
+      groq:
+        max_failures: 3 # Groq should be very reliable
+        reset_timeout_sec: 30
+        success_threshold: 2
+      gemini:
+        max_failures: 5 # Standard settings
+        reset_timeout_sec: 60
+        success_threshold: 3
+      openai:
+        max_failures: 4 # Slightly more tolerant
+        reset_timeout_sec: 90
+        success_threshold: 3
+      anthropic:
+        max_failures: 4
+        reset_timeout_sec: 75
+        success_threshold: 3
+
+  # Health Check Configuration
+  health_check:
+    enabled: true
+    interval_sec: 30 # Check every 30 seconds
+    timeout_sec: 10 # Timeout for health checks
+
+  # Retry Configuration
+  retry:
+    enabled: true
+    max_retries: 3 # Maximum retry attempts
+    base_delay_ms: 100 # Initial delay
+    max_delay_ms: 5000 # Maximum delay
+    multiplier: 2.0 # Exponential backoff multiplier
+
+# Provider-specific production settings
+provider_production:
+  groq:
+    timeout_sec: 30 # Groq is fast, shorter timeout
+    priority: high # High priority for speed-critical
+    max_retries: 3 # Maximum retry attempts
+    base_delay_ms: 50 # Initial delay
+    max_delay_ms: 3000 # Maximum delay
+    multiplier: 1.5 # Exponential backoff multiplier
+
+  gemini:
+    timeout_sec: 60 # Standard timeout
+    priority: medium
+    max_retries: 3 # Maximum retry attempts
+    base_delay_ms: 100 # Initial delay
+    max_delay_ms: 5000 # Maximum delay
+    multiplier: 2.0 # Exponential backoff multiplier
+
+  openai:
+    timeout_sec: 120 # Longer timeout for complex requests
+    priority: medium
+    max_retries: 4 # Maximum retry attempts
+    base_delay_ms: 200 # Initial delay
+    max_delay_ms: 6000 # Maximum delay
+    multiplier: 2.5 # Exponential backoff multiplier
+
+  anthropic:
+    timeout_sec: 90 # Claude can be slower but thorough
+    priority: medium
+    max_retries: 4 # Maximum retry attempts
+    base_delay_ms: 150 # Initial delay
+    max_delay_ms: 5500 # Maximum delay
+    multiplier: 2.0 # Exponential backoff multiplier
+
+  # Future providers (uncomment when implemented)
+  # openrouter:
+  #   timeout_sec: 60
+  #   priority: low
+  #   max_retries: 3 # Maximum retry attempts
+  #   base_delay_ms: 100 # Initial delay
+  #   max_delay_ms: 5000 # Maximum delay
+  #   multiplier: 2.0 # Exponential backoff multiplier
+  # ollama:
+  #   timeout_sec: 45
+  #   priority: low
+  #   max_retries: 2 # Maximum retry attempts
+  #   base_delay_ms: 100 # Initial delay
+  #   max_delay_ms: 4000 # Maximum delay
+  #   multiplier: 1.5 # Exponential backoff multiplier
+  # custom_provider:
+  #   timeout_sec: 60
+  #   priority: low
+  #   max_retries: 3 # Maximum retry attempts
+  #   base_delay_ms: 100 # Initial delay
+  #   max_delay_ms: 5000 # Maximum delay
+  #   multiplier: 2.0 # Exponential backoff multiplier
+
+# Security Settings
+security:
+  enable_https: true
+  allowed_origins: ["https://kubex.world"]
+  jwt_secret: "your_production_jwt_secret_here"
+  api_keys:
+    - "your_production_api_key_1"
+    - "your_production_api_key_2"
+    - "your_production_api_key_3"
+    - GF_SECURITY_ADMIN_USER=admin
+    - GF_SECURITY_ADMIN_PASSWORD=securepassword
+    - "your_production_api_key_4"
+
+# Monitoring and Logging
+monitoring:
+  enable_metrics: true
+
+  # Prometheus configuration
+  prometheus:
+    endpoint: /metrics
+    port: 9090
+
+  # Grafana configuration
+  grafana:
+    url: http://localhost:3000
+    admin_user: admin
+    admin_password: securepassword
+
+  # Logging configuration
+  logging:
+    # Local logging configuration
+    enabled: true
+    level: INFO
+    format: json
+    output: /var/log/gemx-grompt/production.log
+
+    # Log rotation settings
+    rotation:
+      max_size_mb: 100
+      max_backups: 7
+      max_age_days: 30
+      enable_compression: true
+      compression_level: 5
+      retention_days: 30
+
+    # External logging service configuration
+    external_logging_service: null # e.g., "loggly", "splunk", or null
+    external_logging_api_key: null # API key for the external logging service
+    external_logging_endpoint: null # Endpoint URL for the external logging service
+    log_request_response: false # Set to true to log full requests and responses (may include sensitive data)
+    log_level: INFO # Log level for the external logging service
+    log_format: json # Format for the external logging service (e.g., "json", "text")
+
+  # Alerting configuration
+  alerting:
+    enabled: false
+
+    # Chat Ops Bot Configuration
+    chat_ops_bot:
+      enabled: false
+      provider: "slack" # e.g., "slack", "microsoft_teams", or "discord"
+      webhook_url: "your_slack_webhook_url"
+      channel: "#alerts"
+      username: "KubexAlertBot"
+      icon_emoji: ":alert:"
+      mention_users:
+        - "@user1"
+        - "@user2"
+        - "@user3"
+      mention_groups:
+        - "@here"
+        - "@channel"
+        - "@everyone"
+      mention_roles:
+        - "admin"
+        - "devops"
+        - "oncall"
+      message_format: "text" # e.g., "text", "markdown", or "json"
+      custom_message: "Alert: {{alert_name}} - {{alert_details}}"
+      alert_severity: "high" # e.g., "low", "medium", "high", or "critical"
+      notification_interval_min: 30 # Minimum interval between notifications in minutes
+      escalation_policy:
+        - level: "critical"
+          actions:
+            - "send_bot_message"
+        - level: "warning"
+          actions:
+            - "send_bot_message"
+        - level: "info"
+          actions:
+            - "send_bot_message"
+      profiles:
+        - "dev"
+        - "ops"
+        - "oncall"
+      tags:
+        - "alert"
+        - "notification"
+        - "monitoring"
+
+      # Chat Ops Bot Configuration (Integrations)
+      integrations:
+        # Slack Integration
+        slack:
+          enabled: false
+          webhook_url: "your_slack_webhook_url"
+          channel: "#alerts"
+          username: "KubexSlackBot"
+          icon_emoji: ":slack:"
+          mention_users:
+            - "@user1"
+            - "@user2"
+            - "@user3"
+          mention_groups:
+            - "@here"
+            - "@channel"
+            - "@everyone"
+          mention_roles:
+            - "admin"
+            - "devops"
+            - "oncall"
+          message_format: "text" # e.g., "text", "markdown", or "json"
+          custom_message: "Alert: {{alert_name}} - {{alert_details}}"
+          alert_severity: "high" # e.g., "low", "medium", "high", or "critical"
+          notification_interval_min: 30 # Minimum interval between notifications in minutes
+          escalation_policy:
+            - level: "critical"
+              actions:
+                - "send_slack_message"
+            - level: "warning"
+              actions:
+                - "send_slack_message"
+            - level: "info"
+              actions:
+                - "send_slack_message"
+
+        # Microsoft Teams Integration
+        microsoft_teams:
+          enabled: false
+          endpoint: "your_microsoft_teams_webhook_url"
+          token: "your_microsoft_teams_bot_token"
+          channel: "Alerts"
+          username: "KubexTeamsBot"
+          icon_emoji: ":teams:"
+          mention_users:
+            - "@user1"
+            - "@user2"
+            - "@user3"
+          mention_groups:
+            - "@here"
+            - "@channel"
+            - "@everyone"
+          mention_roles:
+            - "admin"
+            - "devops"
+            - "oncall"
+          message_format: "text" # e.g., "text", "markdown", or "json"
+          custom_message: "Alert: {{alert_name}} - {{alert_details}}"
+          alert_severity: "high" # e.g., "low", "medium", "high", or "critical"
+          notification_interval_min: 30 # Minimum interval between notifications in minutes
+          escalation_policy:
+            - level: "critical"
+              actions:
+                - "send_teams_message"
+            - level: "warning"
+              actions:
+                - "send_teams_message"
+            - level: "info"
+              actions:
+                - "send_teams_message"
+          webhook:
+            enabled: false
+            url: "your_custom_webhook_url"
+            method: "POST"
+            headers:
+              Content-Type: application/json
+            payload_template: '{"alert": "{{alert_name}}", "details": "{{alert_details}}"}'
+
+        # Discord Integration
+        discord:
+          enabled: false
+          endpoint: "your_discord_webhook_url"
+          token: "your_discord_bot_token"
+          channel: "alerts"
+          username: "KubexDiscordBot"
+          icon_emoji: ":discord:"
+          mention_users:
+            - "@user1"
+            - "@user2"
+            - "@user3"
+          mention_groups:
+            - "@here"
+            - "@channel"
+            - "@everyone"
+          mention_roles:
+            - "admin"
+            - "devops"
+            - "oncall"
+          message_format: "text" # e.g., "text", "markdown", or "json"
+          custom_message: "Alert: {{alert_name}} - {{alert_details}}"
+          alert_severity: "high" # e.g., "low", "medium", "high", or "critical"
+          notification_interval_min: 30 # Minimum interval between notifications in minutes
+          escalation_policy:
+            - level: "critical"
+              actions:
+                - "send_discord_message"
+            - level: "warning"
+              actions:
+                - "send_discord_message"
+            - level: "info"
+              actions:
+                - "send_discord_message"
+          webhook:
+            enabled: false
+            url: "your_custom_webhook_url"
+            method: "POST"
+            headers:
+              Content-Type: application/json
+            payload_template: '{"alert": "{{alert_name}}", "details": "{{alert_details}}"}'
+
+        # PagerDuty, OpsGenie, VictorOps Integrations
+        pagerduty:
+          enabled: false
+          service_key: "your_pagerduty_service_key"
+        opsgenie:
+          enabled: false
+          api_key: "your_opsgenie_api_key"
+        victorops:
+          enabled: false
+          api_key: "your_victorops_api_key"
+
+        # Meta Alerting Configuration
+        meta:
+          enabled: false
+          url: "your_meta_alerting_url"
+          api_key: "your_meta_api_key"
+          project_id: "your_meta_project_id"
+          incident_severity: "high" # e.g., "low", "medium", "high", or "critical"
+          notification_interval_min: 30 # Minimum interval between notifications in minutes
+          escalation_policy:
+            - level: "critical"
+              actions:
+                - "send_meta_alert"
+            - level: "warning"
+              actions:
+                - "send_meta_alert"
+            - level: "info"
+              actions:
+                - "send_meta_alert"
+          tags:
+            - "alert"
+            - "notification"
+            - "monitoring"
+          profiles:
+            - "dev"
+            - "ops"
+            - "oncall"
+          custom_message: "Alert: {{alert_name}} - {{alert_details}}"
+          message_format: "text" # e.g., "text", "markdown", or "json"
+          mention_users:
+            - "@user1"
+            - "@user2"
+            - "@user3"
+          mention_groups:
+            - "@here"
+            - "@channel"
+            - "@everyone"
+          mention_roles:
+            - "admin"
+            - "devops"
+            - "oncall"
+          bot_username: "KubexMetaAlertBot"
+          bot_icon_emoji: ":alert:"
+          alert_severity: "high" # e.g., "low", "medium", "high", or "critical"
+
+        # Custom Webhook Configuration
+        webhook:
+          enabled: false
+          url: "your_custom_webhook_url"
+          method: "POST"
+          headers:
+            Content-Type: application/json
+          payload_template: '{"alert": "{{alert_name}}", "details": "{{alert_details}}"}'
+
+    # SMS Configuration
+    sms:
+      provider: "twilio" # e.g., "twilio", "nexmo", or "plivo"
+      api_key: "your_sms_provider_api_key"
+      api_secret: "your_sms_provider_api_secret"
+      from_number: "your_sms_from_number"
+      to_numbers:
+        - "your_sms_to_number1"
+        - "your_sms_to_number2"
+        - "your_sms_to_number3"
+
+    # Email Configuration
+    email:
+      smtp_server: smtp.your-email-provider.com
+      smtp_port: 587
+      username: your-email-username
+      password: your-email-password
+      from_address: your-email-from-address
+      to_addresses:
+        - your-email-to-address1
+        - your-email-to-address2
+      subject: "Kubex GemX Grompt Alert"
+    thresholds:
+      error_rate_percentage: 5 # Alert if error rate exceeds 5%
+      latency_ms: 2000 # Alert if average latency exceeds 2000ms
+      provider_failures: 10 # Alert if provider failures exceed 10 in a minute
+    notification_interval_min: 30 # Minimum interval between notifications in minutes
+    escalation_policy:
+      - level: "critical"
+        actions:
+          - "send_email"
+          - "send_sms"
+      - level: "warning"
+        actions:
+          - "send_email"
+          - "send_sms"
+      - level: "info"
+        actions:
+          - "send_email"
+
+Repository: https://github.com/kubex-ecosystem/kubex-gemx-grompt
+version: 1.0.0
+authors:
+  - "Kubex Dev Team <dev@kubex.world>"
+license: "MIT"
+#
+#
+# We appreciate your support and feedback.
+# If you have any questions or need assistance, please reach out to us at support@kubex.world
+# Future enhancements
+#  - Add support for additional notification channels
+#  - Implement machine learning-based alerting
+#  - Improve alert correlation and deduplication
+#  - monitoring
+#  - incident response automation
+#
+# Kubex Ecosystem: https://kubex.world
+#
+# Thanks for using Kubex GemX Grompt!
+#
+# 🚀 We hope it brings value to your projects and workflows. 🚀
+#
+# ❤️ Open Source software born out of passion and community effort. ❤️
+#
+# Please consider supporting our work by starring the repository and sharing it with others.
+# Your contributions and feedback are always welcome!
+# Happy coding! 😊

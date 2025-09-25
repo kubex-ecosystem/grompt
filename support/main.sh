@@ -241,7 +241,7 @@ __main() {
 
       return 0
       ;;
-    build-dev|BUILD-DEV|-bd|-BD)
+    build-dev|BUILD-DEV|-bd|-BD|dev)
       log info "Preparing to build the binary..."
       if ! validate_versions; then
         log error "Required dependencies are missing. Please install them and try again." true
@@ -318,7 +318,7 @@ __main() {
         log error "Required dependencies are missing. Please install them and try again." true
         return 1
       fi
-      if ! go test ./...; then
+      if ! go test -v "${_ROOT_DIR:-}/..." ; then
         log error "Tests failed. Please check the output for details." true
         return 1
       fi

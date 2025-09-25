@@ -1,58 +1,253 @@
-# Grompt: AI Prompt Crafter
+# Grompt Frontend - React 19 + MultiProvider Architecture
 
-![Grompt Logo](https://github.com/kubex-ecosystem/grompt/raw/main/docs/assets/logo.png)
+Modern React frontend for the Grompt prompt engineering tool, featuring MultiProvider AI integration, PWA capabilities, and comprehensive offline support.
 
-Grompt is an intelligent AI prompt crafting tool built with Kubex principles: Radical Simplicity, Modularity, and No Cages. Transform your raw ideas into professional, structured prompts for AI models.
+## Overview
 
-## ✨ Features
+The Grompt frontend is a cutting-edge React 19 application built with TypeScript, Vite, and TailwindCSS. It provides a seamless interface for prompt generation with support for multiple AI providers through both local SDK integration and backend gateway fallback.
 
-- 🧠 **Smart Prompt Engineering**: Transform raw ideas into structured, professional prompts
-- 🎯 **Multiple Purposes**: Code generation, creative writing, data analysis, technical documentation, and more
-- 🌙 **Dark/Light Theme**: Beautiful UI that adapts to your preference
-- 🌍 **Multi-language**: Support for English, Spanish, Chinese, and Portuguese
-- 💾 **Local Storage**: Save your prompts and ideas locally
-- 🔗 **Shareable Links**: Share your prompts via URL
-- 🔑 **Flexible API Key**: Works in demo mode or with your own Gemini API key
-- 📱 **Responsive Design**: Works perfectly on desktop and mobile
+### Key Features
 
-## 🚀 Quick Start
+- **🤖 MultiProvider AI Integration**: OpenAI, Anthropic, and Gemini support
+- **📱 Progressive Web App**: Installable with offline capabilities
+- **⚡ React 19**: Latest React features with concurrent rendering
+- **🎨 Modern UI**: TailwindCSS with responsive design
+- **🔄 Real-time Streaming**: SSE-based prompt generation with coalescing
+- **💾 Offline-First**: IndexedDB caching and service worker support
+- **🔐 Secure Configuration**: Local API key management with encryption
 
-### Option 1: Demo Mode (No API Key Required)
+## Architecture
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. Open <http://localhost:5173>
+### Technology Stack
 
-The app will work in **demo mode** with simulated AI responses, perfect for testing and demonstrating the interface.
+- **Framework**: React 19 + Vite + TypeScript
+- **Styling**: TailwindCSS + PostCSS
+- **State Management**: React hooks + Context API
+- **HTTP Client**: Enhanced Fetch API with offline support
+- **Database**: IndexedDB via `idb` library
+- **PWA**: Service Worker + Web App Manifest
 
-### Option 2: With Gemini API Key
+### Core Components
 
-1. Get a free API key from [Google AI Studio](https://ai.google.dev/)
-2. Either:
-   - **Environment Variable**: Create `.env.local` and add `GEMINI_API_KEY=your_key_here`
-   - **User Input**: Enter your API key directly in the app interface (stored locally)
-3. Run the app as above
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Optional - app works in demo mode without this
-GEMINI_API_KEY=your_gemini_api_key_here
+```
+frontend/src/
+├── components/          # Reusable UI components
+│   ├── layout/         # Header, navigation, layout components
+│   ├── providers/      # MultiProvider configuration UI
+│   ├── pwa/           # PWA-specific components
+│   └── settings/      # Configuration panels
+├── core/              # Core business logic
+│   └── llm/           # LLM provider implementations
+│       ├── providers/ # Individual provider classes
+│       └── wrapper/   # MultiAIWrapper abstraction
+├── hooks/             # Custom React hooks
+├── screens/           # Main application screens
+├── services/          # API and service integrations
+├── types/            # TypeScript type definitions
+└── utils/            # Utility functions
 ```
 
-### User API Key
+## MultiProvider System
 
-If no environment variable is set, users can input their own API key directly in the interface. The key is:
+### Provider Support
 
-- Stored only in localStorage (never sent to external servers)
-- Validated for format (starts with "AIza", proper length)
-- Used dynamically for API calls
-- Can be cleared at any time
+The frontend supports multiple AI providers with seamless switching:
 
-## 🏗️ Build and Deploy
+**OpenAI**:
+- Models: GPT-4 Turbo, GPT-3.5 Turbo
+- Features: Function calling, JSON mode, streaming
+- SDK: Official OpenAI JavaScript SDK
+
+**Anthropic**:
+- Models: Claude 3.5 Sonnet, Claude 3 Haiku
+- Features: Large context, system messages, streaming
+- SDK: Official Anthropic SDK
+
+**Gemini**:
+- Models: Gemini 1.5 Pro, Gemini 1.5 Flash
+- Features: Multimodal, safety settings, structured output
+- SDK: Google Generative AI SDK
+
+### Configuration Management
+
+```typescript
+// Provider configuration interface
+interface MultiProviderConfig {
+  providers: {
+    [AIProvider.OPENAI]?: {
+      apiKey: string
+      defaultModel: string
+      baseURL?: string
+    }
+    // ... other providers
+  }
+  fallbackToBackend?: boolean
+  cacheResponses?: boolean
+}
+```
+
+## PWA Features
+
+### Offline Capabilities
+
+- **Service Worker**: Caches static assets and API responses
+- **IndexedDB**: Stores prompt history and provider configurations
+- **Background Sync**: Queues requests when offline
+- **Push Notifications**: Updates and alerts (when enabled)
+
+### Installation
+
+The app can be installed on desktop and mobile devices:
+
+```javascript
+// Installation prompt handling
+const installPWA = async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    console.log(`User ${outcome} the install prompt`)
+  }
+}
+```
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+ (recommended: 20+)
+- npm or yarn package manager
+- Modern browser supporting ES2022
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Type checking
+npm run typecheck
+
+# Linting
+npm run lint
+```
+
+### Environment Configuration
+
+Create `.env.local` for development:
+
+```env
+# Development settings
+VITE_APP_TITLE="Grompt Dev"
+VITE_API_BASE_URL="http://localhost:3000"
+
+# Optional: Default API keys for testing
+VITE_OPENAI_API_KEY="sk-your-development-key"
+VITE_ANTHROPIC_API_KEY="sk-ant-your-development-key"
+VITE_GEMINI_API_KEY="your-gemini-development-key"
+```
+
+## Key Components Documentation
+
+### MultiProviderConfig Component
+
+```typescript
+// Component for managing provider configurations
+<MultiProviderConfig
+  isOpen={showConfig}
+  onClose={() => setShowConfig(false)}
+  onConfigUpdate={(config) => {
+    // Handle configuration updates
+    console.log('Provider config updated:', config)
+  }}
+/>
+```
+
+### Enhanced API Service
+
+```typescript
+// Offline-first API with automatic fallback
+const enhancedAPI = new EnhancedAPI({
+  baseURL: 'http://localhost:3000',
+  cacheEnabled: true,
+  offlineMode: 'graceful'
+})
+
+// Generate prompt with automatic provider selection
+const response = await enhancedAPI.generatePrompt({
+  provider: 'openai',
+  ideas: ['React', 'TypeScript', 'PWA'],
+  purpose: 'code'
+})
+```
+
+### Streaming Integration
+
+```typescript
+// Real-time streaming with SSE
+await enhancedAPI.generatePromptStream(
+  request,
+  (chunk) => {
+    // Handle streaming chunks
+    setContent(prev => prev + chunk)
+  },
+  (usage) => {
+    // Handle completion
+    console.log('Tokens used:', usage.tokens)
+  },
+  (error) => {
+    // Handle errors
+    console.error('Stream error:', error)
+  }
+)
+```
+
+## Testing
+
+### Unit Testing
+
+```bash
+# Run unit tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### Integration Testing
+
+```bash
+# Test provider integrations
+npm run test:providers
+
+# Test PWA functionality
+npm run test:pwa
+
+# Test offline scenarios
+npm run test:offline
+```
+
+### E2E Testing
+
+```bash
+# Run end-to-end tests
+npm run test:e2e
+
+# Test in multiple browsers
+npm run test:cross-browser
+```
+
+## Build and Deployment
+
+### Production Build
 
 ```bash
 # Build for production
@@ -61,35 +256,129 @@ npm run build
 # Preview production build
 npm run preview
 
-# Build static files
-npm run build:static
+# Analyze bundle size
+npm run analyze
 ```
 
-The app is designed to be deployed anywhere - Vercel, Netlify, GitHub Pages, or any static hosting service.
+### Build Outputs
 
-## 🎯 Kubex Principles
+```
+dist/
+├── assets/           # Compiled CSS, JS, and static assets
+├── icons/           # PWA icons and favicons
+├── manifest.json    # Web app manifest
+├── sw.js           # Service worker
+└── index.html      # Main HTML file
+```
 
-- **Radical Simplicity**: One command = one result. Direct, pragmatic, anti-jargon.
-- **Modularity**: Well-structured, reusable components and outputs.
-- **No Cages**: Platform-agnostic, open formats, no vendor lock-in.
+### Integration with Go Backend
 
-## 🛠️ Technology Stack
+The frontend is automatically embedded in the Go binary during build:
 
-- **React 19** with TypeScript
-- **Vite** for blazing fast development
-- **Tailwind CSS** for styling
-- **Google Gemini AI** for prompt generation
-- **Lucide React** for icons
-- **No vendor-specific CDNs** - uses standard ESM.sh
+```go
+//go:embed frontend/dist
+var frontendAssets embed.FS
 
-## 📄 License
+func serveFrontend() {
+    // Serve embedded frontend assets
+    handler := http.FileServer(http.FS(frontendAssets))
+    http.Handle("/", handler)
+}
+```
 
-MIT License - see [LICENSE](LICENSE) file for details.
+## Performance Optimizations
 
-## 🤝 Contributing
+### Bundle Optimization
 
-Contributions are welcome! Please read our [contributing guidelines](docs/CONTRIBUTING.md) first.
+- **Code Splitting**: Automatic route-based splitting
+- **Tree Shaking**: Dead code elimination
+- **Asset Optimization**: Image compression and optimization
+- **Gzip Compression**: Build-time compression
 
----
+### Runtime Performance
 
-Built with ❤️ following Kubex principles: **CODE FAST. OWN EVERYTHING.**
+- **Virtual Scrolling**: For large lists (prompt history)
+- **Memoization**: React.memo and useMemo for expensive operations
+- **Debouncing**: Input debouncing for API calls
+- **Lazy Loading**: Component and route lazy loading
+
+### Caching Strategy
+
+```typescript
+// Multi-level caching
+const cacheStrategy = {
+  memory: new Map(),        // In-memory cache
+  localStorage: window.localStorage,  // Browser storage
+  indexedDB: await openDB('grompt'), // Persistent storage
+  serviceWorker: await caches.open('api-cache') // HTTP cache
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Build Errors**:
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Clear Vite cache
+npm run dev -- --force
+```
+
+**TypeScript Errors**:
+```bash
+# Restart TypeScript server
+npm run typecheck
+```
+
+**Provider Connection Issues**:
+- Check API keys in browser localStorage
+- Verify network connectivity
+- Check provider status endpoints
+
+### Debug Mode
+
+```typescript
+// Enable debug mode
+localStorage.setItem('debug', 'grompt:*')
+
+// Check provider health
+console.log(await multiProviderService.getProviderHealth())
+
+// Inspect cache state
+console.log(await enhancedAPI.getCacheStats())
+```
+
+## Contributing
+
+### Code Style
+
+- **Prettier**: Automatic code formatting
+- **ESLint**: Code quality and consistency
+- **TypeScript**: Strict type checking
+- **Conventional Commits**: Standardized commit messages
+
+### Development Workflow
+
+1. **Feature Branch**: Create from `main`
+2. **Development**: Make changes with tests
+3. **Testing**: Run full test suite
+4. **PR Review**: Submit for code review
+5. **Integration**: Merge after approval
+
+### File Naming Conventions
+
+- **Components**: PascalCase (`MultiProviderConfig.tsx`)
+- **Hooks**: camelCase with `use` prefix (`useMultiProvider.ts`)
+- **Services**: camelCase (`multiProviderService.ts`)
+- **Types**: PascalCase (`types.ts` with exported interfaces)
+
+## Related Documentation
+
+- [MultiProvider Architecture](../docs/MULTIPROVIDER_ARCHITECTURE.md)
+- [Grompt V1 API Documentation](../GROMPT_V1_API.md)
+- [PWA Integration Summary](PWA_INTEGRATION_SUMMARY.md)
+- [Quick Start Guide](../QUICKSTART_V1.md)

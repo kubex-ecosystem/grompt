@@ -1,97 +1,60 @@
-// Package providers defines interfaces for AI providers.
+// Package providers supplies legacy helper constructors for compatibility with the refactored engine.
 package providers
 
 import (
-	"github.com/kubex-ecosystem/grompt/internal/types"
-	"github.com/kubex-ecosystem/logz"
+    "github.com/kubex-ecosystem/grompt"
+    logz "github.com/kubex-ecosystem/logz"
 )
 
-// Provider represents an AI provider interface
-type Provider interface {
-	// Name returns the provider name (e.g., "openai", "claude", "ollama")
-	Name() string
+type Provider = grompt.Provider
 
-	// Version returns the provider version
-	Version() string
+type Capabilities = grompt.Capabilities
 
-	// Execute sends a prompt to the provider and returns the response
-	Execute(prompt string) (string, error)
+type Pricing = grompt.Pricing
 
-	// IsAvailable checks if the provider is configured and ready
-	IsAvailable() bool
-
-	// GetCapabilities returns provider-specific capabilities
-	GetCapabilities() *types.Capabilities
-}
-
-type Capabilities = types.Capabilities
-
-func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
-	return &types.ProviderImpl{
-		VName:    name,
-		VVersion: version,
-		VAPI:     cfg.GetAPIConfig(name),
-		VConfig:  cfg,
-	}
-}
-
-// Initialize creates and returns all available providers
+// Initialize mirrors the legacy helper, wiring a prompt engine and returning the available providers.
 func Initialize(
-	bindAddr,
-	port,
-	openAIKey,
-	deepSeekKey,
-	ollamaEndpoint,
-	claudeKey,
-	geminiKey,
-	chatGPTKey string,
-	logger logz.Logger,
+    bindAddr string,
+    port string,
+    openAIKey string,
+    deepSeekKey string,
+    ollamaEndpoint string,
+    claudeKey string,
+    geminiKey string,
+    chatgptKey string,
+    logger logz.Logger,
 ) []Provider {
+    cfg := grompt.NewConfig(
+        bindAddr,
+        port,
+        openAIKey,
+        deepSeekKey,
+        ollamaEndpoint,
+        claudeKey,
+        geminiKey,
+        chatgptKey,
+        logger,
+    )
 
-	if bindAddr == "" &&
-		port == "" &&
-		openAIKey == "" &&
-		deepSeekKey == "" &&
-		ollamaEndpoint == "" &&
-		claudeKey == "" &&
-		geminiKey == "" &&
-		chatGPTKey == "" {
-		return []Provider{}
-	}
+    engine := grompt.NewPromptEngine(cfg)
+    return engine.GetProviders()
+}
 
-	var cfg = types.NewConfig(
-		bindAddr,
-		"8080",
-		openAIKey,
-		deepSeekKey,
-		ollamaEndpoint,
-		claudeKey,
-		geminiKey,
-		chatGPTKey,
-		nil,
-	)
+// NewProvider lazily ensures the named provider is available and returns its adapter.
+func NewProvider(name, apiKey, version string, cfg grompt.Config) Provider {
+    if cfg == nil {
+        return nil
+    }
 
-	cfg.Logger = logger
+    if apiKey != "" {
+        _ = cfg.SetAPIKey(name, apiKey)
+    }
 
-	var providers []Provider
-	if claudeKey != "" {
-		providers = append(providers, NewProvider("claude", claudeKey, "v1", cfg))
-	}
-	if openAIKey != "" {
-		providers = append(providers, NewProvider("openai", openAIKey, "v1", cfg))
-	}
-	if deepSeekKey != "" {
-		providers = append(providers, NewProvider("deepseek", deepSeekKey, "v1", cfg))
-	}
-	if ollamaEndpoint != "" {
-		providers = append(providers, NewProvider("ollama", ollamaEndpoint, "v1", cfg))
-	}
-	if geminiKey != "" {
-		providers = append(providers, NewProvider("gemini", geminiKey, "v1", cfg))
-	}
-	if chatGPTKey != "" {
-		providers = append(providers, NewProvider("chatgpt", chatGPTKey, "v1", cfg))
-	}
-
-	return providers
+    engine := grompt.NewPromptEngine(cfg)
+    for _, provider := range engine.GetProviders() {
+        if provider.Name() == name {
+            return provider
+        }
+    }
+    return nil
 }

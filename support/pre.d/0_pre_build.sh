@@ -60,24 +60,27 @@ build_frontend() {
           exit 1
       fi
 
-      if [[ -d './dist' ]]; then
+      if [[ -d "${_ROOT_DIR}/frontend/dist" ]]; then
           log success "Frontend assets built successfully." true
       else
           log fatal "Build directory does not exist." true
           exit 1
       fi
 
-      if [[ -d "${_ROOT_DIR}/internal/services/server/" ]]; then
+      if [[ -d "${_ROOT_DIR}/internal/grompt/embedded/guiweb" ]]; then
           log notice "Removing old build directory..."
-          rm -rf "${_ROOT_DIR}/internal/services/server/build"
+          rm -rf "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
+              log fatal "Failed to remove old build directory." true
+              exit 1
+          }
       fi
 
-      mv './dist' "${_ROOT_DIR}/internal/services/server/build" || {
-          log fatal "Failed to move build directory to server." true
+      mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
+          log fatal "Failed to move build directory to embedded/guiweb." true
           exit 1
       }
 
-      log success "Frontend build moved to server directory successfully." true
+      log success "Frontend build moved to embedded/guiweb directory successfully." true
   else
       log fatal "npm is not installed. Please install Node.js and npm to continue." true
       exit 1

@@ -1,0 +1,36 @@
+# Development Dockerfile for Analyzer Gateway
+FROM golang:1.25-alpine AS development
+
+# Install development dependencies
+RUN apk add --no-cache \
+    git \
+    ca-certificates \
+    tzdata \
+    curl \
+    make \
+    bash \
+    && go install github.com/go-delve/delve/cmd/dlv@latest
+
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Create non-root user for development
+RUN addgroup -g 1001 developer && \
+    adduser -D -u 1001 -G developer developer
+
+# Set ownership
+RUN chown -R developer:developer /app /go
+
+# Switch to non-root user
+USER developer
+
+# Expose ports (app + debugger)
+EXPOSE 8080 2345
+
+# Default command for development
+CMD ["go", "run", "./cmd/main.go", "gateway", "serve", "&", "bash"]

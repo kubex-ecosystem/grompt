@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+AGENTS.md
+CODE_OF_CONDUCT.md
+NOTICE.md
+SECURITY.md
+LICENSE
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts
+dist/
+frontend/dist/
+frontend/node_modules/
+*.log
+
+# Test files
+tests/
+*_test.go
+test_*
+
+# Backup files
+bkp/
+*.bak
+*.backup
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Development scripts
+migrate_go_project.sh
+support/
+Makefile
+
+# Coverage reports
+coverage.out
+coverage.html

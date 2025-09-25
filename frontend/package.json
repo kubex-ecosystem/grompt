@@ -1,81 +1,43 @@
 {
   "name": "grompt",
-  "private": false,
-  "version": "2.0.0",
-  "description": "AI prompt crafting tool that transforms raw ideas into professional prompts. Part of Kubex Ecosystem — modular, open-source tools following principles of radical simplicity and no lock-in.",
-  "keywords": [
-    "ai",
-    "prompts",
-    "prompt-engineering",
-    "kubex",
-    "open-source",
-    "no-lock-in",
-    "modular",
-    "react",
-    "typescript"
-  ],
   "markdown": "github",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kubex-ecosystem/grompt.git"
   },
-  "author": "Rafael Mori <faelmori@live.com>",
-  "license": "MIT",
-  "homepage": "https://kubex.world",
-  "readme": "https://github.com/kubex-ecosystem/grompt/README.md",
-  "bugs": {
-    "url": "https://github.com/kubex-ecosystem/grompt/issues"
-  },
+  "homepage": "https://kubex-ecosystem.github.io/grompt/",
+  "packageManager": "npm@10.9.2",
+  "private": true,
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "setup": "npm i --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
+    "setup:ci": "npm ci --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
     "build": "vite build",
-    "preview": "vite preview",
     "build:static": "vite build --mode production",
-    "serve": "vite preview --port 4173 --host"
+    "dev": "vite",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
+    "@anthropic-ai/sdk": "^0.63.0",
+    "@google/genai": "^1.20.0",
+    "framer-motion": "^10.18.0",
+    "idb": "^8.0.3",
     "lucide-react": "^0.542.0",
+    "openai": "^5.22.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-markdown": "9.0.1",
-    "react-syntax-highlighter": "^15.6.6",
-    "remark-gfm": "4.0.0"
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@types/react": "^19.1.12",
+    "@types/node": "^22.17.0",
+    "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
-  },
-  "browserslist": [
-    "last 1 version",
-    "> 1%",
-    "maintained node versions",
-    "not dead"
-  ],
-  "browser": {
-    "fs": false,
-    "path": false,
-    "os": false,
-    "child_process": false
-  },
-  "engines": {
-    "node": ">=22"
-  },
-  "main": "src/index.tsx",
-  "files": [
-    "src",
-    "services",
-    "types.d.ts",
-    "index.html",
-    "index.css",
-    "assets",
-    "package.json",
-    "README.md",
-    "LICENSE"
-  ]
+    "vite": "^7.1.6"
+  }
 }

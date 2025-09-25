@@ -3,9 +3,12 @@
     "target": "ES2022",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
     "module": "ESNext",
+    "moduleResolution": "Node",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
     "lib": [
       "ES2022",
       "DOM",
@@ -13,31 +16,31 @@
     ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "types": [],
-    "typeRoots": [
-      "./node_modules/@types"
+    "types": [
+      "node"
     ],
-    "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
-    "jsx": "react-jsx",
+    "jsx": "react",
     "paths": {
       "@/*": [
+        "./src/*",
         "./*"
-      ]
+      ],
+      "tests/*": [
+        "./tests/*"
+      ],
+      "test-utils/*": [
+        "./tests/utils/*"
+      ],
+      "components/*": [
+        "./src/components/*"
+      ],
+      "hooks/*": [
+        "./src/hooks/*"
+      ],
     },
-    "allowImportingTsExtensions": true,
     "noEmit": true
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.test.ts",
-    "**/*.test.tsx"
-  ],
-  "ts-node": {
-    "skipProject": true
   }
 }

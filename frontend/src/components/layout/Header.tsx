@@ -1,62 +1,147 @@
-import { BotMessageSquare, Moon, Sun } from 'lucide-react';
-import React from 'react';
-import { useTranslations } from '../../i18n/useTranslations';
-import { Theme } from '../../types';
-import LanguageSelector from './LanguageSelector';
+import { BookOpen, Moon, Play, Settings, Sun } from 'lucide-react';
+import * as React from 'react';
+import { DemoMode } from '../../config/demoMode';
+import { Theme } from '../../constants/themes';
+import { useGromptAPI } from '../../hooks/useGromptAPI';
+import { MultiProviderConfig } from '../providers/MultiProviderConfig';
+
+
+const {
+  providers,
+  health
+} = useGromptAPI({});
+
 
 interface HeaderProps {
-  theme: Theme;
-  toggleTheme: () => void;
+  darkMode: boolean;
+  setDarkMode: (value: boolean) => void;
+  currentTheme: Theme;
+  startOnboarding: () => void;
+  showEducation: (topic: string) => void;
+  providers?: typeof providers;
+  health?: typeof health;
+  isHealthy: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
-  const { t } = useTranslations();
+const Header: React.FC<HeaderProps> = ({
+  darkMode,
+  setDarkMode,
+  currentTheme,
+  startOnboarding,
+  showEducation,
+  providers,
+  health,
+  isHealthy
+}) => {
+  const [showProviderConfig, setShowProviderConfig] = React.useState(false);
+  const healthyProviders = providers?.providers?.filter(p => p.available) || [];
+  const healthStatus = isHealthy ? 'healthy' : 'degraded';
 
   return (
-    <header className="mb-8 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-white/50 dark:bg-[#10151b] border-2 border-sky-500 dark:border-[#00f0ff] rounded-full flex items-center justify-center shadow-lg dark:neon-border-cyan">
-          <BotMessageSquare size={24} className="text-sky-500 dark:text-[#00f0ff] dark:neon-glow-cyan" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold font-orbitron text-sky-500 light-shadow-sky dark:text-[#00f0ff] dark:neon-glow-cyan tracking-widest uppercase">
-              Grompt
-            </h1>
-            {/*
-            <!-- Não exibir versão por ora -->
-            <span className="text-xs bg-gradient-to-r from-emerald-500 to-sky-500 dark:from-[#00e676] dark:to-[#00f0ff] text-white dark:text-black px-2 py-1 rounded-full font-bold">
-              v1.0.8
-            </span> */}
+    <div className="flex justify-between items-center mb-8" id="header">
+      <div>
+        <h1 className="text-4xl font-bold mb-2 text-white">
+          <span className="text-purple-400">Grompt</span>{' '}
+          <span className="text-teal-400">AI</span>
+          <span className="text-lg ml-2 px-2 py-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full">
+            +API
+          </span>
+          {DemoMode.isActive && (
+            <span className="text-xs ml-2 px-2 py-1 bg-blue-500 text-blue-100 rounded-full">
+              DEMO v1.0.0
+            </span>
+          )}
+        </h1>
+        <p className="text-gray-300">
+          Crie prompts profissionais e agents inteligentes com Multi-Provider API
+        </p>
+        {providers && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className={`px-2 py-1 rounded-full ${healthStatus === 'healthy'
+              ? 'bg-green-900/50 text-green-200 border border-green-700'
+              : 'bg-yellow-900/50 text-yellow-200 border border-yellow-700'
+              }`}>
+              {healthyProviders.length} providers ativos
+            </span>
+            {healthyProviders.length > 0 && (
+              <span className="text-gray-400">
+                ({healthyProviders.map(p => p.name).join(', ')})
+              </span>
+            )}
           </div>
-          <h2 className="text-lg text-slate-500 dark:text-[#90a4ae] font-medium font-plex-mono">
-            {t('promptCrafter')}
-          </h2>
-          {/*
-          <!-- Desativado por ora... Não há landing page ainda, então essa está na raiz -->
-          <a
-            href="https://kubex.world"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-sky-600 dark:text-[#00f0ff]/80 hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200 font-plex-mono"
-          >
-            ← Back to Kubex Ecosystem
-          </a> */}
-        </div>
+        )}
       </div>
-      <div className="flex items-center gap-3">
-        <LanguageSelector />
-        <button
-          type='button'
-          title={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
-          onClick={toggleTheme}
-          className="p-2 rounded-full bg-slate-200/50 dark:bg-[#10151b] text-slate-600 dark:text-[#90a4ae] hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
-          aria-label={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
+      <div className="flex items-center gap-4">
+        {DemoMode.isActive && (
+          <div className="flex gap-2">
+            <button
+              onClick={startOnboarding}
+              className="px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
+            >
+              <Play size={16} />
+              Tour
+            </button>
+            <button
+              onClick={() => showEducation('mcp')}
+              className="px-3 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2 text-sm transition-colors"
+            >
+              <BookOpen size={16} />
+              O que é MCP?
+            </button>
+          </div>
+        )}
+
+        {/* Provider selector */}
+        <select
+          title='Selecione o provedor de IA'
+          className="px-3 py-2 rounded-lg border border-gray-600 bg-gray-700/80 text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          defaultValue={healthyProviders[0]?.name || 'openai'}
         >
-          {theme === 'light' ? <Moon size={24} /> : <Sun size={24} />}
+          {healthyProviders.length > 0 ? (
+            healthyProviders.map(provider => (
+              <option key={provider.name} value={provider.name}>
+                {provider.name} ✅
+              </option>
+            ))
+          ) : (
+            <>
+              <option value="openai">OpenAI (configurar)</option>
+              <option value="anthropic">Anthropic (configurar)</option>
+              <option value="gemini">Gemini (configurar)</option>
+            </>
+          )}
+          {providers?.providers?.filter(p => !p.available).map(provider => (
+            <option key={provider.name} value={provider.name} disabled>
+              {provider.name} (indisponível)
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={() => setShowProviderConfig(true)}
+          title="Configurar Providers"
+          className="p-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+        >
+          <Settings size={20} />
+        </button>
+
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="p-2 rounded-lg bg-gray-700/80 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
-    </header>
+
+      <MultiProviderConfig
+        isOpen={showProviderConfig}
+        onClose={() => setShowProviderConfig(false)}
+        onConfigUpdate={(config) => {
+          // Optionally trigger a refresh of providers in parent component
+          console.log('Provider configuration updated:', config);
+        }}
+      />
+    </div>
   );
 };
 
