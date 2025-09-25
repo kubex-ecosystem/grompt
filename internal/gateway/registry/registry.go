@@ -28,13 +28,25 @@ func Load(path string) (*Registry, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	return FromConfig(cfg)
+}
+
+// FromConfig builds a registry from an in-memory configuration structure.
+func FromConfig(cfg providers.Config) (*Registry, error) {
 	r := &Registry{
 		cfg:       cfg,
 		providers: make(map[string]providers.Provider),
 	}
 
-	// Initialize providers based on configuration
-	for name, pc := range cfg.Providers {
+	if err := r.initializeProviders(); err != nil {
+		return nil, err
+	}
+
+	return r, nil
+}
+
+func (r *Registry) initializeProviders() error {
+	for name, pc := range r.cfg.Providers {
 		switch pc.Type {
 		case "openai":
 			key := os.Getenv(pc.KeyEnv)
@@ -44,7 +56,7 @@ func Load(path string) (*Registry, error) {
 			}
 			p, err := NewOpenAIProvider(name, pc.BaseURL, key, pc.DefaultModel)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create OpenAI provider %s: %w", name, err)
+				return fmt.Errorf("failed to create OpenAI provider %s: %w", name, err)
 			}
 			r.providers[name] = p
 		case "gemini":
@@ -55,7 +67,7 @@ func Load(path string) (*Registry, error) {
 			}
 			p, err := NewGeminiProvider(name, pc.BaseURL, key, pc.DefaultModel)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create Gemini provider %s: %w", name, err)
+				return fmt.Errorf("failed to create Gemini provider %s: %w", name, err)
 			}
 			r.providers[name] = p
 		case "anthropic":
@@ -66,34 +78,30 @@ func Load(path string) (*Registry, error) {
 			}
 			p, err := NewAnthropicProvider(name, pc.BaseURL, key, pc.DefaultModel)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create Anthropic provider %s: %w", name, err)
+				return fmt.Errorf("failed to create Anthropic provider %s: %w", name, err)
 			}
 			r.providers[name] = p
 		case "groq":
-
 			key := os.Getenv(pc.KeyEnv)
 			if key == "" {
 				fmt.Printf("Warning: Skipping Groq provider '%s' - no API key found in %s\n", name, pc.KeyEnv)
 				continue
 			}
-
 			p, err := NewGroqProvider(name, pc.BaseURL, key, pc.DefaultModel)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create Groq provider %s: %w", name, err)
+				return fmt.Errorf("failed to create Groq provider %s: %w", name, err)
 			}
 			r.providers[name] = p
 		case "openrouter":
-			// TODO: Implement OpenRouter provider
-			return nil, fmt.Errorf("openrouter provider not yet implemented")
+			fmt.Printf("Warning: Skipping OpenRouter provider '%s' - not yet implemented\n", name)
 		case "ollama":
-			// TODO: Implement Ollama provider
-			return nil, fmt.Errorf("ollama provider not yet implemented")
+			fmt.Printf("Warning: Skipping Ollama provider '%s' - not yet implemented\n", name)
 		default:
-			return nil, fmt.Errorf("unknown provider type: %s", pc.Type)
+			fmt.Printf("Warning: Skipping provider '%s' - unknown type '%s'\n", name, pc.Type)
 		}
 	}
 
-	return r, nil
+	return nil
 }
 
 // Resolve returns a provider by name

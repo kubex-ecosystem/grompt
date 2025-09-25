@@ -10,6 +10,7 @@
   "repository": "https://github.com/kubex-ecosystem/grompt",
   "homepage": "https://github.com/kubex-ecosystem/grompt",
   "description": "Kubex - GemX Grompt is a professional AI prompt context object kind like: agents, prompts, API calls, and more.",
+  "go_version": "1.25.1",
   "main": "cmd/main.go",
   "bin": "grompt",
   "author": "Rafael Mori <faelmori@gmail.com>",

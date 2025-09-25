@@ -6,12 +6,73 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/kubex-ecosystem/grompt/types"
+	logz "github.com/kubex-ecosystem/logz"
 )
+
+// Result represents the outcome of a processed prompt.
+type Result = types.Result
+
+// Capabilities describes provider abilities (legacy compatibility).
+type Capabilities = types.Capabilities
+
+// Pricing captures basic usage pricing metadata.
+type Pricing = types.Pricing
+
+// PromptEngine exposes legacy prompt-processing capabilities.
+type PromptEngine = types.PromptEngine
+
+// Provider is the legacy provider interface exposed to consumers.
+type Provider = types.Provider
+
+// APIConfig mirrors the legacy engine API configuration contract.
+type APIConfig = types.APIConfig
+
+// Config mirrors the legacy engine configuration contract.
+type Config = types.Config
 
 // Prompt represents a command-line prompt with a message and an optional default value.
 type Prompt struct {
 	Message      string
 	DefaultValue string
+}
+
+// ---------- Public constructors ----------
+
+// DefaultConfig rebuilds a legacy-compatible configuration.
+func DefaultConfig(configFilePath string) Config {
+	return types.DefaultConfig(configFilePath)
+}
+
+// NewConfig constructs a configuration using explicit parameters.
+func NewConfig(
+	bindAddr string,
+	port string,
+	openAIKey string,
+	deepSeekKey string,
+	ollamaEndpoint string,
+	claudeKey string,
+	geminiKey string,
+	chatGPTKey string,
+	logger logz.Logger,
+) Config {
+	return types.NewConfig(
+		bindAddr,
+		port,
+		openAIKey,
+		deepSeekKey,
+		ollamaEndpoint,
+		claudeKey,
+		geminiKey,
+		chatGPTKey,
+		logger,
+	)
+}
+
+// NewPromptEngine returns a legacy-compatible engine backed by the new gateway stack.
+func NewPromptEngine(cfg Config) PromptEngine {
+	return types.NewPromptEngine(cfg)
 }
 
 // NewPrompt creates a new Prompt instance with the given message and default value.
@@ -38,10 +99,3 @@ func (p *Prompt) Show() string {
 	}
 	return input
 }
-
-// Example usage:
-// func main() {
-//     prompt := NewPrompt("Enter your name", "Guest")
-//     name := prompt.Show()
-//     fmt.Printf("Hello, %s!\n", name)
-// }

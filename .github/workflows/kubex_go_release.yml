@@ -25,6 +25,11 @@ on:
         required: false
         default: false
         type: boolean
+      go_version:
+        description: 'Override Go version (e.g., 1.25.1)'
+        required: false
+        default: ''
+        type: string
       platforms:
         description: 'Override platforms (comma-separated, e.g., linux/amd64,windows/amd64)'
         required: false
@@ -86,13 +91,33 @@ jobs:
             exit 1
           fi
 
+          GO_VERSION="${GO_VERSION:-${{ github.event.inputs.go_version }}}"
+          GO_VERSION=$(cat $(git rev-parse --show-toplevel)/internal/module/info/manifest.json | jq -r '.go_version // ""')
+          if [[ -z "$GO_VERSION" ]]; then
+            GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
+            # Check if go.mod extraction brings a version with minor version
+            if [[ ! "$GO_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              # Check if it has at least major.minor
+              if [[ "$GO_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+                echo "⚠️  go.mod Go version '$GO_VERSION' is missing patch version, defaulting to .1"
+                GO_VERSION="${GO_VERSION}.1"
+              else
+                echo "❌ Unable to determine Go version from go.mod"
+                exit 1
+              fi
+              GO_VERSION="${GO_VERSION%.*}.1"
+            fi
+          fi
+
           echo "module-name=$MODULE_NAME" >> $GITHUB_OUTPUT
           echo "manifest-version=$MODULE_VERSION" >> $GITHUB_OUTPUT
           echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+          echo "go-version=$GO_VERSION" >> $GITHUB_OUTPUT
 
           echo "✅ Module: $MODULE_NAME"
           echo "✅ Manifest Version: $MODULE_VERSION"
           echo "✅ Platforms: $PLATFORMS"
+          echo "✅ Go Version: $GO_VERSION"
       - name: Extract Version
         id: version
         run: |
@@ -144,12 +169,20 @@ jobs:
         id: go-setup
         if: steps.version-check.outputs.continue == 'true'
         run: |
-          GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
+          GO_VERSION=""
+          echo "🔍 Setting up Go environment..."
+          # Determine Go version to install
+          if [[ -n "${{ github.event.inputs.go_version }}" ]]; then
+            GO_VERSION="${{ github.event.inputs.go_version }}"
+            echo "🔧 Overriding Go version from input: $GO_VERSION"
+          else
+            GO_VERSION="${{ steps.manifest.outputs.go-version }}"
+          fi
 
           bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s --version "$GO_VERSION"
 
           # Verify installation
-          go version
+          go version || exit 1
 
           # Output for other jobs
           echo "go-version=$GO_VERSION" >> $GITHUB_OUTPUT
