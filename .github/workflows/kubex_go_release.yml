@@ -179,7 +179,7 @@ jobs:
             GO_VERSION="${{ steps.manifest.outputs.go-version }}"
           fi
 
-          bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s --version "$GO_VERSION"
+          bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s install "$GO_VERSION"
 
           # Verify installation
           go version || exit 1
