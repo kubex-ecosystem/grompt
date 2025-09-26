@@ -25,10 +25,10 @@ validate_versions() {
       log warn "Go is not installed. Attempting to install Go version ${required_version}."
       local go_installation_output
       if [[ -t 0 ]]; then
-          go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+          go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s install "$required_version" 2>&1)"
       else
           # shellcheck disable=SC2030
-          go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+          go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s install "$required_version" 2>&1)"
       fi
 
       # shellcheck disable=SC2181
@@ -41,10 +41,10 @@ validate_versions() {
 
         local go_installation_output
         if [[ -t 0 ]]; then
-            go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+            go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s install "$required_version" 2>&1)"
         else
             # shellcheck disable=SC2031
-            go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+            go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s install "$required_version" 2>&1)"
         fi
 
         # shellcheck disable=SC2181

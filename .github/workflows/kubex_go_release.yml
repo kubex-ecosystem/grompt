@@ -7,33 +7,33 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag name for manual release (e.g., v1.0.0)'
+        description: "Tag name for manual release (e.g., v1.0.0)"
         required: false
         type: string
       debug:
-        description: 'Enable/Disable debug mode'
+        description: "Enable/Disable debug mode"
         required: false
         default: false
         type: boolean
       quiet:
-        description: 'Enable/Disable quiet mode'
+        description: "Enable/Disable quiet mode"
         required: false
         default: true
         type: boolean
       dry_run:
-        description: 'Enable/Disable dry run mode'
+        description: "Enable/Disable dry run mode"
         required: false
         default: false
         type: boolean
       go_version:
-        description: 'Override Go version (e.g., 1.25.1)'
+        description: "Override Go version (e.g., 1.25.1)"
         required: false
-        default: ''
+        default: ""
         type: string
       platforms:
-        description: 'Override platforms (comma-separated, e.g., linux/amd64,windows/amd64)'
+        description: "Override platforms (comma-separated, e.g., linux/amd64,windows/amd64)"
         required: false
-        default: ''
+        default: ""
         type: string
 
 permissions:
@@ -313,7 +313,7 @@ jobs:
   #       run: |
   #         GO_VERSION=$(grep '^go ' $(git rev-parse --show-toplevel)/go.mod | awk '{print $2}')
 
-  #         bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s --version "${GO_VERSION:-1.24.5}"
+  #         bash -c "$(curl -sSfL 'https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh')" -s install "${GO_VERSION:-1.24.5}"
 
   #         # Verify installation
   #         go version
