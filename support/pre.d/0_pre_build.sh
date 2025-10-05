@@ -46,7 +46,7 @@ build_frontend() {
   if command -v npm &>/dev/null; then
       log info "Building frontend..." true
 
-      _frontend_install_output="$(npm i --no-audit --no-fund --prefer-offline --silent || {
+      _frontend_install_output="$(npm i --no-fund --no-audit --loglevel=error --legacy-peer-deps || {
           echo "Failed to install frontend dependencies."
       })"
 

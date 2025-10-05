@@ -47,6 +47,13 @@ export default defineConfig(({ mode }) => {
     // },
     build: {
       rollupOptions: {
+        external: [
+          'buffer', 'stream', 'util', 'events', 'http', 'https', 'url', 'zlib', 'crypto',
+          './src/components/layout/Footer'
+        ],
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+        },
         output: {
           manualChunks: {
             vendor: [

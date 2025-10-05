@@ -147,9 +147,12 @@ ${params.ideas.map(i => `- ${i}`).join('\n')}`;
 
   public async testProvider(provider: AIProvider): Promise<boolean> {
     try {
+      const { instance, type } = this.getProvider(provider as AIProvider);
+      if (!instance) throw new Error(`Provider ${type} not initialized`);
+
       const response = await this.generateContent({
         prompt: "Return exactly: Test successful.",
-        provider,
+        provider: provider as AIProvider,
         options: { maxTokens: 30, temperature: 0, stopSequences: ["\n"] }
       });
       return /Test successful/.test(response.text);
