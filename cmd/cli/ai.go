@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz"
@@ -27,6 +27,7 @@ func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
 func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig, error) {
 	var cfg t.IConfig
 	var err error
+	logger := l.GetLogger("Grompt")
 
 	if configFile != "" {
 		cfg, err = loadConfigFile(configFile)
@@ -44,7 +45,7 @@ func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig
 			utils.GetEnvOr("CLAUDE_API_KEY", getProviderAPIKey("claude", provider, apiKey)),
 			utils.GetEnvOr("GEMINI_API_KEY", getProviderAPIKey("gemini", provider, apiKey)),
 			utils.GetEnvOr("CHATGPT_API_KEY", getProviderAPIKey("chatgpt", provider, apiKey)),
-			gl.GetLogger[l.Logger](nil),
+			logger,
 		)
 	}
 
@@ -121,8 +122,8 @@ Examples:
   grompt ask --prompt "Write a poem about code" --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if debug {
-				gl.GetLogger[l.Logger](nil)
-				gl.SetDebug(true)
+				l.GetLogger("Grompt")
+				gl.SetDebugMode(true)
 			}
 
 			if len(prompt) == 0 {
@@ -213,8 +214,8 @@ Examples:
   grompt generate --ideas "docker,kubernetes,deployment" --output prompt.md --provider claude`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if debug {
-				gl.GetLogger[l.Logger](nil)
-				gl.SetDebug(true)
+				l.GetLogger("Grompt")
+				gl.SetDebugMode(true)
 			}
 
 			if len(ideas) == 0 {
@@ -320,9 +321,9 @@ Examples:
   grompt chat --provider openai --model gpt-4
   grompt chat --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := l.GetLogger("Grompt")
 			if debug {
-				gl.GetLogger[l.Logger](nil)
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 			var cfg t.IConfig
 			var err error
@@ -343,7 +344,7 @@ Examples:
 					utils.GetEnvOr("CLAUDE_API_KEY", apiKey),
 					utils.GetEnvOr("GEMINI_API_KEY", apiKey),
 					utils.GetEnvOr("CHATGPT_API_KEY", apiKey),
-					gl.GetLogger[l.Logger](nil),
+					logger,
 				)
 			}
 

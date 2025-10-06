@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from '../../i18n/useTranslations';
 
 /* ========= Types (mantidos / estendidos) ========= */
 
@@ -130,6 +131,9 @@ function buildTree(files: ProjectFile[]): TreeNode {
 /* ========= Componente ========= */
 
 export default function ProjectExtractor({ projectFile, projectName, description }: ProjectExtractorProps) {
+  /* ========== Traduções ========= */
+  const { t } = useTranslations();
+  /* ========= Estados ========= */
   const [isLoading, setIsLoading] = useState(false);
   const [projectData, setProjectData] = useState<{ stats: ProjectStats; files: ProjectFile[] } | null>(null);
   const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
@@ -304,7 +308,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
               aria-pressed={showStats}
               onClick={() => setShowStats((s) => !s)}
               className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-              title="Ver Estatísticas"
+              title={t(showStats ? 'hideStats' : 'showStats')}
             >
               <ChartBarIcon className="w-5 h-5" />
             </button>
@@ -318,7 +322,8 @@ export default function ProjectExtractor({ projectFile, projectName, description
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar (atalho: /)"
+              placeholder={t('searchFiles')}
+              // placeholder="Buscar (atalho: /)"
               className="w-full pl-8 pr-3 py-2 rounded-md text-sm text-gray-900"
             />
           </div>
@@ -328,7 +333,8 @@ export default function ProjectExtractor({ projectFile, projectName, description
               value={extFilter}
               onChange={(e) => setExtFilter(e.target.value)}
               className="bg-white/90 text-gray-900 rounded-md px-2 py-1 text-sm"
-              title="Filtrar por extensão"
+              title={t('filterByExtension')}
+            // title="Filtrar por extensão"
             >
               <option value="all">Todas</option>
               <option value="ts">.ts</option>
@@ -346,7 +352,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
             <div className="flex items-center gap-1">
               <span className="text-xs">A</span>
               <input
-                title='Ajustar tamanho da fonte'
+                title={t('adjustFontSize')}
                 type="range"
                 min={11}
                 max={18}
@@ -371,15 +377,15 @@ export default function ProjectExtractor({ projectFile, projectName, description
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-blue-600">{projectData.stats.totalFiles}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Arquivos</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">t{projectData.stats.totalFiles}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">{formatFileSize(projectData.stats.totalBytes)}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Tamanho</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">t{formatFileSize(projectData.stats.totalBytes)}</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">{projectData.stats.totalMarkers}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Marcadores</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">t{projectData.stats.totalMarkers}</div>
               </div>
             </div>
             {!!projectData.stats.errors?.length && (
@@ -408,15 +414,15 @@ export default function ProjectExtractor({ projectFile, projectName, description
                 ) : (
                   <PlayIcon className="w-4 h-4" />
                 )}
-                {isLoading ? 'Extraindo...' : 'Extrair Projeto'}
+                {isLoading ? <span>{t('extracting')}</span> : t('extractProject')}
               </button>
               <button
                 onClick={downloadSourceFile}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                title="Baixar arquivo original"
+                title={t('downloadOriginalFile')}
               >
                 <DocumentIcon className="w-4 h-4" />
-                Download origem
+                {t('downloadOriginal')}
               </button>
             </>
           ) : (
@@ -431,7 +437,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
                 )}
               >
                 <EyeIcon className="w-4 h-4" />
-                Preview
+                {t('preview')}
               </button>
               <button
                 onClick={downloadProject}
@@ -444,22 +450,22 @@ export default function ProjectExtractor({ projectFile, projectName, description
                 ) : (
                   <ArrowDownTrayIcon className="w-4 h-4" />
                 )}
-                Download ZIP
+                {t('downloadZip')}
               </button>
               <button
                 onClick={downloadSourceFile}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <DocumentIcon className="w-4 h-4" />
-                Download origem
+                {t('downloadOriginal')}
               </button>
               <button
                 onClick={() => extractProject()}
                 className="flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                title="Reprocessar"
+                title={t('reprocess')}
               >
                 <ArrowPathIcon className="w-4 h-4" />
-                Reprocessar
+                {t('reprocess')}
               </button>
             </>
           )}
@@ -468,7 +474,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
           <div className="mt-2 text-sm text-red-600">
             {error}{' '}
             <button onClick={() => extractProject()} className="underline">
-              Tentar novamente
+              {t('tryAgain')}
             </button>
           </div>
         )}
@@ -483,14 +489,14 @@ export default function ProjectExtractor({ projectFile, projectName, description
             exit={{ opacity: 0, height: 0 }}
             className="grid grid-cols-12 h-[500px]"
             role="region"
-            aria-label="Arquivos do projeto"
+            aria-label={t('fileExplorer')}
           >
             {/* Left: Tree */}
             <div className="col-span-4 border-r dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 overflow-hidden">
               <div className="p-3 border-b dark:border-gray-700 bg-gray-100 dark:bg-gray-700">
                 <h4 className="font-semibold text-sm text-gray-900 dark:text-white flex items-center gap-2">
                   <FolderIcon className="w-4 h-4 text-blue-500" />
-                  Arquivos ({filteredFiles.length})
+                  {t('files')} ({filteredFiles.length})
                 </h4>
               </div>
               <div className="flex-1 overflow-auto p-1">
@@ -518,7 +524,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 ml-4">
                         <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                          {selectedFile.lines} linhas
+                          {selectedFile.lines} {t('lines')}
                         </span>
                         <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
                           {formatFileSize(selectedFile.size)}
@@ -528,9 +534,9 @@ export default function ProjectExtractor({ projectFile, projectName, description
                             navigator.clipboard.writeText(selectedFile.content);
                           }}
                           className="ml-2 inline-flex items-center gap-1 px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                          title="Copiar conteúdo"
+                          title={t('copyToClipboard')}
                         >
-                          <ClipboardDocumentIcon className="w-4 h-4" /> Copiar
+                          <ClipboardDocumentIcon className="w-4 h-4" /> {t('copy')}
                         </button>
                       </div>
                     </div>
@@ -574,9 +580,9 @@ export default function ProjectExtractor({ projectFile, projectName, description
       {!projectData && !isLoading && (
         <div className="p-8 text-center">
           <FolderIcon className="w-16 h-16 text-gray-400 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Projeto ainda não extraído</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('projectNotExtracted')}</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Clique em &quot;Extrair Projeto&quot; para visualizar os arquivos extraídos dos marcadores LookAtni
+            {t('extractProjectInstructions')}
           </p>
         </div>
       )}
@@ -587,15 +593,16 @@ export default function ProjectExtractor({ projectFile, projectName, description
 /* ========= Subcomponentes ========= */
 
 function EmptyState() {
+  const { t } = useTranslations();
   return (
     <div className="text-center">
       <DocumentIcon className="w-20 h-20 mx-auto mb-4 opacity-30" />
-      <h3 className="text-lg font-medium mb-2 text-gray-700 dark:text-gray-300">Nenhum arquivo selecionado</h3>
+      <h3 className="text-lg font-medium mb-2 text-gray-700 dark:text-gray-300">{t('noFileSelected')}</h3>
       <p className="text-sm max-w-xs mx-auto">
-        Clique em um arquivo na lista à esquerda para visualizar seu conteúdo completo
+        {t('clickFileToView')}
       </p>
       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs">
-        💡 <strong>Novo layout:</strong> Lista à esquerda, conteúdo detalhado à direita. Use <kbd>/</kbd> para buscar e <kbd>j/k</kbd> para navegar.
+        💡 <strong>{t('newLayout')}:</strong> {t('newLayoutInstructions')}
       </div>
     </div>
   );
@@ -668,11 +675,12 @@ function TreeView({
 }
 
 function CodeViewer({ code, wrap, fontSize, langHint }: { code: string; wrap: boolean; fontSize: number; langHint?: string }) {
+  const { t } = useTranslations();
   const html = useMemo(() => maybeHighlight(code, langHint), [code, langHint]);
   return (
     <pre
 
-      title='Ajustar tamanho da fonte'
+      title={t('adjustFontSize')}
       className={classNames(
         'p-4 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 overflow-auto leading-relaxed',
         wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'

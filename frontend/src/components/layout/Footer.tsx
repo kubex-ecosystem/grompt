@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
   const { t } = useTranslations();
 
   return (
-    <footer className="text-center mt-12 text-slate-500 dark:text-[#90a4ae] text-xs space-y-3">
+    <footer className="text-center py-8 text-slate-500 dark:text-[#90a4ae] text-xs space-y-3">
       <div className="flex justify-center items-center gap-6 text-xs">
         <a
           href="https://kubex.world"
@@ -23,22 +23,22 @@ const Footer: React.FC = () => {
         >
           GitHub
         </a>
-        <a
+        {/* <a
           href="/humans.txt"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
         >
           Humans.txt
-        </a>
-        <a
+        </a> */}
+        {/* <a
           href="/.well-known/security.txt"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
         >
           Security
-        </a>
+        </a> */}
       </div>
       <div>
         <p>{t('poweredBy')}</p>

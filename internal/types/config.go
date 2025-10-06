@@ -9,7 +9,7 @@ import (
 	"net/netip"
 	"time"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz"
@@ -109,7 +109,7 @@ type Config struct {
 
 func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey, chatGPTKey string, logger l.Logger) *Config {
 	if logger == nil {
-		logger = gl.GetLogger[l.Logger](nil)
+		logger = l.GetLogger("Grompt")
 	}
 	return &Config{
 		Logger:         logger,

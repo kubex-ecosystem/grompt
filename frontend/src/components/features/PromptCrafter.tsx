@@ -325,23 +325,34 @@ const IdeasList: React.FC<IdeasListProps> = React.memo(({ ideas, onRemoveIdea })
 interface PurposeSelectorProps {
   purpose: string;
   setPurpose: (value: string) => void;
+  isLight: boolean;
 }
-const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(({ purpose, setPurpose }) => {
+const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(({ purpose, setPurpose, isLight }) => {
   const { t } = useTranslations();
   const purposes = Object.keys(purposeKeys);
 
   return (
     <div className="mt-6">
-      <label htmlFor="purpose-input" className="block text-lg font-medium text-sky-500 dark:text-[#00f0ff] mb-3 light-shadow-sky dark:neon-glow-cyan">{t('purposeLabel')}</label>
+      <label
+        htmlFor="purpose-input"
+        className={`block text-lg font-medium mb-3 ${isLight ? 'text-slate-700' : 'text-[#00f0ff] dark:neon-glow-cyan'}`}
+      >
+        {t('purposeLabel')}
+      </label>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
         {purposes.map(p => (
           <button
             key={p}
             onClick={() => setPurpose(p)}
-            className={`p-2 rounded-md text-sm font-medium border-2 transition-all duration-200 ${purpose === p
-              ? 'bg-emerald-500/20 dark:bg-[#00e676]/20 border-emerald-500 dark:border-[#00e676] text-emerald-700 dark:text-white scale-105'
-              : 'bg-slate-100 dark:bg-[#10151b]/50 border-transparent hover:border-emerald-500/50 dark:hover:border-[#00e676]/50 text-slate-600 dark:text-slate-300'
-              }`}
+            className={`p-2 rounded-md text-sm font-medium transition-all duration-200 border ${
+              purpose === p
+                ? isLight
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-[0_18px_32px_-28px_rgba(16,185,129,0.75)]'
+                  : 'bg-[#00e676]/20 border-[#00e676] text-white scale-105'
+                : isLight
+                  ? 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-600'
+                  : 'bg-[#10151b]/50 border-transparent text-slate-300 hover:border-[#00e676]/50'
+            }`}
           >
             {t(purposeKeys[p])}
           </button>
@@ -354,7 +365,11 @@ const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(({ purpose, s
         onChange={(e) => setPurpose(e.target.value)}
         list="purposes-list"
         placeholder={t('customPurposePlaceholder')}
-        className="w-full bg-white dark:bg-[#10151b] border-2 border-emerald-500/50 dark:border-[#00e676]/30 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-[#00e676] focus:border-emerald-500 dark:focus:border-[#00e676] transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-[#90a4ae]/50 text-emerald-600 dark:text-[#00e676] font-semibold"
+        className={`w-full rounded-md p-3 transition-all duration-300 focus:outline-none focus:ring-2 ${
+          isLight
+            ? 'bg-white border border-slate-200 focus:border-emerald-400 focus:ring-emerald-200 placeholder:text-slate-400 text-slate-700'
+            : 'bg-[#10151b] border-2 border-[#00e676]/30 focus:border-[#00e676] focus:ring-[#00e676] placeholder:text-[#90a4ae]/50 text-[#00e676] font-semibold'
+        }`}
       />
       <datalist id="purposes-list">
         {purposes.map(p => <option key={p} value={p} />)}
@@ -368,17 +383,34 @@ interface PromptHistoryProps {
   onLoad: (item: HistoryItem) => void;
   onDelete: (id: string) => void;
   onClear: () => void;
+  isLight: boolean;
 }
-const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history, onLoad, onDelete, onClear }) => {
+const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history, onLoad, onDelete, onClear, isLight }) => {
   const { t, language } = useTranslations();
   return (
-    <div className="lg:col-span-2 bg-white/60 dark:bg-[#10151b]/30 p-6 rounded-lg border-2 border-slate-200 dark:border-sky-500/30 backdrop-blur-sm shadow-2xl shadow-slate-500/10">
+    <div
+      className={`lg:col-span-2 rounded-xl border backdrop-blur-sm p-6 transition-colors duration-300 ${
+        isLight
+          ? 'bg-white border-slate-200 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.3)]'
+          : 'bg-[#10151b]/30 border-sky-500/30 shadow-2xl shadow-slate-500/10'
+      }`}
+    >
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-2xl font-bold font-orbitron text-sky-600 dark:text-sky-400 tracking-wider">{t('historyTitle')}</h3>
+        <h3
+          className={`text-2xl font-bold font-orbitron tracking-wide ${
+            isLight ? 'text-slate-900' : 'text-sky-400'
+          }`}
+        >
+          {t('historyTitle')}
+        </h3>
         {history.length > 0 && (
           <button
             onClick={onClear}
-            className="flex items-center gap-2 px-3 py-1 text-sm bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-300 rounded-full hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors duration-200"
+            className={`flex items-center gap-2 px-3 py-1 text-sm rounded-full transition-colors duration-200 ${
+              isLight
+                ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                : 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+            }`}
             aria-label={t('clearAll')}
           >
             <XCircle size={16} />
@@ -394,10 +426,25 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
           </div>
         ) : (
           history.map(item => (
-            <div key={item.id} className="bg-slate-100/50 dark:bg-[#10151b]/50 p-3 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-transparent hover:border-sky-400/50 dark:hover:border-sky-500/50 transition-colors duration-300">
+            <div
+              key={item.id}
+              className={`p-3 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border transition-colors duration-300 ${
+                isLight
+                  ? 'bg-white border-slate-200 hover:border-sky-300 shadow-sm'
+                  : 'bg-[#10151b]/50 border-transparent hover:border-sky-500/50'
+              }`}
+            >
               <div className="flex-grow overflow-hidden">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="px-2 py-0.5 text-xs font-bold text-white dark:text-black rounded-full bg-sky-500 dark:bg-sky-400 flex-shrink-0">{item.purpose}</span>
+                  <span
+                    className={`px-2 py-0.5 text-xs font-bold rounded-full flex-shrink-0 ${
+                      isLight
+                        ? 'bg-sky-100 text-sky-700'
+                        : 'bg-sky-400 text-black'
+                    }`}
+                  >
+                    {item.purpose}
+                  </span>
                   <span className="text-xs text-slate-500 dark:text-[#90a4ae] truncate">{formatRelativeTime(item.timestamp, language)}</span>
                 </div>
                 <p className="text-sm text-slate-700 dark:text-[#e0f7fa] line-clamp-2">
@@ -407,14 +454,22 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
               <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
                 <button
                   onClick={() => onLoad(item)}
-                  className="p-2 rounded-md bg-indigo-500/10 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/20 dark:hover:bg-indigo-400/30 transition-colors duration-200"
+                  className={`p-2 rounded-md transition-colors duration-200 ${
+                    isLight
+                      ? 'bg-sky-100 text-sky-700 hover:bg-sky-200'
+                      : 'bg-indigo-400/20 text-indigo-300 hover:bg-indigo-400/30'
+                  }`}
                   aria-label={t('loadPrompt')}
                 >
                   <Eye size={18} />
                 </button>
                 <button
                   onClick={() => onDelete(item.id)}
-                  className="p-2 rounded-md bg-red-500/10 dark:bg-red-400/20 text-red-600 dark:text-red-300 hover:bg-red-500/20 dark:hover:bg-red-400/30 transition-colors duration-200"
+                  className={`p-2 rounded-md transition-colors duration-200 ${
+                    isLight
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                      : 'bg-red-400/20 text-red-300 hover:bg-red-400/30'
+                  }`}
                   aria-label={t('deletePrompt')}
                 >
                   <Trash2 size={18} />
@@ -436,6 +491,7 @@ interface PromptCrafterProps {
 }
 const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing }) => {
   const { t } = useTranslations();
+  const isLight = theme === 'light';
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [currentIdea, setCurrentIdea] = useState('');
   const [purpose, setPurpose] = useState('Code Generation');
@@ -701,12 +757,28 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       {/* Input Section */}
-      <div className="bg-white/60 dark:bg-[#10151b]/30 p-6 rounded-lg border-2 border-slate-200 dark:border-[#7c4dff]/30 backdrop-blur-sm shadow-2xl shadow-slate-500/10">
+      <div
+        className={`rounded-xl border backdrop-blur-sm p-6 transition-colors duration-300 ${
+          isLight
+            ? 'bg-white border-slate-200 shadow-[0_28px_60px_-40px_rgba(15,23,42,0.35)]'
+            : 'bg-[#10151b]/30 border-[#7c4dff]/30 shadow-2xl shadow-slate-500/10'
+        }`}
+      >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold font-orbitron text-indigo-600 dark:text-[#7c4dff] tracking-wider">{t('inputIdeasTitle')}</h3>
+          <h3
+            className={`text-2xl font-bold font-orbitron tracking-wide ${
+              isLight ? 'text-slate-900' : 'text-[#7c4dff]'
+            }`}
+          >
+            {t('inputIdeasTitle')}
+          </h3>
           <button
             onClick={handleLoadExample}
-            className="flex items-center gap-2 px-3 py-1 text-sm bg-slate-200/50 dark:bg-[#10151b] text-indigo-600 dark:text-[#7c4dff] rounded-full hover:bg-slate-300/50 dark:hover:bg-slate-800 transition-colors duration-200"
+            className={`flex items-center gap-2 px-3 py-1 text-sm rounded-full border transition-colors duration-200 ${
+              isLight
+                ? 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:text-slate-800'
+                : 'bg-[#10151b] text-[#7c4dff] border-[#7c4dff]/30 hover:bg-slate-800'
+            }`}
             aria-label={t('loadExample')}
           >
             <Lightbulb size={16} />
@@ -715,14 +787,32 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
         </div>
         <IdeaInput currentIdea={currentIdea} setCurrentIdea={setCurrentIdea} onAddIdea={handleAddIdea} />
         <IdeasList ideas={ideas} onRemoveIdea={handleRemoveIdea} />
-        <PurposeSelector purpose={purpose} setPurpose={setPurpose} />
+        <PurposeSelector purpose={purpose} setPurpose={setPurpose} isLight={isLight} />
       </div>
 
       {/* Output Section */}
       <div className="flex flex-col">
-        <div className="bg-white/60 dark:bg-[#10151b]/30 p-6 rounded-lg border-2 border-slate-200 dark:border-[#00e676]/30 backdrop-blur-sm flex-grow flex flex-col shadow-2xl shadow-slate-500/10">
-          <h3 className="text-2xl font-bold font-orbitron text-emerald-600 dark:text-[#00e676] tracking-wider mb-4 light-shadow-emerald dark:neon-glow-green">{t('generatedPromptTitle')}</h3>
-          <div className="flex-grow bg-slate-100 dark:bg-[#0a0f14] rounded-md min-h-[300px] flex flex-col border border-slate-200 dark:border-transparent">
+        <div
+          className={`rounded-xl border backdrop-blur-sm p-6 transition-colors duration-300 flex-grow flex flex-col ${
+            isLight
+              ? 'bg-white border-slate-200 shadow-[0_32px_70px_-45px_rgba(15,23,42,0.35)]'
+              : 'bg-[#10151b]/30 border-[#00e676]/30 shadow-2xl shadow-slate-500/10'
+          }`}
+        >
+          <h3
+            className={`text-2xl font-bold font-orbitron tracking-wide mb-4 ${
+              isLight ? 'text-slate-900' : 'text-[#00e676] dark:neon-glow-green'
+            }`}
+          >
+            {t('generatedPromptTitle')}
+          </h3>
+          <div
+            className={`flex-grow rounded-md min-h-[300px] flex flex-col border ${
+              isLight
+                ? 'bg-slate-50 border-slate-200'
+                : 'bg-[#0a0f14] border-transparent'
+            }`}
+          >
             <div className="relative flex-grow p-4 overflow-y-auto">
               {isLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100/80 dark:bg-[#0a0f14]/80 backdrop-blur-sm z-20">
@@ -779,7 +869,13 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
               )}
             </div>
             {tokenUsage && (
-              <div className="flex-shrink-0 bg-slate-200/50 dark:bg-[#10151b]/50 p-2 border-t border-slate-200 dark:border-slate-700/50">
+              <div
+                className={`flex-shrink-0 p-2 border-t ${
+                  isLight
+                    ? 'bg-slate-100 border-slate-200'
+                    : 'bg-[#10151b]/50 border-slate-700/50'
+                }`}
+              >
                 <div className="flex items-center justify-center gap-4 text-xs text-slate-600 dark:text-slate-400 font-semibold">
                   <BrainCircuit size={16} className="text-sky-500 dark:text-sky-400" />
                   <span>{t('input')}: <span className="font-bold text-sky-600 dark:text-sky-300">{tokenUsage.input}</span> {t('tokens')}</span>
@@ -794,7 +890,13 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
 
           {/* Provider Status Section */}
           {!isConfigLoading && (
-            <div className="mt-4 p-3 bg-slate-50/50 dark:bg-[#0a0f14]/50 rounded-lg border border-slate-200 dark:border-slate-700/50">
+            <div
+              className={`mt-4 p-3 rounded-lg border ${
+                isLight
+                  ? 'bg-slate-50 border-slate-200'
+                  : 'bg-[#0a0f14]/50 border-slate-700/50'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-yellow-500' : 'bg-green-500'}`} />
@@ -819,7 +921,11 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
           <button
             onClick={handleGenerate}
             disabled={isLoading || ideas.length === 0 || !purpose.trim()}
-            className="w-full mt-6 bg-gradient-to-r from-emerald-500 to-sky-500 dark:from-[#00e676] dark:to-[#00f0ff] text-white dark:text-black font-bold font-orbitron text-lg p-4 rounded-lg flex items-center justify-center gap-3 hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-sky-500/40 dark:shadow-[0_0_15px_rgba(0,230,118,0.5)] hover:shadow-xl hover:shadow-sky-500/50 dark:hover:shadow-[0_0_25px_rgba(0,240,255,0.7)]"
+            className={`w-full mt-6 bg-gradient-to-r font-bold font-orbitron text-lg p-4 rounded-lg flex items-center justify-center gap-3 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${
+              isLight
+                ? 'from-emerald-400 via-teal-400 to-sky-500 text-white shadow-[0_22px_45px_-30px_rgba(14,116,144,0.55)] hover:scale-[1.02] hover:shadow-[0_28px_52px_-30px_rgba(6,95,140,0.6)]'
+                : 'from-[#00e676] to-[#00f0ff] text-black shadow-lg shadow-sky-500/40 dark:shadow-[0_0_15px_rgba(0,230,118,0.5)] hover:scale-105 hover:shadow-xl hover:shadow-sky-500/50 dark:hover:shadow-[0_0_25px_rgba(0,240,255,0.7)]'
+            }`}
           >
             {isLoading ? <Loader className="animate-spin" size={28} /> : <Wand2 size={28} />}
             {isLoading ? t('generatingButton') : t('generateButton')}
@@ -833,6 +939,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
         onLoad={handleLoadFromHistory}
         onDelete={handleDeleteFromHistory}
         onClear={handleClearHistory}
+        isLight={isLight}
       />
     </div>
   );

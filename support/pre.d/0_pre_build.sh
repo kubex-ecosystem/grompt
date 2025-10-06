@@ -67,12 +67,12 @@ build_frontend() {
           exit 1
       fi
 
-      if [[ -d "${_ROOT_DIR}/internal/services/server/" ]]; then
+      if [[ -d "${_ROOT_DIR}/internal/grompt/embedded/" ]]; then
           log notice "Removing old build directory..."
-          rm -rf "${_ROOT_DIR}/internal/services/server/build"
+          rm -rf "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || true
       fi
 
-      mv './dist' "${_ROOT_DIR}/internal/services/server/build" || {
+      mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
           log fatal "Failed to move build directory to server." true
           exit 1
       }
@@ -85,6 +85,6 @@ build_frontend() {
 }
 
 (build_frontend) || {
-  log fatal "An error occurred during the pre-build process." || echo "An error occurred during the pre-build process." >&2
+  log fatal "An error occurred during the pre-build process." | tee /dev/stderr
   exit 1
 }

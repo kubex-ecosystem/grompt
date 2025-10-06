@@ -10,14 +10,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+      :root {
+        color-scheme: light dark;
+      }
       body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.4s ease, color 0.4s ease;
+        background-color: #f8fafc;
+        color: #1e293b;
+      }
+      body.dark-theme {
         background-color: #010409;
-        background-image: 
+        background-image:
           linear-gradient(rgba(11, 23, 45, 0.6) 1px, transparent 1px),
           linear-gradient(90deg, rgba(11, 23, 45, 0.6) 1px, transparent 1px);
         background-size: 20px 20px;
+        color: #e4f2ff;
+      }
+      body.light-theme {
+        background-color: #f8fafc;
+        background-image:
+          radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.22) 1px, transparent 0);
+        background-size: 22px 22px;
+        color: #1e293b;
       }
       .font-orbitron { font-family: 'Orbitron', sans-serif; }
       .font-space-mono { font-family: 'Space Mono', monospace; }
@@ -82,7 +98,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-background text-foreground font-sans">
+  <body class="bg-background text-foreground font-sans dark-theme">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

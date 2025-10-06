@@ -2,7 +2,6 @@
 package server
 
 import (
-	"embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -15,11 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubex-ecosystem/grompt/internal/grompt"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
-//go:embed all:build
-var reactApp embed.FS
+var reactApp = grompt.NewGUIGrompt()
 
 type Server struct {
 	config   *t.Config
@@ -77,7 +76,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes() {
-	buildFS, err := fs.Sub(reactApp, "build")
+	buildFS, err := fs.Sub(reactApp.GetWebFS(), "build")
 	if err != nil {
 		log.Printf("⚠️ build embed não encontrado: %v", err)
 		s.setupFallbackRoutes()

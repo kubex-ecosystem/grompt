@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/kubex-ecosystem/grompt/utils"
 	"gopkg.in/yaml.v3"
 
@@ -43,9 +43,9 @@ func startServer() *cobra.Command {
 			"This command initializes the Grompt server and starts waiting for help to build prompts.",
 		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
-			gl.GetLogger[l.Logger](nil)
+			logger := l.GetLogger("Grompt")
 			if debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 
 			if background {
@@ -90,7 +90,7 @@ func startServer() *cobra.Command {
 					utils.GetEnvOr("CLAUDE_API_KEY", claudeKey),
 					utils.GetEnvOr("GEMINI_API_KEY", geminiKey),
 					utils.GetEnvOr("CHATGPT_API_KEY", chatGPTKey),
-					gl.GetLogger[l.Logger](nil),
+					logger,
 				)
 			}
 
@@ -154,10 +154,10 @@ func startServerService() *cobra.Command {
 			"This command initializes the Grompt server and starts waiting for help to build prompts.",
 		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
-			lgr := gl.GetLogger[l.Logger](nil)
+			lgr := l.GetLogger("Grompt")
 
 			if debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 
 			var cfg t.IConfig
