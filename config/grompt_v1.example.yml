@@ -1,0 +1,156 @@
+# Grompt V1 Gateway Configuration
+# Enhanced configuration for production-ready Grompt deployment
+
+server:
+  addr: ":3000"
+  debug: false
+  cors:
+    allow_origins:
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+      - "https://your-frontend-domain.com"
+
+# Default configuration values
+defaults:
+  tenant_id: "default"
+  user_id: "system"
+  byok: "enabled"  # Bring Your Own Key support
+  notification_timeout_seconds: 30
+
+# Multi-AI Provider Configuration
+providers:
+  # Google Gemini (Primary Recommendation)
+  gemini:
+    type: "gemini"
+    key_env: "GEMINI_API_KEY"
+    base_url: "https://generativelanguage.googleapis.com"
+    default_model: "gemini-2.0-flash"
+
+  # OpenAI GPT Models
+  openai:
+    type: "openai"
+    key_env: "OPENAI_API_KEY"
+    base_url: "https://api.openai.com"
+    default_model: "gpt-4o"
+
+  # Anthropic Claude Models
+  anthropic:
+    type: "anthropic"
+    key_env: "ANTHROPIC_API_KEY"
+    base_url: "https://api.anthropic.com"
+    default_model: "claude-3-5-sonnet-20241022"
+
+  # Groq (High-speed inference)
+  groq:
+    type: "groq"
+    key_env: "GROQ_API_KEY"
+    base_url: "https://api.groq.com"
+    default_model: "llama-3.3-70b-versatile"
+
+# GoBE Integration (Optional)
+gobe:
+  enabled: true
+  base_url: "https://gobe.example.com"
+  timeout_seconds: 30
+  retry_attempts: 3
+
+# Production Middleware Configuration
+middleware:
+  rate_limit:
+    enabled: true
+    requests_per_second: 10
+    burst_size: 20
+
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    timeout_seconds: 60
+
+  health_check:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 5
+
+# Observability Settings
+observability:
+  metrics:
+    enabled: true
+    prefix: "grompt_gateway_"
+
+  logging:
+    level: "info"  # debug, info, warn, error
+    structured: true
+    include_request_id: true
+
+  tracing:
+    enabled: false
+    endpoint: "http://jaeger:14268/api/traces"
+
+# Security Configuration
+security:
+  api_key_validation: true
+  cors_enabled: true
+  rate_limiting: true
+  request_size_limit: "10MB"
+
+# Performance Tuning
+performance:
+  max_concurrent_requests: 100
+  request_timeout_seconds: 120
+  keep_alive_timeout_seconds: 65
+  read_header_timeout_seconds: 10
+
+  # Streaming optimizations
+  sse_buffer_size: 100
+  sse_flush_interval_ms: 75
+
+# Generation Defaults
+generation:
+  default_temperature: 0.7
+  max_tokens_limit: 32000
+  max_ideas_count: 10
+  max_idea_length: 1000
+
+  # Prompt engineering templates
+  system_prompts:
+    code: |
+      You are an expert prompt engineer specializing in software development.
+      Create clear, structured prompts for coding tasks that include:
+      - Specific technical requirements
+      - Programming language and framework preferences
+      - Expected output format and structure
+      - Testing and documentation requirements
+
+    creative: |
+      You are an expert prompt engineer for creative writing tasks.
+      Develop engaging prompts that specify:
+      - Genre, tone, and style guidelines
+      - Target audience and content length
+      - Structure and formatting requirements
+      - Creative constraints and themes
+
+    analysis: |
+      You are an expert prompt engineer for analytical tasks.
+      Build comprehensive prompts featuring:
+      - Clear methodology and analytical frameworks
+      - Data sources and format specifications
+      - Visualization and reporting requirements
+      - Accuracy and objectivity standards
+
+# Environment Variables Reference
+# Set these in your environment or .env file:
+#
+# Core Provider Keys (at least one required):
+# GEMINI_API_KEY=your_gemini_key_here
+# OPENAI_API_KEY=sk-your_openai_key_here
+# ANTHROPIC_API_KEY=sk-ant-your_anthropic_key_here
+# GROQ_API_KEY=gsk_your_groq_key_here
+#
+# Optional GoBE Integration:
+# GOBE_BASE_URL=https://your-gobe-instance.com
+# GOBE_API_KEY=your_gobe_api_key
+#
+# Server Configuration:
+# PORT=3000
+# DEBUG=false
+# LOG_LEVEL=info

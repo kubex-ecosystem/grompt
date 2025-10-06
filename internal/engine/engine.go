@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubex-ecosystem/grompt/factory/providers"
 	"github.com/kubex-ecosystem/grompt/factory/templates"
 	concreteProviders "github.com/kubex-ecosystem/grompt/internal/providers"
 	"github.com/kubex-ecosystem/grompt/internal/types"
@@ -16,7 +15,7 @@ type IEngine interface {
 	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
 
 	// GetProviders returns available providers
-	GetProviders() []providers.Provider
+	GetProviders() []concreteProviders.Provider
 
 	// GetHistory returns the prompt history
 	GetHistory() []Result
@@ -30,7 +29,7 @@ type IEngine interface {
 
 // Engine represents the core prompt engineering engine
 type Engine struct {
-	providers []providers.Provider
+	providers []concreteProviders.Provider
 	templates templates.Manager
 	history   IHistoryManager
 	config    types.IConfig
@@ -39,7 +38,7 @@ type Engine struct {
 // NewEngine creates a new IEngine instance with initialized providers
 func NewEngine(config types.IConfig) IEngine {
 	engine := &Engine{
-		providers: make([]providers.Provider, 0),
+		providers: make([]concreteProviders.Provider, 0),
 		templates: templates.NewManager("./templates"), // Default templates path
 		history:   NewHistoryManager(100),              // Default to 100 entries
 		config:    config,
@@ -124,7 +123,7 @@ func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*R
 }
 
 // GetProviders returns available providers
-func (e *Engine) GetProviders() []providers.Provider {
+func (e *Engine) GetProviders() []concreteProviders.Provider {
 	if e == nil {
 		return nil
 	}

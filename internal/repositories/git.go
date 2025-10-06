@@ -1,0 +1,432 @@
+// Package repositories - Git client for commit analysis and AI assistance detection.
+package repositories
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os/exec"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/kubex-ecosystem/grompt/internal/metrics"
+)
+
+// GitClient implements local Git repository analysis
+type GitClient struct {
+	repoPath string
+}
+
+// NewGitClient creates a new Git client for local repository analysis
+func NewGitClient(repoPath string) *GitClient {
+	return &GitClient{
+		repoPath: repoPath,
+	}
+}
+
+// GetCommits fetches commits from local Git repository
+func (g *GitClient) GetCommits(ctx context.Context, owner, repo string, since time.Time) ([]metrics.Commit, error) {
+	// Git log command with JSON-like format
+	sinceArg := since.Format("2006-01-02")
+	cmd := exec.CommandContext(ctx, "git",
+		"-C", g.repoPath,
+		"log",
+		"--since="+sinceArg,
+		"--pretty=format:{\"sha\":\"%H\",\"message\":\"%s\",\"author\":\"%an\",\"date\":\"%ai\"}",
+		"--stat=1000,1000", // Get file stats
+		"--name-only",
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run git log: %w", err)
+	}
+
+	return g.parseGitLog(string(output))
+}
+
+// parseGitLog parses git log output into commit structures
+func (g *GitClient) parseGitLog(output string) ([]metrics.Commit, error) {
+	var commits []metrics.Commit
+	lines := strings.Split(output, "\n")
+
+	var currentCommit *metrics.Commit
+	var inStats bool
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Try to parse as JSON commit header
+		if strings.HasPrefix(line, "{") && strings.HasSuffix(line, "}") {
+			// Save previous commit
+			if currentCommit != nil {
+				commits = append(commits, *currentCommit)
+			}
+
+			var commitData struct {
+				SHA     string `json:"sha"`
+				Message string `json:"message"`
+				Author  string `json:"author"`
+				Date    string `json:"date"`
+			}
+
+			if err := json.Unmarshal([]byte(line), &commitData); err != nil {
+				continue // Skip malformed lines
+			}
+
+			date, err := time.Parse("2006-01-02 15:04:05 -0700", commitData.Date)
+			if err != nil {
+				continue
+			}
+
+			currentCommit = &metrics.Commit{
+				SHA:     commitData.SHA,
+				Message: commitData.Message,
+				Author:  commitData.Author,
+				Date:    date,
+				Files:   []string{},
+			}
+
+			// Analyze AI assistance indicators
+			g.analyzeAIAssistance(currentCommit)
+			inStats = false
+			continue
+		}
+
+		// Parse file stats
+		if currentCommit != nil {
+			// Check for git stat line (e.g., "2 files changed, 10 insertions(+), 5 deletions(-)")
+			if strings.Contains(line, "file") && (strings.Contains(line, "changed") || strings.Contains(line, "insertion") || strings.Contains(line, "deletion")) {
+				g.parseStatLine(currentCommit, line)
+				inStats = true
+				continue
+			}
+
+			// File names (after stats line)
+			if inStats && !strings.Contains(line, "|") {
+				currentCommit.Files = append(currentCommit.Files, line)
+			}
+		}
+	}
+
+	// Add last commit
+	if currentCommit != nil {
+		commits = append(commits, *currentCommit)
+	}
+
+	return commits, nil
+}
+
+// parseStatLine parses git stat line to extract additions/deletions
+func (g *GitClient) parseStatLine(commit *metrics.Commit, line string) {
+	// Parse line like "2 files changed, 10 insertions(+), 5 deletions(-)"
+	insertionRegex := regexp.MustCompile(`(\d+) insertion`)
+	deletionRegex := regexp.MustCompile(`(\d+) deletion`)
+
+	if matches := insertionRegex.FindStringSubmatch(line); len(matches) > 1 {
+		if additions := parseInt(matches[1]); additions > 0 {
+			commit.Additions = additions
+		}
+	}
+
+	if matches := deletionRegex.FindStringSubmatch(line); len(matches) > 1 {
+		if deletions := parseInt(matches[1]); deletions > 0 {
+			commit.Deletions = deletions
+		}
+	}
+}
+
+// parseInt safely parses integer from string
+func parseInt(s string) int {
+	var result int
+	fmt.Sscanf(s, "%d", &result)
+	return result
+}
+
+// analyzeAIAssistance detects AI assistance indicators in commits
+func (g *GitClient) analyzeAIAssistance(commit *metrics.Commit) {
+	message := strings.ToLower(commit.Message)
+
+	// Check for Co-authored-by patterns in commit message
+	coAuthorRegex := regexp.MustCompile(`co-authored-by:\s*([^<]+)`)
+	matches := coAuthorRegex.FindAllStringSubmatch(commit.Message, -1)
+	for _, match := range matches {
+		if len(match) > 1 {
+			coAuthor := strings.TrimSpace(match[1])
+			commit.CoAuthoredBy = append(commit.CoAuthoredBy, coAuthor)
+
+			// Check if co-author is AI
+			if g.isAICoAuthor(coAuthor) {
+				commit.AIAssisted = true
+				commit.AIProvider = g.detectAIProvider(coAuthor)
+			}
+		}
+	}
+
+	// Check for AI keywords in commit message
+	aiPatterns := []string{
+		"copilot", "github copilot", "gh copilot",
+		"codewhisperer", "amazon codewhisperer",
+		"codeium", "tabnine", "cursor",
+		"ai-assisted", "ai-generated", "ai assisted", "ai generated",
+		"with ai", "using ai", "ai help", "ai suggestion",
+		"assisted by", "generated by", "suggested by",
+		"auto-generated", "auto generated",
+		"#copilot", "#ai", "#codewhisperer", "#codeium",
+	}
+
+	for _, pattern := range aiPatterns {
+		if strings.Contains(message, pattern) {
+			commit.AIAssisted = true
+			if commit.AIProvider == "" {
+				commit.AIProvider = g.detectAIProvider(pattern)
+			}
+			break
+		}
+	}
+
+	// Check for commit message patterns that suggest AI assistance
+	aiMessagePatterns := []string{
+		"fix:", "feat:", "refactor:", // Conventional commits often AI-assisted
+		"update", "improve", "enhance", // Generic improvement words
+		"add", "remove", "delete", // Simple actions
+	}
+
+	if !commit.AIAssisted {
+		// If message is very generic and short, might be AI-assisted
+		words := strings.Fields(message)
+		if len(words) <= 3 {
+			for _, pattern := range aiMessagePatterns {
+				if strings.HasPrefix(message, pattern) {
+					// Weak indication of AI assistance (lower confidence)
+					break
+				}
+			}
+		}
+	}
+}
+
+// isAICoAuthor checks if a co-author name indicates AI assistance
+func (g *GitClient) isAICoAuthor(coAuthor string) bool {
+	aiCoAuthors := []string{
+		"github-copilot", "copilot", "gh-copilot",
+		"codewhisperer", "amazon-codewhisperer",
+		"codeium", "tabnine", "cursor-ai",
+		"ai-assistant", "ai-copilot", "assistant",
+		"bot", "automation", "auto",
+	}
+
+	coAuthorLower := strings.ToLower(coAuthor)
+	for _, ai := range aiCoAuthors {
+		if strings.Contains(coAuthorLower, ai) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// detectAIProvider detects which AI provider was used
+func (g *GitClient) detectAIProvider(text string) string {
+	textLower := strings.ToLower(text)
+
+	if strings.Contains(textLower, "copilot") || strings.Contains(textLower, "github") {
+		return "github-copilot"
+	}
+	if strings.Contains(textLower, "codewhisperer") || strings.Contains(textLower, "amazon") {
+		return "amazon-codewhisperer"
+	}
+	if strings.Contains(textLower, "codeium") {
+		return "codeium"
+	}
+	if strings.Contains(textLower, "tabnine") {
+		return "tabnine"
+	}
+	if strings.Contains(textLower, "cursor") {
+		return "cursor"
+	}
+
+	return "unknown-ai"
+}
+
+// GetCommitTrailers extracts Git trailers from commits (for AI detection)
+func (g *GitClient) GetCommitTrailers(ctx context.Context, sha string) (map[string]string, error) {
+	cmd := exec.CommandContext(ctx, "git",
+		"-C", g.repoPath,
+		"show", "--format=%B", "--no-patch", sha,
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commit trailers: %w", err)
+	}
+
+	trailers := make(map[string]string)
+	lines := strings.Split(string(output), "\n")
+
+	// Git trailers are at the end of commit message
+	inTrailers := false
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if line == "" {
+			if inTrailers {
+				break // End of trailers
+			}
+			continue
+		}
+
+		// Trailer format: "Key: Value"
+		if strings.Contains(line, ":") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+
+				// Common trailer keys
+				if isTrailerKey(key) {
+					trailers[key] = value
+					inTrailers = true
+				}
+			}
+		} else if inTrailers {
+			break // No more trailers
+		}
+	}
+
+	return trailers, nil
+}
+
+// isTrailerKey checks if a key is a valid Git trailer key
+func isTrailerKey(key string) bool {
+	trailerKeys := []string{
+		"Co-authored-by", "Co-Authored-By",
+		"Signed-off-by", "Signed-Off-By",
+		"Reviewed-by", "Reviewed-By",
+		"Tested-by", "Tested-By",
+		"Reported-by", "Reported-By",
+		"Suggested-by", "Suggested-By",
+		"AI-Assisted", "AI-Generated",
+		"Copilot-Assisted", "Codewhisperer-Assisted",
+		"Generated-By", "Assisted-By",
+	}
+
+	for _, trailerKey := range trailerKeys {
+		if strings.EqualFold(key, trailerKey) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetRepositoryStats gets overall repository statistics
+func (g *GitClient) GetRepositoryStats(ctx context.Context) (*RepositoryStats, error) {
+	stats := &RepositoryStats{}
+
+	// Get total commits
+	cmd := exec.CommandContext(ctx, "git", "-C", g.repoPath, "rev-list", "--count", "HEAD")
+	output, err := cmd.Output()
+	if err == nil {
+		fmt.Sscanf(strings.TrimSpace(string(output)), "%d", &stats.TotalCommits)
+	}
+
+	// Get contributors count
+	cmd = exec.CommandContext(ctx, "git", "-C", g.repoPath, "shortlog", "-sn", "--all")
+	output, err = cmd.Output()
+	if err == nil {
+		contributors := strings.Split(strings.TrimSpace(string(output)), "\n")
+		stats.TotalContributors = len(contributors)
+
+		// Parse contributor stats
+		for _, line := range contributors {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				var commits int
+				fmt.Sscanf(parts[0], "%d", &commits)
+				name := strings.Join(parts[1:], " ")
+
+				stats.Contributors = append(stats.Contributors, ContributorStat{
+					Name:    name,
+					Commits: commits,
+				})
+			}
+		}
+	}
+
+	// Get first and last commit dates
+	cmd = exec.CommandContext(ctx, "git", "-C", g.repoPath, "log", "--reverse", "--format=%ai", "-1")
+	output, err = cmd.Output()
+	if err == nil {
+		if firstDate, err := time.Parse("2006-01-02 15:04:05 -0700", strings.TrimSpace(string(output))); err == nil {
+			stats.FirstCommitDate = firstDate
+		}
+	}
+
+	cmd = exec.CommandContext(ctx, "git", "-C", g.repoPath, "log", "--format=%ai", "-1")
+	output, err = cmd.Output()
+	if err == nil {
+		if lastDate, err := time.Parse("2006-01-02 15:04:05 -0700", strings.TrimSpace(string(output))); err == nil {
+			stats.LastCommitDate = lastDate
+		}
+	}
+
+	return stats, nil
+}
+
+// RepositoryStats contains overall repository statistics
+type RepositoryStats struct {
+	TotalCommits      int               `json:"total_commits"`
+	TotalContributors int               `json:"total_contributors"`
+	Contributors      []ContributorStat `json:"contributors"`
+	FirstCommitDate   time.Time         `json:"first_commit_date"`
+	LastCommitDate    time.Time         `json:"last_commit_date"`
+}
+
+// ContributorStat contains statistics for a single contributor
+type ContributorStat struct {
+	Name    string `json:"name"`
+	Commits int    `json:"commits"`
+}
+
+// IDEClient implements IDE telemetry client (mock for now)
+type IDEClient struct {
+	// This would integrate with VS Code, JetBrains, etc. telemetry APIs
+	// For now, we'll use a simplified implementation
+}
+
+// NewIDEClient creates a new IDE telemetry client
+func NewIDEClient() *IDEClient {
+	return &IDEClient{}
+}
+
+// GetAIAssistData gets AI assistance data from IDE telemetry
+func (i *IDEClient) GetAIAssistData(ctx context.Context, user, repo string, since time.Time) (*metrics.AIAssistData, error) {
+	// This is a mock implementation
+	// In production, this would integrate with:
+	// - VS Code Copilot telemetry
+	// - JetBrains AI Assistant telemetry
+	// - Cursor AI telemetry
+	// - Local IDE logs/settings
+
+	return &metrics.AIAssistData{
+		TotalSuggestions:    150,
+		AcceptedSuggestions: 90,
+		AcceptanceRate:      0.6,
+		TimeWithAI:          12.5, // hours
+		LinesGenerated:      450,
+		Provider:            "github-copilot",
+	}, nil
+}
+
+/*
+
+Cara... Olha os arquivos que inseri nesse contexto aqui!! Por favor!
+
+Pausa só um pouco.. rsrs
+
+*/
