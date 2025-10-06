@@ -10,6 +10,7 @@ const moods = ['Vibrante', 'Minimalista', 'Futurista', 'Orgânico'];
 const styles = ['Ilustração digital', 'Fotorrealista', 'Flat design', 'Isométrico'];
 
 const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
+  const { t } = useTranslation();
   const [subject, setSubject] = useState('');
   const [mood, setMood] = useState(moods[0]);
   const [style, setStyle] = useState(styles[0]);
@@ -60,6 +61,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
                   Clima
                 </label>
                 <select
+                  title={t("Selecione o clima ou tom desejado para a imagem")}
                   value={mood}
                   onChange={(event) => setMood(event.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-[#0f172a] dark:text-slate-200"
@@ -76,6 +78,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
                   Estilo
                 </label>
                 <select
+                  title={t("Selecione o estilo visual desejado para a imagem")}
                   value={style}
                   onChange={(event) => setStyle(event.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-inner focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-[#0f172a] dark:text-slate-200"
@@ -107,7 +110,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
               className="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-35px_rgba(15,23,42,0.8)] transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#00f0ff] dark:bg-[#00f0ff] dark:text-[#010409]"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isLoading ? 'Gerando briefing...' : 'Gerar prompt' }
+              {isLoading ? 'Gerando briefing...' : 'Gerar prompt'}
             </button>
           </div>
 
@@ -135,3 +138,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
 };
 
 export default ImageGenerator;
+function useTranslation(): { t: any; } {
+  throw new Error('Function not implemented.');
+}
+
