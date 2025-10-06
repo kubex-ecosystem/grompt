@@ -66,7 +66,7 @@ func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, e
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Ollama retornou status %d: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("ollama retornou status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var response OllamaResponse

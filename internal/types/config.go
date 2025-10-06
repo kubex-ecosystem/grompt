@@ -95,7 +95,11 @@ type IConfig interface {
 }
 
 type Config struct {
-	Logger         l.Logger
+	Logger    l.Logger
+	Server    *ServerConfig             `yaml:"server"`
+	Defaults  *DefaultsConfig           `yaml:"defaults"`
+	Providers map[string]ProviderConfig `yaml:"providers"`
+
 	BindAddr       string `json:"bind_addr,omitempty" gorm:"default:'localhost'"`
 	Port           string `json:"port" gorm:"default:8080"`
 	OpenAIAPIKey   string `json:"openai_api_key,omitempty" gorm:"default:''"`

@@ -25,11 +25,6 @@ type OpenAIAPIRequest struct {
 	Stream      bool      `json:"stream"`
 }
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
 type OpenAIAPIResponse struct {
 	ID      string   `json:"id"`
 	Object  string   `json:"object"`
@@ -43,12 +38,6 @@ type Choice struct {
 	Index        int     `json:"index"`
 	Message      Message `json:"message"`
 	FinishReason string  `json:"finish_reason"`
-}
-
-type Usage struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
 }
 
 type OpenAIErrorResponse struct {
@@ -182,7 +171,7 @@ func (o *OpenAIAPI) IsAvailable() bool {
 	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusBadRequest
 }
 
-// Listar modelos disponíveis
+// ListModels Listar modelos disponíveis
 func (o *OpenAIAPI) ListModels() ([]string, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
@@ -229,7 +218,7 @@ func (o *OpenAIAPI) ListModels() ([]string, error) {
 	return models, nil
 }
 
-// Modelos comuns da OpenAI
+// GetCommonModels Modelos comuns da OpenAI
 func (o *OpenAIAPI) GetCommonModels() []string {
 	return []string{
 		"gpt-4",

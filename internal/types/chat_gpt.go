@@ -182,7 +182,7 @@ func (o *ChatGPTAPI) IsAvailable() bool {
 	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusBadRequest
 }
 
-// Listar modelos disponíveis
+// ListModels Listar modelos disponíveis
 func (o *ChatGPTAPI) ListModels() ([]string, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
@@ -229,7 +229,7 @@ func (o *ChatGPTAPI) ListModels() ([]string, error) {
 	return models, nil
 }
 
-// Modelos comuns da ChatGPT
+// GetCommonModels Modelos comuns da ChatGPT
 func (o *ChatGPTAPI) GetCommonModels() []string {
 	return []string{
 		"gpt-4",
