@@ -53,11 +53,45 @@ func (p *anthropicProvider) Name() string {
 	return p.name
 }
 
-func (p *anthropicProvider) Available() error {
+func (p *anthropicProvider) Available() bool {
 	if p.apiKey == "" {
-		return errors.New("anthropic API key not configured")
+		return false
 	}
-	return nil
+	return true
+}
+
+func (p *anthropicProvider) Execute(ctx context.Context, prompt string) (string, error) {
+	// Implement command execution logic here if applicable
+	return "", nil
+}
+
+func (p *anthropicProvider) GetCapabilities(ctx context.Context) *providers.Capabilities {
+	if p == nil {
+		return nil
+	}
+
+	models := []string{
+		"claude-3-5-sonnet-20241022",
+		"claude-3-haiku-20241022",
+		"claude-3-opus-20241022",
+	}
+
+	return &providers.Capabilities{
+		MaxTokens:         4096,
+		SupportsBatch:     false,
+		SupportsStreaming: true,
+		Models:            models,
+		Pricing: &providers.Pricing{
+			InputCostPer1K:  0.003, // Default to Claude 3.5 Sonnet rates
+			OutputCostPer1K: 0.015, // Default to Claude 3.5 Sonnet rates
+			Currency:        "USD",
+		},
+		CanChat:       true,
+		CanStream:     true,
+		CanNotify:     false,
+		CanExecute:    false,
+		SupportsTools: false,
+	}
 }
 
 // anthropicMessage represents a message in Anthropic's format

@@ -73,7 +73,7 @@ temp/
 *_linux_amd64
 *_linux_amd64*
 bkp/
-grompt
+
 docs/prompt/
 support/docs/site/
 internal/services/server/build/*

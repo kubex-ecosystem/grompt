@@ -54,11 +54,11 @@ func (g *geminiProvider) Name() string {
 }
 
 // Available checks if the provider is available
-func (g *geminiProvider) Available() error {
+func (g *geminiProvider) Available() bool {
 	if g.apiKey == "" {
-		return errors.New("API key not configured")
+		return false
 	}
-	return nil
+	return true
 }
 
 // Chat performs a chat completion request using Gemini's streaming API with the SDK
@@ -208,6 +208,34 @@ func (g *geminiProvider) Chat(ctx context.Context, req providers.ChatRequest) (<
 func (g *geminiProvider) Notify(ctx context.Context, event providers.NotificationEvent) error {
 	// Implement notification logic here
 	return nil
+}
+
+func (g *geminiProvider) Execute(ctx context.Context, prompt string) (string, error) {
+	// Implement command execution logic here if applicable
+	return "", nil
+}
+
+func (g *geminiProvider) GetCapabilities(ctx context.Context) *providers.Capabilities {
+	return &providers.Capabilities{
+		SupportsBatch:     true,
+		SupportsStreaming: true,
+		Models: []string{
+			"gemini-1",
+			"gemini-1.5",
+			"gemini-2",
+		},
+		MaxTokens: 4096,
+		Pricing: &providers.Pricing{
+			InputCostPer1K:  0.0015,
+			OutputCostPer1K: 0.002,
+			Currency:        "USD",
+		},
+		CanChat:       true,
+		CanStream:     true,
+		CanNotify:     false,
+		CanExecute:    false,
+		SupportsTools: false,
+	}
 }
 
 // toGeminiContents converts generic messages to Gemini SDK format

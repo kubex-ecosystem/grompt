@@ -63,6 +63,10 @@ func (m *Grompt) Command() *cobra.Command {
 	rtCmd.AddCommand(cc.ServerCmdList()...)
 	rtCmd.AddCommand(cc.SquadCmdList()...)
 	rtCmd.AddCommand(cc.AICmdList()...)
+	rtCmd.AddCommand(cc.GatewayCmds())
+	rtCmd.AddCommand(cc.NewDaemonCommand())
+
+	// Add version command
 	rtCmd.AddCommand(vs.CliCommand())
 
 	// Set usage definitions for the command and its subcommands

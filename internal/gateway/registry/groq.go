@@ -53,11 +53,38 @@ func (p *groqProvider) Name() string {
 	return p.name
 }
 
-func (p *groqProvider) Available() error {
-	if p.apiKey == "" {
-		return errors.New("groq API key not configured")
+func (p *groqProvider) Available() bool {
+	return p.apiKey != ""
+}
+
+func (p *groqProvider) Execute(ctx context.Context, prompt string) (string, error) {
+	// Implement command execution logic here if applicable
+	return "", nil
+}
+
+func (p *groqProvider) GetCapabilities(ctx context.Context) *providers.Capabilities {
+	return &providers.Capabilities{
+		MaxTokens:         8192, // Groq supports high token limits
+		SupportsBatch:     false,
+		SupportsStreaming: true,
+		Models: []string{
+			"llama-3.1-70b-versatile",
+			"llama-3.1-8b-versatile",
+			"mixtral-8x7b",
+			"gemma-1.5-8k",
+			"gemma-1.5-32k",
+		},
+		Pricing: &providers.Pricing{
+			InputCostPer1K:  0.59 / 1000, // $0.59 per 1K input tokens for Llama 3.1 70B
+			OutputCostPer1K: 0.79 / 1000, // $0.79 per 1K output tokens for Llama 3.1 70B
+			Currency:        "USD",
+		},
+		CanChat:       true,
+		CanStream:     true,
+		CanNotify:     false,
+		CanExecute:    false,
+		SupportsTools: false,
 	}
-	return nil
 }
 
 func (p *groqProvider) Notify(ctx context.Context, event providers.NotificationEvent) error {

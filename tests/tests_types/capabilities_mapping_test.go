@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"context"
 	"testing"
 
 	typesx "github.com/kubex-ecosystem/grompt/internal/types"
@@ -23,7 +24,7 @@ func TestCapabilities_MaxTokens_ByProvider(t *testing.T) {
 	}
 	for _, c := range cases {
 		p := &typesx.ProviderImpl{VName: c.provider, VAPI: api}
-		caps := p.GetCapabilities()
+		caps := p.GetCapabilities(context.Background())
 		if caps == nil {
 			t.Fatalf("%s: caps is nil", c.name)
 		}

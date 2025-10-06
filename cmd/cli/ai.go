@@ -81,7 +81,7 @@ func setupProvider(cfg t.IConfig, provider, apiKey string) (t.IAPIConfig, string
 		return nil, "", fmt.Errorf("provider '%s' is not configured or available", provider)
 	}
 
-	if !providerObj.IsAvailable() {
+	if !providerObj.Available() {
 		return nil, "", fmt.Errorf("provider '%s' is not available. Please check your API key and configuration", provider)
 	}
 
@@ -375,7 +375,7 @@ Examples:
 				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured or available", provider))
 			}
 
-			if !providerObj.IsAvailable() {
+			if !providerObj.Available() {
 				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not available. Please check your API key and configuration.", provider))
 			}
 

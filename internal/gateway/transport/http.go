@@ -235,8 +235,8 @@ func (h *httpHandlers) chatSSE(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if provider is available
-	if err := provider.Available(); err != nil {
-		http.Error(w, fmt.Sprintf("Provider unavailable: %v", err), http.StatusServiceUnavailable)
+	if ok := provider.Available(); !ok {
+		http.Error(w, "Provider unavailable", http.StatusServiceUnavailable)
 		return
 	}
 

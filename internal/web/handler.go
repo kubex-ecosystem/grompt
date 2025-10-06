@@ -2,13 +2,14 @@
 package web
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
 	"path"
 	"strings"
 
-	"github.com/kubex-ecosystem/grompt/internal/grompt"
+	gmp "github.com/kubex-ecosystem/grompt/internal/grompt"
 )
 
 // Handler provides HTTP handlers for the web interface
@@ -18,15 +19,17 @@ type Handler struct {
 
 // NewHandler creates a new web interface handler
 func NewHandler() (*Handler, error) {
-	// Strip the "embedded/guiweb" prefix from the embedded filesystem
-	fsys, err := fs.Sub(grompt.GuiWebFS, "embedded/guiweb")
-	if err != nil {
-		return nil, err
+	baseFS := gmp.NewGUIGrompt().GetWebFS()
+	if baseFS == nil {
+		return nil, fmt.Errorf("web assets filesystem not available")
 	}
 
-	return &Handler{
-		fsys: fsys,
-	}, nil
+	webFS, err := fs.Sub(baseFS, "embedded/guiweb")
+	if err != nil {
+		return nil, fmt.Errorf("web assets missing: %w", err)
+	}
+
+	return &Handler{fsys: webFS}, nil
 }
 
 // ServeHTTP handles web interface requests
@@ -47,6 +50,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Not found", http.StatusNotFound)
 			return
 		}
+		cleanPath = "index.html"
 	}
 	defer file.Close()
 

@@ -2,11 +2,11 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/factory/templates"
-	concreteProviders "github.com/kubex-ecosystem/grompt/internal/providers"
 	"github.com/kubex-ecosystem/grompt/internal/types"
 )
 
@@ -15,7 +15,7 @@ type IEngine interface {
 	ProcessPrompt(template string, vars map[string]interface{}) (*Result, error)
 
 	// GetProviders returns available providers
-	GetProviders() []concreteProviders.Provider
+	GetProviders() []types.Provider
 
 	// GetHistory returns the prompt history
 	GetHistory() []Result
@@ -29,7 +29,7 @@ type IEngine interface {
 
 // Engine represents the core prompt engineering engine
 type Engine struct {
-	providers []concreteProviders.Provider
+	providers []types.Provider
 	templates templates.Manager
 	history   IHistoryManager
 	config    types.IConfig
@@ -38,7 +38,7 @@ type Engine struct {
 // NewEngine creates a new IEngine instance with initialized providers
 func NewEngine(config types.IConfig) IEngine {
 	engine := &Engine{
-		providers: make([]concreteProviders.Provider, 0),
+		providers: make([]types.Provider, 0),
 		templates: templates.NewManager("./templates"), // Default templates path
 		history:   NewHistoryManager(100),              // Default to 100 entries
 		config:    config,
@@ -54,29 +54,29 @@ func NewEngine(config types.IConfig) IEngine {
 func (e *Engine) initializeProviders() {
 	// Initialize OpenAI provider
 	if apiKey := e.config.GetAPIKey("openai"); apiKey != "" {
-		provider := concreteProviders.NewOpenAIProvider(apiKey)
+		provider := types.NewOpenAIProvider(apiKey)
 		e.providers = append(e.providers, provider)
 	}
 
 	// Initialize Claude provider
 	if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
-		provider := concreteProviders.NewClaudeProvider(apiKey)
+		provider := types.NewClaudeProvider(apiKey)
 		e.providers = append(e.providers, provider)
 	}
 
 	// Initialize DeepSeek provider
 	if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
-		provider := concreteProviders.NewDeepSeekProvider(apiKey)
+		provider := types.NewDeepSeekProvider(apiKey)
 		e.providers = append(e.providers, provider)
 	}
 
 	// Initialize Ollama provider (local - no API key needed)
-	provider := concreteProviders.NewOllamaProvider()
+	provider := types.NewOllamaProvider()
 	e.providers = append(e.providers, provider)
 
 	// Initialize Gemini provider
 	if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
-		provider := concreteProviders.NewGeminiProvider(apiKey)
+		provider := types.NewGeminiProvider(apiKey)
 		e.providers = append(e.providers, provider)
 	}
 }
@@ -101,7 +101,7 @@ func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*R
 	provider := e.providers[0]
 
 	// Execute prompt with provider
-	response, err := provider.Execute(processedPrompt)
+	response, err := provider.Execute(context.Background(), processedPrompt)
 	if err != nil {
 		return nil, fmt.Errorf("provider execution failed: %w", err)
 	}
@@ -123,7 +123,7 @@ func (e *Engine) ProcessPrompt(template string, vars map[string]interface{}) (*R
 }
 
 // GetProviders returns available providers
-func (e *Engine) GetProviders() []concreteProviders.Provider {
+func (e *Engine) GetProviders() []types.Provider {
 	if e == nil {
 		return nil
 	}

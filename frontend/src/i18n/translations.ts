@@ -1,10 +1,10 @@
-import { Language } from '../types';
+import { Language } from '../../types';
 
 export const translations: Record<Language, Record<string, string>> = {
   en: {
     'promptCrafter': 'AI Prompt Crafter',
     'toggleTheme': 'Switch to {theme} mode',
-    'poweredBy': 'Kubex Principles: Radical Simplicity, No Cages.',
+    'poweredBy': 'Kubex Ecosystem - Powered by AI.',
     'motto': 'CODE FAST. OWN EVERYTHING.',
     "inputIdeasTitle": "1. INPUT IDEAS",
     "loadExample": "Load Example",
@@ -53,7 +53,7 @@ export const translations: Record<Language, Record<string, string>> = {
   es: {
     'promptCrafter': 'Creador de Prompts con IA',
     'toggleTheme': 'Cambiar a modo {theme}',
-    'poweredBy': 'Principios de Kubex: Simplicidad Radical, Sin Jaulas.',
+    'poweredBy': 'Kubex Ecosystem - Impulsado por IA.',
     'motto': 'CODIFICA RÁPIDO. SÉ DUEÑO DE TODO.',
     "inputIdeasTitle": "1. INGRESAR IDEAS",
     "loadExample": "Cargar Ejemplo",
@@ -102,7 +102,7 @@ export const translations: Record<Language, Record<string, string>> = {
   zh: {
     'promptCrafter': 'AI 提示词构建器',
     'toggleTheme': '切换到{theme}模式',
-    'poweredBy': 'Kubex 原则：极致简约，无拘无束。',
+    'poweredBy': 'Kubex 生态系统 - AI 驱动。',
     'motto': '快速编码。拥有一切。',
     "inputIdeasTitle": "1. 输入想法",
     "loadExample": "加载示例",
@@ -151,7 +151,7 @@ export const translations: Record<Language, Record<string, string>> = {
   pt: {
     'promptCrafter': 'Criador de Prompts IA',
     'toggleTheme': 'Alternar para modo {theme}',
-    'poweredBy': 'Princípios Kubex: Simplicidade Radical, Sem Jaulas.',
+    'poweredBy': 'Kubex Ecosystem - Impulsionado por IA.',
     'motto': 'CODIFIQUE RÁPIDO. SEJA DONO DE TUDO.',
     "inputIdeasTitle": "1. INSIRA AS IDEIAS",
     "loadExample": "Carregar Exemplo",

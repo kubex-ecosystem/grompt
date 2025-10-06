@@ -65,16 +65,16 @@ type GenerateRequest struct {
 
 // GenerateResponse represents the response for prompt generation
 type GenerateResponse struct {
-	ID          string                 `json:"id"`
-	Object      string                 `json:"object"`
-	CreatedAt   int64                  `json:"created_at"`
-	Provider    string                 `json:"provider"`
-	Model       string                 `json:"model"`
-	Prompt      string                 `json:"prompt"`
-	Ideas       []string               `json:"ideas"`
-	Purpose     string                 `json:"purpose"`
-	Usage       *providers.Usage       `json:"usage,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	ID        string                 `json:"id"`
+	Object    string                 `json:"object"`
+	CreatedAt int64                  `json:"created_at"`
+	Provider  string                 `json:"provider"`
+	Model     string                 `json:"model"`
+	Prompt    string                 `json:"prompt"`
+	Ideas     []string               `json:"ideas"`
+	Purpose   string                 `json:"purpose"`
+	Usage     *providers.Usage       `json:"usage,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // generatePrompt handles POST /v1/generate - synchronous prompt generation
@@ -109,8 +109,8 @@ func (h *GromptV1Handlers) generatePrompt(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check provider availability
-	if err := provider.Available(); err != nil {
-		http.Error(w, fmt.Sprintf("Provider unavailable: %v", err), http.StatusServiceUnavailable)
+	if ok := provider.Available(); !ok {
+		http.Error(w, "Provider unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -226,8 +226,8 @@ func (h *GromptV1Handlers) generatePromptStream(w http.ResponseWriter, r *http.R
 	}
 
 	// Check provider availability
-	if err := prov.Available(); err != nil {
-		http.Error(w, fmt.Sprintf("Provider unavailable: %v", err), http.StatusServiceUnavailable)
+	if ok := prov.Available(); !ok {
+		http.Error(w, "Provider unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -292,17 +292,17 @@ func (h *GromptV1Handlers) generatePromptStream(w http.ResponseWriter, r *http.R
 
 	// Send initial event
 	fmt.Fprintf(w, "data: %s\n\n", mustMarshalJSON(map[string]interface{}{
-		"event": "generation.started",
+		"event":    "generation.started",
 		"provider": provider,
-		"model": model,
-		"ideas": ideas,
+		"model":    model,
+		"ideas":    ideas,
 	}))
 	flusher.Flush()
 
 	// Create SSE coalescer for smooth streaming UX
 	coalescer := NewSSECoalescer(func(content string) {
 		data := mustMarshalJSON(map[string]interface{}{
-			"event": "generation.chunk",
+			"event":   "generation.chunk",
 			"content": content,
 		})
 		fmt.Fprintf(w, "data: %s\n\n", data)
@@ -366,7 +366,7 @@ func (h *GromptV1Handlers) listProviders(w http.ResponseWriter, r *http.Request)
 	providers := make([]map[string]interface{}, 0, len(providerNames))
 	for _, name := range providerNames {
 		providerInfo := map[string]interface{}{
-			"name": name,
+			"name":      name,
 			"available": true,
 		}
 
@@ -378,9 +378,9 @@ func (h *GromptV1Handlers) listProviders(w http.ResponseWriter, r *http.Request)
 
 		// Check availability
 		if provider := h.registry.Resolve(name); provider != nil {
-			if err := provider.Available(); err != nil {
+			if ok := provider.Available(); !ok {
 				providerInfo["available"] = false
-				providerInfo["error"] = err.Error()
+				providerInfo["error"] = "Provider unavailable"
 			}
 		}
 
@@ -388,9 +388,9 @@ func (h *GromptV1Handlers) listProviders(w http.ResponseWriter, r *http.Request)
 	}
 
 	response := map[string]interface{}{
-		"object": "list",
-		"data": providers,
-		"has_more": false,
+		"object":    "list",
+		"data":      providers,
+		"has_more":  false,
 		"timestamp": time.Now().Unix(),
 	}
 
@@ -406,10 +406,10 @@ func (h *GromptV1Handlers) healthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	health := map[string]interface{}{
-		"status": "healthy",
-		"service": "grompt-v1",
-		"timestamp": time.Now().Unix(),
-		"version": "1.0.0",
+		"status":       "healthy",
+		"service":      "grompt-v1",
+		"timestamp":    time.Now().Unix(),
+		"version":      "1.0.0",
 		"dependencies": make(map[string]interface{}),
 	}
 
@@ -424,16 +424,16 @@ func (h *GromptV1Handlers) healthCheck(w http.ResponseWriter, r *http.Request) {
 		if provider == nil {
 			providerHealth[name] = map[string]interface{}{
 				"status": "unavailable",
-				"error": "provider not found",
+				"error":  "provider not found",
 			}
 			overallHealthy = false
 			continue
 		}
 
-		if err := provider.Available(); err != nil {
+		if ok := provider.Available(); !ok {
 			providerHealth[name] = map[string]interface{}{
 				"status": "unhealthy",
-				"error": err.Error(),
+				"error":  "Provider unavailable",
 			}
 			overallHealthy = false
 		} else {
@@ -509,7 +509,7 @@ func (h *GromptV1Handlers) proxyToGoBE(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadGateway)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error": "gobe_proxy_error",
+			"error":   "gobe_proxy_error",
 			"message": "Failed to reach GoBE backend",
 			"details": err.Error(),
 		})
@@ -575,7 +575,7 @@ func (h *GromptV1Handlers) buildPromptFromIdeas(ideas []string, context map[stri
 		prompt.WriteString(fmt.Sprintf("%d. %s\n", i+1, idea))
 	}
 
-	if context != nil && len(context) > 0 {
+	if len(context) > 0 {
 		prompt.WriteString("\nAdditional context:\n")
 		for key, value := range context {
 			prompt.WriteString(fmt.Sprintf("- %s: %v\n", key, value))
@@ -590,7 +590,7 @@ func (h *GromptV1Handlers) buildPromptFromIdeas(ideas []string, context map[stri
 func (h *GromptV1Handlers) checkGobeHealth() map[string]interface{} {
 	if h.gobeBaseURL == "" {
 		return map[string]interface{}{
-			"status": "not_configured",
+			"status":  "not_configured",
 			"message": "GoBE proxy URL not configured",
 		}
 	}
@@ -604,7 +604,7 @@ func (h *GromptV1Handlers) checkGobeHealth() map[string]interface{} {
 	if err != nil {
 		return map[string]interface{}{
 			"status": "unhealthy",
-			"error": fmt.Sprintf("failed to create request: %v", err),
+			"error":  fmt.Sprintf("failed to create request: %v", err),
 		}
 	}
 
@@ -613,7 +613,7 @@ func (h *GromptV1Handlers) checkGobeHealth() map[string]interface{} {
 	if err != nil {
 		return map[string]interface{}{
 			"status": "unhealthy",
-			"error": fmt.Sprintf("connection failed: %v", err),
+			"error":  fmt.Sprintf("connection failed: %v", err),
 		}
 	}
 	defer resp.Body.Close()
@@ -621,12 +621,12 @@ func (h *GromptV1Handlers) checkGobeHealth() map[string]interface{} {
 	if resp.StatusCode != http.StatusOK {
 		return map[string]interface{}{
 			"status": "unhealthy",
-			"error": fmt.Sprintf("health check failed with status: %d", resp.StatusCode),
+			"error":  fmt.Sprintf("health check failed with status: %d", resp.StatusCode),
 		}
 	}
 
 	return map[string]interface{}{
-		"status": "healthy",
+		"status":        "healthy",
 		"response_time": "< 5s",
 	}
 }
@@ -654,10 +654,10 @@ func (h *GromptV1Handlers) validateGenerateRequest(req *GenerateRequest) error {
 	// Validate purpose if provided
 	if req.Purpose != "" {
 		validPurposes := map[string]bool{
-			"code":      true,
-			"creative":  true,
-			"analysis":  true,
-			"general":   true,
+			"code":     true,
+			"creative": true,
+			"analysis": true,
+			"general":  true,
 		}
 		if !validPurposes[req.Purpose] {
 			return fmt.Errorf("invalid purpose '%s', must be one of: code, creative, analysis, general", req.Purpose)
@@ -745,7 +745,7 @@ func (h *GromptV1Handlers) withTimeout(handler http.HandlerFunc) http.HandlerFun
 
 // concurrentRequests tracks active requests
 var (
-	activeRequests int64
+	activeRequests        int64
 	maxConcurrentRequests int64 = 50 // Configurable limit
 )
 

@@ -6,13 +6,11 @@ import (
 )
 
 // Provider defines the interface for AI providers.
-type Provider interface {
-	Name() string
-	Version() string
-	Execute(prompt string) (string, error)
-	IsAvailable() bool
-	GetCapabilities() *types.Capabilities
-}
+type Provider = types.Provider
+
+type Capabilities = types.Capabilities
+
+type Pricing = types.Pricing
 
 // Individual provider constructors for engine initialization
 

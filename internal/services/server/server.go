@@ -76,7 +76,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) setupRoutes() {
-	buildFS, err := fs.Sub(reactApp.GetWebFS(), "build")
+	buildFS, err := fs.Sub(reactApp.GetWebFS(), "embedded/guiweb")
 	if err != nil {
 		log.Printf("⚠️ build embed não encontrado: %v", err)
 		s.setupFallbackRoutes()

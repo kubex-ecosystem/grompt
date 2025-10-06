@@ -242,8 +242,8 @@ func (pe *promptEngine) invokeProvider(ctx context.Context, providerName, prompt
 		return nil, fmt.Errorf("provider '%s' not found", providerName)
 	}
 
-	if err := provider.Available(); err != nil {
-		return nil, err
+	if ok := provider.Available(); !ok {
+		return nil, fmt.Errorf("provider '%s' is not available", providerName)
 	}
 
 	model := pe.cfg.defaultModels[providerName]

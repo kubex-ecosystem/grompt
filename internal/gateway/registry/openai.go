@@ -50,11 +50,8 @@ func (o *openaiProvider) Name() string {
 }
 
 // Available checks if the provider is available
-func (o *openaiProvider) Available() error {
-	if o.apiKey == "" {
-		return errors.New("API key not configured")
-	}
-	return nil
+func (o *openaiProvider) Available() bool {
+	return o.apiKey != ""
 }
 
 // Chat performs a chat completion request
@@ -150,9 +147,41 @@ func (o *openaiProvider) Chat(ctx context.Context, req providers.ChatRequest) (<
 	return ch, nil
 }
 
+// Notify sends a notification event (not implemented)
 func (o *openaiProvider) Notify(ctx context.Context, event providers.NotificationEvent) error {
 	// Implement notification logic here
 	return nil
+}
+
+func (o *openaiProvider) Execute(ctx context.Context, command string) (string, error) {
+	// Implement command execution logic here if applicable
+	return "", nil
+}
+
+func (o *openaiProvider) GetCapabilities(ctx context.Context) *providers.Capabilities {
+	return &providers.Capabilities{
+		SupportsBatch:     true,
+		SupportsStreaming: true,
+		Models: []string{
+			o.defaultModel,
+			"gpt-4",
+			"gpt-4-turbo",
+			"gpt-3.5-turbo",
+			"gpt-3.5",
+			"gpt-3.5-16k",
+		},
+		MaxTokens: 4096,
+		Pricing: &providers.Pricing{
+			InputCostPer1K:  0.0015,
+			OutputCostPer1K: 0.002,
+			Currency:        "USD",
+		},
+		CanChat:       true,
+		CanStream:     true,
+		CanNotify:     false,
+		CanExecute:    false,
+		SupportsTools: false,
+	}
 }
 
 // toOpenAIMessages converts generic messages to OpenAI format

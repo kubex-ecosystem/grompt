@@ -7,14 +7,14 @@ const Footer: React.FC = () => {
   return (
     <footer className="text-center py-8 text-slate-500 dark:text-[#90a4ae] text-xs space-y-3">
       <div className="flex justify-center items-center gap-6 text-xs">
-        <a
+        {/* <a
           href="https://kubex.world"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
         >
           Kubex Ecosystem
-        </a>
+        </a> */}
         <a
           href="https://github.com/kubex-ecosystem/grompt"
           target="_blank"

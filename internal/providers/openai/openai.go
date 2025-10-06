@@ -203,6 +203,10 @@ func (p *Provider) Chat(ctx context.Context, in providers.ChatRequest) (<-chan p
 	return out, nil
 }
 
+func (p *Provider) Available() bool {
+	return p.apiKey != ""
+}
+
 func toOAIMessages(ms []providers.Message) []map[string]any {
 	out := make([]map[string]any, 0, len(ms))
 	for _, m := range ms {

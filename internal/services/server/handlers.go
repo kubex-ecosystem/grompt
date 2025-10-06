@@ -141,7 +141,7 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 		}
 
 		fmt.Printf("⚙️  ServeFileFS para %s\n", "index.html")
-		http.ServeFileFS(w, r, buildFS, p+"index.html")
+		http.ServeFileFS(w, r, buildFS, "index.html")
 	}
 }
 

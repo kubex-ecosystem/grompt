@@ -57,7 +57,9 @@ type ProviderConfig struct {
 type Provider interface {
 	Name() string
 	Chat(ctx context.Context, req ChatRequest) (<-chan ChatChunk, error)
-	Available() error
+	Execute(ctx context.Context, prompt string) (string, error)
+	GetCapabilities(ctx context.Context) *Capabilities
+	Available() bool
 	Notify(ctx context.Context, event NotificationEvent) error
 }
 
@@ -88,6 +90,11 @@ type Capabilities struct {
 	SupportsStreaming bool     `json:"supports_streaming"`
 	Models            []string `json:"models"`
 	Pricing           *Pricing `json:"pricing,omitempty"`
+	CanChat           bool
+	CanStream         bool
+	CanNotify         bool
+	CanExecute        bool
+	SupportsTools     bool
 }
 
 // Pricing information for the provider
@@ -116,15 +123,15 @@ func (cp *ProviderImpl) Version() string {
 }
 
 // Execute sends a prompt to the provider and returns the response
-func (cp *ProviderImpl) Execute(prompt string) (string, error) {
+func (cp *ProviderImpl) Execute(ctx context.Context, prompt string) (string, error) {
 	if cp == nil || cp.VAPI == nil {
 		return "", fmt.Errorf("provider is not available")
 	}
 	return cp.VAPI.Complete(prompt, 2048, "") // Default max tokens
 }
 
-// IsAvailable checks if the provider is configured and ready
-func (cp *ProviderImpl) IsAvailable() bool {
+// Available checks if the provider is configured and ready
+func (cp *ProviderImpl) Available() bool {
 	if cp == nil || cp.VAPI == nil {
 		return false
 	}
@@ -132,7 +139,7 @@ func (cp *ProviderImpl) IsAvailable() bool {
 }
 
 // GetCapabilities returns provider-specific capabilities
-func (cp *ProviderImpl) GetCapabilities() *Capabilities {
+func (cp *ProviderImpl) GetCapabilities(ctx context.Context) *Capabilities {
 	if cp == nil {
 		return nil
 	}
@@ -167,6 +174,29 @@ func (cp *ProviderImpl) GetCapabilities() *Capabilities {
 		Models:            models,
 		Pricing:           getPricingForProvider(cp.VName),
 	}
+}
+
+// Chat sends a chat request to the provider and returns a stream of responses
+func (cp *ProviderImpl) Chat(ctx context.Context, req ChatRequest) (<-chan ChatChunk, error) {
+	if cp == nil || cp.VAPI == nil {
+		return nil, fmt.Errorf("provider is not available")
+	}
+	if _, ok := cp.VAPI.(Provider); !ok {
+		return nil, fmt.Errorf("provider does not support chat")
+	}
+	chatProvider := cp.VAPI.(Provider)
+	return chatProvider.Chat(ctx, req)
+}
+
+// Notify sends a notification event to the provider if supported
+func (cp *ProviderImpl) Notify(ctx context.Context, event NotificationEvent) error {
+	if cp == nil || cp.VAPI == nil {
+		return fmt.Errorf("provider is not available")
+	}
+	if notifier, ok := cp.VAPI.(Notifier); ok {
+		return notifier.Notify(ctx, event)
+	}
+	return fmt.Errorf("provider does not support notifications")
 }
 
 // getMaxTokensForProvider returns max tokens for each provider
