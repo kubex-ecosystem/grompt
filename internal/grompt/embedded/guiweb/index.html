@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grompt - AI Prompt Crafter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.4s ease, color 0.4s ease;
+        background-color: #f8fafc;
+        color: #1e293b;
+      }
+      body.dark-theme {
+        background-color: #010409;
+        background-image:
+          linear-gradient(rgba(11, 23, 45, 0.6) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(11, 23, 45, 0.6) 1px, transparent 1px);
+        background-size: 20px 20px;
+        color: #e4f2ff;
+      }
+      body.light-theme {
+        background-color: #f8fafc;
+        background-image:
+          radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.22) 1px, transparent 0);
+        background-size: 22px 22px;
+        color: #1e293b;
+      }
+      .font-orbitron { font-family: 'Orbitron', sans-serif; }
+      .font-space-mono { font-family: 'Space Mono', monospace; }
+      .glow-border {
+        box-shadow: 0 0 2px 0px #00e5ff, 0 0 5px 0px #00e5ff, 0 0 10px 0px #00e5ff;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Space Mono', 'monospace'],
+              display: ['Orbitron', 'sans-serif'],
+            },
+            colors: {
+              background: '#010409',
+              card: 'rgba(13, 20, 33, 0.8)',
+              border: 'rgba(0, 229, 255, 0.2)',
+              input: 'rgba(0, 0, 0, 0.5)',
+              primary: {
+                DEFAULT: '#00e5ff', // cyan
+                hover: '#80f2ff',
+                foreground: '#010409'
+              },
+              secondary: {
+                DEFAULT: '#2a0e4a', // dark purple
+                hover: '#3c146b',
+                foreground: '#e0cffc'
+              },
+              accent: {
+                DEFAULT: '#39d353', // green
+                hover: '#5cf073',
+                foreground: '#010409'
+              },
+              muted: {
+                foreground: '#8b949e'
+              },
+              foreground: '#c9d1d9'
+            },
+            boxShadow: {
+                'neon-cyan': '0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff',
+                'neon-green': '0 0 5px #39d353, 0 0 10px #39d353, 0 0 20px #39d353',
+            }
+          },
+        },
+      }
+    </script>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.543.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="./assets/main-BdunAMOW.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-9sitkZcQ.js">
+  <link rel="stylesheet" crossorigin href="./assets/main-tn0RQdqM.css">
+</head>
+  <body class="bg-background text-foreground font-sans dark-theme">
+    <div id="root"></div>
+  </body>
+</html>
