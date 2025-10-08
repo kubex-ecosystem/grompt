@@ -22,12 +22,12 @@ const Layout: React.FC<LayoutProps> = ({
   onSidebarClose,
 }) => {
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-[#010409] text-slate-800 dark:text-[#e0f7fa]">
+    <div className="min-h-screen bg-[#f9fafb] text-[#334155] dark:bg-[#0a0f14] dark:text-[#e5f2f2]">
       {/* mobile overlay */}
       {sidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-[#111827]/40 backdrop-blur-sm lg:hidden"
           onClick={onSidebarClose}
           aria-label="Close navigation sidebar"
         />
@@ -35,14 +35,14 @@ const Layout: React.FC<LayoutProps> = ({
 
       <div className="relative flex min-h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-80 transform border-r border-slate-200/80 dark:border-slate-800/60 bg-white/90 dark:bg-[#0a0f14]/95 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0 shadow-xl shadow-slate-900/20' : '-translate-x-full'
+          className={`fixed inset-y-0 left-0 z-40 w-80 transform border-r border-[#e2e8f0] dark:border-[#0b1220] bg-white/95 dark:bg-[#0a1523]/92 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0 shadow-xl shadow-[#111827]/15' : '-translate-x-full'
             }`}
         >
           {sidebar}
         </aside>
 
         <div className="flex flex-1 flex-col lg:ml-5">
-          <header className="sticky top-0 z-20 backdrop-blur-lg bg-white/80 dark:bg-[#010409]/80 border-b border-slate-200/80 dark:border-slate-800/60">
+          <header className="sticky top-0 z-20 border-b border-[#e2e8f0] bg-white/85 backdrop-blur-lg dark:border-[#0b1220] dark:bg-[#0a1523]/85">
             {header}
           </header>
 
@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({
             {children}
           </main>
 
-          <footer className="border-t border-slate-200/80 dark:border-slate-800/60 bg-white/50 dark:bg-[#010409]/80">
+          <footer className="border-t border-[#e2e8f0] bg-white/80 dark:border-[#0b1220] dark:bg-[#0a1523]/85">
             {footer}
           </footer>
         </div>

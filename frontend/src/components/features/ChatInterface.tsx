@@ -22,23 +22,23 @@ const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
     <div
       className={`max-w-2xl rounded-2xl border px-4 py-3 text-sm shadow-sm transition ${
         isUser
-          ? 'ml-auto bg-slate-900 text-white border-slate-900/80 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.8)]'
-          : 'mr-auto bg-white/90 border-slate-200/80 text-slate-700 dark:bg-[#10151b]/80 dark:border-slate-800/60 dark:text-slate-200'
+          ? 'ml-auto border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card'
+          : 'mr-auto border-slate-200/80 bg-white text-[#475569] dark:border-[#13263a]/80 dark:bg-[#0a1523]/80 dark:text-[#e5f2f2]'
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <span className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-[#94a3b8] dark:text-[#64748b]">
           {isUser ? <User className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
           {isUser ? 'Você' : 'Assistant'}
         </span>
         {message.usedProvider && (
-          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[#64748b]">
             {message.usedProvider}
           </span>
         )}
       </div>
       <p className="mt-2 whitespace-pre-wrap leading-relaxed">{message.content}</p>
-      <span className="mt-3 block text-[10px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+      <span className="mt-3 block text-[10px] uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[#64748b]">
         {new Date(message.createdAt).toLocaleTimeString()}
       </span>
     </div>
@@ -108,7 +108,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend }) => {
         <div className="flex flex-col gap-4">
           <div className="space-y-3">
             {messages.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200/80 bg-white/60 p-6 text-sm text-slate-500 dark:border-slate-700/80 dark:bg-[#0a0f14]/60 dark:text-slate-400">
+              <p className="rounded-2xl border border-dashed border-slate-200/80 bg-white/70 p-6 text-sm text-[#64748b] dark:border-[#13263a]/70 dark:bg-[#0a1523]/60 dark:text-[#94a3b8]">
                 Nenhuma mensagem ainda. Use o campo abaixo para iniciar uma conversa.
               </p>
             ) : (
@@ -119,8 +119,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend }) => {
               </div>
             )}
           </div>
-          <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-slate-800/60 dark:bg-[#0a0f14]/70">
-            <label htmlFor="chat-input" className="mb-2 block text-xs font-semibold uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-sm dark:border-[#13263a]/70 dark:bg-[#0a1523]/70">
+            <label htmlFor="chat-input" className="mb-2 block text-xs font-semibold uppercase tracking-[0.4em] text-[#94a3b8] dark:text-[#64748b]">
               Sua mensagem
             </label>
             <textarea
@@ -129,16 +129,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend }) => {
               onChange={(event) => setInput(event.target.value)}
               placeholder={placeholder}
               rows={4}
-              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-inner transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-[#0f172a] dark:text-slate-200 dark:focus:border-slate-500 dark:focus:ring-slate-700/40"
+              className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#475569] shadow-inner transition focus:border-[#06b6d4] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#e5f2f2] dark:focus:border-[#38cde4] dark:focus:ring-[#38cde4]/20"
             />
             <div className="mt-3 flex items-center justify-between">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[#64748b]">
                 Histórico salvo localmente
               </p>
               <button
                 type="submit"
                 disabled={disabled}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-35px_rgba(15,23,42,0.8)] transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#00f0ff] dark:bg-[#00f0ff] dark:text-[#010409]"
+                className="inline-flex items-center gap-2 rounded-full border border-[#06b6d4] bg-[#06b6d4] px-5 py-2 text-sm font-semibold text-white shadow-soft-card transition hover:bg-[#0891b2] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/30 dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]"
               >
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 {isSending ? 'Gerando...' : 'Enviar mensagem'}

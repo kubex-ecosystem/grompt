@@ -40,18 +40,18 @@ const LanguageSelector: React.FC = () => {
         type="button"
         title={t('lang_' + currentLanguage.code)}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-slate-200/50 dark:bg-[#10151b] p-2 rounded-full transition-colors duration-200 hover:bg-slate-300/50 dark:hover:bg-slate-800"
+        className="flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-white/80 p-2 transition-colors duration-200 hover:bg-[#ecfeff] dark:border-[#13263a] dark:bg-[#0a1523] dark:hover:bg-[#1b2534]"
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-label="Select language"
       >
         <div className="w-6 h-6 rounded-full overflow-hidden">{currentLanguage.flag}</div>
-        <span className="font-semibold text-sm uppercase text-slate-700 dark:text-slate-300">{currentLanguage.code}</span>
-        <ChevronDown size={16} className={`text-slate-600 dark:text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="text-sm font-semibold uppercase text-[#475569] dark:text-[#e5f2f2]">{currentLanguage.code}</span>
+        <ChevronDown size={16} className={`text-[#94a3b8] dark:text-[#64748b] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-2 w-48 bg-white/70 dark:bg-[#10151b]/70 backdrop-blur-md rounded-lg shadow-2xl border border-slate-200 dark:border-sky-500/20 py-1 animate-fade-in z-50"
+          className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[#e2e8f0] bg-white/90 py-1 backdrop-blur-md shadow-soft-card dark:border-[#13263a] dark:bg-[#0a1523]/85"
           role="menu"
         >
           {languageOptions.map(lang => (
@@ -60,7 +60,7 @@ const LanguageSelector: React.FC = () => {
               title={t('lang_' + lang.code)}
               key={lang.code}
               onClick={() => handleSelectLanguage(lang.code)}
-              className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-sky-100 dark:hover:bg-sky-500/20"
+              className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-[#475569] transition-colors duration-150 hover:bg-[#ecfeff] disabled:text-[#94a3b8] dark:text-[#e5f2f2] dark:hover:bg-[#1b2534]"
               role="menuitem"
               disabled={language === lang.code}
             >

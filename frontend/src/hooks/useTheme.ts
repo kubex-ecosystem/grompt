@@ -2,19 +2,16 @@ import { useState, useEffect } from 'react';
 import { Theme } from '../types';
 
 export const useTheme = (): [Theme, () => void] => {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('theme') as Theme | null;
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+      const initialTheme = savedTheme ?? 'light';
       setTheme(initialTheme);
     } catch (error) {
       console.warn('Could not access localStorage to get theme. Using default.', error);
-      // Fallback to prefers-color-scheme if localStorage is not available
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      setTheme('light');
     }
   }, []);
 

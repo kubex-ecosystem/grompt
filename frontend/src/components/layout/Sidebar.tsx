@@ -28,12 +28,12 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-3 py-5 lg:hidden">
-        <h2 className="text-base font-semibold tracking-wide text-slate-700 dark:text-[#e0f7fa]">
+        <h2 className="text-base font-semibold tracking-wide text-[#0f172a] dark:text-[#e5f2f2]">
           Workspace
         </h2>
         <button
           type="button"
-          className="rounded-full border border-slate-200/70 bg-white/40 p-2 text-slate-500 transition hover:bg-white/80 dark:border-slate-700/70 dark:bg-[#0a0f14]/70 dark:text-slate-300 dark:hover:border-slate-500"
+          className="rounded-full border border-[#e2e8f0] bg-white/60 p-2 text-[#475569] transition hover:bg-white dark:border-[#13263a] dark:bg-[#0a1523]/70 dark:text-[#94a3b8]"
           onClick={onClose}
           aria-label="Close navigation"
         >
@@ -42,10 +42,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
         </button>
       </div>
 
-      <div className="hidden lg:block px-6 pt-8 pb-5">
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-400 dark:text-slate-500">Kubex Suite</p>
-        <h1 className="mt-3 text-2xl font-orbitron font-semibold text-slate-900 dark:text-white">Grompt Hub</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <div className="hidden px-6 pt-8 pb-5 lg:block">
+        <p className="text-xs uppercase tracking-[0.4em] text-[#94a3b8] dark:text-[#475569]">Kubex Suite</p>
+        <h1 className="mt-3 text-2xl font-orbitron font-semibold text-[#111827] dark:text-[#f5f3ff]">Grompt Hub</h1>
+        <p className="mt-2 text-sm text-[#475569] dark:text-[#94a3b8]">
           Navigate through AI-assisted modules tailored for prompt engineering, ideation, and delivery.
         </p>
       </div>
@@ -64,23 +64,23 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
                     if (onClose) onClose();
                   }}
                   className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 ${isActive
-                      ? 'border-slate-900/80 bg-slate-900 text-white shadow-[0_20px_45px_-35px_rgba(15,23,42,0.8)] dark:border-[#00f0ff]/80 dark:bg-[#00f0ff]/10 dark:text-[#e0f7fa]'
-                      : 'border-transparent bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white dark:bg-[#0a0f14]/40 dark:text-slate-300 dark:hover:border-slate-600'
+                      ? 'border-[#06b6d4]/70 bg-[#ecfeff] text-[#0f172a] shadow-soft-card dark:border-[#06b6d4]/70 dark:bg-[#0a1523]/70 dark:text-[#e5f2f2]'
+                      : 'border-transparent bg-white/75 text-[#475569] hover:border-[#bae6fd] hover:bg-white dark:bg-[#0a1523]/40 dark:text-[#94a3b8] dark:hover:border-[#13263a]'
                     }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${isActive
-                        ? 'border-white/20 bg-white/10 text-white dark:border-[#00f0ff]/30 dark:bg-[#00f0ff]/20'
-                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-[#0a0f14]/80'
+                        ? 'border-transparent bg-white text-[#06b6d4] dark:bg-[#0a1523]/80 dark:text-[#06b6d4]'
+                        : 'border-[#e2e8f0] bg-white text-[#475569] dark:border-[#13263a] dark:bg-[#0a1523]/80'
                       }`}>
                       <Icon size={20} />
                     </span>
                     <div>
-                      <p className={`text-sm font-semibold ${isActive ? 'text-inherit' : 'text-slate-700 dark:text-slate-200'}`}>
+                      <p className={`text-sm font-semibold ${isActive ? 'text-inherit' : 'text-[#1f2937] dark:text-[#e5f2f2]'}`}>
                         {section.label}
                       </p>
                       {section.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{section.description}</p>
+                        <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">{section.description}</p>
                       )}
                     </div>
                   </div>
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
         </ul>
       </nav>
 
-      <div className="hidden border-t border-slate-200/70 px-6 py-5 text-xs text-slate-500 dark:border-slate-800/60 dark:text-slate-400 lg:block">
+      <div className="hidden border-t border-[#e2e8f0] px-6 py-5 text-xs text-[#64748b] dark:border-[#13263a] dark:text-[#94a3b8] lg:block">
         <p>Build better prompts with Kubex governance.</p>
         <p className="mt-1">Lightweight, portable, and embeddable.</p>
       </div>

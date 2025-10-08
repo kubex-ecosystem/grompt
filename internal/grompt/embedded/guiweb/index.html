@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
@@ -7,7 +7,10 @@
     <title>Grompt - AI Prompt Crafter</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    >
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root {
@@ -17,28 +20,28 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         transition: background-color 0.4s ease, color 0.4s ease;
-        background-color: #f8fafc;
-        color: #1e293b;
+        background-color: #f9fafb;
+        color: #334155;
       }
       body.dark-theme {
-        background-color: #010409;
+        background-color: #0a0f14;
         background-image:
-          linear-gradient(rgba(11, 23, 45, 0.6) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(11, 23, 45, 0.6) 1px, transparent 1px);
-        background-size: 20px 20px;
-        color: #e4f2ff;
+          linear-gradient(rgba(9, 20, 35, 0.45) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(9, 20, 35, 0.45) 1px, transparent 1px);
+        background-size: 24px 24px;
+        color: #e5f2f2;
       }
       body.light-theme {
-        background-color: #f8fafc;
+        background-color: #f9fafb;
         background-image:
-          radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.22) 1px, transparent 0);
-        background-size: 22px 22px;
-        color: #1e293b;
+          radial-gradient(circle at 1px 1px, rgba(8, 145, 178, 0.08) 1px, transparent 0);
+        background-size: 26px 26px;
+        color: #334155;
       }
       .font-orbitron { font-family: 'Orbitron', sans-serif; }
-      .font-space-mono { font-family: 'Space Mono', monospace; }
+      .font-plex-mono { font-family: 'IBM Plex Mono', monospace; }
       .glow-border {
-        box-shadow: 0 0 2px 0px #00e5ff, 0 0 5px 0px #00e5ff, 0 0 10px 0px #00e5ff;
+        box-shadow: 0 0 18px -6px rgba(0, 136, 255, 0.18), 0 0 28px -8px rgba(168, 85, 247, 0.16);
       }
     </style>
     <script>
@@ -47,37 +50,42 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Space Mono', 'monospace'],
-              display: ['Orbitron', 'sans-serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              display: ['Orbitron', 'Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
             },
             colors: {
-              background: '#010409',
-              card: 'rgba(13, 20, 33, 0.8)',
-              border: 'rgba(0, 229, 255, 0.2)',
-              input: 'rgba(0, 0, 0, 0.5)',
-              primary: {
-                DEFAULT: '#00e5ff', // cyan
-                hover: '#80f2ff',
-                foreground: '#010409'
+              background: '#f9fafb',
+              surface: '#ffffff',
+              border: '#e2e8f0',
+              text: {
+                head: '#111827',
+                body: '#334155',
               },
-              secondary: {
-                DEFAULT: '#2a0e4a', // dark purple
-                hover: '#3c146b',
-                foreground: '#e0cffc'
+              primary: {
+                DEFAULT: '#06b6d4',
+                hover: '#0891b2',
+                subtle: '#ecfeff',
+                foreground: '#024251',
               },
               accent: {
-                DEFAULT: '#39d353', // green
-                hover: '#5cf073',
-                foreground: '#010409'
+                DEFAULT: '#a855f7',
+                hover: '#9333ea',
+                secondary: '#d946ef',
+                subtle: '#f5f3ff',
+                foreground: '#3b0764',
               },
-              muted: {
-                foreground: '#8b949e'
+              success: '#16a34a',
+              warning: '#f59e0b',
+              danger: '#ef4444',
+              glow: {
+                cyan: 'rgba(0, 136, 255, 0.08)',
+                lilac: 'rgba(124, 77, 255, 0.08)',
               },
-              foreground: '#c9d1d9'
             },
             boxShadow: {
-                'neon-cyan': '0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff',
-                'neon-green': '0 0 5px #39d353, 0 0 10px #39d353, 0 0 20px #39d353',
+              'soft-card': '0 18px 40px -28px rgba(15, 23, 42, 0.45)',
+              'glow-cyan': '0 0 22px -6px rgba(0, 136, 255, 0.35)',
             }
           },
         },
@@ -97,11 +105,11 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="./assets/main-CPLbc83T.js"></script>
+  <script type="module" crossorigin src="./assets/main-DASMX88i.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/vendor-9sitkZcQ.js">
   <link rel="stylesheet" crossorigin href="./assets/main-tn0RQdqM.css">
 </head>
-  <body class="bg-background text-foreground font-sans dark-theme">
+  <body class="font-sans light-theme">
     <div id="root"></div>
   </body>
 </html>

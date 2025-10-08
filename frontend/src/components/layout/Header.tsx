@@ -20,38 +20,38 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu }) => 
         <button
           type="button"
           onClick={onToggleMenu}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200/80 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-slate-800/80 dark:bg-[#0a0f14] dark:text-slate-300 dark:hover:border-slate-600 lg:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] shadow-sm transition hover:border-[#cbd5f5] hover:text-[#1f2937] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/40 dark:border-[#0b1220] dark:bg-[#0a1523] dark:text-[#94a3b8] dark:hover:border-[#13263a] lg:hidden"
           aria-label="Open navigation"
         >
           <span className="sr-only">Open navigation</span>
           ≡
         </button>
         <div
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-colors duration-300 ${isLight
-            ? 'bg-white border border-slate-200 text-sky-600 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.45)]'
-            : 'bg-[#10151b] border-2 border-[#00f0ff] dark:neon-border-cyan'
+          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-soft-card transition-colors duration-300 ${isLight
+            ? 'bg-white border border-[#e2e8f0] text-[#06b6d4]'
+            : 'bg-[#0a1523] border-2 border-[#06b6d4]/60'
             }`}
         >
           <BotMessageSquare
             size={24}
-            className={`${isLight ? 'text-sky-600' : 'text-[#00f0ff] dark:neon-glow-cyan'}`}
+            className={`${isLight ? 'text-[#06b6d4]' : 'text-[#06b6d4]'}`}
           />
         </div>
         <div>
           <div className="flex items-center gap-2">
             <h1
-              className={`text-3xl font-bold font-orbitron tracking-widest uppercase ${isLight ? 'text-slate-900' : 'text-[#00f0ff] dark:neon-glow-cyan'
+              className={`text-3xl font-bold font-orbitron tracking-widest uppercase ${isLight ? 'text-[#111827]' : 'text-[#06b6d4]'
                 }`}
             >
               Grompt
             </h1>
             {/*
             <!-- Não exibir versão por ora -->
-            <span className="text-xs bg-gradient-to-r from-emerald-500 to-sky-500 dark:from-[#00e676] dark:to-[#00f0ff] text-white dark:text-black px-2 py-1 rounded-full font-bold">
+            <span className="text-xs bg-gradient-to-r from-emerald-500 to-[#06b6d4] dark:from-[#16a34a] dark:to-[#38cde4] text-white dark:text-black px-2 py-1 rounded-full font-bold">
               v1.0.8
             </span> */}
           </div>
-          <h2 className={`text-lg font-medium font-plex-mono ${isLight ? 'text-slate-500' : 'text-[#90a4ae]'}`}>
+          <h2 className={`text-lg font-medium font-plex-mono ${isLight ? 'text-[#475569]' : 'text-[#94a3b8]'}`}>
             {t('promptCrafter')}
           </h2>
           {/*
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu }) => 
             href="https://kubex.world"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-sky-600 dark:text-[#00f0ff]/80 hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200 font-plex-mono"
+            className="text-xs text-[#06b6d4] transition-colors duration-200 hover:text-[#0891b2] font-plex-mono dark:text-[#38cde4]/80 dark:hover:text-[#38cde4]"
           >
             ← Back to Kubex Ecosystem
           </a> */}
@@ -73,8 +73,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu }) => 
           title={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
           onClick={toggleTheme}
           className={`p-2 rounded-full transition-colors duration-200 ${isLight
-            ? 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm'
-            : 'bg-[#10151b] text-[#90a4ae] hover:text-[#00f0ff]'
+            ? 'bg-white border border-[#e2e8f0] text-[#475569] hover:text-[#0f172a] hover:border-[#cbd5f5] shadow-sm'
+            : 'bg-[#0a1523] border border-[#13263a] text-[#94a3b8] hover:text-[#f5f3ff]'
             }`}
           aria-label={t('toggleTheme', { theme: theme === 'light' ? 'dark' : 'light' })}
         >

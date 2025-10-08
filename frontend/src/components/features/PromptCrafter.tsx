@@ -307,7 +307,7 @@ const IdeasList: React.FC<IdeasListProps> = React.memo(({ ideas, onRemoveIdea })
   return (
     <div className="space-y-3 mt-4 pr-2 max-h-60 overflow-y-auto">
       {ideas.map((idea, index) => (
-        <div key={idea.id} className="bg-slate-100/50 dark:bg-[#10151b]/50 p-3 rounded-md flex justify-between items-center border border-transparent hover:border-sky-400/50 dark:hover:border-[#00f0ff]/30 transition-colors duration-300 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+        <div key={idea.id} className="bg-slate-100/50 dark:bg-[#10151b]/50 p-3 rounded-md flex justify-between items-center border border-transparent hover:border-[#06b6d4]/50 dark:hover:border-[#38cde4]/40 transition-colors duration-300 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
           <span className="text-slate-700 dark:text-[#e0f7fa]">{idea.text}</span>
           <button
             onClick={() => onRemoveIdea(idea.id)}
@@ -335,7 +335,7 @@ const PurposeSelector: React.FC<PurposeSelectorProps> = React.memo(({ purpose, s
     <div className="mt-6">
       <label
         htmlFor="purpose-input"
-        className={`block text-lg font-medium mb-3 ${isLight ? 'text-slate-700' : 'text-[#00f0ff] dark:neon-glow-cyan'}`}
+        className={`mb-3 block text-lg font-medium ${isLight ? 'text-[#1f2937]' : 'text-[#06b6d4]'}`}
       >
         {t('purposeLabel')}
       </label>
@@ -392,13 +392,13 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
       className={`lg:col-span-2 rounded-xl border backdrop-blur-sm p-6 transition-colors duration-300 ${
         isLight
           ? 'bg-white border-slate-200 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.3)]'
-          : 'bg-[#10151b]/30 border-sky-500/30 shadow-2xl shadow-slate-500/10'
+          : 'bg-[#10151b]/30 border-[#06b6d4]/30 shadow-2xl shadow-slate-500/10'
       }`}
     >
       <div className="flex justify-between items-center mb-4">
         <h3
           className={`text-2xl font-bold font-orbitron tracking-wide ${
-            isLight ? 'text-slate-900' : 'text-sky-400'
+            isLight ? 'text-[#111827]' : 'text-[#38cde4]'
           }`}
         >
           {t('historyTitle')}
@@ -430,8 +430,8 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
               key={item.id}
               className={`p-3 rounded-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border transition-colors duration-300 ${
                 isLight
-                  ? 'bg-white border-slate-200 hover:border-sky-300 shadow-sm'
-                  : 'bg-[#10151b]/50 border-transparent hover:border-sky-500/50'
+                  ? 'bg-white border-slate-200 hover:border-[#bae6fd] shadow-sm'
+                  : 'bg-[#10151b]/50 border-transparent hover:border-[#38cde4]/50'
               }`}
             >
               <div className="flex-grow overflow-hidden">
@@ -439,8 +439,8 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
                   <span
                     className={`px-2 py-0.5 text-xs font-bold rounded-full flex-shrink-0 ${
                       isLight
-                        ? 'bg-sky-100 text-sky-700'
-                        : 'bg-sky-400 text-black'
+                        ? 'bg-[#ecfeff] text-[#0f172a]'
+                        : 'bg-[#06b6d4] text-white'
                     }`}
                   >
                     {item.purpose}
@@ -456,7 +456,7 @@ const PromptHistoryDisplay: React.FC<PromptHistoryProps> = React.memo(({ history
                   onClick={() => onLoad(item)}
                   className={`p-2 rounded-md transition-colors duration-200 ${
                     isLight
-                      ? 'bg-sky-100 text-sky-700 hover:bg-sky-200'
+                      ? 'bg-[#ecfeff] text-[#0f172a] hover:bg-[#cffafe]'
                       : 'bg-indigo-400/20 text-indigo-300 hover:bg-indigo-400/30'
                   }`}
                   aria-label={t('loadPrompt')}
@@ -816,8 +816,8 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
             <div className="relative flex-grow p-4 overflow-y-auto">
               {isLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100/80 dark:bg-[#0a0f14]/80 backdrop-blur-sm z-20">
-                  <Loader className="animate-spin text-sky-500 dark:text-[#00f0ff]" size={48} />
-                  <p className="mt-4 text-sky-500 dark:text-[#00f0ff] font-semibold">{t('generatingMessage')}</p>
+                  <Loader className="animate-spin text-[#06b6d4] dark:text-[#38cde4]" size={48} />
+                  <p className="mt-4 font-semibold text-[#06b6d4] dark:text-[#38cde4]">{t('generatingMessage')}</p>
                 </div>
               )}
               {error && (
@@ -835,13 +835,13 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
               {generatedPrompt && !isLoading && !error && (
                 <>
                   <div className="absolute top-2 right-2 flex gap-2 z-10">
-                    <button onClick={() => setViewMode(viewMode === 'raw' ? 'preview' : 'raw')} className="bg-white dark:bg-[#10151b] p-2 rounded-md text-sky-500 dark:text-[#00f0ff] hover:bg-sky-100 dark:hover:bg-[#00f0ff] hover:text-sky-600 dark:hover:text-black transition-all duration-200" aria-label={t('toggleView')}>
+                    <button onClick={() => setViewMode(viewMode === 'raw' ? 'preview' : 'raw')} className="rounded-md bg-white p-2 text-[#06b6d4] transition-all duration-200 hover:bg-[#ecfeff] hover:text-[#0891b2] dark:bg-[#10151b] dark:text-[#38cde4] dark:hover:bg-[#1b2534]" aria-label={t('toggleView')}>
                       {viewMode === 'raw' ? <Eye size={20} /> : <Code size={20} />}
                     </button>
-                    <button onClick={handleShare} className="bg-white dark:bg-[#10151b] p-2 rounded-md text-sky-500 dark:text-[#00f0ff] hover:bg-sky-100 dark:hover:bg-[#00f0ff] hover:text-sky-600 dark:hover:text-black transition-all duration-200" aria-label={t('copyLink')}>
+                    <button onClick={handleShare} className="rounded-md bg-white p-2 text-[#06b6d4] transition-all duration-200 hover:bg-[#ecfeff] hover:text-[#0891b2] dark:bg-[#10151b] dark:text-[#38cde4] dark:hover:bg-[#1b2534]" aria-label={t('copyLink')}>
                       {isLinkCopied ? <ClipboardCheck size={20} /> : <Share2 size={20} />}
                     </button>
-                    <button onClick={handleCopy} className="bg-white dark:bg-[#10151b] p-2 rounded-md text-sky-500 dark:text-[#00f0ff] hover:bg-sky-100 dark:hover:bg-[#00f0ff] hover:text-sky-600 dark:hover:text-black transition-all duration-200" aria-label={t('copyPrompt')}>
+                    <button onClick={handleCopy} className="rounded-md bg-white p-2 text-[#06b6d4] transition-all duration-200 hover:bg-[#ecfeff] hover:text-[#0891b2] dark:bg-[#10151b] dark:text-[#38cde4] dark:hover:bg-[#1b2534]" aria-label={t('copyPrompt')}>
                       {isCopied ? <ClipboardCheck size={20} /> : <Clipboard size={20} />}
                     </button>
                   </div>
@@ -877,8 +877,8 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
                 }`}
               >
                 <div className="flex items-center justify-center gap-4 text-xs text-slate-600 dark:text-slate-400 font-semibold">
-                  <BrainCircuit size={16} className="text-sky-500 dark:text-sky-400" />
-                  <span>{t('input')}: <span className="font-bold text-sky-600 dark:text-sky-300">{tokenUsage.input}</span> {t('tokens')}</span>
+                  <BrainCircuit size={16} className="text-[#06b6d4] dark:text-[#38cde4]" />
+                  <span>{t('input')}: <span className="font-bold text-[#0891b2] dark:text-[#38cde4]">{tokenUsage.input}</span> {t('tokens')}</span>
                   <span className="text-slate-300 dark:text-slate-600">|</span>
                   <span>{t('output')}: <span className="font-bold text-emerald-600 dark:text-emerald-300">{tokenUsage.output}</span> {t('tokens')}</span>
                   <span className="text-slate-300 dark:text-slate-600">|</span>
@@ -923,8 +923,8 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
             disabled={isLoading || ideas.length === 0 || !purpose.trim()}
             className={`w-full mt-6 bg-gradient-to-r font-bold font-orbitron text-lg p-4 rounded-lg flex items-center justify-center gap-3 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${
               isLight
-                ? 'from-emerald-400 via-teal-400 to-sky-500 text-white shadow-[0_22px_45px_-30px_rgba(14,116,144,0.55)] hover:scale-[1.02] hover:shadow-[0_28px_52px_-30px_rgba(6,95,140,0.6)]'
-                : 'from-[#00e676] to-[#00f0ff] text-black shadow-lg shadow-sky-500/40 dark:shadow-[0_0_15px_rgba(0,230,118,0.5)] hover:scale-105 hover:shadow-xl hover:shadow-sky-500/50 dark:hover:shadow-[0_0_25px_rgba(0,240,255,0.7)]'
+                ? 'from-emerald-500 via-teal-400 to-[#06b6d4] text-white shadow-[0_22px_45px_-30px_rgba(14,116,144,0.45)] hover:scale-[1.02] hover:shadow-[0_28px_52px_-30px_rgba(6,95,140,0.5)]'
+                : 'from-[#16a34a] to-[#06b6d4] text-white shadow-lg shadow-[#0e7490]/40 hover:scale-105 hover:shadow-xl hover:shadow-[#06b6d4]/50 dark:from-[#16a34a] dark:to-[#38cde4]'
             }`}
           >
             {isLoading ? <Loader className="animate-spin" size={28} /> : <Wand2 size={28} />}

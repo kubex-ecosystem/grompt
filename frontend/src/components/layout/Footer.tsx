@@ -5,13 +5,13 @@ const Footer: React.FC = () => {
   const { t } = useTranslations();
 
   return (
-    <footer className="text-center py-8 text-slate-500 dark:text-[#90a4ae] text-xs space-y-3">
+    <footer className="space-y-3 py-8 text-center text-xs text-[#64748b] dark:text-[#94a3b8]">
       <div className="flex justify-center items-center gap-6 text-xs">
         {/* <a
           href="https://kubex.world"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
+          className="transition-colors duration-200 hover:text-[#06b6d4] dark:hover:text-[#38cde4]"
         >
           Kubex Ecosystem
         </a> */}
@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
           href="https://github.com/kubex-ecosystem/grompt"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
+          className="transition-colors duration-200 hover:text-[#06b6d4] dark:hover:text-[#38cde4]"
         >
           GitHub
         </a>
@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
           href="/humans.txt"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
+          className="transition-colors duration-200 hover:text-[#06b6d4] dark:hover:text-[#38cde4]"
         >
           Humans.txt
         </a> */}
@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
           href="/.well-known/security.txt"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-sky-500 dark:hover:text-[#00f0ff] transition-colors duration-200"
+          className="transition-colors duration-200 hover:text-[#06b6d4] dark:hover:text-[#38cde4]"
         >
           Security
         </a> */}

@@ -24,18 +24,16 @@ const featureHighlights = [
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
   return (
     <div className="space-y-8">
-      <Card
-        className="bg-gradient-to-br from-white via-white to-slate-100/80 dark:from-[#0a0f14] dark:via-[#0a0f14] dark:to-[#0a0f14]/90"
-      >
+      <Card className="bg-gradient-to-br from-[#ffffff] via-[#f9fafb] to-[#ecfeff] dark:from-[#0a1523] dark:via-[#0a1523] dark:to-[#0a1523]/90">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
           <div className="flex-1 space-y-4">
-            <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
+            <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.4em] text-[#06b6d4] dark:text-[#38cde4]">
               <Compass size={16} /> Kubex Ecosystem
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-[#e0f7fa] sm:text-4xl md:text-5xl">
+            <h1 className="text-3xl font-bold tracking-tight text-[#111827] dark:text-[#f5f3ff] sm:text-4xl md:text-5xl">
               Governança, Criatividade, Produtividade, Liberdade!
             </h1>
-            <p className="text-base text-slate-600 dark:text-slate-300">
+            <p className="text-base text-[#475569] dark:text-[#94a3b8]">
               O Grompt reúne os fluxos de Prompt Engineering, geração de conteúdo e análise de código em um único arquivo, com frontend
               estável e leve, gateway coalescente, CLI dinâmica e intuitiva, multi-provider com mais de 100 APIs. Personalize idiomas, temas e provedores de IA na mesma interface.
             </p>
@@ -43,29 +41,29 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <button
                 type="button"
                 onClick={onGetStarted}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-35px_rgba(15,23,42,0.8)] transition hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-slate-400 dark:border-[#00f0ff] dark:bg-[#00f0ff] dark:text-[#010409]"
+                className="inline-flex items-center gap-2 rounded-full border border-[#06b6d4] bg-[#06b6d4] px-6 py-2 text-sm font-semibold text-white shadow-soft-card transition hover:scale-[1.01] hover:bg-[#0891b2] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/40 dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]"
               >
                 Começar agora
                 <ArrowRight size={16} />
               </button>
-              <div className="rounded-full border border-slate-200/70 bg-white/60 px-4 py-2 text-xs text-slate-500 shadow-sm dark:border-slate-700 dark:bg-[#0a0f14]/80 dark:text-slate-300">
+              <div className="rounded-full border border-[#e2e8f0] bg-white/70 px-4 py-2 text-xs text-[#475569] shadow-sm dark:border-[#13263a] dark:bg-[#0a1523]/80 dark:text-[#94a3b8]">
                 Build: front-end React + Vite 7 + Tailwind 3
               </div>
             </div>
           </div>
-          <div className="flex-1 rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-inner dark:border-slate-800/60 dark:bg-[#0f172a]/60">
-            <p className="text-xs uppercase tracking-[0.45em] text-slate-500 dark:text-slate-400">Stack unificada</p>
-            <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex-1 rounded-2xl border border-[#e2e8f0] bg-white/95 p-6 shadow-soft-card dark:border-[#13263a] dark:bg-[#0a1523]/75">
+            <p className="text-xs uppercase tracking-[0.45em] text-[#94a3b8] dark:text-[#64748b]">Stack unificada</p>
+            <ul className="mt-4 space-y-3 text-sm text-[#475569] dark:text-[#cbd5f5]">
               <li className="flex items-start gap-3">
-                <Sparkles className="mt-1 h-4 w-4 text-emerald-500" />
+                <Sparkles className="mt-1 h-4 w-4 text-[#06b6d4]" />
                 Multi-provedores (Gemini, OpenAI, Anthropic) com wrapper unificado.
               </li>
               <li className="flex items-start gap-3">
-                <Sparkles className="mt-1 h-4 w-4 text-sky-500" />
+                <Sparkles className="mt-1 h-4 w-4 text-[#a855f7]" />
                 Persistência híbrida usando IndexedDB com fallback automágico para localStorage.
               </li>
               <li className="flex items-start gap-3">
-                <Sparkles className="mt-1 h-4 w-4 text-purple-500" />
+                <Sparkles className="mt-1 h-4 w-4 text-[#d946ef]" />
                 Componentes responsivos com Tailwind e animações do Framer Motion.
               </li>
             </ul>
@@ -76,7 +74,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
       <div className="grid gap-6 md:grid-cols-3">
         {featureHighlights.map((feature) => (
           <Card key={feature.title} title={feature.title} description={feature.description}>
-            <div className="flex items-center justify-between pt-1 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between pt-1 text-xs text-[#64748b] dark:text-[#94a3b8]">
               <span>Conectado ao fluxo Kubex</span>
               <span>Sem lock-in</span>
             </div>
