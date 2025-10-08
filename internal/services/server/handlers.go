@@ -636,6 +636,13 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// BYOK Support: Check for external API key in headers
+	// Supports both generic X-API-Key and provider-specific X-{PROVIDER}-Key headers
+	externalKey := r.Header.Get("X-API-Key")
+	if externalKey == "" {
+		externalKey = r.Header.Get("X-" + strings.ToUpper(req.Provider) + "-Key")
+	}
+
 	var response string
 	var err error
 	var model = req.Model
@@ -643,36 +650,102 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 
 	switch req.Provider {
 	case "claude":
-		if key := h.config.GetAPIKey("claude"); key == "" {
-			http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
+		apiKey := externalKey
+		if apiKey == "" {
+			apiKey = h.config.GetAPIKey("claude")
+		}
+		if apiKey == "" {
+			http.Error(w, "Claude API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
 			return
 		}
-		response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
+		// Create temporary API instance with external key if provided
+		api := h.claudeAPI
+		if externalKey != "" {
+			api = ii.NewClaudeAPI(externalKey)
+		}
+		response, err = api.Complete(prompt, maxTokens, model)
 		if model == "" {
 			model = "claude-3-5-sonnet-20241022"
 		}
 
 	case "openai":
-		if key := h.config.GetAPIKey("openai"); key == "" {
-			http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
+		apiKey := externalKey
+		if apiKey == "" {
+			apiKey = h.config.GetAPIKey("openai")
+		}
+		if apiKey == "" {
+			http.Error(w, "OpenAI API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
 			return
+		}
+		// Create temporary API instance with external key if provided
+		api := h.openaiAPI
+		if externalKey != "" {
+			api = ii.NewOpenAIAPI(externalKey)
 		}
 		if model == "" {
 			model = "gpt-4o-mini"
 		}
-		response, err = h.openaiAPI.Complete(prompt, req.MaxTokens, model)
+		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "deepseek":
-		if key := h.config.GetAPIKey("deepseek"); key == "" {
-			http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
+		apiKey := externalKey
+		if apiKey == "" {
+			apiKey = h.config.GetAPIKey("deepseek")
+		}
+		if apiKey == "" {
+			http.Error(w, "DeepSeek API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
 			return
+		}
+		// Create temporary API instance with external key if provided
+		api := h.deepseekAPI
+		if externalKey != "" {
+			api = ii.NewDeepSeekAPI(externalKey)
 		}
 		if model == "" {
 			model = "deepseek-chat"
 		}
-		response, err = h.deepseekAPI.Complete(prompt, req.MaxTokens, model)
+		response, err = api.Complete(prompt, req.MaxTokens, model)
+
+	case "gemini":
+		apiKey := externalKey
+		if apiKey == "" {
+			apiKey = h.config.GetAPIKey("gemini")
+		}
+		if apiKey == "" {
+			http.Error(w, "Gemini API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
+			return
+		}
+		// Create temporary API instance with external key if provided
+		api := h.geminiAPI
+		if externalKey != "" {
+			api = ii.NewGeminiAPI(externalKey)
+		}
+		if model == "" {
+			model = "gemini-2.0-flash-exp"
+		}
+		response, err = api.Complete(prompt, req.MaxTokens, model)
+
+	case "chatgpt":
+		apiKey := externalKey
+		if apiKey == "" {
+			apiKey = h.config.GetAPIKey("chatgpt")
+		}
+		if apiKey == "" {
+			http.Error(w, "ChatGPT API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
+			return
+		}
+		// Create temporary API instance with external key if provided
+		api := h.chatGPTAPI
+		if externalKey != "" {
+			api = ii.NewChatGPTAPI(externalKey)
+		}
+		if model == "" {
+			model = "gpt-4o-mini"
+		}
+		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "ollama":
+		// Ollama doesn't require API key (local instance)
 		if model == "" {
 			model = "llama3.2"
 		}
@@ -1083,7 +1156,8 @@ func (h *Handlers) setCORSHeaders(w http.ResponseWriter) {
 	// Adjust as necessary for your security requirements.
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	// BYOK Support: Allow custom API key headers
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key, X-OPENAI-Key, X-CLAUDE-Key, X-GEMINI-Key, X-DEEPSEEK-Key, X-CHATGPT-Key")
 	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("X-Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")

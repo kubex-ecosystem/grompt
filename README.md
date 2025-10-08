@@ -77,7 +77,8 @@ Create a generic TypeScript function that:
 | 🐹 **Robust Go Backend** | Efficient HTTP server with zero external dependencies |
 | 📦 **Single Binary** | Self-contained executable - just download and run |
 | 🌍 **Cross-Platform** | Windows, Linux, macOS support out of the box |
-| 🔌 **Multiple AI Providers** | OpenAI, Claude, DeepSeek, Ollama, plus demo mode |
+| 🔌 **Multiple AI Providers** | OpenAI, Claude, DeepSeek, Gemini, ChatGPT, Ollama, plus demo mode |
+| 🔑 **BYOK Support** | Bring Your Own API Key - use external keys via headers without server config |
 | 🚀 **Instant Setup** | No installation, configuration, or cloud dependencies required |
 
 ---
@@ -466,6 +467,65 @@ POST /api/ollama     # Ollama specific endpoint
 # Utility
 GET  /api/test       # Test API provider availability
 ```
+
+### 🔑 **BYOK (Bring Your Own Key) Support**
+
+Grompt now supports **external API keys per request** via HTTP headers, enabling:
+- ✅ No server-side API key configuration required
+- ✅ Use your own keys without storing them on the server
+- ✅ Perfect for client applications and browser extensions
+- ✅ Full support for all AI providers
+
+#### Usage Examples
+
+**Via cURL:**
+```bash
+# Generic X-API-Key header (works with all providers)
+curl -X POST http://localhost:8080/api/unified \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-your-openai-key-here" \
+  -d '{
+    "provider": "openai",
+    "prompt": "Explain quantum computing in simple terms",
+    "max_tokens": 500
+  }'
+
+# Provider-specific header
+curl -X POST http://localhost:8080/api/unified \
+  -H "Content-Type: application/json" \
+  -H "X-GEMINI-Key: AIza-your-gemini-key" \
+  -d '{
+    "provider": "gemini",
+    "ideas": ["quantum computing", "simple explanation"],
+    "purpose": "Educational Content"
+  }'
+```
+
+**Via JavaScript/TypeScript:**
+```typescript
+const response = await fetch('/api/unified', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk-your-api-key-here'  // Your external key
+  },
+  body: JSON.stringify({
+    provider: 'openai',
+    prompt: 'Generate a creative story',
+    max_tokens: 1000
+  })
+});
+```
+
+**Supported Headers:**
+- `X-API-Key` - Generic header for any provider
+- `X-OPENAI-Key` - OpenAI specific
+- `X-CLAUDE-Key` - Anthropic Claude specific
+- `X-GEMINI-Key` - Google Gemini specific
+- `X-DEEPSEEK-Key` - DeepSeek specific
+- `X-CHATGPT-Key` - ChatGPT specific
+
+**Priority:** External keys via headers take precedence over server configuration.
 
 ---
 

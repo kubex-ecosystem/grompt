@@ -13,6 +13,7 @@ export interface UnifiedRequest {
   max_tokens?: number;
   model?: string;
   provider?: string;
+  api_key?: string; // BYOK Support: Optional external API key
 }
 
 export interface UnifiedResponse {
@@ -43,12 +44,14 @@ class UnifiedAIService {
 
   /**
    * Generate a structured prompt using backend's unified API
+   * @param apiKey - Optional external API key for BYOK (Bring Your Own Key)
    */
   async generateStructuredPrompt(
     ideas: Idea[],
     purpose: string,
     provider?: string,
-    model?: string
+    model?: string,
+    apiKey?: string
   ): Promise<GenerationResult> {
     try {
       // Get config to determine the best provider to use
@@ -80,12 +83,20 @@ class UnifiedAIService {
         max_tokens: 5000,
       };
 
+      // Prepare headers with BYOK support
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // BYOK Support: Add external API key if provided
+      if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+      }
+
       // Call unified API
       const response = await fetch('/api/unified', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(request),
       });
 
@@ -117,12 +128,14 @@ class UnifiedAIService {
 
   /**
    * Generate a direct prompt (skip prompt engineering)
+   * @param apiKey - Optional external API key for BYOK (Bring Your Own Key)
    */
   async generateDirectPrompt(
     prompt: string,
     provider?: string,
     model?: string,
-    maxTokens = 1000
+    maxTokens = 1000,
+    apiKey?: string
   ): Promise<UnifiedResponse> {
     try {
       const config = await configService.getConfig();
@@ -139,11 +152,19 @@ class UnifiedAIService {
         max_tokens: maxTokens,
       };
 
+      // Prepare headers with BYOK support
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // BYOK Support: Add external API key if provided
+      if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+      }
+
       const response = await fetch('/api/unified', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(request),
       });
 

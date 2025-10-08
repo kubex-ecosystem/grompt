@@ -510,6 +510,10 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
 
+  // BYOK Support: External API key
+  const [externalApiKey, setExternalApiKey] = useState<string>('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+
   const isInitialLoad = useRef(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -669,7 +673,9 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
       // Use selected provider or fallback to first available
       const provider = selectedProvider || (availableProviders.length > 0 ? availableProviders[0].name : undefined);
 
-      const result = await generateStructuredPrompt(ideas, purpose, provider);
+      // BYOK Support: Pass external API key if provided
+      const apiKey = externalApiKey.trim() || undefined;
+      const result = await generateStructuredPrompt(ideas, purpose, provider, undefined, apiKey);
       setGeneratedPrompt(result.prompt);
       const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;
       const outputTokens = result.usageMetadata?.candidatesTokenCount ?? 0;
@@ -917,6 +923,38 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
               )}
             </div>
           )}
+
+          {/* BYOK Support: Optional API Key Input */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+              className={`text-sm flex items-center gap-2 ${
+                isLight ? 'text-gray-600 hover:text-gray-900' : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {showApiKeyInput ? '🔒 Hide API Key' : '🔑 Use Your Own API Key (BYOK)'}
+            </button>
+
+            {showApiKeyInput && (
+              <div className="mt-2">
+                <input
+                  type="password"
+                  placeholder="sk-... or AIza... (optional)"
+                  value={externalApiKey}
+                  onChange={(e) => setExternalApiKey(e.target.value)}
+                  className={`w-full p-3 rounded-lg border ${
+                    isLight
+                      ? 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                      : 'bg-gray-800 border-gray-600 text-gray-100 focus:border-blue-400'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                />
+                <p className={`text-xs mt-1 ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>
+                  💡 Your key is only used for this request and never stored on our servers
+                </p>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={handleGenerate}
