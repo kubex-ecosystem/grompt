@@ -10,7 +10,8 @@ import {
   Folder as FolderIcon,
   Funnel as FunnelIcon,
   Search as MagnifyingGlassIcon,
-  Play as PlayIcon
+  Play as PlayIcon,
+  Upload as UploadIcon
 } from "lucide-react";
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -151,6 +152,84 @@ function normalizeExtractedProject(project: LookAtniExtractedProject | null) {
   return { stats, files };
 }
 
+/* ========= Processamento Local de Arquivos ========= */
+
+/**
+ * Lê um arquivo local e retorna seu conteúdo como string
+ */
+async function readFileContent(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string || '');
+    reader.onerror = () => reject(new Error(`Falha ao ler ${file.name}`));
+    reader.readAsText(file);
+  });
+}
+
+/**
+ * Processa arquivos locais (do upload) e converte para o formato ProjectFile[]
+ */
+async function processLocalFiles(files: FileList | File[]): Promise<{ stats: ProjectStats; files: ProjectFile[] }> {
+  const fileArray = Array.from(files);
+  const projectFiles: ProjectFile[] = [];
+  const errors: Array<{ line: number; message: string }> = [];
+
+  // Filtrar arquivos binários e pastas comuns a ignorar
+  const ignoredPatterns = [
+    /node_modules/,
+    /\.git/,
+    /dist/,
+    /build/,
+    /\.next/,
+    /coverage/,
+    /\.cache/,
+    /\.(jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot|mp4|mp3|pdf|zip|tar|gz)$/i,
+  ];
+
+  const shouldIgnore = (path: string) => {
+    return ignoredPatterns.some(pattern => pattern.test(path));
+  };
+
+  for (let i = 0; i < fileArray.length; i++) {
+    const file = fileArray[i];
+
+    // Usar webkitRelativePath se disponível (quando é upload de pasta), senão usar name
+    const relativePath = (file as any).webkitRelativePath || file.name;
+
+    if (shouldIgnore(relativePath)) {
+      continue;
+    }
+
+    try {
+      const content = await readFileContent(file);
+      const lines = content.split(/\r?\n/).length;
+
+      projectFiles.push({
+        path: relativePath,
+        content,
+        size: file.size,
+        lines,
+      });
+    } catch (err: any) {
+      errors.push({
+        line: i,
+        message: err?.message || `Erro ao processar ${file.name}`,
+      });
+    }
+  }
+
+  const totalBytes = projectFiles.reduce((acc, f) => acc + f.size, 0);
+
+  const stats: ProjectStats = {
+    totalFiles: projectFiles.length,
+    totalMarkers: 0, // Não há fragmentos em upload local
+    totalBytes,
+    errors,
+  };
+
+  return { stats, files: projectFiles };
+}
+
 /* ========= File tree básico ========= */
 
 type TreeNode = {
@@ -210,6 +289,8 @@ export default function ProjectExtractor({ projectFile, projectName, description
   const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [extractionMode, setExtractionMode] = useState<'preview' | 'download'>('preview');
+  const [sourceMode, setSourceMode] = useState<'server' | 'local'>('server'); // novo: modo de origem
+  const [isDragging, setIsDragging] = useState(false);
 
   // novos estados
   const [error, setError] = useState<string | null>(null);
@@ -220,6 +301,7 @@ export default function ProjectExtractor({ projectFile, projectName, description
 
   const abortRef = useRef<AbortController | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // micro-telemetria
   const t0 = useRef<number>(0);
@@ -284,6 +366,109 @@ export default function ProjectExtractor({ projectFile, projectName, description
       console.log(`[PE] extract done in ${dt}ms`);
     }
   }, [projectFile]);
+
+  const handleLocalUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsLoading(true);
+    setError(null);
+    setExtractedProject(null);
+    setProjectData(null);
+    setSelectedFile(null);
+    t0.current = performance.now();
+
+    try {
+      const result = await processLocalFiles(files);
+
+      if (!result || result.files.length === 0) {
+        setProjectData(null);
+        setSelectedFile(null);
+        setError('Nenhum arquivo válido encontrado no upload.');
+        return;
+      }
+
+      setProjectData(result);
+      setSelectedFile(result.files[0]);
+      setSourceMode('local');
+    } catch (err: any) {
+      setError(err?.message ?? 'Erro ao processar arquivos locais.');
+    } finally {
+      setIsLoading(false);
+      const dt = (performance.now() - t0.current).toFixed(0);
+      // eslint-disable-next-line no-console
+      console.log(`[PE] local upload processed in ${dt}ms`);
+    }
+  }, []);
+
+  const triggerFileUpload = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const items = Array.from(e.dataTransfer.items);
+    const files: File[] = [];
+
+    // Função recursiva para ler diretórios
+    const readEntry = async (entry: any): Promise<void> => {
+      if (entry.isFile) {
+        return new Promise((resolve) => {
+          entry.file((file: File) => {
+            // Criar uma cópia do file com webkitRelativePath definido
+            const fileWithPath = new File([file], file.name, { type: file.type });
+            Object.defineProperty(fileWithPath, 'webkitRelativePath', {
+              value: entry.fullPath.startsWith('/') ? entry.fullPath.slice(1) : entry.fullPath,
+              writable: false,
+            });
+            files.push(fileWithPath);
+            resolve();
+          });
+        });
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        return new Promise<void>((resolve) => {
+          reader.readEntries(async (entries: any[]) => {
+            for (const childEntry of entries) {
+              await readEntry(childEntry);
+            }
+            resolve();
+          });
+        });
+      }
+    };
+
+    // Processar todos os itens
+    for (const item of items) {
+      const entry = item.webkitGetAsEntry();
+      if (entry) {
+        await readEntry(entry);
+      }
+    }
+
+    if (files.length > 0) {
+      // Simular evento de input
+      const fakeEvent = {
+        target: { files: files as any },
+      } as React.ChangeEvent<HTMLInputElement>;
+      await handleLocalUpload(fakeEvent);
+    }
+  }, [handleLocalUpload]);
 
   const downloadProject = useCallback(async () => {
     if (!extractedProject) {
@@ -516,6 +701,17 @@ export default function ProjectExtractor({ projectFile, projectName, description
 
       {/* Action Buttons */}
       <div className="p-4 border-b bg-[#f9fafb] dark:bg-[#0a1e2b] border-[#e2e8f0] dark:border-[#13263a]">
+        {/* Hidden file inputs */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          // @ts-ignore - webkitdirectory não está em tipos padrão mas funciona
+          webkitdirectory=""
+          onChange={handleLocalUpload}
+          className="hidden"
+        />
+
         <div className="flex gap-2 flex-wrap">
           {!projectData ? (
             <>
@@ -530,6 +726,19 @@ export default function ProjectExtractor({ projectFile, projectName, description
                   <PlayIcon className="w-4 h-4" />
                 )}
                 {isLoading ? <span>{t('extracting')}</span> : t('extractProject')}
+              </button>
+              <button
+                onClick={triggerFileUpload}
+                disabled={isLoading}
+                className="flex items-center gap-2 rounded-full border border-transparent bg-[#8b5cf6] px-5 py-2 text-sm font-semibold text-white shadow-soft-card transition hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-60"
+                title="Upload local de arquivos/pastas"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <UploadIcon className="w-4 h-4" />
+                )}
+                Upload Local
               </button>
               <button
                 onClick={downloadSourceFile}
@@ -691,14 +900,52 @@ export default function ProjectExtractor({ projectFile, projectName, description
         )}
       </AnimatePresence>
 
-      {/* Empty initial state */}
+      {/* Empty initial state + Dropzone */}
       {!projectData && !isLoading && (
-        <div className="p-8 text-center bg-[#f9fafb] dark:bg-[#050a12]">
-          <FolderIcon className="w-16 h-16 mx-auto mb-4 text-[#06b6d4]/40" />
-          <h3 className="text-lg font-medium text-[#111827] dark:text-[#e5f2f2] mb-2">{t('projectNotExtracted')}</h3>
-          <p className="text-[#475569] dark:text-[#94a3b8] mb-4">
-            {t('extractProjectInstructions')}
-          </p>
+        <div
+          className={classNames(
+            'p-8 text-center bg-[#f9fafb] dark:bg-[#050a12] transition-all',
+            isDragging && 'bg-[#ecfeff] dark:bg-[#0a1e2b] border-4 border-dashed border-[#06b6d4]'
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging ? (
+            <>
+              <UploadIcon className="w-20 h-20 mx-auto mb-4 text-[#06b6d4] animate-bounce" />
+              <h3 className="text-xl font-bold text-[#06b6d4] mb-2">
+                Solte os arquivos/pasta aqui!
+              </h3>
+              <p className="text-[#0891b2]">
+                Processamento 100% local no browser
+              </p>
+            </>
+          ) : (
+            <>
+              <FolderIcon className="w-16 h-16 mx-auto mb-4 text-[#06b6d4]/40" />
+              <h3 className="text-lg font-medium text-[#111827] dark:text-[#e5f2f2] mb-2">
+                {t('projectNotExtracted')}
+              </h3>
+              <p className="text-[#475569] dark:text-[#94a3b8] mb-4">
+                {t('extractProjectInstructions')}
+              </p>
+              <div className="mt-6 p-4 border-2 border-dashed border-[#cbd5e1] dark:border-[#334155] rounded-xl max-w-md mx-auto hover:border-[#06b6d4] dark:hover:border-[#06b6d4] transition-colors cursor-pointer"
+                onClick={triggerFileUpload}
+              >
+                <UploadIcon className="w-10 h-10 mx-auto mb-3 text-[#8b5cf6]" />
+                <p className="text-sm font-semibold text-[#111827] dark:text-[#e5f2f2] mb-1">
+                  Arraste & Solte ou Clique
+                </p>
+                <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
+                  Upload local de arquivos ou pastas completas
+                </p>
+                <p className="text-xs text-[#06b6d4] dark:text-[#38cde4] mt-2">
+                  Tudo processado localmente no seu browser
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
