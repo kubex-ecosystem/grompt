@@ -1,134 +1,47 @@
-site_name: Grompt
-site_url: https://kubex-ecosystem.github.io/grompt/
-site_description: "CLI poderosa para gerenciar e transformar prompts com práticas de engenharia — Go 1.25, React 19, Next 15."
-site_author: "Rafael Mori"
-
-repo_name: "kubex-ecosystem/grompt"
+site_name: Grompt - AI Prompt Engineering Platform
+site_description: Transform unstructured ideas into clean, effective prompts for AI models
+site_author: Rafa Mori
+site_url: https://grompt.kubex.world
+repo_name: kubex-ecosystem/grompt
 repo_url: https://github.com/kubex-ecosystem/grompt
-
 docs_dir: ../../docs
-
-# Permite links "Editar esta página" no GitHub
-edit_uri: edit/main/docs/
 
 theme:
   name: material
-  language: pt-BR
-  palette:
-    primary: "indigo"
-    accent: "indigo"
   features:
     - navigation.tabs
-    - navigation.top
-    - navigation.instant
-    - navigation.expand
     - navigation.sections
-    - navigation.tracking
-    - navigation.tabs.sticky
+    - navigation.top
+    - search.highlight
     - content.code.copy
-    - content.tabs.link
-  font:
-    text: Roboto
-    code: Roboto Mono
-  icon:
-    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle: {icon: material/brightness-4, name: Light mode}
+  font: {text: Roboto, code: Roboto Mono}
+  icon: {logo: material/brain}
 
 markdown_extensions:
   - admonition
-  - codehilite:
-      linenums: true
-  - toc:
-      permalink: true
-      title: Nesta página
-  - attr_list
-  - def_list
-  - footnotes
-  - md_in_html
-  - smarty
-  - tables
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.betterem:
-      smart_enable: all
-  - pymdownx.caret
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.keys
-  - pymdownx.magiclink:
-      repo_url_shorthand: true
-      user: kubex-ecosystem
-      repo: grompt
-  - pymdownx.mark
-  - pymdownx.smartsymbols
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: pymdownx.superfences.fence_code_format
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.tilde
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.emoji: {emoji_index: !!python/name:material.extensions.emoji.twemoji}
+
+plugins: [search, minify]
 
 nav:
-  - Início: index.md
-  - Primeiros Passos:
-      - Instalação: getting-started/installation.md
-      - Início Rápido: getting-started/quickstart.md
-  - Guia do Usuário:
-      - Comandos CLI: user-guide/cli-commands.md
-      - Configuração: user-guide/configuration.md
-      - Exemplos de Uso: user-guide/usage-examples.md
-      - FAQ: user-guide/faq.md
-      - API Reference: user-guide/api-reference.md
-      - Tópicos Avançados:
-          - Wrapper WRPR: pages/wrpr-wrapper.md
-  - Desenvolvimento:
-      - Contribuindo: development/contributing.md
-      - Testes: development/testing.md
-      - Comandos Makefile: development/makefile.md
-      - Publicando Docs: development/docs-publishing.md
-      - Solução de Problemas: development/troubleshooting.md
-      - Arquitetura: development/architecture.md
-  - Comunidade:
-      - Código de Conduta: community/code-of-conduct.md
-      - Suporte: community/support.md
-      - Autores: community/authors.md
-  - Informações do Projeto:
-      - Licença: project-info/license.md
-      - Aviso Legal: project-info/notice.md
-      - Política de Segurança: project-info/security.md
-      - Changelog: project-info/changelog.md
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/kubex-ecosystem/grompt
-      name: Grompt on GitHub
-    - icon: fontawesome/brands/linkedin
-      link: https://www.linkedin.com/in/rafa-mori/
-      name: Rafael Mori on LinkedIn
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/faelOmori
-      name: Rafael Mori on Twitter
-  version:
-    provider: mike
-  analytics:
-    provider: google
-    property: G-7HLY17F3DK
-
-plugins:
-  - search:
-      lang: pt
-  - git-revision-date-localized:
-      type: datetime
-      timezone: America/Sao_Paulo
-      locale: pt_BR
-      fallback_to_build_date: true
-  # - linkcheck:
-  #     fail_on_dead_links: true
-  #     timeout: 10
-  #     retry_count: 2
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+  - Features:
+      - BYOK Support: features/byok.md
+      - Resilience Modes: features/resilience.md
+  - About:
+      - License: about/license.md

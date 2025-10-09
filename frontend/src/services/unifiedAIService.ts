@@ -20,6 +20,7 @@ export interface UnifiedResponse {
   response: string;
   provider: string;
   model: string;
+  mode?: 'byok' | 'server' | 'demo'; // API key source mode
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -32,6 +33,7 @@ export interface GenerationResult {
   prompt: string;
   provider: string;
   model: string;
+  mode?: 'byok' | 'server' | 'demo'; // API key source mode
   usageMetadata?: {
     promptTokenCount?: number;
     candidatesTokenCount?: number;
@@ -112,6 +114,7 @@ class UnifiedAIService {
         prompt: data.response,
         provider: data.provider,
         model: data.model,
+        mode: data.mode, // Include mode from backend
         usageMetadata: {
           promptTokenCount: data.usage?.prompt_tokens,
           candidatesTokenCount: data.usage?.completion_tokens,

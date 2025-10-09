@@ -8,7 +8,7 @@ interface CodeGeneratorProps {
     goal: string;
     constraints: string[];
     extras: string;
-  }) => Promise<string>;
+  }, apiKey?: string) => Promise<string>;
 }
 
 const stacks = ['Go + Fiber', 'TypeScript + React', 'Python + FastAPI', 'Rust + Axum'];
@@ -21,6 +21,9 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  // BYOK Support
+  const [externalApiKey, setExternalApiKey] = useState<string>('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const toggleConstraint = (value: string) => {
     setConstraints((prev) =>
@@ -33,12 +36,14 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate }) => {
     setIsGenerating(true);
     setResult('');
     try {
+      // BYOK Support: Pass external API key if provided
+      const apiKey = externalApiKey.trim() || undefined;
       const code = await onGenerate({
         stack,
         goal: goal.trim(),
         constraints,
         extras: extraNotes.trim(),
-      });
+      }, apiKey);
       setResult(code);
     } catch (error) {
       setResult(error instanceof Error ? error.message : 'Não foi possível gerar o código.');
@@ -122,6 +127,32 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate }) => {
                 rows={4}
                 className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#475569] shadow-inner transition focus:border-[#06b6d4] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#e5f2f2]"
               />
+            </div>
+
+            {/* BYOK Support: Optional API Key Input */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+              >
+                {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
+              </button>
+
+              {showApiKeyInput && (
+                <div className="mt-2">
+                  <input
+                    type="password"
+                    placeholder="sk-... ou AIza... (opcional)"
+                    value={externalApiKey}
+                    onChange={(e) => setExternalApiKey(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  />
+                  <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                  </p>
+                </div>
+              )}
             </div>
 
             <button

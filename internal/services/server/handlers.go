@@ -46,6 +46,7 @@ type UnifiedResponse struct {
 	Response string     `json:"response"`
 	Provider string     `json:"provider"`
 	Model    string     `json:"model"`
+	Mode     string     `json:"mode,omitempty"` // "byok", "server", or "demo"
 	Usage    *UsageInfo `json:"usage,omitempty"`
 }
 
@@ -57,6 +58,44 @@ type UsageInfo struct {
 }
 
 var llmKeyMap map[string]string
+
+// generateDemoResponse creates a fallback demo response when no API keys are available
+func (h *Handlers) generateDemoResponse(prompt string, purpose string) string {
+	return fmt.Sprintf(`# 🎭 Demo Mode Response
+
+**Original Request:** %s
+
+## ⚠️ Notice
+You are currently running Grompt in **DEMO MODE**. This is a simulated response demonstrating the application's capabilities.
+
+## To Use Real AI Features
+
+Configure an API key using one of these methods:
+
+### Option 1: Server Configuration (Recommended)
+Set environment variables before starting Grompt:
+` + "```bash" + `
+export OPENAI_API_KEY=sk-...
+export CLAUDE_API_KEY=sk-ant-...
+export GEMINI_API_KEY=AIza...
+./grompt start
+` + "```" + `
+
+### Option 2: BYOK (Bring Your Own Key)
+Use the 🔑 button in the interface to provide your API key per request.
+
+## Supported Providers
+- OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo)
+- Anthropic Claude (Claude 3.5 Sonnet, Haiku)
+- Google Gemini (Gemini 2.0 Flash, Pro)
+- DeepSeek (DeepSeek Chat, Coder)
+- Ollama (Local models)
+
+---
+
+*This response was generated in demo mode. Configure an API key to access real AI-powered features.*
+`, prompt)
+}
 
 func NewHandlers(cfg ii.IConfig) *Handlers {
 	hndr := &Handlers{}
@@ -647,102 +686,118 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var model = req.Model
 	var maxTokens = req.MaxTokens
+	var mode = "server" // default to server mode
+
+	// Determine API key source and mode
+	var finalAPIKey string
+	if externalKey != "" {
+		finalAPIKey = externalKey
+		mode = "byok"
+	} else if h.config != nil && h.config.GetAPIKey(req.Provider) != "" {
+		finalAPIKey = h.config.GetAPIKey(req.Provider)
+		mode = "server"
+	}
 
 	switch req.Provider {
 	case "claude":
-		apiKey := externalKey
-		if apiKey == "" {
-			apiKey = h.config.GetAPIKey("claude")
-		}
-		if apiKey == "" {
-			http.Error(w, "Claude API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
-			return
-		}
-		// Create temporary API instance with external key if provided
-		api := h.claudeAPI
-		if externalKey != "" {
-			api = ii.NewClaudeAPI(externalKey)
-		}
-		response, err = api.Complete(prompt, maxTokens, model)
-		if model == "" {
-			model = "claude-3-5-sonnet-20241022"
+		if finalAPIKey == "" {
+			// Demo mode fallback
+			mode = "demo"
+			if model == "" {
+				model = "claude-3-5-sonnet-20241022"
+			}
+			response = h.generateDemoResponse(prompt, req.Purpose)
+		} else {
+			// Real API call
+			api := h.claudeAPI
+			if mode == "byok" {
+				api = ii.NewClaudeAPI(finalAPIKey)
+			}
+			if model == "" {
+				model = "claude-3-5-sonnet-20241022"
+			}
+			response, err = api.Complete(prompt, maxTokens, model)
 		}
 
 	case "openai":
-		apiKey := externalKey
-		if apiKey == "" {
-			apiKey = h.config.GetAPIKey("openai")
+		if finalAPIKey == "" {
+			// Demo mode fallback
+			mode = "demo"
+			if model == "" {
+				model = "gpt-4o-mini"
+			}
+			response = h.generateDemoResponse(prompt, req.Purpose)
+		} else {
+			// Real API call
+			api := h.openaiAPI
+			if mode == "byok" {
+				api = ii.NewOpenAIAPI(finalAPIKey)
+			}
+			if model == "" {
+				model = "gpt-4o-mini"
+			}
+			response, err = api.Complete(prompt, req.MaxTokens, model)
 		}
-		if apiKey == "" {
-			http.Error(w, "OpenAI API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
-			return
-		}
-		// Create temporary API instance with external key if provided
-		api := h.openaiAPI
-		if externalKey != "" {
-			api = ii.NewOpenAIAPI(externalKey)
-		}
-		if model == "" {
-			model = "gpt-4o-mini"
-		}
-		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "deepseek":
-		apiKey := externalKey
-		if apiKey == "" {
-			apiKey = h.config.GetAPIKey("deepseek")
+		if finalAPIKey == "" {
+			// Demo mode fallback
+			mode = "demo"
+			if model == "" {
+				model = "deepseek-chat"
+			}
+			response = h.generateDemoResponse(prompt, req.Purpose)
+		} else {
+			// Real API call
+			api := h.deepseekAPI
+			if mode == "byok" {
+				api = ii.NewDeepSeekAPI(finalAPIKey)
+			}
+			if model == "" {
+				model = "deepseek-chat"
+			}
+			response, err = api.Complete(prompt, req.MaxTokens, model)
 		}
-		if apiKey == "" {
-			http.Error(w, "DeepSeek API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
-			return
-		}
-		// Create temporary API instance with external key if provided
-		api := h.deepseekAPI
-		if externalKey != "" {
-			api = ii.NewDeepSeekAPI(externalKey)
-		}
-		if model == "" {
-			model = "deepseek-chat"
-		}
-		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "gemini":
-		apiKey := externalKey
-		if apiKey == "" {
-			apiKey = h.config.GetAPIKey("gemini")
+		if finalAPIKey == "" {
+			// Demo mode fallback
+			mode = "demo"
+			if model == "" {
+				model = "gemini-2.0-flash-exp"
+			}
+			response = h.generateDemoResponse(prompt, req.Purpose)
+		} else {
+			// Real API call
+			api := h.geminiAPI
+			if mode == "byok" {
+				api = ii.NewGeminiAPI(finalAPIKey)
+			}
+			if model == "" {
+				model = "gemini-2.0-flash-exp"
+			}
+			response, err = api.Complete(prompt, req.MaxTokens, model)
 		}
-		if apiKey == "" {
-			http.Error(w, "Gemini API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
-			return
-		}
-		// Create temporary API instance with external key if provided
-		api := h.geminiAPI
-		if externalKey != "" {
-			api = ii.NewGeminiAPI(externalKey)
-		}
-		if model == "" {
-			model = "gemini-2.0-flash-exp"
-		}
-		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "chatgpt":
-		apiKey := externalKey
-		if apiKey == "" {
-			apiKey = h.config.GetAPIKey("chatgpt")
+		if finalAPIKey == "" {
+			// Demo mode fallback
+			mode = "demo"
+			if model == "" {
+				model = "gpt-4o-mini"
+			}
+			response = h.generateDemoResponse(prompt, req.Purpose)
+		} else {
+			// Real API call
+			api := h.chatGPTAPI
+			if mode == "byok" {
+				api = ii.NewChatGPTAPI(finalAPIKey)
+			}
+			if model == "" {
+				model = "gpt-4o-mini"
+			}
+			response, err = api.Complete(prompt, req.MaxTokens, model)
 		}
-		if apiKey == "" {
-			http.Error(w, "ChatGPT API Key not configured and not provided via X-API-Key header", http.StatusServiceUnavailable)
-			return
-		}
-		// Create temporary API instance with external key if provided
-		api := h.chatGPTAPI
-		if externalKey != "" {
-			api = ii.NewChatGPTAPI(externalKey)
-		}
-		if model == "" {
-			model = "gpt-4o-mini"
-		}
-		response, err = api.Complete(prompt, req.MaxTokens, model)
 
 	case "ollama":
 		// Ollama doesn't require API key (local instance)
@@ -765,6 +820,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		Response: response,
 		Provider: req.Provider,
 		Model:    model,
+		Mode:     mode, // Include mode in response
 	}
 
 	w.Header().Set("Content-Type", "application/json")

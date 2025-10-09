@@ -31,7 +31,7 @@ const App: React.FC = () => {
   const [theme, toggleTheme] = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
-  const [activeSection, setActiveSection] = useState<SectionKey>('prompt');
+  const [activeSection, setActiveSection] = useState<SectionKey>('welcome');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const languageContextValue = useMemo(
@@ -99,7 +99,8 @@ const App: React.FC = () => {
 
   const handleChatSend = async (
     history: ChatMessage[],
-    input: string
+    input: string,
+    apiKey?: string
   ): Promise<{ content: string; provider?: string } | null> => {
     const transcript = history
       .map((message) => `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content}`)
@@ -116,7 +117,8 @@ ${transcript}
 Reply to the latest user message with a helpful, structured answer. Use Markdown when it improves comprehension.`;
 
     try {
-      const response = await unifiedAIService.generateDirectPrompt(composedPrompt, undefined, undefined, 700);
+      // BYOK Support: Pass external API key if provided
+      const response = await unifiedAIService.generateDirectPrompt(composedPrompt, undefined, undefined, 700, apiKey);
       return {
         content: response.response.trim(),
         provider: response.provider,
@@ -129,7 +131,7 @@ Reply to the latest user message with a helpful, structured answer. Use Markdown
     }
   };
 
-  const handleSummarize = async (input: string, tone: string, maxWords: number): Promise<string> => {
+  const handleSummarize = async (input: string, tone: string, maxWords: number, apiKey?: string): Promise<string> => {
     const prompt = `You are an expert summarizer for the Kubex ecosystem.
 Tone requested: ${tone}.
 Target length: up to ${maxWords} words.
@@ -142,11 +144,13 @@ ${input}
 
 Return only the formatted summary.`;
     try {
+      // BYOK Support: Pass external API key if provided
       const response = await unifiedAIService.generateDirectPrompt(
         prompt,
         undefined,
         undefined,
-        Math.min(maxWords * 3, 1200)
+        Math.min(maxWords * 3, 1200),
+        apiKey
       );
       return response.response.trim();
     } catch (error) {
@@ -160,7 +164,7 @@ Return only the formatted summary.`;
     goal: string;
     constraints: string[];
     extras: string;
-  }): Promise<string> => {
+  }, apiKey?: string): Promise<string> => {
     const constraintList = spec.constraints.length > 0 ? spec.constraints.join('; ') : 'Sem constraints adicionais.';
     const prompt = `You are an experienced engineer generating boilerplates aligned with Kubex guidelines.
 
@@ -177,7 +181,8 @@ Produce a concise Markdown response containing:
 Use fenced code blocks with the appropriate language identifier and avoid proprietary dependencies.`;
 
     try {
-      const response = await unifiedAIService.generateDirectPrompt(prompt, undefined, undefined, 1200);
+      // BYOK Support: Pass external API key if provided
+      const response = await unifiedAIService.generateDirectPrompt(prompt, undefined, undefined, 1200, apiKey);
       return response.response.trim();
     } catch (error) {
       console.error('Code generation failed', error);
@@ -190,7 +195,7 @@ Use fenced code blocks with the appropriate language identifier and avoid propri
     mood: string;
     style: string;
     details: string;
-  }): Promise<string> => {
+  }, apiKey?: string): Promise<string> => {
     const prompt = `Craft a single prompt for an image generation model.
 
 Subject: ${payload.subject}
@@ -201,7 +206,8 @@ Additional details: ${payload.details || 'Nenhum detalhe extra informado.'}
 Return the final prompt in Markdown with sections Persona, Composition, Style Notes, and Output Requirements. Keep it under 180 words.`;
 
     try {
-      const response = await unifiedAIService.generateDirectPrompt(prompt, undefined, undefined, 400);
+      // BYOK Support: Pass external API key if provided
+      const response = await unifiedAIService.generateDirectPrompt(prompt, undefined, undefined, 400, apiKey);
       return response.response.trim();
     } catch (error) {
       console.error('Image briefing failed', error);

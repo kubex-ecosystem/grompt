@@ -510,6 +510,9 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
 
+  // Mode tracking (byok, server, or demo)
+  const [currentMode, setCurrentMode] = useState<'byok' | 'server' | 'demo'>('server');
+
   // BYOK Support: External API key
   const [externalApiKey, setExternalApiKey] = useState<string>('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
@@ -680,6 +683,11 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
       const inputTokens = result.usageMetadata?.promptTokenCount ?? 0;
       const outputTokens = result.usageMetadata?.candidatesTokenCount ?? 0;
       setTokenUsage({ input: inputTokens, output: outputTokens });
+
+      // Update current mode based on response
+      if (result.mode) {
+        setCurrentMode(result.mode);
+      }
 
       const newItem: HistoryItem = {
         id: Date.now().toString(),
@@ -894,20 +902,32 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
             )}
           </div>
 
-          {/* Provider Status Section */}
+          {/* Mode Indicator Section */}
           {!isConfigLoading && (
             <div
               className={`mt-4 p-3 rounded-lg border ${
-                isLight
-                  ? 'bg-slate-50 border-slate-200'
-                  : 'bg-[#0a0f14]/50 border-slate-700/50'
+                currentMode === 'demo'
+                  ? 'bg-yellow-50 border-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-600/50'
+                  : currentMode === 'byok'
+                  ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-600/50'
+                  : 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-600/50'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${isDemoMode ? 'bg-yellow-500' : 'bg-green-500'}`} />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {isDemoMode ? 'Demo Mode' : `Using ${selectedProvider || 'Unknown'}`}
+                  <div className={`w-2 h-2 rounded-full ${
+                    currentMode === 'demo' ? 'bg-yellow-500'
+                    : currentMode === 'byok' ? 'bg-blue-500'
+                    : 'bg-green-500'
+                  }`} />
+                  <span className={`text-sm font-medium ${
+                    currentMode === 'demo' ? 'text-yellow-700 dark:text-yellow-300'
+                    : currentMode === 'byok' ? 'text-blue-700 dark:text-blue-300'
+                    : 'text-green-700 dark:text-green-300'
+                  }`}>
+                    {currentMode === 'demo' && '🎭 Demo Mode'}
+                    {currentMode === 'byok' && '🔑 Using Your API Key (BYOK)'}
+                    {currentMode === 'server' && `🔧 Using Server Config${selectedProvider ? ` (${selectedProvider})` : ''}`}
                   </span>
                 </div>
                 {availableProviders.length > 0 && (
@@ -916,9 +936,9 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
                   </div>
                 )}
               </div>
-              {isDemoMode && (
+              {currentMode === 'demo' && (
                 <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  Configure an AI provider API key for enhanced functionality
+                  ⚠️ Configure an API key (server or BYOK) for full AI-powered features
                 </p>
               )}
             </div>

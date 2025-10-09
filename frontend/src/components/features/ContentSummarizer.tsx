@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Card from '../ui/Card';
 
 interface ContentSummarizerProps {
-  onSummarize?: (input: string, tone: string, maxWords: number) => Promise<string>;
+  onSummarize?: (input: string, tone: string, maxWords: number, apiKey?: string) => Promise<string>;
 }
 
 const tonePresets = [
@@ -19,6 +19,9 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // BYOK Support
+  const [externalApiKey, setExternalApiKey] = useState<string>('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const handleSummarize = async () => {
     if (!input.trim() || !onSummarize) return;
@@ -26,7 +29,9 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize }) =>
     setError(null);
     setSummary(null);
     try {
-      const result = await onSummarize(input.trim(), tone, maxWords);
+      // BYOK Support: Pass external API key if provided
+      const apiKey = externalApiKey.trim() || undefined;
+      const result = await onSummarize(input.trim(), tone, maxWords, apiKey);
       setSummary(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível gerar o resumo.');
@@ -84,6 +89,33 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize }) =>
                 className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[#475569] shadow-sm focus:border-[#06b6d4] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/20 dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#e5f2f2]"
               />
             </div>
+
+            {/* BYOK Support: Optional API Key Input */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+              >
+                {showApiKeyInput ? '🔒 Ocultar API Key' : '🔑 Usar Sua Própria API Key (BYOK)'}
+              </button>
+
+              {showApiKeyInput && (
+                <div className="mt-2">
+                  <input
+                    type="password"
+                    placeholder="sk-... ou AIza... (opcional)"
+                    value={externalApiKey}
+                    onChange={(e) => setExternalApiKey(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400"
+                  />
+                  <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    💡 Sua key é usada apenas nesta requisição e nunca armazenada
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               disabled={disabled}
