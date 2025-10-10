@@ -1,0 +1,178 @@
+title = "Kubex Gitleaks Config"
+
+[allowlist]
+description = "Ignora o README.md inteiro"
+paths = [
+  '''README.md''',
+  '''^docs/.*$''',
+  '''^internal/sockets/messagery/rabbitmq\.go$''',
+]
+rules = ['''(?i)README\.md''']
+
+[[rules]]
+id = "pre_commit_config"
+description = "Ignora arquivos de configuração do pre-commit"
+regex = '''\.pre-commit-config\.yaml$'''
+paths = ['''\.pre-commit-config\.yaml$''']
+tags = ["config", "pre-commit"]
+
+[[rules]]
+id = "golangci_lint"
+description = "Ignora arquivos de configuração do golangci-lint"
+regex = '''\.golangci\.yaml$'''
+paths = ['''\.golangci\.yaml$''']
+tags = ["config", "golangci-lint"]
+
+[[rules]]
+id = "gitleaks_config"
+description = "Ignora arquivos de configuração do gitleaks"
+regex = '''gitleaks\.toml$'''
+paths = ['''gitleaks\.toml$''']
+tags = ["config", "gitleaks"]
+
+[[rules]]
+id = "vscode_settings"
+description = "Ignora arquivos de configuração do vscode"
+regex = '''settings\.json$'''
+paths = ['''\.vscode/settings\.json$''']
+tags = ["config", "vscode"]
+
+[[rules]]
+id = "setup_hooks"
+description = "Ignora scripts de setup"
+regex = '''setup-hooks\.sh$'''
+paths = ['''setup-hooks\.sh$''']
+tags = ["script", "setup"]
+
+[[rules]]
+id = "requirements_hooks"
+description = "Ignora arquivos de requisitos do pre-commit"
+regex = '''requirements-hooks\.txt$'''
+paths = ['''requirements-hooks\.txt$''']
+tags = ["config", "pre-commit", "requirements"]
+
+[[rules]]
+id = "support_folder"
+description = "Ignora toda a pasta support"
+regex = '''^support/.*$'''
+paths = ['''^support/.*$''']
+tags = ["support", "config"]
+
+[[rules]]
+id = "go_sum"
+description = "Ignora arquivos de soma de verificação do Go"
+regex = '''go\.sum$'''
+paths = ['''go\.sum$''']
+tags = ["go", "checksum"]
+
+[[rules]]
+id = "go_mod"
+description = "Ignora arquivos de modulação do Go"
+regex = '''go\.mod$'''
+paths = ['''go\.mod$''']
+tags = ["go", "mod"]
+
+[[rules]]
+id = "log_files"
+description = "Ignora arquivos de log"
+regex = '''\.log$'''
+paths = ['''\.log$''']
+tags = ["log"]
+
+[[rules]]
+id = "ds_store"
+description = "Ignora arquivos temporários do sistema"
+regex = '''\.DS_Store$'''
+paths = ['''\.DS_Store$''']
+tags = ["temp", "system"]
+
+[[rules]]
+id = "vim_swap"
+description = "Ignora arquivos de swap do Vim"
+regex = '''\.swp$'''
+paths = ['''\.swp$''']
+tags = ["temp", "vim"]
+
+[[rules]]
+id = "vim_backup"
+description = "Ignora arquivos de backup do Vim"
+regex = '''\.bak$'''
+paths = ['''\.bak$''']
+tags = ["temp", "vim"]
+
+[[rules]]
+id = "gitignore"
+description = "Ignora tudo que está no .gitignore"
+regex = '''\.gitignore$'''
+paths = ['''\.gitignore$''']
+tags = ["config", "gitignore"]
+
+[[rules]]
+id = "ide_config"
+description = "Ignora arquivos de configuração do IDE"
+regex = '''\.idea/.*$'''
+paths = ['''\.idea/.*$''']
+tags = ["config", "IDE"]
+
+[[rules]]
+id = "editor_config"
+description = "Ignora arquivos de configuração do editor"
+regex = '''\.vscode/.*$'''
+paths = ['''\.vscode/.*$''']
+tags = ["config", "editor"]
+
+[[rules]]
+id = "docker_config"
+description = "Ignora arquivos de configuração do Docker"
+regex = '''Dockerfile$'''
+paths = ['''Dockerfile$''']
+tags = ["config", "docker"]
+
+[[rules]]
+id = "kubernetes_config"
+description = "Ignora arquivos de configuração do Kubernetes"
+regex = '''\.kube/.*$'''
+paths = ['''\.kube/.*$''']
+tags = ["config", "kubernetes"]
+
+[[rules]]
+id = "terraform_config"
+description = "Ignora arquivos de configuração do Terraform"
+regex = '''\.tf$'''
+paths = ['''\.tf$''']
+tags = ["config", "terraform"]
+
+[[rules]]
+id = "ansible_config"
+description = "Ignora arquivos de configuração do Ansible"
+regex = '''\.yml$'''
+paths = ['''\.yml$''']
+tags = ["config", "ansible"]
+
+[[rules]]
+id = "ci_cd_config"
+description = "Ignora arquivos de configuração do CI/CD"
+regex = '''\.gitlab-ci\.yml$'''
+paths = ['''\.gitlab-ci\.yml$''']
+tags = ["config", "ci/cd"]
+
+[[rules]]
+id = "hidden_dirs"
+description = "Ignora todos os diretórios ocultos"
+regex = '''^\..*/.*$'''
+paths = ['''^\..*/.*$''']
+tags = ["config", "hidden"]
+
+[[rules]]
+id = "sql_files"
+description = "Ignora arquivos SQL"
+regex = '''\.sql$'''
+paths = ['''\.sql$''']
+tags = ["sql", "database"]
+
+[[rules]]
+id = "markdown_files"
+description = "Ignora arquivos Markdown"
+regex = '''\.md$'''
+paths = ['''\.md$''']
+tags = ["markdown", "documentation"]

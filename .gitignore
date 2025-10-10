@@ -85,3 +85,4 @@ internal/services/server/build/*
 frontend/.notes/current_light.png
 frontend/.notes/dark.png
 frontend/.notes/light.png
+.venv-hooks
