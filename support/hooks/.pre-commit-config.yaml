@@ -1,0 +1,161 @@
+# .pre-commit-config.yaml
+
+default_language_version:
+  python: python3
+  node: 22.19.0
+
+exclude: |
+  (?x)^(
+    node_modules/|
+    dist/|build/|coverage/|
+    vendor/|
+    support/|
+    tests/generated/
+  )
+
+repos:
+  # - repo: local
+  #   hooks:
+  #     - id: docs-sanitize
+  #       name: docs-sanitize (deny secrets-looking strings in docs)
+  #       entry: python3 support/hooks/.check_docs_secrets.py
+  #       language: system
+  #       files: \.(md|mdx|rst|txt|adoc|html)$
+  #       always_run: true
+
+  # -------- Hygiene --------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=1512"]
+
+  # -------- ESLint (Node env) --------
+  # - repo: https://github.com/pre-commit/mirrors-eslint
+  #   rev: v9.11.1
+  #   hooks:
+  #     - id: eslint
+  #       files: \.(js|jsx|ts|tsx)$
+  #       additional_dependencies:
+  #         - eslint@9.11.1
+  #         - typescript@5.6.3
+  #         - "@typescript-eslint/parser@7.18.0"
+  #         - "@typescript-eslint/eslint-plugin@7.18.0"
+  #         - eslint-plugin-react@7.35.0
+  #         - eslint-plugin-react-hooks@4.6.2
+  #         - eslint-plugin-import@2.29.1
+  #         - eslint-plugin-jsx-a11y@6.9.0
+  #       args:
+  #         [
+  #           "--config","support/hooks/.eslintrc.json",
+  #           "--fix"
+  #         ]
+
+  # -------- Markdown --------
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        files: \.(md|mdx)$
+        args: ["--config", "support/hooks/.markdownlint.yaml"]
+
+  # -------- Detect Secrets (rápido) --------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: (^docs/.*$|^pnpm-lock\.yaml$|^frontend/src/locales/.*$)
+        files: ^(.*\.(go|ya?ml|json|tf|tfvars|sh|ps1|ts|tsx|js|jsx)$)
+
+  # -------- Segurança pesada (pre-push) --------
+  - repo: https://github.com/returntocorp/semgrep
+    rev: v1.73.0
+    hooks:
+      - id: semgrep
+        stages: [pre-push]
+        pass_filenames: false
+        args:
+          [
+            "--timeout",
+            "120",
+            "--config",
+            "support/hooks/.semgrep.yaml",
+            "--exclude",
+            "vendor/",
+            "--exclude",
+            "node_modules/",
+            "--exclude",
+            "dist/",
+            "--exclude",
+            "build/",
+            "--exclude",
+            "coverage/",
+          ]
+        files: ^(.*\.(go|ya?ml|json|tf|tfvars|sh|ps1|ts|tsx|js|jsx)$)
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        stages: [pre-push]
+        args:
+          [
+            "protect",
+            "--no-banner",
+            "--redact",
+            "--config=support/hooks/.gitleaks.toml",
+          ]
+
+  # -------- Golang --------
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.51.2
+    hooks:
+      - id: golangci-lint
+        args: ["run", "--config", "support/hooks/.golangci.yaml"]
+        #        language: system
+        files: \.go$
+        stages: [pre-push]
+        additional_dependencies: ["golangci-lint@v1.51.2"]
+        exclude: ^(tests/generated/.*$|support/.*$)
+        #        exclude_types: [whitespace, comment]
+        pass_filenames: false
+        require_serial: true
+        always_run: false
+        language_version: go1.25.3
+
+  # - repo: local
+  #   rev: v1.0.0
+  #   hooks:
+  #     - id: go-mod-tidy
+  #       name: go mod tidy
+  #       language: system
+  #       entry: go mod tidy
+  #       files: \.go$
+  #       stages: [pre-push]
+  #       additional_dependencies: ["golangci-lint@v1.51.2"]
+  #       exclude: ^(tests/generated/.*$|support/.*$)
+  #       exclude_types: []
+  #       pass_filenames: false
+  #       require_serial: true
+  #       always_run: false
+
+  # - repo: local
+  #   rev: v1.0.0
+  #   hooks:
+  #     - id: go-fmt
+  #       name: go fmt
+  #       language: system
+  #       entry: go fmt
+  #       files: \.go$
+  #       stages: [pre-push]
+  #       additional_dependencies: ["golangci-lint@v1.51.2"]
+  #       exclude: ^(tests/generated/.*$|support/.*$)
+  #       exclude_types: []
+  #       pass_filenames: false
+  #       require_serial: true
+  #       always_run: false

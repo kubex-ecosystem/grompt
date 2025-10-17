@@ -23,15 +23,23 @@ cd "$_SCRIPT_DIR" || exit 1
 _default_pre_commit_config() {
   echo "🚀 Configurando pre-commit hooks (defaults)..."
 
-  # Create support/pre-commit-config.yaml if it doesn't exist
-  if [[ ! -f support/.pre-commit-config.yaml || -z "$(cat support/.pre-commit-config.yaml)" ]]; then
-    echo "🛠️  Creating support/.pre-commit-config.yaml..."
+  # Create support/hooks/pre-commit-config.yaml if it doesn't exist
+  if [[ ! -f support/hooks/.pre-commit-config.yaml || -z "$(cat support/hooks/.pre-commit-config.yaml)" ]]; then
+    echo "🛠️  Creating support/hooks/.pre-commit-config.yaml..."
     printf '%s\n' '
-# This is the default pre-commit configuration file.
-# It includes basic hygiene checks, security scans
 # Pre-commit configuration file
-# Documentation: https://pre-commit.com/
+
 repos:
+  - repo: local
+    hooks:
+      - id: docs-sanitize
+        name: docs-sanitize (deny secrets-looking strings in docs)
+        entry: python3 support/hooks/.check_docs_secrets.py
+        language: system
+        files: \.(md|mdx|rst|txt|adoc|html)$
+        fail_fast: false
+        always_run: true
+
   # -------- Hygiene básica --------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -41,7 +49,81 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
+      - id: check-merge-conflicts
         args: ["--maxkb=1512"]
+        fail_fast: false
+        always_run: true
+        verbose: false
+
+  # -------- Formatação de código --------
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: "v8.45.0"
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint@8.45.0
+          - typescript-eslint/eslint-plugin@5.61.0
+          - eslint-plugin-react@7.32.2
+          - eslint-plugin-react-hooks@4.6.0
+          - eslint-plugin-import@2.26.0
+          - eslint-plugin-jsx-a11y@6.7.1
+          - babel-eslint@10.1.0
+        name: eslint (fix)
+        entry: eslint
+        language: system
+        fail_fast: false
+        always_run: true
+        verbose: true
+        files: \.(js|jsx|ts|tsx)$
+        args:
+          [
+            "--config",
+            "support/hooks/.eslintrc.json",
+            "--ext",
+            ".js,.jsx,.ts,.tsx,.mjs,.cjs,.json",
+            "--fix"
+          ]
+
+  # -------- Documentação --------
+  - repo: https://github.com/pre-commit/mirrors-markdownlint
+    rev: v0.1.0
+    hooks:
+      - id: markdownlint
+        name: markdownlint (fix)
+        files: \.(md|mdx)$
+        args: ["--config", "support/hooks/.markdownlint.yaml"]
+        additional_dependencies:
+          - markdownlint-cli@0.33.0
+        entry: markdownlint-cli
+        language: system
+        fail_fast: true
+        verbose: true
+        always_run: true
+
+  # -------- Segurança: semgrep --------
+  - repo: https://github.com/returntocorp/semgrep
+    rev: v1.35.0
+    hooks:
+      - id: semgrep
+        name: semgrep (security and code quality)
+        entry: semgrep
+        language: system
+        fail_fast: true
+        pass_filenames: false
+        always_run: true
+        files: ^(.*\.go$|.*\.yaml$|.*\.yml$|.*\.json$|.*\.tf$|.*\.tfvars$|.*\.sh$|.*\.ps1$|.*\.ts$|.*\.tsx$|.*\.js$|.*\.jsx$)
+        args:
+          [
+            "--exclude=vendor/",
+            "--exclude=node_modules/",
+            "--exclude=dist/",
+            "--exclude=build/",
+            "--exclude=coverage/",
+            "--exclude=support/",
+            "--exclude=tests/",
+            "--timeout=120s",
+            "--config=support/hooks/.semgrep.yaml"
+          ]
 
   # -------- Segurança: detect-secrets --------
   - repo: https://github.com/Yelp/detect-secrets
@@ -49,30 +131,12 @@ repos:
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
-        exclude: '"'"'(^docs/.*$|^README\.md$|^internal/sockets/messagery/rabbitmq\.go$|^frontend/tsconfig\.json$|^docs/swagger\.json$|^frontend/src/locales/.*$)'"'"'
-        files: '"'"'^(.*\.go$|.*\.yaml$|.*\.yml$|.*\.json$|.*\.tf$|.*\.tfvars$|.*\.sh$|.*\.ps1$)'"'"'
-        pragma: allowlist dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", pgConfig.Username, pgConfig.Password, pgConfig.Host, port, pgConfig.Name)
-
-  # -------- Segurança: semgrep --------
-  # - repo: https://github.com/returntocorp/semgrep
-  #   rev: v1.35.0
-  #   hooks:
-  #     - id: semgrep
-  #       args:
-  #         [
-  #           "--config=auto",
-  #           "--exclude=vendor/",
-  #           "--exclude=docs/",
-  #           "--exclude=support/",
-  #         ]
-  #       files: '"'"'^(.*\.go$|.*\.yaml$|.*\.yml$|.*\.json$|.*\.tf$|.*\.tfvars$|.*\.sh$|.*\.ps1$)'"'"'
-
-  # -------- Segurança: bandit --------
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: v1.7.0
-  #   hooks:
-  #     - id: bandit
-  #       args: ["-r", "."]
+        exclude: (^docs/.*$|^README\.md$|^internal/sockets/messagery/rabbitmq\.go$|^frontend/tsconfig\.json$|^docs/swagger\.json$|^frontend/src/locales/.*$)
+        files: ^(.*\.go$|.*\.yaml$|.*\.yml$|.*\.json$|.*\.tf$|.*\.tfvars$|.*\.sh$|.*\.ps1$|.*\.ts$|.*\.tsx$|.*\.js$|.*\.jsx$)
+        pragma: allowlist dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",pgConfig.Username, pgConfig.Password, pgConfig.Host, port, pgConfig.Name)
+        fail_fast: false
+        always_run: true
+        verbose: true
 
   # -------- Segurança: gitleaks --------
   - repo: https://github.com/zricethezav/gitleaks
@@ -88,19 +152,14 @@ repos:
             "protect",
             "--staged",
             "--no-banner",
-            "--config=support/.gitleaks.toml",
+            "--config=support/hooks/.gitleaks.toml"
           ]
+        files: ^(.*\.go$|.*\.yaml$|.*\.yml$|.*\.json$|.*\.tf$|.*\.tfvars$|.*\.sh$|.*\.ps1$|.*\.ts$|.*\.tsx$|.*\.js$|.*\.jsx$)
+        verbose: true
+        fail_fast: false
+        always_run: true
 
-  # -------- Go tools --------
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
-    hooks:
-      - id: go-fmt
-      - id: go-vet
-      - id: go-mod-tidy
-        # - id: golangci-lint
-        # args: ["run", "--config=./support/.golangci.yaml"]
-' | tee "support/.pre-commit-config.yaml"
+' | tee "support/hooks/.pre-commit-config.yaml"
   # else
   #   cat support/pre-commit-config.yaml
   fi
@@ -122,15 +181,15 @@ _install_pre_commit_tools() {
   . .venv-hooks/bin/activate
 
   # Install requirements file from support/ if it exists
-  if [[ -f support/requirements-hooks.txt ]]; then
-    pip install -r support/requirements-hooks.txt
+  if [[ -f support/hooks/requirements-hooks.txt ]]; then
+    pip install -r support/hooks/requirements-hooks.txt
   fi
 
   pip install -U pip setuptools wheel
   pip install pre-commit detect-secrets
 
   # Install pre-commit hooks
-  pre-commit install --config support/.pre-commit-config.yaml --install-hooks
+  pre-commit install --config support/hooks/.pre-commit-config.yaml --install-hooks
 }
 
 _create_baseline() {
