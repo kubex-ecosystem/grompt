@@ -1,6 +1,6 @@
 module github.com/kubex-ecosystem/grompt
 
-go 1.25.1
+go 1.25.3
 
 require (
 	cloud.google.com/go/vertexai v0.15.0
