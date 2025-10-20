@@ -1,6 +1,6 @@
 module github.com/kubex-ecosystem/grompt
 
-go 1.25.1
+go 1.25.3
 
 require (
 	cloud.google.com/go/vertexai v0.15.0
@@ -51,8 +51,8 @@ require (
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/api v0.252.0
 	google.golang.org/genproto v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250922171735-9219d122eba9 // indirect
@@ -64,6 +64,6 @@ require (
 require (
 	github.com/fatih/color v1.18.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/kubex-ecosystem/logz v1.5.1
+	github.com/kubex-ecosystem/logz v1.5.5
 	github.com/spf13/pflag v1.0.10 // indirect
 )
