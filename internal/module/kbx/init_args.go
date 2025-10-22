@@ -6,9 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
-	l "github.com/kubex-ecosystem/logz"
 )
 
 var (
@@ -99,14 +96,6 @@ func NewInitArgs(
 		PubKeyPath:     GetValueOrDefaultSimple(pubKeyPath, os.ExpandEnv(DefaultGoBECertPath)),
 		Pwd:            GetValueOrDefaultSimple(pwd, ""),
 	}
-}
-
-type ILogger = l.Logger
-
-type Logger = gl.GLog[ILogger]
-
-func Log(level string, payload ...any) {
-	gl.Log(level, payload...)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

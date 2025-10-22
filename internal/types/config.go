@@ -9,10 +9,10 @@ import (
 	"net/netip"
 	"time"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz"
+	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
 var (

@@ -63,7 +63,7 @@ export OPENAI_API_KEY=sk-...
 
 ## Hierarchical Priority Flow
 
-```
+```plaintext
 ┌─────────────────────────────────────┐
 │  Request Received                   │
 └──────────┬──────────────────────────┘
@@ -127,7 +127,6 @@ This **prevents confusion** and ensures users understand what's happening.
 
 When no API keys are available, Grompt generates **template-based responses** following Kubex principles:
 
-- ✅ Radical simplicity
 - ✅ Modularity
 - ✅ Anti-jargon language
 - ✅ Practical, implementable solutions
@@ -135,16 +134,18 @@ When no API keys are available, Grompt generates **template-based responses** fo
 ### Example Demo Response
 
 **Input**:
+
 - Ideas: "REST API", "authentication", "PostgreSQL"
 - Purpose: "Code Generation"
 
 **Output**:
+
 ```markdown
 # Code Generation Expert Assistant
 
 ## Primary Objective
-Transform the provided ideas into actionable code generation solutions 
-following Kubex principles of radical simplicity and modularity.
+Transform the provided ideas into actionable code generation solutions
+following Kubex principles of modularity.
 
 ## User Requirements
 - REST API
@@ -152,11 +153,11 @@ following Kubex principles of radical simplicity and modularity.
 - PostgreSQL
 
 ## Task Instructions
-You are an expert code generation specialist. Based on the requirements above, 
+You are an expert code generation specialist. Based on the requirements above,
 provide a comprehensive solution that:
 
 ### Key Requirements:
-- Follow KUBEX principles: Radical Simplicity, Modularity, No Cages
+- Follow KUBEX principles: Modularity, No Vendor Lock-in, Practicality
 - Use clear, anti-jargon language
 - Provide modular, reusable components
 - Ensure outputs are platform-agnostic
@@ -174,8 +175,8 @@ provide a comprehensive solution that:
 - Use open standards and formats
 
 ## Context
-This prompt was generated using Grompt, part of the Kubex Ecosystem, 
-following principles of radical simplicity and avoiding technological cages.
+This prompt was generated using Grompt, part of the Kubex Ecosystem,
+following principles of modularity and clarity.
 
 ---
 *Generated in demo mode - Connect your AI provider API key for enhanced AI-powered prompts*
@@ -195,12 +196,14 @@ following principles of radical simplicity and avoiding technological cages.
 ### BYOK Mode
 
 **Best for:**
+
 - Personal projects
 - Sensitive environments
 - Cost tracking per user
 - Testing different providers
 
 **Example**:
+
 ```bash
 # Developer testing Claude vs OpenAI
 curl ... -H "X-API-Key: sk-ant-..." -d '{"provider":"claude",...}'
@@ -210,12 +213,14 @@ curl ... -H "X-API-Key: sk-..." -d '{"provider":"openai",...}'
 ### Server Mode
 
 **Best for:**
+
 - Team environments
 - Shared deployments
 - Consistent provider selection
 - Centralized billing
 
 **Example**:
+
 ```bash
 # Team server with OpenAI configured
 export OPENAI_API_KEY=sk-team-key
@@ -226,12 +231,14 @@ export OPENAI_API_KEY=sk-team-key
 ### Demo Mode
 
 **Best for:**
+
 - First-time users
 - Learning and exploration
 - Offline/air-gapped environments
 - Demonstrations and presentations
 
 **Example**:
+
 ```bash
 # No configuration needed!
 ./grompt start
@@ -261,7 +268,7 @@ If server config key fails:
 - 🎭 **Mode**: "demo"
 - ⚠️ **Warning indicator** in UI
 
-### Demo Mode
+### Demo Mode (Offline)
 
 - ✅ **Never fails** - always returns template-based response
 - 📊 **HTTP Status**: 200 (always success)
@@ -315,6 +322,7 @@ curl http://localhost:8080/api/config
 ```
 
 Response:
+
 ```json
 {
   "providers": {
@@ -390,6 +398,7 @@ Users can start using Grompt **immediately** without any configuration.
 ### 2. Maximum Flexibility
 
 Choose the mode that fits your needs:
+
 - Personal → BYOK
 - Team → Server
 - Testing → Demo

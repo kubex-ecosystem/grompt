@@ -235,7 +235,7 @@ class UnifiedAIService {
     const demoPrompt = `# ${purpose} Expert Assistant
 
 ## Primary Objective
-Transform the provided ideas into actionable ${purpose.toLowerCase()} solutions following Kubex principles of radical simplicity and modularity.
+Transform the provided ideas into actionable ${purpose.toLowerCase()} solutions following Kubex principles of modularity.
 
 ## User Requirements
 ${ideasText}
@@ -244,7 +244,7 @@ ${ideasText}
 You are an expert ${purpose.toLowerCase()} specialist. Based on the requirements above, provide a comprehensive solution that:
 
 ### Key Requirements:
-- Follow KUBEX principles: Radical Simplicity, Modularity, No Cages
+- Follow KUBEX principles: Modularity, Practicality, Interoperability
 - Use clear, anti-jargon language
 - Provide modular, reusable components
 - Ensure outputs are platform-agnostic
@@ -262,7 +262,7 @@ You are an expert ${purpose.toLowerCase()} specialist. Based on the requirements
 - Use open standards and formats
 
 ## Context
-This prompt was generated using Grompt, part of the Kubex Ecosystem, following principles of radical simplicity and avoiding technological cages.
+This prompt was generated using Grompt, part of the Kubex Ecosystem, following principles of modularity and clarity.
 
 ---
 *Generated in demo mode - Connect your AI provider API key for enhanced AI-powered prompts*`;

@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/kubex-ecosystem/grompt/utils"
+	gl "github.com/kubex-ecosystem/logz/logger"
 	"gopkg.in/yaml.v3"
 
 	s "github.com/kubex-ecosystem/grompt/internal/services/server"

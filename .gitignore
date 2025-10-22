@@ -79,10 +79,8 @@ support/docs/site/
 internal/services/server/build/*
 !internal/services/server/build/style.css
 .notes/
-.kubex/
-.claude/
-.codex/
-frontend/.notes/current_light.png
-frontend/.notes/dark.png
-frontend/.notes/light.png
+# .kubex/
+# .claude/
+# .codex/
+frontend/.notes/
 .venv-hooks

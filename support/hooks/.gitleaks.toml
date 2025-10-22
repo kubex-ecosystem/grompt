@@ -1,13 +1,11 @@
 title = "Kubex Gitleaks Config"
 
 [allowlist]
-description = "Ignora o README.md inteiro"
+description = "Ignora pasta do frontend buildado que é embarcado no backend"
 paths = [
-  '''README.md''',
-  '''^docs/.*$''',
-  '''^internal/sockets/messagery/rabbitmq\.go$''',
+  '''^internal/grompt/embedded/guiweb/assets/.*$'''
 ]
-rules = ['''(?i)README\.md''']
+
 
 [[rules]]
 id = "pre_commit_config"

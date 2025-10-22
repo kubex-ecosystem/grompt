@@ -89,7 +89,7 @@ npm run preview
 
 ### Project Structure (Kubex Standard)
 
-```
+```plaintext
 grompt/
 ├── cmd/                        # Application entrypoints
 │   ├── main.go                 # Main CLI entrypoint
@@ -202,7 +202,7 @@ func NewPromptEngine(config Config) PromptEngine {
 Always use the centralized logger:
 
 ```go
-import gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+import gl "github.com/kubex-ecosystem/logz/logger"
 
 gl.Log("info", "Starting server...")
 gl.Log("debug", "Processing request")
@@ -255,7 +255,7 @@ Build output is embedded in the Go binary during `make build`.
 9. **Documentation**: Exported functions MUST have godoc comments starting with the name
 10. **Composition**: Favor composition over inheritance; accept interfaces, return structs
 
-### Testing
+### Testing Structure
 
 - **Unit tests**: `tests/tests_*/` directories
 - **Integration tests**: `tests/*.sh` scripts
@@ -283,7 +283,7 @@ export GROMPT_ENV="dev"
 
 When running `grompt start` or `grompt gateway start`:
 
-```
+```plaintext
 GET  /api/config      # Available providers & configuration
 GET  /api/health      # Server health status
 GET  /api/models      # Available models per provider

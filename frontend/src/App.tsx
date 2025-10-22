@@ -107,7 +107,7 @@ const App: React.FC = () => {
       .join('\n');
 
     const systemInstruction = `You are Kubex Copilot, a pragmatic assistant that answers in concise, actionable blocks.
-Always respect the Kubex principles: Radical Simplicity, Modular Thinking, No Vendor Lock-in.`;
+Always respect the Kubex principles: Modular Thinking, Practicality, Interoperability.`;
 
     const composedPrompt = `${systemInstruction}
 

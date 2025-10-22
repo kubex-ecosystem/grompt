@@ -43,14 +43,14 @@ build_frontend() {
     exit 1
   }
 
-  if command -v npm &>/dev/null; then
+  if command -v pnpm &>/dev/null; then
       log info "Building frontend..." true
 
-      _frontend_install_output="$(npm i --no-fund --no-audit --loglevel=error --legacy-peer-deps || {
+      _frontend_install_output="$(pnpm install --force > /dev/null 2>&1 || {
           echo "Failed to install frontend dependencies."
       })"
 
-      _frontend_build_output="$(npm run build --silent > /dev/null 2>&1 || {
+      _frontend_build_output="$(pnpm run build > /dev/null 2>&1 || {
           echo "Failed to build frontend assets."
       })"
 
@@ -79,7 +79,7 @@ build_frontend() {
 
       log success "Frontend build moved to server directory successfully." true
   else
-      log fatal "npm is not installed. Please install Node.js and npm to continue." true
+      log fatal "pnpm is not installed. Please install Node.js and pnpm to continue." true
       exit 1
   fi
 }
