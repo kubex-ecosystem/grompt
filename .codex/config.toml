@@ -1,17 +1,17 @@
 [settings]
 model_reasoning_summary = "concise"
-user_intent_summary     = "detailed"
-project_summary         = "detailed"
-default_max_tokens_out  = 700
-fail_fast               = true
-temperature             = 0.1
+user_intent_summary = "detailed"
+project_summary = "detailed"
+default_max_tokens_out = 700
+fail_fast = true
+temperature = 0.1
 
 [manifests]
 # cada repo terá estes princípios leves sempre no contexto
 paths = [
   "docs/brand/**/kubex_brand_visual_spec*.md",
   "docs/architecture/**/Resilience-by-Design*.md",
-  "docs/governance/**/KUBEX_MANIFESTO*.md"
+  "docs/governance/**/KUBEX_MANIFESTO*.md",
 ]
 max_tokens = 300
 update_strategy = "incremental"
@@ -19,12 +19,12 @@ priority = "high"
 
 [context]
 scopes = [
-  { name = "objective",   max_tokens = 120, summarization = "bullet_goals" },
-  { name = "constraints", max_tokens = 120, summarization = "hard_rules"   },
-  { name = "facts",       max_tokens = 200, summarization = "code_facts"   },
-  { name = "delta",       max_tokens = 180, summarization = "git_diff"     },
-  { name = "plan",        max_tokens = 160, summarization = "step_plan"    },
-  { name = "exec",        max_tokens = 120, summarization = "checklist"    }
+  { name = "objective", max_tokens = 120, summarization = "bullet_goals" },
+  { name = "constraints", max_tokens = 120, summarization = "hard_rules" },
+  { name = "facts", max_tokens = 200, summarization = "code_facts" },
+  { name = "delta", max_tokens = 180, summarization = "git_diff" },
+  { name = "plan", max_tokens = 160, summarization = "step_plan" },
+  { name = "exec", max_tokens = 120, summarization = "checklist" },
 ]
 eviction_order = ["exec", "plan", "delta"]
 
@@ -41,14 +41,20 @@ allow_repo_writing_of_reports = false
 "/<ABS_PATH>/<REPO_NAME>" = { trust_level = "trusted" }
 
 [guards]
-dangerous_patterns    = ["rm -rf", "dd if=", "mkfs", "drop table", "helm uninstall --all"]
-require_confirmation  = true
-auto_dry_run          = true
+dangerous_patterns = [
+  "rm -rf",
+  "dd if=",
+  "mkfs",
+  "drop table",
+  "helm uninstall --all",
+]
+require_confirmation = true
+auto_dry_run = true
 
 [behaviors]
-goal_driven_context   = true
-prefer_recent_diffs   = true
-refuse_when_unsafe    = true
+goal_driven_context = true
+prefer_recent_diffs = true
+refuse_when_unsafe = true
 
 [summarizers]
 bullet_goals = """
@@ -69,3 +75,65 @@ step_plan = """
 checklist = """
 - Checklist [ ] executável.
 """
+
+[shell_environment_policy]
+# inherit can be "all" (default), "core", or "none"
+inherit = "core"
+# set to true to *skip* the filter for `"*KEY*"` and `"*TOKEN*"`
+# ignore_default_excludes = false
+# exclude patterns (case-insensitive globs)
+# exclude = ["AWS_*", "AZURE_*"]
+# force-set / override values
+set = { CI = "1" }
+# if provided, *only* vars matching these patterns are kept
+include_only = [
+  "PATH",
+  "HOME",
+  "BUILDX_GIT_INFO",
+  "GOROOT",
+  "GOPATH",
+  "PKG_CONFIG_PATH",
+]
+[sandbox]
+# List of paths outside the sandbox that should be made read-only accessible inside the sandbox.
+readable_roots = [
+  "/home/user/.local/bin/",
+  "/projects/TESTS/",
+  "/projects/kubex/",
+  "/projects/canalize/",
+  "/projects/DOCS/KUBEX/",
+  "/projects/BACKUPS/",
+  "/tmp/grompt_sandbox/",
+]
+writable_roots = [
+  "/projects/kubex/",
+  "/tmp/grompt_sandbox/",
+  "/projects/canalize/",
+  "/projects/TESTS/",
+  "/projects/DOCS/KUBEX/",
+]
+
+writable_paths = [
+  "/tmp/grompt_sandbox/",
+  "/projects/kubex/",
+  "/projects/canalize/",
+  "/projects/TESTS/",
+  "/projects/DOCS/KUBEX/",
+]
+
+readable_paths = [
+  "/home/user/.local/bin/",
+  "/projects/TESTS/",
+  "/projects/kubex/",
+  "/projects/canalize/",
+  "/projects/DOCS/KUBEX/",
+  "/projects/BACKUPS/",
+  "/tmp/grompt_sandbox/",
+]
+
+# Allow the command being run inside the sandbox to read environment variables.
+env_access = true
+
+# Allow the command being run inside the sandbox to make outbound network
+# requests. Disabled by default.
+network_access = true

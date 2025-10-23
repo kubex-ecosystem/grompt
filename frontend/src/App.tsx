@@ -1,53 +1,38 @@
-/**
- * Grompt - AI Prompt Engineering Tool
- * Main App component with integrated backend API, PWA support and Analyzer design system
- */
+//(trecho de integração do botão “Evolve”)
+import { buildLookatniBlob, requestUnifiedDiff } from "./services/evolver";
 
-import * as React from 'react'
-import PromptCrafter from './PromptCrafter'
-import PWAStatus from './components/pwa/PWAStatus'
-import { useMultiProvider } from './hooks/useMultiProvider'
+// defina a lista mínima do teu app:
+const EVOLVE_INCLUDE = [
+  "index.html",
+  "src/main.tsx",
+  "src/App.tsx",
+  "src/services/geminiService.ts",   // se existir
+  "src/styles.css",
+  "vite.config.ts",
+  "package.json",
+  "tsconfig.json"
+];
 
-// Analyzer design system background effects
-const BackgroundEffects: React.FC = () => (
-  <>
-    {/* Grid pattern background - following Analyzer design */}
-    <div
-      className="fixed inset-0 z-[-10]"
-      style={{
-        backgroundImage: `
-          linear-gradient(rgba(128,128,128,0.1) 1px, transparent 1px),
-          linear-gradient(to right, rgba(128,128,128,0.1) 1px, transparent 1px)
-        `,
-        backgroundSize: '24px 24px'
-      }}
-    />
+// Função que “pega” arquivos do runtime do teu ambiente.
+// Se não tiver __VFS__, substitui por fetch('/snapshot/<path>')
+function grabFile(path: string): string {
+  // @ts-expect-error ambiente do AI Studio/preview pode expor isso; se não, troca por fetch()
+  const b = window.__VFS__?.[path];
+  if (typeof b === "string") return b;
+  throw new Error(`VFS missing: ${path} (troque grabFile para fetch('/snapshot/${path}'))`);
+}
 
-    {/* Vignette effect for depth - following Analyzer design */}
-    <div
-      className="fixed inset-0 z-[-9]"
-      style={{
-        backgroundImage: 'radial-gradient(circle at center, transparent 40%, #030712 90%)'
-      }}
-    />
-  </>
-)
+async function handleVirtuousEvolve() {
+  setEvolveStep("generating_prompt");
+  const selfPrompt = [
+    "Perform a tiny but valuable refactor improving cohesion/clarity.",
+    "Prefer lazy-chunk UI pieces and remove any dead code.",
+    "Return ONLY a unified diff fenced with ```diff."
+  ].join("\n");
 
-export default function App() {
-  // Initialize multi-provider service
-  useMultiProvider()
-
-  return (
-    <div className="min-h-screen bg-[#030712] text-white font-sans selection:bg-purple-500/30">
-      <BackgroundEffects />
-
-      {/* PWA Status - Fixed position */}
-      <div className="fixed top-4 right-4 z-50">
-        <PWAStatus />
-      </div>
-
-      {/* Main Application */}
-      <PromptCrafter />
-    </div>
-  )
+  const blob = await buildLookatniBlob(grabFile, EVOLVE_INCLUDE);
+  setEvolveStep("refactoring");
+  const diff = await requestUnifiedDiff(blob, selfPrompt);
+  setEvolveDiff(diff);
+  setEvolveStep("done");
 }

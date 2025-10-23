@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grompt - AI Prompt Crafter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    >
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.4s ease, color 0.4s ease;
+        background-color: #f9fafb;
+        color: #334155;
+      }
+      body.dark-theme {
+        background-color: #0a0f14;
+        background-image:
+          linear-gradient(rgba(9, 20, 35, 0.45) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(9, 20, 35, 0.45) 1px, transparent 1px);
+        background-size: 24px 24px;
+        color: #e5f2f2;
+      }
+      body.light-theme {
+        background-color: #f9fafb;
+        background-image:
+          radial-gradient(circle at 1px 1px, rgba(8, 145, 178, 0.08) 1px, transparent 0);
+        background-size: 26px 26px;
+        color: #334155;
+      }
+      .font-orbitron { font-family: 'Orbitron', sans-serif; }
+      .font-plex-mono { font-family: 'IBM Plex Mono', monospace; }
+      .glow-border {
+        box-shadow: 0 0 18px -6px rgba(0, 136, 255, 0.18), 0 0 28px -8px rgba(168, 85, 247, 0.16);
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              display: ['Orbitron', 'Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+            colors: {
+              background: '#f9fafb',
+              surface: '#ffffff',
+              border: '#e2e8f0',
+              text: {
+                head: '#111827',
+                body: '#334155',
+              },
+              primary: {
+                DEFAULT: '#06b6d4',
+                hover: '#0891b2',
+                subtle: '#ecfeff',
+                foreground: '#024251',
+              },
+              accent: {
+                DEFAULT: '#a855f7',
+                hover: '#9333ea',
+                secondary: '#d946ef',
+                subtle: '#f5f3ff',
+                foreground: '#3b0764',
+              },
+              success: '#16a34a',
+              warning: '#f59e0b',
+              danger: '#ef4444',
+              glow: {
+                cyan: 'rgba(0, 136, 255, 0.08)',
+                lilac: 'rgba(124, 77, 255, 0.08)',
+              },
+            },
+            boxShadow: {
+              'soft-card': '0 18px 40px -28px rgba(15, 23, 42, 0.45)',
+              'glow-cyan': '0 0 22px -6px rgba(0, 136, 255, 0.35)',
+            }
+          },
+        },
+      }
+    </script>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.543.0",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="./assets/main-c-6vCLbz.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-CdglivQu.js">
+  <link rel="stylesheet" crossorigin href="./assets/main-tn0RQdqM.css">
+</head>
+  <body class="font-sans light-theme">
+    <div id="root"></div>
+  </body>
+</html>

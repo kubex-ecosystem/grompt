@@ -6,13 +6,11 @@
     "url": "git+https://github.com/kubex-ecosystem/grompt.git"
   },
   "homepage": "https://kubex-ecosystem.github.io/grompt/",
-  "packageManager": "npm@10.9.2",
+  "packageManager": "pnpm@10.19.0",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "setup": "npm i --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
-    "setup:ci": "npm ci --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
     "build": "vite build",
     "build:static": "vite build --mode production",
     "dev": "vite",
@@ -21,6 +19,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.0",
     "@google/genai": "^1.20.0",
+    "@tailwindcss/vite": "^4.1.15",
     "framer-motion": "^10.18.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.542.0",
@@ -36,8 +35,9 @@
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
+    "react-markdown": "^10.1.0",
     "tailwindcss": "^3.4.4",
     "typescript": "~5.8.2",
-    "vite": "^7.1.11"
+    "vite": "^7.1.6"
   }
 }

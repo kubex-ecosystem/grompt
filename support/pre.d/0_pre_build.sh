@@ -43,14 +43,14 @@ build_frontend() {
     exit 1
   }
 
-  if command -v npm &>/dev/null; then
+  if command -v pnpm &>/dev/null; then
       log info "Building frontend..." true
 
-      _frontend_install_output="$(npm i --no-audit --no-fund --prefer-offline --silent || {
+      _frontend_install_output="$(pnpm install --force > /dev/null 2>&1 || {
           echo "Failed to install frontend dependencies."
       })"
 
-      _frontend_build_output="$(npm run build --silent > /dev/null 2>&1 || {
+      _frontend_build_output="$(pnpm run build > /dev/null 2>&1 || {
           echo "Failed to build frontend assets."
       })"
 
@@ -67,27 +67,24 @@ build_frontend() {
           exit 1
       fi
 
-      if [[ -d "${_ROOT_DIR}/internal/grompt/embedded/guiweb" ]]; then
+      if [[ -d "${_ROOT_DIR}/internal/services/server/" ]]; then
           log notice "Removing old build directory..."
-          rm -rf "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
-              log fatal "Failed to remove old build directory." true
-              exit 1
-          }
+          rm -rf "${_ROOT_DIR}/internal/services/server/build"
       fi
 
-      mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
-          log fatal "Failed to move build directory to embedded/guiweb." true
+      mv './dist' "${_ROOT_DIR}/internal/services/server/build" || {
+          log fatal "Failed to move build directory to server." true
           exit 1
       }
 
       log success "Frontend build moved to embedded/guiweb directory successfully." true
   else
-      log fatal "npm is not installed. Please install Node.js and npm to continue." true
+      log fatal "pnpm is not installed. Please install Node.js and pnpm to continue." true
       exit 1
   fi
 }
 
 (build_frontend) || {
-  log fatal "An error occurred during the pre-build process." || echo "An error occurred during the pre-build process." >&2
+  log fatal "An error occurred during the pre-build process." | tee /dev/stderr
   exit 1
 }

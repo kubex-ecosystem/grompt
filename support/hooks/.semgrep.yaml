@@ -1,0 +1,27 @@
+# Semgrep configuration file for hooks
+
+rules:
+  - id: typescript-unused-import
+    severity: WARNING
+    message: "Remove unused import"
+    languages:
+      - typescript
+    patterns:
+      - pattern: import $X from "$Y";
+      - metavariable-pattern:
+          metavariable: $X
+          pattern: |
+            $X;
+            ...
+            import $X from "$Y";
+            ...
+    metadata:
+      category: best-practice
+      technology: typescript
+      cwe: "CWE-561: Dead Code"
+      owasp: "A9: Using Components with Known Vulnerabilities"
+      tags:
+        - security
+        - correctness
+        - maintainability
+        - unused-code

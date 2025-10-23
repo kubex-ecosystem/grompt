@@ -3,7 +3,7 @@ package module
 
 import (
 	cc "github.com/kubex-ecosystem/grompt/cmd/cli"
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/logz/logger"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/spf13/cobra"
 
@@ -57,11 +57,9 @@ func (m *Grompt) Command() *cobra.Command {
 		}, m.PrintBanner),
 	}
 
-	// Add subcommands to the root command
-	rtCmd.AddCommand(cc.GatewayCmds())
-	rtCmd.AddCommand(cc.NewDaemonCommand())
-
-	// Add more commands as needed
+	rtCmd.AddCommand(cc.ServerCmdList()...)
+	rtCmd.AddCommand(cc.SquadCmdList()...)
+	rtCmd.AddCommand(cc.AICmdList()...)
 	rtCmd.AddCommand(vs.CliCommand())
 
 	// Set usage definitions for the command and its subcommands

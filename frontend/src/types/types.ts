@@ -12,11 +12,12 @@ export enum AIProvider {
   GEMINI = 'gemini',
   OPENAI = 'openai',
   ANTHROPIC = 'anthropic',
+  DEEPSEEK = 'deepseek',
 }
 
 export enum GeminiModels {
-  GEMINI_FLASH = 'gemini-2.5-flash',
-  GEMINI_PRO = 'gemini-1.5-pro-latest',
+  GEMINI_FLASH = 'gemini-2.0-flash',
+  GEMINI_PRO = 'gemini-2.5-pro',
 }
 
 export enum OpenAIModels {
@@ -35,7 +36,12 @@ export enum AnthropicModels {
   CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20240620',
 }
 
-export type AIModel = GeminiModels | OpenAIModels | AnthropicModels;
+export enum DeepSeekModels {
+  DEEPSEEK_V1 = 'deepseek-v1',
+  DEEPSEEK_V2 = 'deepseek-v2',
+}
+
+export type AIModel = GeminiModels | OpenAIModels | AnthropicModels | DeepSeekModels;
 
 export interface AIResponse {
   text: string;
@@ -51,10 +57,26 @@ export interface AIResponse {
 }
 
 export interface MultiAIConfig {
+  // API keys for different providers
+  apiKey?: string;
+  azureApiKey?: string;
+  azureEndpoint?: string;
+  azureDeployment?: string;
+  anthropicApiKey?: string;
+  cohereApiKey?: string;
+  googleApiKey?: string;
+  googleModel?: string;
+  huggingfaceApiKey?: string;
+  deepseekApiKey?: string;
+
+  // Provider-specific configurations
   providers: {
     [AIProvider.GEMINI]?: {
       apiKey: string;
       defaultModel: GeminiModels;
+      baseURL?: string;
+      project?: string;
+      location?: string;
       options?: {
         safetySettings?: any[];
         generationConfig?: {
@@ -76,6 +98,7 @@ export interface MultiAIConfig {
           temperature?: number;
           max_tokens?: number;
           top_p?: number;
+          top_k?: number;
           frequency_penalty?: number;
           presence_penalty?: number;
         };
@@ -95,8 +118,22 @@ export interface MultiAIConfig {
         };
       };
     };
+    [AIProvider.DEEPSEEK]?: {
+      apiKey: string;
+      defaultModel: DeepSeekModels;
+      options?: {
+        baseURL?: string;
+        defaultQuery?: {
+          temperature?: number;
+          max_tokens?: number;
+          top_p?: number;
+          top_k?: number;
+        };
+      };
+    };
   };
   defaultProvider: AIProvider;
+  defaultModel: AIModel;
   enableCache?: boolean;
 }
 
@@ -109,6 +146,7 @@ export interface GenerateContentParams {
     temperature?: number;
     maxTokens?: number;
     topP?: number;
+    topK?: number;
     stream?: boolean;
     stopSequences?: string[];
   };

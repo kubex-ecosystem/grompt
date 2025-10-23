@@ -1,275 +1,128 @@
-# Instalação
+# Installation
 
-Esta página fornece instruções detalhadas para instalar e configurar o Grompt em diferentes plataformas.
+**Grompt** is distributed as a single binary with zero dependencies. No Docker, no Node.js, no Python required.
 
-## 📦 Opções de Instalação
+---
 
-### Opção 1: Download Binário (Recomendado)
+## System Requirements
 
-A forma mais simples de instalar o Grompt é baixando o binário pré-compilado para sua plataforma:
+- **OS**: Linux, macOS, or Windows
+- **Architecture**: amd64, arm64, or 386
+- **Disk Space**: ~20MB
+- **Memory**: ~20MB idle, ~50MB under load
 
-#### Windows
+---
 
-```powershell
-# PowerShell
-Invoke-WebRequest -Uri "https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_windows_amd64.exe" -OutFile "grompt.exe"
-.\grompt.exe --help
-```
+## Quick Install
 
-#### Linux
+### Option 1: Download Pre-built Binary
+
+Visit the [GitHub Releases](https://github.com/kubex-ecosystem/grompt/releases) page and download the binary for your platform:
 
 ```bash
-# Download e instalação
-curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64 -o grompt
+# Linux (amd64)
+wget https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt-linux-amd64
+chmod +x grompt-linux-amd64
+mv grompt-linux-amd64 /usr/local/bin/grompt
+
+# macOS (arm64 - M1/M2/M3)
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt-darwin-arm64 -o grompt
 chmod +x grompt
-sudo mv grompt /usr/local/bin/
-```
+mv grompt /usr/local/bin/grompt
 
-#### macOS
-
-```bash
-# macOS Intel
-curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_amd64 -o grompt
-
-# macOS Apple Silicon (M1/M2)
-curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_darwin_arm64 -o grompt
-
-# Tornar executável e mover para PATH
+# macOS (amd64 - Intel)
+curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt-darwin-amd64 -o grompt
 chmod +x grompt
-sudo mv grompt /usr/local/bin/
+mv grompt /usr/local/bin/grompt
 ```
 
-### Opção 2: Instalar via Make
+### Option 2: Build from Source
+
+Requires **Go 1.25.1+**:
 
 ```bash
-git clone https://github.com/kubex-ecosystem/grompt
+git clone https://github.com/kubex-ecosystem/grompt.git
+cd grompt
+make build
+```
+
+Binary will be available at `./dist/grompt`.
+
+### Option 3: Install to System PATH
+
+```bash
+git clone https://github.com/kubex-ecosystem/grompt.git
 cd grompt
 make install
 ```
 
-Este comando irá:
+This builds and installs to `/usr/local/bin/grompt`.
 
-1. Compilar o binário para sua plataforma
-2. Instalar em `/usr/local/bin/grompt`
-3. Tornar disponível globalmente
+---
 
-### Opção 3: Compilar do Código Fonte
-
-#### Pré-requisitos
-
-- **Go 1.25+** - [Instalar Go](https://golang.org/doc/install)
-- **Node.js 18+** - [Instalar Node.js](https://nodejs.org/)
-- **Make** - Disponível na maioria dos sistemas Unix
-
-#### Passos de Compilação
-
-```bash
-# 1. Clonar o repositório
-git clone https://github.com/kubex-ecosystem/grompt.git
-cd grompt
-
-# 2. Compilar
-make build
-
-# 3. Executar
-./dist/grompt --help
-```
-
-#### Compilação para Outras Plataformas
-
-```bash
-# Compilar para Windows
-make build-windows
-
-# Compilar para Linux
-make build-linux
-
-# Compilar para macOS
-make build-darwin
-
-# Compilar para todas as plataformas
-make build-all
-```
-
-## ⚙️ Configuração Inicial
-
-### 1. Verificar Instalação
+## Verify Installation
 
 ```bash
 grompt --version
 ```
 
-### 2. Configurar Variáveis de Ambiente (Opcional)
+You should see output like:
 
-O Grompt funciona em modo demo sem configuração, mas para usar provedores de IA externos, configure as chaves de API:
-
-```bash
-# Adicione ao seu ~/.bashrc, ~/.zshrc, ou ~/.profile
-
-# OpenAI
-export OPENAI_API_KEY="sk-..."
-
-# Claude (Anthropic)
-export CLAUDE_API_KEY="sk-ant-..."
-
-# DeepSeek
-export DEEPSEEK_API_KEY="..."
-
-# Gemini
-export GEMINI_API_KEY="..."
-
-# Ollama (local)
-export OLLAMA_ENDPOINT="http://localhost:11434"
-
-# Configurações do servidor (opcional)
-export PORT=8080
-export DEBUG=false
 ```
-
-### 3. Primeiro Teste
-
-```bash
-# Testar em modo demo (sem API keys)
-grompt
-
-# Testar CLI
-grompt ask "Olá mundo!" --provider demo
-```
-
-## 🔧 Configuração Avançada
-
-### Configuração do Servidor
-
-Por padrão, o Grompt roda na porta 8080. Para alterar:
-
-```bash
-export PORT=3000
-grompt
-```
-
-Ou diretamente:
-
-```bash
-grompt --port 3000
-```
-
-### Configuração de Debug
-
-Para habilitação de logs detalhados:
-
-```bash
-export DEBUG=true
-grompt
-```
-
-### Configuração para Ollama Local
-
-Se você tem o Ollama instalado localmente:
-
-```bash
-# Instalar Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Baixar um modelo
-ollama pull llama2
-
-# Configurar endpoint
-export OLLAMA_ENDPOINT="http://localhost:11434"
-export OLLAMA_MODEL="llama2"
-```
-
-## 🛠️ Solução de Problemas
-
-### Problemas Comuns
-
-#### "Permission denied" no Linux/macOS
-
-```bash
-chmod +x grompt
-```
-
-#### "grompt: command not found"
-
-Certifique-se que o binário está no PATH:
-
-```bash
-echo $PATH
-which grompt
-```
-
-#### Porta já em uso
-
-```bash
-# Verificar qual processo usa a porta
-lsof -i :8080
-
-# Usar porta diferente
-grompt --port 8081
-```
-
-#### Problemas de Firewall
-
-```bash
-# Linux: permitir porta no firewall
-sudo ufw allow 8080
-
-# macOS: permitir no firewall do sistema
-# Vá em System Preferences > Security & Privacy > Firewall
-```
-
-### Logs de Debug
-
-```bash
-DEBUG=true grompt
-```
-
-### Testar Conectividade
-
-```bash
-# Testar se o servidor está rodando
-curl http://localhost:8080/api/health
-
-# Testar provedores de IA
-grompt ask "teste" --provider openai --dry-run
-```
-
-## 📋 Requisitos do Sistema
-
-| Sistema | Requisitos Mínimos |
-|---------|-------------------|
-| **Memória RAM** | 100 MB |
-| **Espaço em Disco** | 50 MB |
-| **Processador** | x86_64 ou ARM64 |
-| **Sistema Operacional** | Linux, macOS, Windows |
-| **Rede** | Conectividade com internet (para provedores de IA externos) |
-
-## 🔄 Atualizações
-
-### Verificar Versão Atual
-
-```bash
-grompt --version
-```
-
-### Atualizar para Nova Versão
-
-```bash
-# Download manual
-curl -L https://github.com/kubex-ecosystem/grompt/releases/latest/download/grompt_linux_amd64 -o grompt-new
-chmod +x grompt-new
-sudo mv grompt-new /usr/local/bin/grompt
-
-# Ou recompilar do código
-cd grompt
-git pull
-make build
-sudo cp dist/grompt /usr/local/bin/
+Grompt v1.0.0
+Modern AI Prompt Engineering Platform
+Part of the Kubex Ecosystem
 ```
 
 ---
 
-## 📚 Próximos Passos
+## Configuration (Optional)
 
-- **[Início Rápido](quickstart.md)** - Primeiros passos com o Grompt
-- **[Comandos CLI](../user-guide/cli-commands.md)** - Referência completa dos comandos
-- **[Configuração](../user-guide/configuration.md)** - Configuração detalhada dos provedores de IA
+Grompt works **without any configuration** thanks to:
+
+- **Demo Mode**: Always available as fallback
+- **BYOK Support**: Use your own API keys per request
+- **Server Config**: Set environment variables for convenience
+
+### Environment Variables
+
+To use specific AI providers, set these **optional** variables:
+
+```bash
+# OpenAI
+export OPENAI_API_KEY=sk-...
+
+# Anthropic Claude
+export CLAUDE_API_KEY=sk-ant-...
+
+# Google Gemini
+export GEMINI_API_KEY=...
+
+# DeepSeek
+export DEEPSEEK_API_KEY=...
+
+# ChatGPT
+export CHATGPT_API_KEY=...
+
+# Ollama (local)
+export OLLAMA_ENDPOINT=http://localhost:11434
+```
+
+!!! note "Optional Configuration"
+    All environment variables are **optional**. Grompt uses a hierarchical fallback:
+
+    1. **BYOK** (Your API Key via UI) → Priority
+    2. **Server Config** (ENV vars) → Fallback
+    3. **Demo Mode** → Never fails!
+
+---
+
+## Next Steps
+
+- [Quick Start Guide](quick-start.md) - Get started in 60 seconds
+- [BYOK Feature](../features/byok.md) - Use your own API keys
+- [Resilience Modes](../features/resilience.md) - Understand fallback system
+
+---
+
+**Binary size**: ~15MB | **Memory**: ~20MB idle | **Dependencies**: Zero
