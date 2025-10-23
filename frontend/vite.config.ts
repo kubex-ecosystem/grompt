@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 
 const getEnvResilient = (mode: string, envDir: string) => {
@@ -40,11 +41,11 @@ export default defineConfig(({ mode }) => {
       'process.env.JIRA_INSTANCE_URL': JSON.stringify(env.VITE_JIRA_INSTANCE_URL || env.JIRA_INSTANCE_URL || ""),
       'process.env.JIRA_USER_EMAIL': JSON.stringify(env.VITE_JIRA_USER_EMAIL || env.JIRA_USER_EMAIL || "")
     },
-    // resolve: {
-    //   alias: {
-    //     '@': fileURLToPath(new URL('.', import.meta.url)),
-    //   }
-    // },
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('.', import.meta.url)),
+      }
+    },
     build: {
       rollupOptions: {
         external: [
@@ -121,6 +122,7 @@ export default defineConfig(({ mode }) => {
           ]
 
         },
+        external: ["@/config/DemoMode", "@/constants/onboardingSteps"]
       },
       outDir: 'dist',
       sourcemap: false,
@@ -141,4 +143,3 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
-

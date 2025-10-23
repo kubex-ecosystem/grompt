@@ -9,7 +9,7 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   RefactorCodeParams
-} from "../types";
+} from "../../../types/types";
 
 export class MultiAIWrapper {
   private providers: Map<AIProvider, { generateContent: any; streamContent?: any }>;

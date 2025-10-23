@@ -115,6 +115,7 @@ __source_script_if_needed "what_platform" "${_SCRIPT_DIR:-}/platform.sh" || exit
 __source_script_if_needed "check_dependencies" "${_SCRIPT_DIR:-}/validate.sh" || exit 1
 __source_script_if_needed "detect_shell_rc" "${_SCRIPT_DIR:-}/install_funcs.sh" || exit 1
 __source_script_if_needed "build_binary" "${_SCRIPT_DIR:-}/build.sh" || exit 1
+__source_script_if_needed "optimize_media" "${_SCRIPT_DIR:-}/optimize_media.sh" || exit 1
 
 # Initialize traps
 set_trap "${_main_args[@]}"
@@ -232,16 +233,20 @@ __main() {
       echo "Usage: make {build|build-dev|install|build-docs|clean|test|help}"
       echo "Commands:"
       echo "  build    - Compiles the binary for the specified platform and architecture."
-      echo "  install  - Installs the binary, either by downloading a pre-compiled version or building it locally."
       echo "  build-dev - Builds the binary in development mode (without compression)."
+      echo "  install  - Installs the binary, either by downloading a pre-compiled version or building it locally."
+      echo "  uninstall - Uninstalls the binary from the system."
       echo "  build-docs - Builds the documentation for the project."
+      echo "  serve-docs - Serves the generated documentation locally."
+      echo "  pub-docs - Publishes the documentation to GitHub Pages."
+      echo "  optimize-media - Optimizes media files (images, videos) for better performance."
       echo "  test     - Runs the tests for the project."
       echo "  clean    - Cleans up build artifacts."
       echo "  help     - Displays this help message."
 
       return 0
       ;;
-    build-dev|BUILD-DEV|-bd|-BD)
+    build-dev|BUILD-DEV|-bd|-BD|dev)
       log info "Preparing to build the binary..."
       if ! validate_versions; then
         log error "Required dependencies are missing. Please install them and try again." true
@@ -318,11 +323,26 @@ __main() {
         log error "Required dependencies are missing. Please install them and try again." true
         return 1
       fi
-      if ! go test ./...; then
+      if ! go test -v "${_ROOT_DIR:-}/..." ; then
         log error "Tests failed. Please check the output for details." true
         return 1
       fi
       log success "All tests passed successfully."
+      ;;
+
+    # OPTIMIZE-MEDIA
+    # Optimize media files (images, videos) for better performance
+    optimize-media|OPTIMIZE-MEDIA|-om|-OM)
+      log info "Running optimize-media command..."
+      if ! check_dependencies; then
+        log error "Required dependencies are missing. Please install them and try again." true
+        return 1
+      fi
+      optimize_media || {
+        log error "Media optimization failed. Please check the output for details." true
+        return 1
+      }
+      log success "Media optimization completed successfully."
       ;;
 
     # BUILD-DOCS
@@ -402,6 +422,8 @@ __main() {
       log success "Documentation server successfully ran at http://localhost:8081/docs"
       ;;
 
+    # PUB-DOCS
+    # Publish the documentation to GitHub Pages
     pub-docs|PUB-DOCS|-pd|-PD)
       log info "Publishing Documentation..."
       cd "${_ROOT_DIR:-}/docs" || {

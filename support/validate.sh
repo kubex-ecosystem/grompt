@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # lib/validate.sh – Validação da versão do Go e dependências
 
+set -euo pipefail
+
 # Source go version management functions
 # shellcheck disable=SC1091
-source "$(dirname "${BASH_SOURCE[0]}")/go_version.sh"
+source "$(dirname "${0}")/go_version.sh"
 
 validate_versions() {
     local go_setup_url='https://raw.githubusercontent.com/kubex-ecosystem/gosetup/main/go.sh'
@@ -11,27 +13,38 @@ validate_versions() {
 
     # Use modular functions for version checking
     current_version="$(get_current_go_version)"
-    required_version="$(get_required_go_version)"
-
-    if [[ "${current_version}" == "not-installed" ]]; then
-        log error "Go is not installed or not found in PATH."
-        return 1
-    fi
+    required_version="$(get_required_go_version "${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/go.mod")"
 
     if [[ -z "$required_version" ]]; then
-        log error "Could not determine the target Go version from go.mod."
+        log error "Could not determine the target Go version for this project."
         return 1
     fi
 
-    # Check version compatibility
-    if [[ "$current_version" != "$required_version" ]]; then
+    # Check if Go is installed, if not, attempt to install it
+    if [[ "${current_version}" == "not-installed" ]]; then
+      log warn "Go is not installed. Attempting to install Go version ${required_version}."
+      local go_installation_output
+      if [[ -t 0 ]]; then
+          go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+      else
+          # shellcheck disable=SC2030
+          go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+      fi
+
+      # shellcheck disable=SC2181
+      if [[ $? -ne 0 ]]; then
+          log error "Failed to install Go version ${required_version}. Output: ${go_installation_output}"
+          return 1
+      fi
+    elif [[ "$current_version" != "$required_version" ]]; then
         log warn "Go version mismatch: current=${current_version}, required=${required_version}"
 
         local go_installation_output
         if [[ -t 0 ]]; then
             go_installation_output="$(bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
         else
-            go_installation_output="$(export NON_INTERACTIVE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
+            # shellcheck disable=SC2031
+            go_installation_output="$(export NON_INTERACTIVE=true; export QUIET=true;  export FORCE=true; bash -c "$(curl -sSfL "${go_setup_url}")" -s --version "$required_version" 2>&1)"
         fi
 
         # shellcheck disable=SC2181
@@ -46,8 +59,8 @@ validate_versions() {
     manifest_file="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-/internal/module/info/manifest.json}"
 
     if [[ -f "${manifest_file}" ]]; then
-        mapfile -t dependencies < <(jq -r '.dependencies[]?' "${manifest_file}")
-        check_dependencies "${dependencies[@]}" || return 1
+      mapfile -t dependencies < <(jq -r '.dependencies[]?' "${manifest_file}")
+      check_dependencies "${dependencies[@]}" || return 1
     fi
     return 0
 }

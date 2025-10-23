@@ -605,10 +605,10 @@ export default function ProjectExtractor({ projectFile, projectName, description
           </div>
           <div className="flex gap-2">
             <button
-              aria-pressed={showStats}
-              onClick={() => setShowStats((s) => !s)}
+              title="Extraction mode"
+              onClick={() => setExtractionMode((m) => (m === 'preview' ? 'download' : 'preview'))}
               className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-              title={t(showStats ? 'hideStats' : 'showStats')}
+              title="Ver Estatísticas"
             >
               <ChartBarIcon className="w-5 h-5" />
             </button>

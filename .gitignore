@@ -2,6 +2,8 @@
 
 !grompt/
 .venv/
+.notes/
+bkp
 
 # Build outputs
 
@@ -15,6 +17,7 @@ dist/
 *.dylib
 *.test
 *.out
+
 go.work
 
 # Node.js
@@ -29,15 +32,7 @@ yarn-error.log*
 
 # React
 !build/index.html
-frontend/build/*.js
-frontend/build/*.css
-frontend/build/*.html
-frontend/build/*.ico
-frontend/build/*.png
-frontend/build/*.svg
-frontend/build/*.jpg
-frontend/build/*.wasm
-
+frontend/build/
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
@@ -73,14 +68,9 @@ temp/
 *_linux_amd64
 *_linux_amd64*
 bkp/
-
+grompt
 docs/prompt/
 support/docs/site/
 internal/services/server/build/*
 !internal/services/server/build/style.css
-.notes/
-# .kubex/
-# .claude/
-# .codex/
-frontend/.notes/
-.venv-hooks
+.venv-hooks/

@@ -1,87 +1,7 @@
+// Package types defines interfaces and types for AI providers
 package types
 
-import (
-	"context"
-	"fmt"
-)
-
-// Message represents a single chat message
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// Usage represents token usage and cost information
-type Usage struct {
-	Completion int     `json:"completion_tokens"`
-	Prompt     int     `json:"prompt_tokens"`
-	Tokens     int     `json:"tokens"`
-	Ms         int64   `json:"latency_ms"`
-	CostUSD    float64 `json:"cost_usd"`
-	Provider   string  `json:"provider"`
-	Model      string  `json:"model"`
-}
-
-type ServerCORS struct {
-	AllowOrigins []string `yaml:"allow_origins"`
-}
-
-type ServerConfig struct {
-	Addr  string     `yaml:"addr"`
-	CORS  ServerCORS `yaml:"cors"`
-	Debug bool       `yaml:"debug"`
-}
-
-type DefaultsConfig struct {
-	TenantID                   string    `yaml:"tenant_id"`
-	UserID                     string    `yaml:"user_id"`
-	Byok                       string    `yaml:"byok"`
-	NotificationProvider       *Provider `yaml:"notification_provider"`
-	NotificationTimeoutSeconds int       `yaml:"notification_timeout_seconds"`
-}
-
-type ToolCall struct {
-	Name string      `json:"name"`
-	Args interface{} `json:"args"` // geralmente map[string]any
-}
-
-// ProviderConfig holds configuration for a specific provider
-type ProviderConfig struct {
-	BaseURL      string `yaml:"base_url"`
-	KeyEnv       string `yaml:"key_env"`
-	DefaultModel string `yaml:"default_model"`
-	Type         string `yaml:"type"` // "openai", "anthropic", "groq", "openrouter", "ollama"
-}
-
-// Provider interface defines the contract for AI providers
-type Provider interface {
-	Name() string
-	Chat(ctx context.Context, req ChatRequest) (<-chan ChatChunk, error)
-	Execute(ctx context.Context, prompt string) (string, error)
-	GetCapabilities(ctx context.Context) *Capabilities
-	Available() bool
-	Notify(ctx context.Context, event NotificationEvent) error
-}
-
-// ChatRequest represents a chat completion request
-type ChatRequest struct {
-	Headers  map[string]string `json:"-"`
-	Provider string            `json:"provider"`
-	Model    string            `json:"model"`
-	Messages []Message         `json:"messages"`
-	Temp     float32           `json:"temperature"`
-	Stream   bool              `json:"stream"`
-	Meta     map[string]any    `json:"meta"`
-}
-
-// ChatChunk represents a streaming response chunk
-type ChatChunk struct {
-	Content  string    `json:"content,omitempty"`
-	Done     bool      `json:"done"`
-	Usage    *Usage    `json:"usage,omitempty"`
-	Error    string    `json:"error,omitempty"`
-	ToolCall *ToolCall `json:"toolCall,omitempty"`
-}
+import "fmt"
 
 // Capabilities describes what a provider can do
 type Capabilities struct {
@@ -90,11 +10,6 @@ type Capabilities struct {
 	SupportsStreaming bool     `json:"supports_streaming"`
 	Models            []string `json:"models"`
 	Pricing           *Pricing `json:"pricing,omitempty"`
-	CanChat           bool
-	CanStream         bool
-	CanNotify         bool
-	CanExecute        bool
-	SupportsTools     bool
 }
 
 // Pricing information for the provider
@@ -123,15 +38,15 @@ func (cp *ProviderImpl) Version() string {
 }
 
 // Execute sends a prompt to the provider and returns the response
-func (cp *ProviderImpl) Execute(ctx context.Context, prompt string) (string, error) {
+func (cp *ProviderImpl) Execute(prompt string) (string, error) {
 	if cp == nil || cp.VAPI == nil {
 		return "", fmt.Errorf("provider is not available")
 	}
 	return cp.VAPI.Complete(prompt, 2048, "") // Default max tokens
 }
 
-// Available checks if the provider is configured and ready
-func (cp *ProviderImpl) Available() bool {
+// IsAvailable checks if the provider is configured and ready
+func (cp *ProviderImpl) IsAvailable() bool {
 	if cp == nil || cp.VAPI == nil {
 		return false
 	}
@@ -139,7 +54,7 @@ func (cp *ProviderImpl) Available() bool {
 }
 
 // GetCapabilities returns provider-specific capabilities
-func (cp *ProviderImpl) GetCapabilities(ctx context.Context) *Capabilities {
+func (cp *ProviderImpl) GetCapabilities() *Capabilities {
 	if cp == nil {
 		return nil
 	}
@@ -199,156 +114,47 @@ func (cp *ProviderImpl) Notify(ctx context.Context, event NotificationEvent) err
 	return fmt.Errorf("provider does not support notifications")
 }
 
-// getMaxTokensForProvider returns max tokens for each provider
-func getMaxTokensForProvider(providerName string) int {
-	switch providerName {
-	case "openai":
-		return 4096
-	case "claude":
-		return 8192
-	case "gemini":
-		return 8192
-	case "deepseek":
-		return 4096
-	case "ollama":
-		return 2048
-	default:
-		return 2048
-	}
+// Provider interface defines the contract for AI providers
+type Provider interface {
+	Name() string
+	Chat(ctx context.Context, req ChatRequest) (<-chan ChatChunk, error)
+	Available() error
+	Notify(ctx context.Context, event NotificationEvent) error
 }
 
-// getPricingForProvider returns pricing information for each provider
-func getPricingForProvider(providerName string) *Pricing {
-	switch providerName {
-	case "openai":
-		return &Pricing{
-			InputCostPer1K:  0.0015,
-			OutputCostPer1K: 0.002,
-			Currency:        "USD",
-		}
-	case "claude":
-		return &Pricing{
-			InputCostPer1K:  0.003,
-			OutputCostPer1K: 0.015,
-			Currency:        "USD",
-		}
-	case "gemini":
-		return &Pricing{
-			InputCostPer1K:  0.000125,
-			OutputCostPer1K: 0.000375,
-			Currency:        "USD",
-		}
-	case "deepseek":
-		return &Pricing{
-			InputCostPer1K:  0.00014,
-			OutputCostPer1K: 0.00028,
-			Currency:        "USD",
-		}
-	case "ollama":
-		return &Pricing{
-			InputCostPer1K:  0.0,
-			OutputCostPer1K: 0.0,
-			Currency:        "USD", // Free local model
-		}
-	default:
-		return nil
-	}
+// ChatRequest represents a chat completion request
+type ChatRequest struct {
+	Headers  map[string]string `json:"-"`
+	Provider string            `json:"provider"`
+	Model    string            `json:"model"`
+	Messages []Message         `json:"messages"`
+	Temp     float32           `json:"temperature"`
+	Stream   bool              `json:"stream"`
+	Meta     map[string]any    `json:"meta"`
 }
 
-// NewProviders creates all available providers based on configuration
-func NewProviders(config IConfig) []*ProviderImpl {
-	var activeProviders []*ProviderImpl
-
-	// List of all supported providers
-	providerConfigs := []struct {
-		name string
-		key  string
-	}{
-		{"openai", "openai"},
-		{"claude", "claude"},
-		{"gemini", "gemini"},
-		{"deepseek", "deepseek"},
-		{"ollama", "ollama"},
-		{"chatgpt", "chatgpt"},
-	}
-
-	for _, pc := range providerConfigs {
-		// Check if provider is configured
-		if config.GetAPIKey(pc.key) != "" {
-			api := config.GetAPIConfig(pc.name)
-			if api != nil && api.IsAvailable() {
-				provider := &ProviderImpl{
-					VName:   pc.name,
-					VAPI:    api,
-					VConfig: config,
-				}
-				activeProviders = append(activeProviders, provider)
-			}
-		}
-	}
-
-	return activeProviders
+// Message represents a single chat message
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
-// Individual provider constructors for engine initialization
-
-// NewOpenAIProvider creates a new OpenAI provider
-func NewOpenAIProvider(apiKey string) *ProviderImpl {
-	api := NewOpenAIAPI(apiKey)
-	return &ProviderImpl{
-		VName: "openai",
-		VAPI:  api,
-	}
+// Usage represents token usage and cost information
+type Usage struct {
+	Completion int     `json:"completion_tokens"`
+	Prompt     int     `json:"prompt_tokens"`
+	Tokens     int     `json:"tokens"`
+	Ms         int64   `json:"latency_ms"`
+	CostUSD    float64 `json:"cost_usd"`
+	Provider   string  `json:"provider"`
+	Model      string  `json:"model"`
 }
 
-// NewClaudeProvider creates a new Claude provider
-func NewClaudeProvider(apiKey string) *ProviderImpl {
-	api := NewClaudeAPI(apiKey)
-	return &ProviderImpl{
-		VName: "claude",
-		VAPI:  api,
-	}
-}
-
-// NewGeminiProvider creates a new Gemini provider
-func NewGeminiProvider(apiKey string) *ProviderImpl {
-	api := NewGeminiAPI(apiKey)
-	return &ProviderImpl{
-		VName: "gemini",
-		VAPI:  api,
-	}
-}
-
-// NewDeepSeekProvider creates a new DeepSeek provider
-func NewDeepSeekProvider(apiKey string) *ProviderImpl {
-	api := NewDeepSeekAPI(apiKey)
-	return &ProviderImpl{
-		VName: "deepseek",
-		VAPI:  api,
-	}
-}
-
-// NewOllamaProvider creates a new Ollama provider
-func NewOllamaProvider() *ProviderImpl {
-	api := NewOllamaAPI("http://localhost:11434")
-	return &ProviderImpl{
-		VName: "ollama",
-		VAPI:  api,
-	}
-}
-
-func NewChatGPTProvider(apiKey string) *ProviderImpl {
-	api := NewChatGPTAPI(apiKey)
-	return &ProviderImpl{
-		VName: "chatgpt",
-		VAPI:  api,
-	}
-}
-
-func NewProvider(name, apiKey string, cfg IConfig) *ProviderImpl {
-	return &ProviderImpl{
-		VName:   name,
-		VAPI:    cfg.GetAPIConfig(name),
-		VConfig: cfg,
-	}
+// ChatChunk represents a streaming response chunk
+type ChatChunk struct {
+	Content  string    `json:"content,omitempty"`
+	Done     bool      `json:"done"`
+	Usage    *Usage    `json:"usage,omitempty"`
+	Error    string    `json:"error,omitempty"`
+	ToolCall *ToolCall `json:"toolCall,omitempty"`
 }

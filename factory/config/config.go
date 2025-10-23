@@ -2,28 +2,32 @@
 package config
 
 import (
-	grt "github.com/kubex-ecosystem/grompt"
-	tp "github.com/kubex-ecosystem/grompt/internal/types"
-	logz "github.com/kubex-ecosystem/logz"
+	"encoding/json"
+	"os"
+	"path/filepath"
+
+	providersPkg "github.com/kubex-ecosystem/grompt/internal/providers"
+	"github.com/kubex-ecosystem/grompt/internal/types"
+	"gopkg.in/yaml.v3"
+
+	l "github.com/kubex-ecosystem/logz"
 )
 
-type Config = grt.Config
-
-type APIConfig = grt.APIConfig
+type Config = types.IConfig
 
 // NewConfig reconstructs a legacy configuration using the updated engine internals.
 func NewConfig(
-	port string,
-	bindAddr string,
-	openAIKey string,
-	deepSeekKey string,
-	ollamaEndpoint string,
-	claudeKey string,
-	geminiKey string,
+	bindAddr,
+	port,
+	openAIKey,
+	deepSeekKey,
+	ollamaEndpoint,
+	claudeKey,
+	geminiKey,
 	chatGPTKey string,
-	logger logz.Logger,
-) Config {
-	return tp.NewConfig(
+	logger l.Logger,
+) types.IConfig {
+	return types.NewConfig(
 		bindAddr,
 		port,
 		openAIKey,
@@ -36,7 +40,49 @@ func NewConfig(
 	)
 }
 
-// NewConfigFromFile loads a configuration file and augments it with environment overrides.
-func NewConfigFromFile(path string) Config {
-	return grt.DefaultConfig(path)
+func NewConfigFromFile(filePath string) types.IConfig {
+	var cfg types.Config
+	if _, statErr := os.Stat(filePath); statErr != nil {
+		return &types.Config{}
+	}
+	switch fileExt := filepath.Ext(filePath); fileExt {
+	case ".json":
+		if err := readJSONFile(filePath, &cfg); err != nil {
+			return &types.Config{}
+		}
+	case ".yaml", ".yml":
+		if err := readYAMLFile(filePath, &cfg); err != nil {
+			return &types.Config{}
+		}
+	default:
+		return &types.Config{}
+	}
+	return &cfg
+}
+
+func readJSONFile(filePath string, cfg *types.Config) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	return decoder.Decode(cfg)
+}
+
+func readYAMLFile(filePath string, cfg *types.Config) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	decoder := yaml.NewDecoder(file)
+	return decoder.Decode(cfg)
+}
+
+func NewProvider(name, apiKey, version string) providersPkg.Provider {
+	cfg := types.NewConfig("", "", "", "", "", "", "", "", nil)
+	return providersPkg.NewProvider(name, apiKey, version, cfg)
 }

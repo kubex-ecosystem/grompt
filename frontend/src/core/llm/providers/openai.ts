@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import {
   AIModel,
   AIProvider,
@@ -7,7 +6,8 @@ import {
   GenerateContentParams,
   MultiAIConfig,
   OpenAIModels
-} from "../types";
+} from "../../../types/types";
+import OpenAI from "openai";
 
 
 export class OpenAIProvider extends BaseProvider {

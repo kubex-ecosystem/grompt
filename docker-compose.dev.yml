@@ -1,0 +1,49 @@
+name: 'Kubex GemX Grompt Development Environment'
+
+services:
+  gemx-grompt-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    image: gemx-grompt:latest
+    container_name: gemx-grompt-dev
+    ports:
+      - "8080:8080"
+      - "2345:2345" # Delve debugger port
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GO_ENV=development
+    volumes:
+      - .:/app
+      - go_modules:/go/pkg/mod
+    networks:
+      - grompt-dev-network
+    working_dir: /app
+    command: ["go", "run", "./cmd/main.go", "gateway", "serve"]
+    restart: unless-stopped
+
+  frontend-dev:
+    image: node:18-alpine
+    container_name: grompt-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    networks:
+      - grompt-dev-network
+    working_dir: /app
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    restart: unless-stopped
+
+volumes:
+  go_modules:
+  node_modules:
+
+networks:
+  grompt-dev-network:
+    driver: bridge

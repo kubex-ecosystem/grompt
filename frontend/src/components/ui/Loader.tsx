@@ -1,4 +1,3 @@
-import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 interface LoaderProps {
@@ -6,11 +5,19 @@ interface LoaderProps {
   className?: string;
 }
 
-const Loader: React.FC<LoaderProps> = ({ label, className }) => (
-  <div className={`flex items-center gap-3 text-slate-500 dark:text-slate-300 ${className ?? ''}`}>
-    <Loader2 className="h-5 w-5 animate-spin" />
-    {label && <span className="text-sm font-medium">{label}</span>}
-  </div>
-);
+export const Loader: React.FC<LoaderProps> = ({ size = 'md', className = '' }) => {
+  const sizeClasses = {
+    sm: 'w-5 h-5 border-2',
+    md: 'w-8 h-8 border-4',
+    lg: 'w-12 h-12 border-4',
+  };
 
-export default Loader;
+  return (
+    <div
+      className={`animate-spin rounded-full border-border border-t-primary ${sizeClasses[size]} ${className}`}
+      role="status"
+    >
+      <span className="sr-only">Loading...</span>
+    </div>
+  );
+};

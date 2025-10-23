@@ -7,15 +7,32 @@ set -euo pipefail
 # Integrates with GoSetup for installation
 
 get_required_go_version() {
+  # If _VERSION_GO is set, use it directly
+  if [[ -n "$_VERSION_GO" ]]; then
+    echo "$_VERSION_GO"
+    return
+  fi
+
+  _VERSION_GO="$(jq -r '.go_version' "${_ROOT_DIR:-$(git rev-parse --show-toplevel)}/${_MANIFEST_SUBPATH:-internal/module/info/manifest.json}" 2>/dev/null || echo "")"
+  if [[ -n "$_VERSION_GO" && "$_VERSION_GO" != "null" ]]; then
+    echo "$_VERSION_GO"
+    return
+  fi
+
   local go_mod_path="${1:-go.mod}"
 
   if [[ ! -f "${go_mod_path}" ]]; then
-    echo "1.21" # fallback
+    echo "1.25.1" # fallback
     return
   fi
 
   # Extract go version from go.mod
-  awk '/^go / {print $2; exit}' "${go_mod_path}"
+  _VERSION_GO="$(awk '/^go / {print $2; exit}' "${go_mod_path}")"
+  if [[ -z "$_VERSION_GO" ]]; then
+    echo "1.25.1" # fallback
+  else
+    echo "$_VERSION_GO"
+  fi
 }
 
 get_current_go_version() {

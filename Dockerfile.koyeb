@@ -1,0 +1,85 @@
+# Koyeb-optimized Dockerfile for Analyzer Gateway
+FROM golang:1.25-alpine AS builder
+
+# Install build dependencies + debugging tools
+RUN apk add --no-cache \
+    git \
+    ca-certificates \
+    tzdata \
+    bash \
+    curl \
+    file
+
+WORKDIR /app
+
+# Copy go mod files first (better caching)
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Create dist directory for binary
+RUN mkdir -p dist
+
+# Build the application with verbose output
+RUN echo "🏗️  Building analyzer binary..." && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -v -ldflags="-w -s -X main.version=$(date +%Y%m%d_%H%M%S)" \
+    -o dist/analyzer_linux_amd64 cmd/main.go
+
+# Verify and debug binary
+RUN echo "🔍 Verifying binary..." && \
+    ls -la /app/dist/ && \
+    file /app/dist/analyzer_linux_amd64 && \
+    /app/dist/analyzer_linux_amd64 --version && \
+    echo "✅ Binary verification completed!"
+
+#########################################
+# Final production stage
+#########################################
+FROM alpine:latest
+
+# Install runtime dependencies
+RUN apk --no-cache add \
+    ca-certificates \
+    curl \
+    bash \
+    tzdata \
+    && update-ca-certificates
+
+# Create non-root user with home directory
+RUN addgroup -g 1001 -S analyzer && \
+    adduser -u 1001 -S analyzer -G analyzer -h /home/analyzer
+
+# Create app directory and set permissions
+WORKDIR /app
+RUN mkdir -p /app/config /app/logs && \
+    chown -R analyzer:analyzer /app
+
+# Copy binary from builder
+COPY --from=builder /app/dist/analyzer_linux_amd64 ./analyzer
+
+# Copy configuration files
+COPY --chown=analyzer:analyzer config/ ./config/
+
+# Ensure binary is executable
+RUN chmod +x ./analyzer
+
+# Switch to non-root user
+USER analyzer
+
+# Expose port (Koyeb will map this)
+EXPOSE 8080
+
+# Add labels for better Docker management
+LABEL maintainer="Rafael Mori <faelmori@gmail.com>"
+LABEL description="Kubex Analyzer Gateway - Multi-provider AI analysis platform"
+LABEL version="1.0.9"
+
+# Health check with retry logic
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD curl -f http://localhost:8080/healthz || exit 1
+
+# Command to run with better error handling
+CMD ["./analyzer", "gateway", "serve", "--config", "./config/koyeb.yml"]

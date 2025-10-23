@@ -18,14 +18,14 @@
     "skipDefaultLibCheck": true,
     "types": [
       "node",
-      "vite/client",
+      "vite/client"
     ],
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react",
     "paths": {
-      "./*": [
+      "@/*": [
         "./src/*"
       ],
       "tests/*": [
@@ -39,7 +39,7 @@
       ],
       "hooks/*": [
         "./src/hooks/*"
-      ],
+      ]
     },
     "noEmit": true
   }

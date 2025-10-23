@@ -2,9 +2,8 @@
 package main
 
 import (
-	gl "github.com/kubex-ecosystem/logz/logger"
-
 	"github.com/kubex-ecosystem/grompt/internal/module"
+	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
 )
 
 func main() {
