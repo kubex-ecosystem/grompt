@@ -46,7 +46,7 @@ func (h *Handlers) HandleAgent(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
 	}
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/agents/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/agents/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)

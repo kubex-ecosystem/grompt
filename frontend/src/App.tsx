@@ -1,9 +1,10 @@
-import { AlertTriangle, BrainCircuit, Image as ImageIcon, MessageCircle, NotebookPen, Sparkles, Workflow } from 'lucide-react';
+import { AlertTriangle, BrainCircuit, Bot, Image as ImageIcon, MessageCircle, NotebookPen, Sparkles, Workflow } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import ChatInterface, { type ChatMessage } from './components/features/ChatInterface';
 import CodeGenerator from './components/features/CodeGenerator';
 import ContentSummarizer from './components/features/ContentSummarizer';
 import ImageGenerator from './components/features/ImageGenerator';
+import AgentsGenerator from './components/features/AgentsGenerator';
 import PromptCrafter from './components/features/PromptCrafter';
 import Welcome from './components/features/Welcome';
 import Footer from './components/layout/Footer';
@@ -21,6 +22,7 @@ import { unifiedAIService } from './services/unifiedAIService';
 type SectionKey =
   | 'welcome'
   | 'prompt'
+  | 'agents'
   | 'chat'
   | 'summaries'
   | 'code'
@@ -33,6 +35,7 @@ const App: React.FC = () => {
   const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
   const [activeSection, setActiveSection] = useState<SectionKey>('welcome');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const languageContextValue = useMemo(
     () => ({ language, setLanguage, t }),
@@ -47,7 +50,23 @@ const App: React.FC = () => {
       console.log('Running in demo mode - API key not configured');
       setIsApiKeyMissing(true);
     }
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('grompt.sidebar.collapsed');
+      if (stored !== null) {
+        setSidebarCollapsed(stored === '1');
+      }
+    }
   }, []);
+
+  const handleToggleSidebarCollapse = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('grompt.sidebar.collapsed', next ? '1' : '0');
+      }
+      return next;
+    });
+  };
 
   const sections = useMemo(
     () => [
@@ -62,6 +81,12 @@ const App: React.FC = () => {
         label: 'Prompt Crafter',
         description: 'Estruture ideias e governe entregas',
         icon: BrainCircuit,
+      },
+      {
+        id: 'agents',
+        label: 'Agents Squad',
+        description: 'Modele squads IA alinhados ao Kubex',
+        icon: Bot,
       },
       {
         id: 'chat',
@@ -221,6 +246,8 @@ Return the final prompt in Markdown with sections Persona, Composition, Style No
         return <Welcome onGetStarted={() => setActiveSection('prompt')} />;
       case 'prompt':
         return <PromptCrafter theme={theme} isApiKeyMissing={isApiKeyMissing} />;
+      case 'agents':
+        return <AgentsGenerator />;
       case 'chat':
         return <ChatInterface onSend={handleChatSend} />;
       case 'summaries':
@@ -254,6 +281,7 @@ Return the final prompt in Markdown with sections Persona, Composition, Style No
               setSidebarOpen(false);
             }}
             onClose={() => setSidebarOpen(false)}
+            collapsed={sidebarCollapsed}
           />
         }
         header={
@@ -261,10 +289,13 @@ Return the final prompt in Markdown with sections Persona, Composition, Style No
             theme={theme}
             toggleTheme={toggleTheme}
             onToggleMenu={() => setSidebarOpen(true)}
+            onToggleSidebarCollapse={handleToggleSidebarCollapse}
+            sidebarCollapsed={sidebarCollapsed}
           />
         }
         footer={<Footer />}
         sidebarOpen={sidebarOpen}
+        sidebarCollapsed={sidebarCollapsed}
         onSidebarClose={() => setSidebarOpen(false)}
       >
         {isApiKeyMissing && (

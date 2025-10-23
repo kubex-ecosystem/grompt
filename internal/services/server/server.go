@@ -16,6 +16,7 @@ import (
 
 	"github.com/kubex-ecosystem/grompt/internal/grompt"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
+	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
 var reactApp = grompt.NewGUIGrompt()
@@ -48,21 +49,21 @@ func (s *Server) Start() error {
 
 	url := fmt.Sprintf("http://localhost:%s", s.config.Port)
 
-	fmt.Printf("🌐 Servidor iniciado em: %s\n", url)
-	fmt.Printf("📁 Servindo aplicação React embarcada\n")
-	fmt.Printf("🔧 APIs disponíveis:\n")
-	fmt.Printf("   • /api/config - Configuração\n")
-	fmt.Printf("   • /api/models - Modelos disponíveis\n")
-	fmt.Printf("   • /api/test - Teste de API\n")
-	fmt.Printf("   • /api/unified - Unified API\n")
-	fmt.Printf("   • /api/openai - OpenAI API\n")
-	fmt.Printf("   • /api/deepseek - DeepSeek API\n")
-	fmt.Printf("   • /api/claude - Claude API\n")
-	fmt.Printf("   • /api/gemini - Gemini API\n")
-	fmt.Printf("   • /api/chatgpt - ChatGPT API\n")
-	fmt.Printf("   • /api/ollama - Ollama Local\n")
-	fmt.Printf("   • /api/health - Status do servidor\n")
-	fmt.Printf("💡 Pressione Ctrl+C para parar\n\n")
+	gl.Log("info","🌐 Gateway started: %s\n", url)
+	gl.Log("info","📁 Serving embedded React application\n")
+	gl.Log("info","🔧 Available APIs:\n")
+	gl.Log("info","   • /api/v1/config - Configuration\n")
+	gl.Log("info","   • /api/v1/models - Available Models\n")
+	gl.Log("info","   • /api/v1/test - API Test\n")
+	gl.Log("info","   • /api/v1/unified - Unified API\n")
+	gl.Log("info","   • /api/v1/openai - OpenAI API\n")
+	gl.Log("info","   • /api/v1/deepseek - DeepSeek API\n")
+	gl.Log("info","   • /api/v1/claude - Claude API\n")
+	gl.Log("info","   • /api/v1/gemini - Gemini API\n")
+	gl.Log("info","   • /api/v1/chatgpt - ChatGPT API\n")
+	gl.Log("info","   • /api/v1/ollama - Ollama Local\n")
+	gl.Log("info","   • /api/v1/health - Server Status\n")
+	gl.Log("info","💡 Press Ctrl+C to stop\n\n")
 
 	// Detecta se há a página aberta em algum lugar
 
@@ -88,30 +89,30 @@ func (s *Server) setupRoutes() {
 	// Rotas de API (organizadas por categoria) usando builder encadeável
 	// ------------------------------------------------------------------
 	// 1) Núcleo / Saúde / Configuração
-	s.router.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
-	s.Route("/api/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
-	s.Route("/api/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-	s.Route("/api/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
-	s.Route("/api/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
+	s.router.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
+	s.Route("/api/v1/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
+	s.Route("/api/v1/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+	s.Route("/api/v1/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
+	s.Route("/api/v1/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
 
 	// 2) Provedores (diretos)
-	s.Route("/api/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
 
 	// 3) Geração Unificada e Atalhos
-	s.Route("/api/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
 
 	// 4) Agentes / Squad
-	s.Route("/api/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-	s.Route("/api/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
-	s.Route("/api/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
+	s.Route("/api/v1/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
+	s.Route("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
+	s.Route("/api/v1/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
+	s.Route("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
 
 	// Página de teste para WASM
 	s.router.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {
@@ -145,13 +146,13 @@ func openBrowser(url string) {
 	case "darwin":
 		err = exec.Command("open", url).Start()
 	default:
-		fmt.Printf("🌐 Open your browser at: %s\n", url)
+		gl.Log("info","🌐 Open your browser at: %s\n", url)
 		return
 	}
 
 	if err != nil {
-		fmt.Printf("⚠️  Error opening browser: %v\n", err)
-		fmt.Printf("🌐 Open your browser at: %s\n", url)
+		gl.Log("notice","⚠️  Error opening browser: %v\n", err)
+		gl.Log("info","🌐 Open your browser at: %s\n", url)
 	}
 }
 
@@ -160,7 +161,7 @@ func (s *Server) setupFallbackRoutes() error {
 	// This route serves a simple HTML page explaining that the React frontend is not available
 	// It provides instructions on how to build the React app and recompile the Go server.
 	s.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/") {
+		if strings.HasPrefix(r.URL.Path, "/api/v1/") {
 			http.NotFound(w, r)
 			return
 		}
@@ -247,8 +248,8 @@ cd ..</code></pre>
 
         <h2>🔗 APIs Disponíveis:</h2>
         <ul>
-            <li><a href="/api/health" style="color: #60a5fa;">/api/health</a> - Status do servidor</li>
-            <li><a href="/api/config" style="color: #60a5fa;">/api/config</a> - Configuração das APIs</li>
+            <li><a href="/api/v1/health" style="color: #60a5fa;">/api/v1/health</a> - Status do servidor</li>
+            <li><a href="/api/v1/config" style="color: #60a5fa;">/api/v1/config</a> - Configuração das APIs</li>
         </ul>
 
         <p><strong>💡 Dica:</strong> Este servidor Go está funcionando corretamente. Você só precisa buildar e embarca o frontend React!</p>
@@ -261,42 +262,49 @@ cd ..</code></pre>
 	// Fallback API routes
 	// These routes handle API requests when the React frontend is not available.
 	// They provide basic functionality to ensure the server can still respond to API requests.
-	s.router.HandleFunc("/api/models", s.handlers.HandleModels)
-	s.router.HandleFunc("/api/claude", s.handlers.HandleClaude)
-	s.router.HandleFunc("/api/ollama", s.handlers.HandleOllama)
-	s.router.HandleFunc("/api/openai", s.handlers.HandleOpenAI)
-	s.router.HandleFunc("/api/chatgpt", s.handlers.HandleChatGPT)
-	s.router.HandleFunc("/api/gemini", s.handlers.HandleGemini)
-	s.router.HandleFunc("/api/deepseek", s.handlers.HandleDeepSeek)
-	s.router.HandleFunc("/api/unified", s.handlers.HandleUnified)
-	s.router.HandleFunc("/api/agents", s.handlers.HandleAgents)
-	s.router.HandleFunc("/api/agents/generate", s.handlers.HandleAgentsGenerate)
-	s.router.HandleFunc("/api/agents/", s.handlers.HandleAgent)
-	s.router.HandleFunc("/api/agents.md", s.handlers.HandleAgentsMarkdown)
+	s.router.HandleFunc("/api/v1/models", s.handlers.HandleModels)
+	s.router.HandleFunc("/api/v1/claude", s.handlers.HandleClaude)
+	s.router.HandleFunc("/api/v1/ollama", s.handlers.HandleOllama)
+	s.router.HandleFunc("/api/v1/openai", s.handlers.HandleOpenAI)
+	s.router.HandleFunc("/api/v1/chatgpt", s.handlers.HandleChatGPT)
+	s.router.HandleFunc("/api/v1/gemini", s.handlers.HandleGemini)
+	s.router.HandleFunc("/api/v1/deepseek", s.handlers.HandleDeepSeek)
+	s.router.HandleFunc("/api/v1/unified", s.handlers.HandleUnified)
+	s.router.HandleFunc("/api/v1/agents", s.handlers.HandleAgents)
+	s.router.HandleFunc("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate)
+	s.router.HandleFunc("/api/v1/agents/", s.handlers.HandleAgent)
+	s.router.HandleFunc("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.
 	// It is useful for clients to know how to interact with the server's APIs.
-	s.router.HandleFunc("/api/config", s.handlers.HandleConfig)
+	s.router.HandleFunc("/api/v1/config", s.handlers.HandleConfig)
 
 	// Test route
 	// This route is used to test the server's API functionality.
 	// It can be used to verify that the server is running and responding correctly.
-	s.router.HandleFunc("/api/test", s.handlers.HandleTest)
+	s.router.HandleFunc("/api/v1/test", s.handlers.HandleTest)
 
 	// Health check route
 	// This route checks the health of the server and returns a simple JSON response.
 	// It is useful for monitoring and ensuring the server is running correctly.
-	s.router.HandleFunc("/api/health", s.handlers.HandleHealth)
+	s.router.HandleFunc("/api/v1/health", s.handlers.HandleHealth)
 
 	// Log the fallback routes setup
-	log.Println("⚠️  Fallback routes: Unavailable React frontend, serving API endpoints only")
+	gl.Log("warn","⚠️  Fallback routes: Unavailable React frontend, serving API endpoints only")
 
 	return nil
 }
 
+func stopAllServices() {
+	// Aqui você pode adicionar a lógica para parar outros serviços, se necessário
+}
+
+
 func (s *Server) Shutdown() {
-	fmt.Println("🧹 Cleaning resources...")
+	gl.Log("info","🧹 Cleaning resources...")
+	stopAllServices()
+	gl.Log("info","✅ Server shutdown complete.")
 }
 
 func SetStaticHeaders(w http.ResponseWriter, path string) {

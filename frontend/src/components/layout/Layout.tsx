@@ -7,6 +7,7 @@ interface LayoutProps {
   children: React.ReactNode;
   sidebarOpen: boolean;
   onSidebarClose: () => void;
+  sidebarCollapsed: boolean;
 }
 
 /**
@@ -20,7 +21,10 @@ const Layout: React.FC<LayoutProps> = ({
   children,
   sidebarOpen,
   onSidebarClose,
+  sidebarCollapsed,
 }) => {
+  const sidebarWidthClass = sidebarCollapsed ? 'w-80 lg:w-24' : 'w-80';
+
   return (
     <div className="min-h-screen bg-[#f9fafb] text-[#334155] dark:bg-[#0a0f14] dark:text-[#e5f2f2]">
       {/* mobile overlay */}
@@ -35,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({
 
       <div className="relative flex min-h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-40 w-80 transform border-r border-[#e2e8f0] dark:border-[#0b1220] bg-white/95 dark:bg-[#0a1523]/92 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0 shadow-xl shadow-[#111827]/15' : '-translate-x-full'
+          className={`fixed inset-y-0 left-0 z-40 transform border-r border-[#e2e8f0] bg-white/95 dark:border-[#0b1220] dark:bg-[#0a1523]/92 backdrop-blur-xl transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarWidthClass} ${sidebarOpen ? 'translate-x-0 shadow-xl shadow-[#111827]/15' : '-translate-x-full lg:translate-x-0'
             }`}
         >
           {sidebar}

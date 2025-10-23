@@ -1,0 +1,157 @@
+[logging]
+level = "info"
+log_file = "/tmp/grompt.log"
+max_size_mb = 10
+max_backups = 5
+max_age_days = 30
+compress = true
+
+[api]
+port = 5000
+host = "0.0.0.0"
+enable_cors = true
+cors_origins = ["*"]
+enable_authentication = false
+# authentication_token = ""
+rate_limit_per_minute = 60
+enable_logging = true
+log_file = "/tmp/grompt_api.log"
+enable_metrics = true
+metrics_port = 9100
+metrics_host = "0.0.0.0"
+enable_swagger = true
+enable_healthcheck = true
+healthcheck_path = "/health"
+healthcheck_timeout_seconds = 5
+enable_profiling = false
+profiling_path = "/debug/pprof"
+profiling_timeout_seconds = 10
+max_request_size_mb = 5
+enable_request_tracing = false
+trace_sample_rate = 0.1
+enable_response_compression = true
+enable_request_logging = false
+enable_error_reporting = true
+# error_reporting_service = "sentry"
+# sentry_dsn = ""
+log_level = "info"
+enable_file_uploads = true
+max_file_upload_size_mb = 10
+allowed_file_types = ["*"]
+enable_file_downloads = true
+max_file_download_size_mb = 10
+allowed_download_file_types = ["*"]
+enable_websockets = true
+websocket_timeout_seconds = 300
+max_websocket_message_size_mb = 5
+enable_rate_limiting = true
+rate_limit_burst = 10
+rate_limit_window_seconds = 60
+rate_limit_exempt_paths = ["/health"]
+enable_ip_whitelisting = false
+ip_whitelist = []
+
+[plugins]
+enabled_plugins = []
+plugin_directory = "/usr/local/grompt/plugins"
+plugin_auto_update = true
+plugin_update_interval_hours = 24
+plugin_timeout_seconds = 30
+plugin_log_file = "/tmp/grompt_plugins.log"
+plugin_log_level = "info"
+plugin_max_retries = 3
+plugin_retry_delay_seconds = 5
+plugin_cache_size_mb = 100
+plugin_cache_ttl_hours = 24
+
+[security]
+enable_sandboxing = true
+sandbox_timeout_seconds = 60
+enable_code_signing = false
+code_signing_key_path = "/etc/grompt/keys/private_key.pem"
+code_signing_algorithm = "RS256"
+enable_integrity_checks = true
+integrity_check_algorithm = "SHA256"
+enable_audit_logging = true
+audit_log_file = "/tmp/grompt_audit.log"
+audit_log_level = "info"
+audit_log_max_size_mb = 10
+audit_log_max_backups = 5
+audit_log_max_age_days = 30
+audit_log_compress = true
+enable_threat_detection = false
+threat_detection_service = "default"
+threat_detection_api_key = ""
+
+[performance]
+enable_caching = true
+cache_size_mb = 500
+cache_ttl_hours = 24
+enable_concurrency = true
+max_concurrent_requests = 10
+request_timeout_seconds = 30
+enable_batch_processing = false
+batch_size = 5
+batch_timeout_seconds = 10
+enable_profiling = false
+profiling_output_file = "/tmp/grompt_performance.prof"
+profiling_duration_seconds = 60
+enable_memory_management = true
+memory_limit_mb = 1024
+memory_cleanup_interval_seconds = 300
+enable_cpu_management = true
+cpu_limit_percent = 80
+cpu_cleanup_interval_seconds = 300
+
+[development]
+enable_debug_mode = false
+debug_log_file = "/tmp/grompt_debug.log"
+debug_log_level = "debug"
+hot_reload_enabled = true
+hot_reload_watch_paths = ["/projects/kubex/", "/projects/canalize/"]
+hot_reload_exclude_paths = [
+  "/projects/kubex/node_modules/",
+  "/projects/canalize/node_modules/",
+]
+hot_reload_debounce_ms = 500
+mock_external_services = false
+mock_data_directory = "/projects/kubex/mocks/"
+mock_data_ttl_hours = 24
+enable_test_mode = false
+test_data_directory = "/projects/kubex/tests/"
+test_data_ttl_hours = 24
+enable_verbose_logging = false
+verbose_log_file = "/tmp/grompt_verbose.log"
+verbose_log_level = "trace"
+
+[notifications]
+enable_notifications = true
+notification_service = "slack"
+slack_webhook_url = "https://hooks.slack.com/services/..."
+enable_email_notifications = false
+email_smtp_server = "smtp.example.com"
+email_smtp_port = 587
+email_username = "user@example.com"
+email_password = "password"
+email_from_address = "user@example.com"
+email_to_addresses = ["recipient@example.com"]
+enable_push_notifications = false
+push_service = "fcm"
+fcm_server_key = "YOUR_FCM_SERVER_KEY"
+enable_notification_logging = true
+notification_log_file = "/tmp/grompt_notifications.log"
+notification_log_level = "info"
+notification_log_max_size_mb = 10
+notification_log_max_backups = 5
+notification_log_max_age_days = 30
+notification_log_compress = true
+
+[backup]
+enable_backups = true
+backup_directory = "/projects/BACKUPS/grompt/"
+backup_interval_hours = 24
+max_backup_files = 7
+backup_compress = true
+backup_encryption_enabled = false
+backup_encryption_key_path = "/etc/grompt/keys/backup_key.pem"
+backup_encryption_algorithm = "AES256"

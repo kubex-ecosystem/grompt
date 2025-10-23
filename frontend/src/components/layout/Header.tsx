@@ -1,4 +1,4 @@
-import { BotMessageSquare, Moon, Sun } from 'lucide-react';
+import { BotMessageSquare, ChevronsLeft, ChevronsRight, Moon, Sun } from 'lucide-react';
 import React from 'react';
 import { Theme } from '../../../types';
 import { useTranslations } from '../../i18n/useTranslations';
@@ -8,11 +8,14 @@ interface HeaderProps {
   theme: Theme;
   toggleTheme: () => void;
   onToggleMenu?: () => void;
+  onToggleSidebarCollapse?: () => void;
+  sidebarCollapsed?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu, onToggleSidebarCollapse, sidebarCollapsed }) => {
   const { t } = useTranslations();
   const isLight = theme === 'light';
+  const collapseLabel = sidebarCollapsed ? t('expandSidebar') : t('collapseSidebar');
 
   return (
     <header className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -67,6 +70,17 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleMenu }) => 
         </div>
       </div>
       <div className="flex items-center gap-3">
+        {onToggleSidebarCollapse && (
+          <button
+            type="button"
+            onClick={onToggleSidebarCollapse}
+            className="hidden h-10 w-10 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] shadow-sm transition hover:border-[#cbd5f5] hover:text-[#1f2937] focus:outline-none focus:ring-2 focus:ring-[#06b6d4]/40 dark:border-[#0b1220] dark:bg-[#0a1523] dark:text-[#94a3b8] dark:hover:border-[#13263a] lg:inline-flex"
+            title={collapseLabel}
+            aria-label={collapseLabel}
+          >
+            {sidebarCollapsed ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
+          </button>
+        )}
         <LanguageSelector />
         <button
           type='button'

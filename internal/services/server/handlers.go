@@ -119,6 +119,7 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 
 func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Bloqueia chamadas para /api/*
 		p := strings.TrimPrefix(r.URL.Path, "/")
 		if strings.HasPrefix(p, "api/") {
 			http.NotFound(w, r)
@@ -136,6 +137,24 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 			return
 		}
 
+		if strings.Contains(p, "v1") && r.Method == http.MethodGet {
+			http.NotFound(w, r)
+			return
+		} else if strings.Contains(p, "v1") && r.Method != http.MethodGet {
+			// Define headers para evitar caching durante desenvolvimento
+			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+		} else {
+			// Define headers para caching de arquivos estáticos
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			expires := time.Now().Add(365 * 24 * time.Hour).Format(http.TimeFormat)
+			w.Header().Set("Expires", expires)
+
+			if strings.HasSuffix(p, "/") {
+				p += "index.html"
+			}
+		}
+
 		// Hide file from address bar
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%s", path.Base(p)))
@@ -146,7 +165,6 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 			if fi, _ := f.Stat(); fi != nil {
 				if fi.IsDir() {
 					w.Header().Set("Content-Type", "text/html; charset=utf-8")
-					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
 					http.ServeFileFS(w, r, buildFS, p+"/index.html")
 					return
@@ -170,11 +188,9 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 			if fi, _ := f.Stat(); fi != nil {
 				if !fi.IsDir() {
 					w.Header().Set("Content-Type", "text/html; charset=utf-8")
-					w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 					fmt.Printf("⚙️  ServeFileFS para %s\n", p+"/index.html")
 					http.ServeFileFS(w, r, buildFS, p)
 					return
-
 				}
 			}
 		}
@@ -1004,7 +1020,7 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 		return "", fmt.Errorf("no LLM API available")
 	}
 
-	// Use the same squad package as /api/agents/generate
+	// Use the same squad package as /api/v1/agents/generate
 	sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

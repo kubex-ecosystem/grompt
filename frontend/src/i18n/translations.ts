@@ -4,6 +4,8 @@ export const translations: Record<Language, Record<string, string>> = {
   en: {
     'promptCrafter': 'AI Prompt Crafter',
     'toggleTheme': 'Switch to {theme} mode',
+    'collapseSidebar': 'Collapse navigation',
+    'expandSidebar': 'Expand navigation',
     'poweredBy': 'Kubex Ecosystem - Powered by AI.',
     'motto': 'CODE FAST. OWN EVERYTHING.',
     "inputIdeasTitle": "1. INPUT IDEAS",
@@ -79,6 +81,8 @@ export const translations: Record<Language, Record<string, string>> = {
   es: {
     'promptCrafter': 'Creador de Prompts con IA',
     'toggleTheme': 'Cambiar a modo {theme}',
+    'collapseSidebar': 'Contraer navegación',
+    'expandSidebar': 'Expandir navegación',
     'poweredBy': 'Kubex Ecosystem - Impulsado por IA.',
     'motto': 'CODIFICA RÁPIDO. SÉ DUEÑO DE TODO.',
     "inputIdeasTitle": "1. INGRESAR IDEAS",
@@ -154,6 +158,8 @@ export const translations: Record<Language, Record<string, string>> = {
   zh: {
     'promptCrafter': 'AI 提示词构建器',
     'toggleTheme': '切换到{theme}模式',
+    'collapseSidebar': '收起导航',
+    'expandSidebar': '展开导航',
     'poweredBy': 'Kubex 生态系统 - AI 驱动。',
     'motto': '快速编码。拥有一切。',
     "inputIdeasTitle": "1. 输入想法",
@@ -229,6 +235,8 @@ export const translations: Record<Language, Record<string, string>> = {
   pt: {
     'promptCrafter': 'Criador de Prompts IA',
     'toggleTheme': 'Alternar para modo {theme}',
+    'collapseSidebar': 'Recolher navegação',
+    'expandSidebar': 'Expandir navegação',
     'poweredBy': 'Kubex Ecosystem - Impulsionado por IA.',
     'motto': 'CODIFIQUE RÁPIDO. SEJA DONO DE TUDO.',
     "inputIdeasTitle": "1. INSIRA AS IDEIAS",
