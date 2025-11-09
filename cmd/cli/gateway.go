@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubex-ecosystem/grompt/internal/engine"
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	"github.com/spf13/cobra"
 )
 
 type Gateway struct {
@@ -53,4 +54,34 @@ func (g *Gateway) ProcessRequest(ctx context.Context, request *interfaces.ChatRe
 	}
 
 	return response, nil
+}
+
+func GatewayCmd() *cobra.Command {
+	var gatewayCmd = &cobra.Command{
+		Use:   "gateway",
+		Short: "Gateway commands",
+		Long:  "Commands for managing the gateway",
+	}
+
+	gatewayCmd.AddCommand(startGatewayServerCmd())
+
+	return gatewayCmd
+}
+
+func startGatewayServerCmd() *cobra.Command {
+	var port, bindAddr string
+
+	var startCmd = &cobra.Command{
+		Use:   "start",
+		Short: "Start the gateway server",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Starting gateway server on %s:%s...\n", bindAddr, port)
+			// Implement the logic to start the gateway server here
+		},
+	}
+
+	startCmd.Flags().StringVarP(&bindAddr, "bind", "b", "localhost", "Address to bind the gateway server to")
+	startCmd.Flags().StringVarP(&port, "port", "p", "9090", "Port to run the gateway server on")
+
+	return startCmd
 }

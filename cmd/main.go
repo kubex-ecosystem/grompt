@@ -8,6 +8,6 @@ import (
 
 func main() {
 	if err := module.RegX().Command().Execute(); err != nil {
-		gl.Log("fatal", err.Error())
+		gl.LoggerG.GetLogger().Log("fatalc", err.Error())
 	}
 }

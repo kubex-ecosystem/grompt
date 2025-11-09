@@ -4,7 +4,6 @@ package server
 import (
 	"fmt"
 	"io/fs"
-	"log"
 	"mime"
 	"net"
 	"net/http"
@@ -43,6 +42,7 @@ type ReactApp struct {
 func NewServer(cfg interfaces.IConfig) *Server {
 	handlers := NewHandlers(cfg)
 	return &Server{
+		IRouter:  gin.New(),
 		config:   cfg.(*t.Config),
 		handlers: handlers,
 		router:   http.NewServeMux(),
@@ -91,7 +91,7 @@ func getGinHandlerFunc(f http.HandlerFunc) gin.HandlerFunc {
 func (s *Server) setupRoutes() {
 	buildFS, err := fs.Sub(reactApp.GetWebFS(), "embedded/guiweb")
 	if err != nil {
-		log.Printf("⚠️ build embed não encontrado: %v", err)
+		gl.LoggerG.GetLogger().Log("warn", fmt.Sprintf("⚠️ build embed não encontrado: %v", err))
 		s.setupFallbackRoutes()
 		return
 	}
@@ -102,24 +102,24 @@ func (s *Server) setupRoutes() {
 	// ------------------------------------------------------------------
 	// 1) Núcleo / Saúde / Configuração
 	s.router.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
-	s.GET("/api/v1/health", getGinHandlerFunc(s.handlers.HandleHealth))
-	s.GET("/api/v1/config", getGinHandlerFunc(s.handlers.HandleConfig))
-	s.POST("/api/v1/config", getGinHandlerFunc(s.handlers.HandleConfig))
-	s.GET("/api/v1/test", getGinHandlerFunc(s.handlers.HandleTest))
-	s.GET("/api/v1/models", getGinHandlerFunc(s.handlers.HandleModels))
+	s.GET("/api/v1/health", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleHealth(w, r) }))
+	s.GET("/api/v1/config", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleConfig(w, r) }))
+	s.POST("/api/v1/config", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleConfig(w, r) }))
+	s.GET("/api/v1/test", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleTest(w, r) }))
+	s.GET("/api/v1/models", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleModels(w, r) }))
 
 	// 2) Provedores (diretos)
-	s.POST("/api/v1/openai", getGinHandlerFunc(s.handlers.HandleOpenAI))
-	s.POST("/api/v1/claude", getGinHandlerFunc(s.handlers.HandleClaude))
-	s.POST("/api/v1/gemini", getGinHandlerFunc(s.handlers.HandleGemini))
-	s.POST("/api/v1/deepseek", getGinHandlerFunc(s.handlers.HandleDeepSeek))
-	s.POST("/api/v1/chatgpt", getGinHandlerFunc(s.handlers.HandleChatGPT))
-	s.POST("/api/v1/ollama", getGinHandlerFunc(s.handlers.HandleOllama))
+	s.POST("/api/v1/openai", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleOpenAI(w, r) }))
+	s.POST("/api/v1/claude", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleClaude(w, r) }))
+	s.POST("/api/v1/gemini", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleGemini(w, r) }))
+	s.POST("/api/v1/deepseek", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleDeepSeek(w, r) }))
+	s.POST("/api/v1/chatgpt", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleChatGPT(w, r) }))
+	s.POST("/api/v1/ollama", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleOllama(w, r) }))
 
 	// 3) Geração Unificada e Atalhos
-	s.POST("/api/v1/unified", getGinHandlerFunc(s.handlers.HandleUnified))
-	s.POST("/api/v1/ask", getGinHandlerFunc(s.handlers.HandleAsk))
-	s.POST("/api/v1/squad", getGinHandlerFunc(s.handlers.HandleSquad))
+	s.POST("/api/v1/unified", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleUnified(w, r) }))
+	s.POST("/api/v1/ask", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleAsk(w, r) }))
+	s.POST("/api/v1/squad", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleSquad(w, r) }))
 
 	// 4) Agentes / Squad
 	// s.GET("/api/v1/agents", getGinHandlerFunc(s.handlers.HandleAgents))
@@ -167,7 +167,7 @@ func openBrowser(url string) {
 	}
 
 	if err != nil {
-		gl.Log("notice","⚠️  Error opening browser: %v\n", err)
+		gl.Log("warn","⚠️  Error opening browser: %v\n", err)
 		gl.Log("info","🌐 Open your browser at: %s\n", url)
 	}
 }
