@@ -3,7 +3,7 @@ package module
 
 import (
 	cc "github.com/kubex-ecosystem/grompt/cmd/cli"
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/logz/logger"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/spf13/cobra"
 

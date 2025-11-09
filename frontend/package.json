@@ -5,16 +5,15 @@
     "type": "git",
     "url": "git+https://github.com/kubex-ecosystem/grompt.git"
   },
-  "homepage": "https://kubex-ecosystem.github.io/grompt/",
-  "packageManager": "npm@10.9.2",
+  "homepage": "https://grompt.kubex.world/",
+  "packageManager": "pnpm@10.20.0",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "setup": "npm i --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
-    "setup:ci": "npm ci --no-fund --no-audit --legacy-peer-deps --loglevel=error --silent",
-    "build": "vite build",
-    "build:static": "vite build --mode production",
+    "setup": "pnpm install --no-strict-peer-dependencies --no-use-stderr --force",
+    "build": "vite build --mode production",
+    "build:static": "vite build --ssr src/entry-static.tsx --mode production",
     "dev": "vite",
     "preview": "vite preview"
   },

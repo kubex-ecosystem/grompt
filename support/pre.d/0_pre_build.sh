@@ -24,9 +24,9 @@ __source_script_if_needed() {
   return 0
 }
 
-_SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || {
-  echo "Error: Could not source utils.sh. Please ensure it exists." >&2
+_ROOT_DIR="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}"
+__source_script_if_needed "get_current_shell" "${_ROOT_DIR}/support/utils.sh" || {
+  echo "Error: Could not source ${_ROOT_DIR}/support/utils.sh. Please ensure it exists." >&2
   exit 1
 }
 
@@ -43,14 +43,14 @@ build_frontend() {
     exit 1
   }
 
-  if command -v npm &>/dev/null; then
+  if command -v pnpm &>/dev/null; then
       log info "Building frontend..." true
 
-      _frontend_install_output="$(npm i --no-audit --no-fund --prefer-offline --silent || {
+      _frontend_install_output="$(pnpm install --no-strict-peer-dependencies --force || {
           echo "Failed to install frontend dependencies."
       })"
 
-      _frontend_build_output="$(npm run build --silent > /dev/null 2>&1 || {
+      _frontend_build_output="$(pnpm run build > /dev/null 2>&1 || {
           echo "Failed to build frontend assets."
       })"
 
@@ -73,6 +73,12 @@ build_frontend() {
               log fatal "Failed to remove old build directory." true
               exit 1
           }
+      else
+        log info "No existing build directory, creating new one." true
+        mkdir -p "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
+            log fatal "Failed to create build directory." true
+            exit 1
+        }
       fi
 
       mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {

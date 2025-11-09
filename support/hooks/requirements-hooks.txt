@@ -1,0 +1,18 @@
+# core do que erros pedirams
+anyio>=4.0
+pyzmq>=26
+colorama>=0.4.6,<0.5.0
+pydantic>=2.7,<3
+
+# jupyter stack saudável p/ 2025
+ipython>=8.12
+ipykernel>=6.29
+matplotlib-inline>=0.1.6
+prompt-toolkit>=3.0.36
+jupyter-server>=2.14
+jupyter-client>=8.6
+jupyter-console>=6.6
+
+# pacotes que puxam isso tudo
+openai==1.93.0
+promptflow-devkit==1.18.1

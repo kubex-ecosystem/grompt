@@ -1,0 +1,22 @@
+version: "2"
+run:
+  timeout: 3m
+  tests: true
+linters:
+  disable:
+    - govet
+    - errcheck
+    - ineffassign
+    - staticcheck
+    - unused
+  # settings:
+  #   errcheck:
+  #     exclude-functions:
+  #       - os.Setenv
+  #       - fmt.Fprintf
+  #       - fmt.Fprint
+  #       - fmt.Fprintln
+  #       - io.WriteString
+  #       - (*log.Logger).Printf
+  #       - (*log.Logger).Println
+  #       - (*log.Logger).Print

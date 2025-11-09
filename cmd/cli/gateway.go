@@ -10,7 +10,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/gateway"
 	"github.com/spf13/cobra"
 
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
 // GatewayCmds returns the gateway command with subcommands
