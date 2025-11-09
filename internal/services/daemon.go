@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/scorecard"
 	"github.com/kubex-ecosystem/grompt/internal/types"
 )
@@ -31,7 +32,7 @@ type DaemonService struct {
 
 	// Channels for communication
 	analysisRequests  chan types.AnalysisRequest
-	notificationQueue chan types.NotificationEvent
+	notificationQueue chan interfaces.NotificationEvent
 	orchestrateQueue  chan types.OrchestrationTask
 }
 
@@ -45,7 +46,7 @@ func NewDaemonService(config *types.Config) *DaemonService {
 		ctx:               ctx,
 		cancel:            cancel,
 		analysisRequests:  make(chan types.AnalysisRequest, 100),
-		notificationQueue: make(chan types.NotificationEvent, 500),
+		notificationQueue: make(chan interfaces.NotificationEvent, 500),
 		orchestrateQueue:  make(chan types.OrchestrationTask, 200),
 	}
 }
@@ -135,7 +136,7 @@ func (d *DaemonService) ScheduleAnalysis(req types.AnalysisRequest) error {
 }
 
 // SendNotification adds a notification to the queue
-func (d *DaemonService) SendNotification(event types.NotificationEvent) error {
+func (d *DaemonService) SendNotification(event interfaces.NotificationEvent) error {
 	event.CreatedAt = time.Now()
 
 	select {
@@ -305,7 +306,7 @@ func (d *DaemonService) processAnalysisRequest(req types.AnalysisRequest) {
 	time.Sleep(2 * time.Second)
 
 	// Send completion notification
-	d.SendNotification(types.NotificationEvent{
+	d.SendNotification(interfaces.NotificationEvent{
 		Type:     "discord",
 		Subject:  fmt.Sprintf("Analysis Complete: %s", req.Type),
 		Content:  fmt.Sprintf("Repository analysis completed for: %s", req.ProjectPath),
@@ -316,7 +317,7 @@ func (d *DaemonService) processAnalysisRequest(req types.AnalysisRequest) {
 }
 
 // processNotificationEvent handles individual notification events
-func (d *DaemonService) processNotificationEvent(event types.NotificationEvent) {
+func (d *DaemonService) processNotificationEvent(event interfaces.NotificationEvent) {
 	log.Printf("📤 Sending %s notification: %s", event.Type, event.Subject)
 
 	// TODO: Implement actual notification sending

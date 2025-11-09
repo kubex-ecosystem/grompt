@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
@@ -78,7 +79,7 @@ func (g *GeminiAPI) Complete(prompt string, maxTokens int, model string) (string
 	// Update baseURL with model
 	baseURL := fmt.Sprintf(
 		"https://generativelanguage.googleapis.com/%s/models/%s:generateContent",
-		g.GetVersion(),
+		g.Version(),
 		model,
 	)
 
@@ -211,18 +212,41 @@ func (g *GeminiAPI) GetCommonModels() []string {
 }
 
 // ListModels returns available Gemini models
-func (g *GeminiAPI) ListModels() ([]string, error) {
-	// For now, return common models
-	// In the future, could make API call to list available models
-	return g.GetCommonModels(), nil
+func (g *GeminiAPI) ListModels() (map[string]any, error) {
+	if g.apiKey == "" {
+		return nil, fmt.Errorf("gemini API key not configured")
+	}
+
+	// Currently, Gemini API does not provide a models listing endpoint.
+	// Returning common models as a placeholder.
+	models := make(map[string]any)
+	for _, model := range g.GetCommonModels() {
+		models[model] = struct{}{}
+	}
+	return models, nil
 }
 
-// GetVersion returns the API version
-func (g *GeminiAPI) GetVersion() string {
+// Version returns the API version
+func (g *GeminiAPI) Version() string {
 	return "v1beta"
 }
 
 // IsDemoMode returns false as this is not demo mode
 func (g *GeminiAPI) IsDemoMode() bool {
 	return false
+}
+
+func (g *GeminiAPI) GetAPIKey(provider string) string {
+	if provider == "" || provider != "gemini" {
+		return ""
+	}
+	return g.apiKey
+}
+
+func (g *GeminiAPI) GetBaseURL() string {
+	return g.baseURL
+}
+
+func (g *GeminiAPI) GetCapabilities() *interfaces.Capabilities {
+	return defaultCapabilities("gemini", "")
 }

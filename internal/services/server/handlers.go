@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubex-ecosystem/grompt/internal/services/agents"
-	"github.com/kubex-ecosystem/grompt/internal/services/squad"
-	ii "github.com/kubex-ecosystem/grompt/internal/types"
+	ii "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	it "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type Handlers struct {
@@ -22,7 +21,7 @@ type Handlers struct {
 	chatGPTAPI  ii.IAPIConfig
 	geminiAPI   ii.IAPIConfig
 	ollamaAPI   ii.IAPIConfig
-	agentStore  *agents.Store
+	// agentStore  *agents.Store
 }
 
 // UnifiedRequest represents a request structure that supports both direct prompts
@@ -106,13 +105,13 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	}
 
 	llmKeyMap = hndr.getLLMAPIKeyMap(cfg)
-	hndr.claudeAPI = ii.NewClaudeAPI(llmKeyMap["claude"])
-	hndr.openaiAPI = ii.NewOpenAIAPI(llmKeyMap["openai"])
-	hndr.chatGPTAPI = ii.NewChatGPTAPI(llmKeyMap["chatgpt"])
-	hndr.deepseekAPI = ii.NewDeepSeekAPI(llmKeyMap["deepseek"])
-	hndr.ollamaAPI = ii.NewOllamaAPI(llmKeyMap["ollama"])
-	hndr.geminiAPI = ii.NewGeminiAPI(llmKeyMap["gemini"])
-	hndr.agentStore = agents.NewStore("agents.json")
+	hndr.claudeAPI = it.NewClaudeAPI(llmKeyMap["claude"])
+	hndr.openaiAPI = it.NewOpenAIAPI(llmKeyMap["openai"])
+	hndr.chatGPTAPI = it.NewChatGPTAPI(llmKeyMap["chatgpt"])
+	hndr.deepseekAPI = it.NewDeepSeekAPI(llmKeyMap["deepseek"])
+	hndr.ollamaAPI = it.NewOllamaAPI(llmKeyMap["ollama"])
+	hndr.geminiAPI = it.NewGeminiAPI(llmKeyMap["gemini"])
+	// hndr.agentStore = agents.NewStore("agents.json")
 
 	return hndr
 }
@@ -727,7 +726,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.claudeAPI
 			if mode == "byok" {
-				api = ii.NewClaudeAPI(finalAPIKey)
+				api = it.NewClaudeAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "claude-3-5-sonnet-20241022"
@@ -747,7 +746,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.openaiAPI
 			if mode == "byok" {
-				api = ii.NewOpenAIAPI(finalAPIKey)
+				api = it.NewOpenAIAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gpt-4o-mini"
@@ -767,7 +766,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.deepseekAPI
 			if mode == "byok" {
-				api = ii.NewDeepSeekAPI(finalAPIKey)
+				api = it.NewDeepSeekAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "deepseek-chat"
@@ -787,7 +786,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.geminiAPI
 			if mode == "byok" {
-				api = ii.NewGeminiAPI(finalAPIKey)
+				api = it.NewGeminiAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gemini-2.0-flash-exp"
@@ -807,7 +806,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.chatGPTAPI
 			if mode == "byok" {
-				api = ii.NewChatGPTAPI(finalAPIKey)
+				api = it.NewChatGPTAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gpt-4o-mini"
@@ -1007,34 +1006,35 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 
 	// Reuse HandleAgentsGenerate inner logic via local function
 	// Build LLM function
-	llmFunc := func(prompt string) (string, error) {
-		if h.config.GetAPIKey("claude") != "" {
-			return h.claudeAPI.Complete(prompt, 4000, "claude-2")
-		}
-		if h.config.GetAPIKey("openai") != "" {
-			return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
-		}
-		if h.config.GetAPIKey("deepseek") != "" {
-			return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
-		}
-		return "", fmt.Errorf("no LLM API available")
-	}
+	// llmFunc := func(prompt string) (string, error) {
+	// 	if h.config.GetAPIKey("claude") != "" {
+	// 		return h.claudeAPI.Complete(prompt, 4000, "claude-2")
+	// 	}
+	// 	if h.config.GetAPIKey("openai") != "" {
+	// 		return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
+	// 	}
+	// 	if h.config.GetAPIKey("deepseek") != "" {
+	// 		return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
+	// 	}
+	// 	return "", fmt.Errorf("no LLM API available")
+	// }
 
 	// Use the same squad package as /api/v1/agents/generate
-	sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	markdown := squad.GenerateMarkdown(sqAgents)
+	// sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// markdown := squad.GenerateMarkdown(sqAgents)
 
-	resp := struct {
-		Agents   []squad.Agent `json:"agents"`
-		Markdown string        `json:"markdown"`
-	}{Agents: sqAgents, Markdown: markdown}
+	// resp := struct {
+	// 	Agents   []squad.Agent `json:"agents"`
+	// 	Markdown string        `json:"markdown"`
+	// }{Agents: sqAgents, Markdown: markdown}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	// json.NewEncoder(w).Encode(resp)
+	w.Write([]byte(`{"agents": [], "markdown": "Feature under development."}`))
 }
 
 func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
@@ -1043,7 +1043,7 @@ func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	healthStatus := map[string]interface{}{
 		"status":    "ok",
 		"timestamp": time.Now().Unix(),
-		"version":   ii.AppVersion,
+		"version":   it.AppVersion,
 		"apis": map[string]interface{}{
 			"claude": map[string]interface{}{
 				"configured": h.config.GetAPIKey("claude") != "",
@@ -1083,7 +1083,7 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 
 	provider := r.URL.Query().Get("provider")
 
-	var models []string
+	var models map[string]any
 	var err error
 
 	switch provider {
@@ -1092,34 +1092,40 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 			models, err = h.openaiAPI.ListModels()
 			if err != nil {
 				// Fallback to common models
-				models = h.openaiAPI.GetCommonModels()
+				models = map[string]any{
+					"common": h.openaiAPI.GetCommonModels(),
+				}
 			}
 		} else {
-			models = h.openaiAPI.GetCommonModels()
+			models = map[string]any{
+				"common": h.openaiAPI.GetCommonModels(),
+			}
 		}
 
 	case "deepseek":
-		models = h.deepseekAPI.GetCommonModels()
+		models = map[string]any{
+			"common": h.deepseekAPI.GetCommonModels(),
+		}
 
 	case "claude":
-		models = []string{
-			"claude-3-5-sonnet-20241022",
-			"claude-3-5-haiku-20241022",
-			"claude-3-opus-20240229",
-			"claude-3-sonnet-20240229",
-			"claude-3-haiku-20240307",
+		models = map[string]any{
+			"claude-3-5-sonnet-20241022": struct{}{},
+			"claude-3-5-haiku-20241022": struct{}{},
+			"claude-3-opus-20240229":    struct{}{},
+			"claude-3-sonnet-20240229":  struct{}{},
+			"claude-3-haiku-20240307":    struct{}{},
 		}
 
 	case "ollama":
-		models = []string{
-			"llama3.2",
-			"llama3.1",
-			"codellama",
-			"mistral",
-			"neural-chat",
-			"vicuna",
-			"wizardcoder",
-			"llama2",
+		models = map[string]any{
+			"llama3.2":   struct{}{},
+			"llama3.1":   struct{}{},
+			"codellama":  struct{}{},
+			"mistral":    struct{}{},
+			"neural-chat": struct{}{},
+			"vicuna":     struct{}{},
+			"wizardcoder": struct{}{},
+			"llama2":     struct{}{},
 		}
 
 	default:
@@ -1247,14 +1253,14 @@ func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appVersion := ii.CurrentVersion
+	appVersion := it.CurrentVersion
 	if appVersion == "" {
-		appVersion = ii.AppVersion
+		appVersion = it.AppVersion
 	}
 
 	versionInfo := map[string]string{
 		"version": appVersion,
-		"name":    ii.AppName,
+		"name":    it.AppName,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1304,7 +1310,7 @@ func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
 	aboutInfo := map[string]string{
 		"name":        "Grompt",
 		"description": "A tool for building prompts with AI assistance using real engineering practices.",
-		"version":     ii.AppVersion,
+		"version":     it.AppVersion,
 		"author":      "Rafa Mori",
 		"license":     "MIT",
 	}
@@ -1324,7 +1330,7 @@ func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	status := map[string]string{
 		"status":    "running",
 		"timestamp": time.Now().Format(time.RFC3339),
-		"version":   ii.AppVersion,
+		"version":   it.AppVersion,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

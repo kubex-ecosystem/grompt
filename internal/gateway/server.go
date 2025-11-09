@@ -66,7 +66,7 @@ func (s *Server) Start() error {
 
 	// Setup HTTP routes
 	mux := http.NewServeMux()
-	transport.WireHTTP(mux, s.registry, s.middleware)
+	transport.WireHTTPSSE(mux, s.registry)
 
 	// Apply CORS if enabled
 	var handler http.Handler = mux

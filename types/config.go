@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/goccy/go-yaml"
-	providers "github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/factory/providers"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	itypes "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/logz"
 )
 
@@ -27,7 +29,7 @@ type legacyFileConfig struct {
 
 // Config mirrors the legacy engine configuration contract.
 type Config interface {
-	GetAPIConfig(provider string) APIConfig
+	GetAPIConfig(provider string) interfaces.IAPIConfig
 	GetPort() string
 	GetAPIKey(provider string) string
 	SetAPIKey(provider, key string) error
@@ -143,8 +145,18 @@ func (c *configImpl) attachEngine(engine *promptEngine) {
 	c.engine = engine
 }
 
-func (c *configImpl) GetAPIConfig(provider string) APIConfig {
-	return &apiConfig{provider: provider, cfg: c}
+func (c *configImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	apiKey := c.apiKeys[strings.ToLower(provider)]
+	endpoint := c.endpoints[strings.ToLower(provider)]
+
+	return &apiConfig{
+		provider: provider,
+		apiKey:   apiKey,
+		endpoint: endpoint,
+	}
 }
 
 func (c *configImpl) GetPort() string {
@@ -285,9 +297,9 @@ func (c *configImpl) loadFromFile(path string) error {
 	return nil
 }
 
-func (c *configImpl) registryConfig() providers.Config {
-	cfg := providers.Config{
-		Providers: map[string]providers.ProviderConfig{},
+func (c *configImpl) registryConfig() itypes.Config {
+	cfg := itypes.Config{
+		Providers: make(map[string]interfaces.Provider),
 	}
 
 	c.mu.RLock()
@@ -299,12 +311,12 @@ func (c *configImpl) registryConfig() providers.Config {
 			providerType = name
 		}
 
-		cfg.Providers[name] = providers.ProviderConfig{
-			BaseURL:      c.endpoints[name],
-			KeyEnv:       c.injectTempEnv(name, apiKey),
-			DefaultModel: c.defaultModels[name],
-			Type:         providerType,
-		}
+		cfg.Providers[name] = providers.NewProvider(
+			name,
+			apiKey,
+			"",
+			&cfg,
+		)
 	}
 
 	return cfg

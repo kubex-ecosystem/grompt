@@ -7,27 +7,30 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	itypes "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/grompt/types"
 	logz "github.com/kubex-ecosystem/logz"
 )
 
 // Result represents the outcome of a processed prompt.
-type Result = types.Result
+type Result = interfaces.Result
 
 // Capabilities describes provider abilities (legacy compatibility).
-type Capabilities = types.Capabilities
+type Capabilities = interfaces.Capabilities
 
 // Pricing captures basic usage pricing metadata.
-type Pricing = types.Pricing
+type Pricing = interfaces.Pricing
 
 // PromptEngine exposes legacy prompt-processing capabilities.
 type PromptEngine = types.PromptEngine
 
 // Provider is the legacy provider interface exposed to consumers.
-type Provider = types.Provider
+type Provider = interfaces.Provider
 
 // APIConfig mirrors the legacy engine API configuration contract.
-type APIConfig = types.APIConfig
+type IAPIConfig = interfaces.IAPIConfig
+type APIConfig = itypes.APIConfig
 
 // Config mirrors the legacy engine configuration contract.
 type Config = types.Config

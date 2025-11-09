@@ -59,11 +59,11 @@ func defaultCapabilities(provider, model string) *interfaces.Capabilities {
 	caps := &interfaces.Capabilities{
 		SupportsBatch:     true,
 		SupportsStreaming: true,
-		Models:            make(map[string]any),
+		Models:            map[string]any{},
 	}
 
 	if model != "" {
-		caps.Models[model] = nil
+		caps.Models[model] = struct{}{}
 	}
 
 	switch provider {

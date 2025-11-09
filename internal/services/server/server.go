@@ -14,7 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kubex-ecosystem/grompt/internal/grompt"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 	gl "github.com/kubex-ecosystem/logz/logger"
 )
@@ -22,9 +24,13 @@ import (
 var reactApp = grompt.NewGUIGrompt()
 
 type Server struct {
+	gin.IRouter
+
+	router   *http.ServeMux
+
 	config   *t.Config
 	handlers *Handlers
-	router   *http.ServeMux
+	// reactApp *ReactApp
 }
 
 type ReactApp struct {
@@ -34,7 +40,7 @@ type ReactApp struct {
 	WasmRoutes  map[string]string
 }
 
-func NewServer(cfg t.IConfig) *Server {
+func NewServer(cfg interfaces.IConfig) *Server {
 	handlers := NewHandlers(cfg)
 	return &Server{
 		config:   cfg.(*t.Config),
@@ -76,6 +82,12 @@ func (s *Server) Start() error {
 	return http.ListenAndServe(net.JoinHostPort(s.config.BindAddr, s.config.Port), s.router)
 }
 
+func getGinHandlerFunc(f http.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		f(c.Writer, c.Request)
+	}
+}
+
 func (s *Server) setupRoutes() {
 	buildFS, err := fs.Sub(reactApp.GetWebFS(), "embedded/guiweb")
 	if err != nil {
@@ -90,29 +102,33 @@ func (s *Server) setupRoutes() {
 	// ------------------------------------------------------------------
 	// 1) Núcleo / Saúde / Configuração
 	s.router.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
-	s.Route("/api/v1/health", s.handlers.HandleHealth).WithAPI().Methods(http.MethodGet).Register()
-	s.Route("/api/v1/config", s.handlers.HandleConfig).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-	s.Route("/api/v1/test", s.handlers.HandleTest).WithAPI().Methods(http.MethodGet).Register()
-	s.Route("/api/v1/models", s.handlers.HandleModels).WithAPI().Methods(http.MethodGet).Register()
+	s.GET("/api/v1/health", getGinHandlerFunc(s.handlers.HandleHealth))
+	s.GET("/api/v1/config", getGinHandlerFunc(s.handlers.HandleConfig))
+	s.POST("/api/v1/config", getGinHandlerFunc(s.handlers.HandleConfig))
+	s.GET("/api/v1/test", getGinHandlerFunc(s.handlers.HandleTest))
+	s.GET("/api/v1/models", getGinHandlerFunc(s.handlers.HandleModels))
 
 	// 2) Provedores (diretos)
-	s.Route("/api/v1/openai", s.handlers.HandleOpenAI).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/claude", s.handlers.HandleClaude).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/gemini", s.handlers.HandleGemini).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/deepseek", s.handlers.HandleDeepSeek).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/chatgpt", s.handlers.HandleChatGPT).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/ollama", s.handlers.HandleOllama).WithAPI().Methods(http.MethodPost).Register()
+	s.POST("/api/v1/openai", getGinHandlerFunc(s.handlers.HandleOpenAI))
+	s.POST("/api/v1/claude", getGinHandlerFunc(s.handlers.HandleClaude))
+	s.POST("/api/v1/gemini", getGinHandlerFunc(s.handlers.HandleGemini))
+	s.POST("/api/v1/deepseek", getGinHandlerFunc(s.handlers.HandleDeepSeek))
+	s.POST("/api/v1/chatgpt", getGinHandlerFunc(s.handlers.HandleChatGPT))
+	s.POST("/api/v1/ollama", getGinHandlerFunc(s.handlers.HandleOllama))
 
 	// 3) Geração Unificada e Atalhos
-	s.Route("/api/v1/unified", s.handlers.HandleUnified).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/ask", s.handlers.HandleAsk).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/squad", s.handlers.HandleSquad).WithAPI().Methods(http.MethodPost).Register()
+	s.POST("/api/v1/unified", getGinHandlerFunc(s.handlers.HandleUnified))
+	s.POST("/api/v1/ask", getGinHandlerFunc(s.handlers.HandleAsk))
+	s.POST("/api/v1/squad", getGinHandlerFunc(s.handlers.HandleSquad))
 
 	// 4) Agentes / Squad
-	s.Route("/api/v1/agents", s.handlers.HandleAgents).WithAPI().Methods(http.MethodGet, http.MethodPost).Register()
-	s.Route("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate).WithAPI().Methods(http.MethodPost).Register()
-	s.Route("/api/v1/agents/", s.handlers.HandleAgent).WithAPI().Methods(http.MethodGet, http.MethodPut, http.MethodDelete).Register()
-	s.Route("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown).WithAPI().Methods(http.MethodGet).Register()
+	// s.GET("/api/v1/agents", getGinHandlerFunc(s.handlers.HandleAgents))
+	// s.POST("/api/v1/agents", getGinHandlerFunc(s.handlers.HandleAgents))
+	// s.POST("/api/v1/agents/generate", getGinHandlerFunc(s.handlers.HandleAgentsGenerate))
+	// s.GET("/api/v1/agents/", getGinHandlerFunc(s.handlers.HandleAgent))
+	// s.PUT("/api/v1/agents/", getGinHandlerFunc(s.handlers.HandleAgent))
+	// s.DELETE("/api/v1/agents/", getGinHandlerFunc(s.handlers.HandleAgent))
+	// s.GET("/api/v1/agents.md", getGinHandlerFunc(s.handlers.HandleAgentsMarkdown))
 
 	// Página de teste para WASM
 	s.router.HandleFunc("/wasm-test.html", func(w http.ResponseWriter, r *http.Request) {
@@ -270,10 +286,10 @@ cd ..</code></pre>
 	s.router.HandleFunc("/api/v1/gemini", s.handlers.HandleGemini)
 	s.router.HandleFunc("/api/v1/deepseek", s.handlers.HandleDeepSeek)
 	s.router.HandleFunc("/api/v1/unified", s.handlers.HandleUnified)
-	s.router.HandleFunc("/api/v1/agents", s.handlers.HandleAgents)
-	s.router.HandleFunc("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate)
-	s.router.HandleFunc("/api/v1/agents/", s.handlers.HandleAgent)
-	s.router.HandleFunc("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown)
+	// s.router.HandleFunc("/api/v1/agents", s.handlers.HandleAgents)
+	// s.router.HandleFunc("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate)
+	// s.router.HandleFunc("/api/v1/agents/", s.handlers.HandleAgent)
+	// s.router.HandleFunc("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown)
 
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.

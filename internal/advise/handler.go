@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
-	providers "github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 type Handler struct{ reg *registry.Registry }
@@ -50,12 +50,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"x-user-id":          r.Header.Get("x-user-id"),
 	}
 
-	ch, err := p.Chat(r.Context(), providers.ChatRequest{
+	ch, err := p.Chat(r.Context(), interfaces.ChatRequest{
 		Provider: in.Provider,
 		Model:    in.Model,
 		Temp:     in.Temperature,
 		Stream:   true,
-		Messages: []providers.Message{
+		Messages: []interfaces.Message{
 			{Role: "system", Content: sys},
 			{Role: "user", Content: user},
 		},

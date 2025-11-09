@@ -6,8 +6,8 @@ import (
 
 	"github.com/kubex-ecosystem/grompt/internal/advise"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/scorecard"
-	providers "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type httpHandlersSSE struct {
@@ -45,7 +45,7 @@ func WireHTTPSSE(mux *http.ServeMux, reg *registry.Registry) {
 type chatReq struct {
 	Provider string              `json:"provider"`
 	Model    string              `json:"model"`
-	Messages []providers.Message `json:"messages"`
+	Messages []interfaces.Message `json:"messages"`
 	Temp     float32             `json:"temperature"`
 	Stream   bool                `json:"stream"`
 	Meta     map[string]any      `json:"meta"`
@@ -67,7 +67,7 @@ func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
 		"x-tenant-id":        r.Header.Get("x-tenant-id"),
 		"x-user-id":          r.Header.Get("x-user-id"),
 	}
-	ch, err := p.Chat(r.Context(), providers.ChatRequest{
+	ch, err := p.Chat(r.Context(), interfaces.ChatRequest{
 		Provider: in.Provider,
 		Model:    in.Model,
 		Messages: in.Messages,
@@ -92,9 +92,9 @@ func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
 		if c.Content != "" {
 			payload["content"] = c.Content
 		}
-		if c.ToolCall != nil {
-			payload["toolCall"] = c.ToolCall
-		}
+		// if c.ToolCall != nil {
+		// 	payload["toolCall"] = c.ToolCall
+		// }
 		if c.Done {
 			payload["done"] = true
 			if c.Usage != nil {
@@ -118,7 +118,7 @@ func (h *httpHandlersSSE) providers(w http.ResponseWriter, r *http.Request) {
 	type item struct{ Name, Type string }
 	out := []item{}
 	for name, pc := range cfg.Providers {
-		out = append(out, item{Name: name, Type: pc.Type})
+		out = append(out, item{Name: name, Type: pc.Type()})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{"providers": out})

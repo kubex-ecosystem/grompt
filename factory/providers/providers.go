@@ -2,59 +2,64 @@
 package providers
 
 import (
-    "github.com/kubex-ecosystem/grompt"
-    logz "github.com/kubex-ecosystem/logz"
+	eng "github.com/kubex-ecosystem/grompt/internal/engine"
+	tp "github.com/kubex-ecosystem/grompt/internal/types"
+	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	logz "github.com/kubex-ecosystem/logz"
 )
 
-type Provider = grompt.Provider
+type Provider = i.Provider
 
-type Capabilities = grompt.Capabilities
+type Capabilities = i.Capabilities
 
-type Pricing = grompt.Pricing
+type Pricing = i.Pricing
 
 // Initialize mirrors the legacy helper, wiring a prompt engine and returning the available providers.
 func Initialize(
-    bindAddr string,
-    port string,
-    openAIKey string,
-    deepSeekKey string,
-    ollamaEndpoint string,
-    claudeKey string,
-    geminiKey string,
-    chatgptKey string,
-    logger logz.Logger,
+	port string,
+	bindAddr string,
+	openAIKey string,
+	deepSeekKey string,
+	ollamaEndpoint string,
+	claudeKey string,
+	geminiKey string,
+	chatgptKey string,
+	logger logz.Logger,
 ) []Provider {
-    cfg := grompt.NewConfig(
-        bindAddr,
-        port,
-        openAIKey,
-        deepSeekKey,
-        ollamaEndpoint,
-        claudeKey,
-        geminiKey,
-        chatgptKey,
-        logger,
-    )
+	cfg := tp.NewConfig(
+		bindAddr,
+		port,
+		openAIKey,
+		deepSeekKey,
+		ollamaEndpoint,
+		claudeKey,
+		geminiKey,
+		chatgptKey,
+		logger,
+	)
 
-    engine := grompt.NewPromptEngine(cfg)
-    return engine.GetProviders()
+	e := eng.NewEngine(cfg)
+	providers := []Provider{}
+	providers = append(providers, e.GetProviders()...)
+
+	return providers
 }
 
 // NewProvider lazily ensures the named provider is available and returns its adapter.
-func NewProvider(name, apiKey, version string, cfg grompt.Config) Provider {
-    if cfg == nil {
-        return nil
-    }
+func NewProvider(name, apiKey, version string, cfg *tp.Config) Provider {
+	if cfg == nil {
+		return nil
+	}
 
-    if apiKey != "" {
-        _ = cfg.SetAPIKey(name, apiKey)
-    }
+	if apiKey != "" {
+		_ = cfg.SetAPIKey(name, apiKey)
+	}
 
-    engine := grompt.NewPromptEngine(cfg)
-    for _, provider := range engine.GetProviders() {
-        if provider.Name() == name {
-            return provider
-        }
-    }
-    return nil
+	engine := eng.NewEngine(cfg)
+	for _, provider := range engine.GetProviders() {
+		if provider.Name() == name {
+			return provider
+		}
+	}
+	return nil
 }

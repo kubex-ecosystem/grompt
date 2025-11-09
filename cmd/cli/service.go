@@ -13,6 +13,7 @@ import (
 
 	s "github.com/kubex-ecosystem/grompt/internal/services/server"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
+	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
 	l "github.com/kubex-ecosystem/logz"
 
 	"github.com/spf13/cobra"
@@ -71,7 +72,7 @@ func startServer() *cobra.Command {
 				return
 			}
 
-			var cfg t.IConfig
+			var cfg i.IConfig
 			var err error
 
 			if configFilePath != "" {
@@ -160,7 +161,7 @@ func startServerService() *cobra.Command {
 				gl.SetDebugMode(true)
 			}
 
-			var cfg t.IConfig
+			var cfg i.IConfig
 			var err error
 
 			if configFilePath != "" {

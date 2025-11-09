@@ -3,7 +3,7 @@ package main
 
 import (
 	"github.com/kubex-ecosystem/grompt/internal/module"
-	gl "github.com/kubex-ecosystem/grompt/internal/module/logger"
+	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
 func main() {

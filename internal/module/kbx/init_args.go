@@ -48,6 +48,8 @@ type InitArgs struct {
 	PubKeyPath     string
 	PrivKeyPath    string
 	Pwd            string
+	NotificationTimeoutSeconds int
+	NotificationProvider		any
 }
 
 func NewInitArgs(

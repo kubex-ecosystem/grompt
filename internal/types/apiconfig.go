@@ -9,8 +9,6 @@ import (
 
 type apiConfig struct {
 	provider string
-	apiKey   string
-	endpoint string
 	cfg      *configImpl
 }
 
@@ -25,20 +23,17 @@ func (a *apiConfig) IsDemoMode() bool { return false }
 
 func (a *apiConfig) Version() string { return "gateway-v1" }
 
-func (a *apiConfig) ListModels() (map[string]any, error) {
+func (a *apiConfig) ListModels() ([]string, error) {
 	model := a.cfg.defaultModels[a.provider]
 	if model == "" {
-		return nil, errors.New("no default model configured for provider " + a.provider)
+		return []string{}, nil
 	}
-	return map[string]any{"default": model}, nil
+	return []string{model}, nil
 }
 
 func (a *apiConfig) GetCommonModels() []string {
-	model := a.cfg.defaultModels[a.provider]
-	if model == "" {
-		return []string{}
-	}
-	return []string{model}
+	models, _ := a.ListModels()
+	return models
 }
 
 func (a *apiConfig) Complete(prompt string, maxTokens int, model string) (string, error) {
@@ -53,7 +48,7 @@ func (a *apiConfig) Complete(prompt string, maxTokens int, model string) (string
 		vars["model"] = model
 	}
 
-	result, err := a.cfg.engine.invokeProvider(context.Background(), a.provider, prompt, vars)
+	result, err := a.cfg.engine.InvokeProvider(context.Background(), a.provider, prompt, vars)
 	if err != nil {
 		return "", err
 	}
