@@ -67,7 +67,7 @@ importers:
         specifier: ~5.8.2
         version: 5.8.3
       vite:
-        specifier: ^7.1.9
+        specifier: ^7.1.6
         version: 7.1.11(@types/node@22.18.12)(jiti@1.21.7)(lightningcss@1.30.2)
 
 packages:

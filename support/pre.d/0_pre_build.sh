@@ -24,8 +24,8 @@ __source_script_if_needed() {
   return 0
 }
 
-_SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
-__source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || {
+_ROOT_DIR="${_ROOT_DIR:-$(git rev-parse --show-toplevel)}"
+__source_script_if_needed "get_current_shell" "${_ROOT_DIR:-}/support/utils.sh" || {
   echo "Error: Could not source utils.sh. Please ensure it exists." >&2
   exit 1
 }
@@ -46,7 +46,7 @@ build_frontend() {
   if command -v pnpm &>/dev/null; then
       log info "Building frontend..." true
 
-      _frontend_install_output="$(pnpm install --force > /dev/null 2>&1 || {
+      _frontend_install_output="$(pnpm install --no-strict-peer-dependencies --no-use-stderr --force > /dev/null 2>&1 || {
           echo "Failed to install frontend dependencies."
       })"
 
