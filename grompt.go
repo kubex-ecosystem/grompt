@@ -9,7 +9,6 @@ import (
 
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	itypes "github.com/kubex-ecosystem/grompt/internal/types"
-	"github.com/kubex-ecosystem/grompt/types"
 
 	logz "github.com/kubex-ecosystem/logz"
 )
@@ -24,7 +23,7 @@ type Capabilities = interfaces.Capabilities
 type Pricing = interfaces.Pricing
 
 // PromptEngine exposes legacy prompt-processing capabilities.
-type PromptEngine = types.PromptEngine
+type PromptEngine = itypes.PromptEngine
 
 // Provider is the legacy provider interface exposed to consumers.
 type Provider = interfaces.Provider
@@ -76,7 +75,7 @@ func NewConfig(
 
 // NewPromptEngine returns a legacy-compatible engine backed by the new gateway stack.
 func NewPromptEngine(cfg interfaces.IConfig) PromptEngine {
-	return types.NewPromptEngine(cfg)
+	return itypes.NewPromptEngine(cfg)
 }
 
 // NewPrompt creates a new Prompt instance with the given message and default value.
