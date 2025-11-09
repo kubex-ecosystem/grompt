@@ -10,6 +10,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	itypes "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/grompt/types"
+
 	logz "github.com/kubex-ecosystem/logz"
 )
 
@@ -28,12 +29,12 @@ type PromptEngine = types.PromptEngine
 // Provider is the legacy provider interface exposed to consumers.
 type Provider = interfaces.Provider
 
-// APIConfig mirrors the legacy engine API configuration contract.
+// IAPIConfig mirrors the legacy engine API configuration contract.
 type IAPIConfig = interfaces.IAPIConfig
 type APIConfig = itypes.APIConfig
 
 // Config mirrors the legacy engine configuration contract.
-type Config = types.Config
+type Config = itypes.Config
 
 // Prompt represents a command-line prompt with a message and an optional default value.
 type Prompt struct {
@@ -44,8 +45,8 @@ type Prompt struct {
 // ---------- Public constructors ----------
 
 // DefaultConfig rebuilds a legacy-compatible configuration.
-func DefaultConfig(configFilePath string) Config {
-	return types.DefaultConfig(configFilePath)
+func DefaultConfig(configFilePath string) interfaces.IConfig {
+	return itypes.DefaultConfig(configFilePath)
 }
 
 // NewConfig constructs a configuration using explicit parameters.
@@ -59,8 +60,8 @@ func NewConfig(
 	geminiKey string,
 	chatGPTKey string,
 	logger logz.Logger,
-) Config {
-	return types.NewConfig(
+) interfaces.IConfig {
+	return itypes.NewConfig(
 		bindAddr,
 		port,
 		openAIKey,
@@ -74,7 +75,7 @@ func NewConfig(
 }
 
 // NewPromptEngine returns a legacy-compatible engine backed by the new gateway stack.
-func NewPromptEngine(cfg Config) PromptEngine {
+func NewPromptEngine(cfg interfaces.IConfig) PromptEngine {
 	return types.NewPromptEngine(cfg)
 }
 
