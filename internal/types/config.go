@@ -139,6 +139,7 @@ var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama
 type ServerConfigImpl struct {
 	Name               string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
 	Debug              bool   `json:"debug,omitempty" yaml:"debug,omitempty" mapstructure:"debug,omitempty"`
+	EnableCORS				bool   `json:"enable_cors,omitempty" yaml:"enable_cors,omitempty" mapstructure:"enable_cors,omitempty"`
 	Logger             logz.Logger `json:"-" yaml:"-" mapstructure:"-"`
 	BindAddr           string `json:"bind_addr,omitempty" yaml:"bind_addr,omitempty" mapstructure:"bind_addr,omitempty"`
 	Port               string `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
@@ -396,4 +397,41 @@ func (c *ServerConfigImpl) Validate() error {
 		return fmt.Errorf("invalid port: %s", c.GetPort())
 	}
 	return c.RegistryConfig().Validate()
+}
+
+func (c *ServerConfigImpl) GetServerConfig() interfaces.IConfig {
+	return c
+}
+
+func (c *ServerConfigImpl) GetProviders() map[string]interfaces.Provider {
+	return c.RegistryConfig().GetProviders()
+}
+
+func (c *ServerConfigImpl) IsDebugMode() bool {
+	return c.Debug
+}
+
+func (c *ServerConfigImpl) GetConfigFilePath() string {
+	return c.ConfigFile
+}
+
+func (c *ServerConfigImpl) GetConfigArgs() kbx.InitArgs {
+	return kbx.InitArgs{
+		Debug:            c.Debug,
+		Bind:             c.BindAddr,
+		Port:             c.Port,
+		TempDir:          c.TempDir,
+		LogFile:          c.LogFile,
+		EnvFile:          c.EnvFile,
+		ConfigFile:       c.ConfigFile,
+		Cwd:              c.Cwd,
+		DefaultProvider:  c.DefaultProvider,
+		HistorySize:      c.HistoryLimit,
+		Timeout:          c.Timeout,
+		ProviderConfigPath: c.ProviderConfigPath,
+	}
+}
+
+func (c *ServerConfigImpl) IsCORSEnabled() bool {
+	return c.EnableCORS
 }

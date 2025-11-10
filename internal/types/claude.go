@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -235,3 +236,35 @@ func (o *ClaudeAPI) IsDemoMode() bool { return o.DemoMode }
 func (o *ClaudeAPI) GetBaseURL() string { return o.BaseURL }
 
 func (o *ClaudeAPI) GetAPIKey() string { return o.APIKey }
+
+func (o *ClaudeAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
+	// Implementar funcionalidade de chat se necessário
+	return nil, fmt.Errorf("chat não implementado para ClaudeAPI")
+}
+
+func (o *ClaudeAPI) Notify(ctx context.Context, event interfaces.NotificationEvent) error {
+	// Implementar funcionalidade de notificação se necessário
+	return fmt.Errorf("notify não implementado para ClaudeAPI")
+}
+
+func (o *ClaudeAPI) Execute(ctx context.Context, cmd string, args map[string]any) (*interfaces.Result, error) {
+	// Implementar funcionalidade de execução se necessário
+	return nil, fmt.Errorf("execute não implementado para ClaudeAPI")
+}
+
+func (o *ClaudeAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
+	// Implementar funcionalidade de capacidades se necessário
+	return nil
+}
+
+func (o *ClaudeAPI) KeyEnv() string {
+	return "CLAUDE_API_KEY"
+}
+
+func (o *ClaudeAPI) Name() string {
+	return "claude"
+}
+
+func (o *ClaudeAPI) Type() string {
+	return "claude"
+}

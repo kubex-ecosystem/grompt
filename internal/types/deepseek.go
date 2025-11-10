@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -235,3 +236,36 @@ func (o *DeepSeekAPI) IsDemoMode() bool { return o.DemoMode }
 func (o *DeepSeekAPI) GetBaseURL() string { return o.BaseURL }
 
 func (o *DeepSeekAPI) GetAPIKey() string { return o.APIKey }
+
+
+func (o *DeepSeekAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
+	// Implementar funcionalidade de chat se necessário
+	return nil, fmt.Errorf("chat não implementado para DeepSeekAPI")
+}
+
+func (o *DeepSeekAPI) Notify(ctx context.Context, event interfaces.NotificationEvent) error {
+	// Implementar funcionalidade de notificação se necessário
+	return fmt.Errorf("notify não implementado para DeepSeekAPI")
+}
+
+func (o *DeepSeekAPI) Execute(ctx context.Context, cmd string, args map[string]any) (*interfaces.Result, error) {
+	// Implementar funcionalidade de execução se necessário
+	return nil, fmt.Errorf("execute não implementado para DeepSeekAPI")
+}
+
+func (o *DeepSeekAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
+	// Implementar funcionalidade de capacidades se necessário
+	return nil
+}
+
+func (o *DeepSeekAPI) KeyEnv() string {
+	return "DEEPSEEK_API_KEY"
+}
+
+func (o *DeepSeekAPI) Name() string {
+	return "deepseek"
+}
+
+func (o *DeepSeekAPI) Type() string {
+	return "deepseek"
+}

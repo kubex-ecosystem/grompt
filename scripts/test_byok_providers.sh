@@ -8,7 +8,9 @@ echo "Testing client-side analyzer with different API providers"
 echo
 
 # Test the deployed frontend
-FRONTEND_URL="https://analyzer.kubex.world"
+# _FRONTEND_URL="https://grompt.kubex.world"
+_FRONTEND_URL="http://localhost:8666"
+FRONTEND_URL="${FRONTEND_URL:-$_FRONTEND_URL}"
 echo "🌐 Testing deployed frontend: $FRONTEND_URL"
 
 if curl -s "$FRONTEND_URL" > /dev/null; then

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Configuration
-BASE_URL="${GROMPT_BASE_URL:-http://localhost:3000}"
+BASE_URL="${GROMPT_BASE_URL:-http://localhost:8080}"
 TIMEOUT="${TIMEOUT:-10}"
 
 # Colors for output
@@ -106,7 +106,7 @@ main() {
 
     # Test 1: Health Check
     ((total_tests++))
-    test_endpoint "GET" "/v1/health" "200" "Health Check" || ((failed_tests++))
+    test_endpoint "GET" "/healthz" "200" "Health Check" || ((failed_tests++))
     echo ""
 
     # Test 2: List Providers
@@ -133,7 +133,7 @@ main() {
     # Test 5: GoBE Proxy Health (if configured)
     if [[ -n "${GOBE_BASE_URL:-}" ]]; then
         ((total_tests++))
-        test_endpoint "GET" "/v1/proxy/health" "200" "GoBE Proxy Health Check" || ((failed_tests++))
+        test_endpoint "GET" "/v1/proxy/healthz" "200" "GoBE Proxy Health Check" || ((failed_tests++))
         echo ""
     else
         log_warning "Skipping GoBE proxy tests - GOBE_BASE_URL not configured"
@@ -174,7 +174,7 @@ validate_environment() {
     log_info "Validating environment..."
 
     # Check if server is running
-    if ! curl -s --max-time 5 "$BASE_URL/v1/health" > /dev/null; then
+    if ! curl -s --max-time 5 "$BASE_URL/v1/healthz" > /dev/null; then
         log_error "Grompt server is not running at $BASE_URL"
         echo "Please start the server with: make run"
         exit 1
@@ -191,7 +191,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  -h, --help     Show this help message"
-    echo "  -u, --url URL  Set base URL (default: http://localhost:3000)"
+    echo "  -u, --url URL  Set base URL (default: http://localhost:8080)"
     echo "  -t, --timeout  Set timeout in seconds (default: 10)"
     echo ""
     echo "Environment Variables:"

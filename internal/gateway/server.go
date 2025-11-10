@@ -3,6 +3,7 @@ package gateway
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/gateway/middleware"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/routes"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 // ServerConfig holds configuration for the gateway server
@@ -24,7 +26,7 @@ type ServerConfig struct {
 
 // Server represents the gateway server
 type Server struct {
-	config     *ServerConfig
+	config     interfaces.IConfig
 	registry   *registry.Registry
 	middleware *middleware.ProductionMiddleware
 	router     *gin.Engine
@@ -32,14 +34,14 @@ type Server struct {
 }
 
 // NewServer creates a new gateway server instance
-func NewServer(config *ServerConfig) (*Server, error) {
+func NewServer(config interfaces.IConfig) (*Server, error) {
 	// Load providers registry
-	reg, err := registry.Load(config.ProvidersConfig)
+	reg, err := registry.Load(config.GetConfigFilePath())
 	if err != nil {
 		return nil, err
 	}
 
-	if !config.Debug {
+	if !config.IsDebugMode() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	router := gin.New()
@@ -59,7 +61,7 @@ func NewServer(config *ServerConfig) (*Server, error) {
 		registry:   reg,
 		middleware: prodMiddleware,
 		router:     router,
-		routes:     routes.NewGatewayRoutes(reg),
+		routes:     routes.NewGatewayRoutes(reg, prodMiddleware),
 	}, nil
 }
 
@@ -75,14 +77,24 @@ func (s *Server) Start() error {
 		os.Exit(0)
 	}()
 
-	if s.config.EnableCORS {
+	if s.config.IsCORSEnabled() {
 		s.router.Use(corsMiddleware())
 	}
 
 	s.routes.Register(s.router)
 
-	log.Printf("🚀 grompt-gw listening on %s with ENTERPRISE features!", s.config.Addr)
-	return s.router.Run(s.config.Addr)
+	log.Printf("🚀 grompt-gw listening on %s with ENTERPRISE features!",
+		net.JoinHostPort(
+			s.config.GetConfigArgs().Bind,
+			s.config.GetConfigArgs().Port,
+		),
+	)
+	return s.router.Run(
+		net.JoinHostPort(
+			s.config.GetConfigArgs().Bind,
+			s.config.GetConfigArgs().Port,
+		),
+	)
 }
 
 // corsMiddleware reproduz a lógica anterior usando o pipeline do gin.

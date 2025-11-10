@@ -2,7 +2,8 @@ import * as React from 'react';
 import { DemoMode } from '../../config/demoMode';
 
 const DemoStatusFooter: React.FC = () => {
-  if (!DemoMode.isActive) return null;
+  if (DemoMode.isActive !== true)
+    return null;
 
   return (
     <div className="mt-8 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">

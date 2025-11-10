@@ -43,7 +43,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'openai',
     display_name: 'OpenAI',
-    available: false,
+    available: true,
     configured: false,
     models: ['gpt-4o-mini'],
     default_model: 'gpt-4o-mini',
@@ -54,7 +54,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'claude',
     display_name: 'Anthropic Claude',
-    available: false,
+    available: true,
     configured: false,
     models: ['claude-3-5-sonnet-20241022'],
     default_model: 'claude-3-5-sonnet-20241022',
@@ -76,7 +76,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'gemini',
     display_name: 'Google Gemini',
-    available: false,
+    available: true,
     configured: false,
     models: ['gemini-2.0-flash', 'gemini-2.5-pro'],
     default_model: 'gemini-2.0-flash',
@@ -87,7 +87,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'deepseek',
     display_name: 'DeepSeek',
-    available: false,
+    available: true,
     configured: false,
     models: ['deepseek-v1', 'deepseek-v2'],
     default_model: 'deepseek-v2',
@@ -98,7 +98,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'chatgpt',
     display_name: 'ChatGPT',
-    available: false,
+    available: true,
     configured: false,
     models: ['gpt-4o-mini'],
     default_model: 'gpt-4o-mini',
@@ -109,7 +109,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'ollama',
     display_name: 'Ollama (Local)',
-    available: false,
+    available: true,
     configured: false,
     models: ['llama3.2'],
     default_model: 'llama3.2',
@@ -266,7 +266,33 @@ class ConfigService {
       available_providers: Object.keys(providers),
       default_provider: 'openai',
       environment: {
-        demo_mode: true,
+        demo_mode: function (config): boolean {
+          if (config) {
+            if (config.openai_available === false &&
+              config.deepseek_available === false &&
+              config.ollama_available === false &&
+              config.claude_available === false &&
+              config.gemini_available === false &&
+              config.chatgpt_available === false) {
+              return true;
+            } else {
+              return false;
+            }
+          } else {
+            if (typeof process !== 'undefined') {
+              if (process.env.DEMO_MODE === 'true') {
+                return true;
+              }
+            }
+            if (typeof window !== 'undefined') {
+              const urlParams = new URLSearchParams(window.location.search);
+              if (urlParams.get('demo_mode') === 'true') {
+                return true;
+              }
+            }
+            return false;
+          }
+        }(this.config),
       },
       openai_available: false,
       deepseek_available: false,

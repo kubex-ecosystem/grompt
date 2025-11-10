@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 )
 
 var (
@@ -56,6 +57,11 @@ type InitArgs struct {
 	ChatGPTKey 	string `yaml:"chatgpt_key,omitempty" json:"chatgpt_key,omitempty" mapstructure:"chatgpt_key,omitempty"`
 	ClaudeKey 	string `yaml:"claude_key,omitempty" json:"claude_key,omitempty" mapstructure:"claude_key,omitempty"`
 	Background 	bool   `yaml:"background,omitempty" json:"background,omitempty" mapstructure:"background,omitempty"`
+	DefaultProvider 	string  `yaml:"default_provider,omitempty" json:"default_provider,omitempty" mapstructure:"default_provider,omitempty"`
+	DefaultTemperature 	float32  `yaml:"default_temperature,omitempty" json:"default_temperature,omitempty" mapstructure:"default_temperature,omitempty"`
+	HistorySize 	int    `yaml:"history_size,omitempty" json:"history_size,omitempty" mapstructure:"history_size,omitempty"`
+	Timeout     	time.Duration    `yaml:"timeout,omitempty" json:"timeout,omitempty" mapstructure:"timeout,omitempty"`
+	ProviderConfigPath string `yaml:"provider_config_path,omitempty" json:"provider_config_path,omitempty" mapstructure:"provider_config_path,omitempty"`
 
 	// Extended configurations
 	NotificationTimeoutSeconds int `yaml:"notification_timeout_seconds,omitempty" json:"notification_timeout_seconds,omitempty" mapstructure:"notification_timeout_seconds,omitempty"`

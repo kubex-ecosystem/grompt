@@ -1,3 +1,4 @@
+// Package health implements health check engine and related components.
 package health
 
 import (

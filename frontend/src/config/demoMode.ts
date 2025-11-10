@@ -33,12 +33,12 @@ const DEMO_CONFIG = {
   currentMode: 'simple' as const,
 
   features: {
-    ollama: { ready: false, eta: 'Q2 2024' },
-    openai: { ready: true, eta: 'Available' }, // OpenAI should work via backend
-    gemini: { ready: false, eta: 'Q2 2024' },
-    mcp_real: { ready: false, eta: 'Q1 2024' },
-    agent_execution: { ready: false, eta: 'Q3 2024' },
-    copilot: { ready: false, eta: 'Q2 2024' }
+    ollama: { ready: true, eta: 'Available' },
+    openai: { ready: true, eta: 'Available' },
+    gemini: { ready: true, eta: 'Available' },
+    mcp_real: { ready: true, eta: 'Q1 2026' },
+    agent_execution: { ready: false, eta: 'Q1 2026' },
+    copilot: { ready: false, eta: 'Q1 2026' }
   } as Record<FeatureKey, FeatureStatus>,
 
   education: {

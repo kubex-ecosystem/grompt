@@ -7,8 +7,11 @@ import (
 	"strings"
 
 	"github.com/kubex-ecosystem/grompt/internal/engine"
+	"github.com/kubex-ecosystem/grompt/internal/gateway"
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
+	"github.com/kubex-ecosystem/grompt/internal/types"
+	l "github.com/kubex-ecosystem/logz/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -19,10 +22,10 @@ func init() {
 }
 
 type Gateway struct {
-	engine *engine.Engine
+	engine interfaces.IEngine
 }
 
-func NewGateway(engine *engine.Engine) *Gateway {
+func NewGateway(engine interfaces.IEngine) *Gateway {
 	return &Gateway{
 		engine: engine,
 	}
@@ -76,14 +79,61 @@ func GatewayCmd() *cobra.Command {
 }
 
 func startGatewayServerCmd() *cobra.Command {
-	var port, bindAddr string
-
 	var startCmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start the gateway server",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Starting gateway server on %s:%s...\n", bindAddr, port)
-			// Implement the logic to start the gateway server here
+			gl := l.LoggerG.GetLogger()
+			if initArgs.Debug {
+				gl.SetDebug(true)
+			}
+			gl.Log("info", "Starting gateway server...")
+
+			cfg := types.NewConfig(
+				initArgs.Name,
+				initArgs.Debug,
+				gl,
+				initArgs.Bind,
+				initArgs.Port,
+				initArgs.TempDir,
+				initArgs.LogFile,
+				initArgs.EnvFile,
+				initArgs.ConfigFile,
+				initArgs.Cwd,
+				initArgs.OpenAIKey,
+				initArgs.ClaudeKey,
+				initArgs.GeminiKey,
+				initArgs.DeepSeekKey,
+				initArgs.ChatGPTKey,
+				initArgs.OllamaEndpoint,
+				make(map[string]string),
+				make(map[string]string),
+				make(map[string]string),
+				make(map[string]string),
+				initArgs.DefaultProvider,
+				initArgs.DefaultTemperature,
+				initArgs.HistorySize,
+				initArgs.Timeout,
+				initArgs.ProviderConfigPath,
+			)
+			// Initialize engine
+			engine := engine.NewEngine(cfg)
+			if engine == nil {
+				gl.Log("error", "Failed to initialize engine")
+				return
+			}
+
+			// Initialize and start gateway server
+			gatewayServer, err := gateway.NewServer(cfg.Server)
+			if err != nil {
+				gl.Log("error", fmt.Sprintf("Failed to create gateway server: %v", err))
+				return
+			}
+
+			if err := gatewayServer.Start(); err != nil {
+				gl.Log("error", fmt.Sprintf("Failed to start gateway server: %v", err))
+				return
+			}
 		},
 	}
 

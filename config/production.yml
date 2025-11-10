@@ -15,7 +15,7 @@ production:
 
     # Security Settings
     rate_limit:
-      enabled: false
+      enabled: true
       requests_per_minute: 120 # Global rate limit
       burst: 20 # Allow short bursts
 

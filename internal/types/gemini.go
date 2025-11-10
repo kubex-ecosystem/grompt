@@ -3,6 +3,7 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -247,6 +248,34 @@ func (g *GeminiAPI) GetBaseURL() string {
 	return g.BaseURL
 }
 
-func (g *GeminiAPI) GetCapabilities() *interfaces.Capabilities {
+func (g *GeminiAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
 	return defaultCapabilities("gemini", "")
+}
+
+
+func (g *GeminiAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
+	// Implementar funcionalidade de chat se necessário
+	return nil, fmt.Errorf("chat não implementado para GeminiAPI")
+}
+
+func (g *GeminiAPI) Notify(ctx context.Context, event interfaces.NotificationEvent) error {
+	// Implementar funcionalidade de notificação se necessário
+	return fmt.Errorf("notify não implementado para GeminiAPI")
+}
+
+func (g *GeminiAPI) Execute(ctx context.Context, cmd string, args map[string]any) (*interfaces.Result, error) {
+	// Implementar funcionalidade de execução se necessário
+	return nil, fmt.Errorf("execute não implementado para GeminiAPI")
+}
+
+func (g *GeminiAPI) KeyEnv() string {
+	return "GEMINI_API_KEY"
+}
+
+func (g *GeminiAPI) Name() string {
+	return "gemini"
+}
+
+func (g *GeminiAPI) Type() string {
+	return "gemini"
 }

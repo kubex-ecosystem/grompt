@@ -4,15 +4,14 @@
  */
 
 import { openDB, type IDBPDatabase } from 'idb';
+import { Provider } from './api';
 import { multiProviderService } from './multiProviderService';
 
 // Re-export existing types
 export type {
   GenerateRequest,
-  GenerateResponse,
-  Provider,
-  StreamEvent,
-  HealthResponse
+  GenerateResponse, HealthResponse, Provider,
+  StreamEvent
 } from './api';
 
 export {
@@ -100,39 +99,39 @@ export interface OfflineQueueItem {
 interface EnhancedGromptDB extends IDBPDatabase {
   providers: {
     key: string;
-    value: Provider & { timestamp: number };
+    value: Provider & { timestamp: number; };
   };
   prompts: {
     key: string;
-    value: any & { timestamp: number };
+    value: any & { timestamp: number; };
     indexes: {
       timestamp: number;
       provider: string;
       purpose: string;
     };
   };
-  health: {
+  healthz: {
     key: number;
     value: any;
   };
   scorecards: {
     key: string;
-    value: ScorecardResponse & { timestamp: number };
-    indexes: { timestamp: number };
+    value: ScorecardResponse & { timestamp: number; };
+    indexes: { timestamp: number; };
   };
   ai_metrics: {
     key: string;
-    value: AIMetricsResponse & { timestamp: number };
-    indexes: { timestamp: number };
+    value: AIMetricsResponse & { timestamp: number; };
+    indexes: { timestamp: number; };
   };
   settings: {
     key: string;
-    value: { key: string; value: any; timestamp: number };
+    value: { key: string; value: any; timestamp: number; };
   };
   offline_queue: {
     key: number;
     value: OfflineQueueItem;
-    indexes: { timestamp: number };
+    indexes: { timestamp: number; };
   };
 }
 
@@ -205,8 +204,8 @@ export class EnhancedGromptAPI {
         }
 
         // Health status store
-        if (!db.objectStoreNames.contains('health')) {
-          db.createObjectStore('health', { keyPath: 'timestamp' });
+        if (!db.objectStoreNames.contains('healthz')) {
+          db.createObjectStore('healthz', { keyPath: 'timestamp' });
         }
 
         // Scorecards store
@@ -234,9 +233,26 @@ export class EnhancedGromptAPI {
           });
           queueStore.createIndex('timestamp', 'timestamp');
         }
-      },
-    });
+
+        // Future object stores can be added here
+        console.log('✅ EnhancedGromptDB initialized (version ' + db.version + ')');
+
+        // On upgrade, clear outdated data
+        if (oldVersion < 2) {
+          const tx = db.transaction(['providers', 'prompts', 'healthz', 'scorecards', 'ai_metrics', 'settings', 'offline_queue'], 'readwrite');
+          tx.objectStore('providers').clear();
+          tx.objectStore('prompts').clear();
+          tx.objectStore('healthz').clear();
+          tx.objectStore('scorecards').clear();
+          tx.objectStore('ai_metrics').clear();
+          tx.objectStore('settings').clear();
+          tx.objectStore('offline_queue').clear();
+        }
+
+      }
+    }) as Promise<EnhancedGromptDB>;
   }
+
 
   // Cache management
   private async getCachedData<T>(key: string): Promise<T | null> {
@@ -253,7 +269,7 @@ export class EnhancedGromptAPI {
       timestamp: Date.now(),
       expiry: Date.now() + duration
     });
-  }
+  };
 
   // Enhanced API methods with offline fallbacks
 
@@ -292,8 +308,8 @@ export class EnhancedGromptAPI {
       await multiProviderService.generateContentStream(
         request,
         onChunk,
-        onComplete || (() => {}),
-        onError || (() => {})
+        onComplete || (() => { }),
+        onError || (() => { })
       );
     } catch (error) {
       console.error('Stream error:', error);
@@ -346,7 +362,7 @@ export class EnhancedGromptAPI {
   }
 
   async getHealth(): Promise<any> {
-    const cacheKey = 'health';
+    const cacheKey = 'healthz';
     const cached = await this.getCachedData<any>(cacheKey);
     if (cached) return cached;
 
@@ -355,16 +371,16 @@ export class EnhancedGromptAPI {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/v1/health`);
+      const response = await fetch(`${this.baseURL}/healthz`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const health = await response.json();
-      this.setCachedData(cacheKey, health);
-      await this.storeHealth(health);
+      const healthz = await response.json();
+      this.setCachedData(cacheKey, healthz);
+      await this.storeHealth(healthz);
 
-      return health;
+      return healthz;
     } catch (error) {
       console.error('Health check error:', error);
       return this.getOfflineHealth();
@@ -438,7 +454,7 @@ export class EnhancedGromptAPI {
     }
   }
 
-  async getAIMetrics(request: ScorecardRequest): Promise<AIMetricsResponse> {
+  async getAIMetrics(request: ScorecardRequest, params: any): Promise<AIMetricsResponse> {
     const cacheKey = `ai_metrics_${request.repo}_${request.period}`;
     const cached = await this.getCachedData<AIMetricsResponse>(cacheKey);
     if (cached) return cached;
@@ -727,12 +743,12 @@ Formate sua resposta como um plano de ação detalhado.`
     }
   }
 
-  private async storeHealth(health: any): Promise<void> {
+  private async storeHealth(healthz: any): Promise<void> {
     if (!this.db) return;
 
     try {
       const db = await this.db;
-      await db.put('health', health);
+      await db.put('healthz', healthz);
     } catch (error) {
       console.warn('Failed to store health offline:', error);
     }
@@ -758,7 +774,7 @@ Formate sua resposta como um plano de ação detalhado.`
     } catch (error) {
       console.warn('Failed to store AI metrics offline:', error);
     }
-  }
+  };
 
   // Offline queue management
 
@@ -816,7 +832,7 @@ Formate sua resposta como um plano de ação detalhado.`
     } catch (error) {
       console.warn('Failed to sync offline queue:', error);
     }
-  }
+  };
 
   // Public utility methods
 
@@ -860,7 +876,7 @@ Formate sua resposta como um plano de ação detalhado.`
       console.warn('Failed to get setting:', error);
       return defaultValue;
     }
-  }
+  };
 
   isConnected(): boolean {
     return this.isOnline;
@@ -873,7 +889,7 @@ Formate sua resposta como um plano de ação detalhado.`
 
     try {
       const db = await this.db;
-      const stores = ['prompts', 'scorecards', 'ai_metrics', 'health'];
+      const stores = ['prompts', 'scorecards', 'ai_metrics', 'healthz', 'providers'];
 
       for (const storeName of stores) {
         const tx = db.transaction(storeName as any, 'readwrite');

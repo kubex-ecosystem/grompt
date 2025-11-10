@@ -507,7 +507,7 @@ const PromptCrafter: React.FC<PromptCrafterProps> = ({ theme, isApiKeyMissing })
   // Dynamic configuration from backend
   const [availableProviders, setAvailableProviders] = useState<ProviderInfo[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
-  const [isDemoMode, setIsDemoMode] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
 
   // Mode tracking (byok, server, or demo)

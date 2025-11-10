@@ -96,6 +96,7 @@ type Config struct {
 	GeminiAPIKey   string `json:"gemini_api_key,omitempty" gorm:"default:''"`
 	ChatGPTAPIKey  string `json:"chatgpt_api_key,omitempty" gorm:"default:''"`
 	Debug          bool   `json:"debug" gorm:"default:false"`
+	EnableCORS		 bool   `json:"enable_cors" gorm:"default:false"`
 }
 
 func NewConfig(
@@ -511,4 +512,28 @@ func (c *Config) Validate() error {
 	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.Cwd))
 
 	return nil
+}
+
+func (c *Config) GetServerConfig() interfaces.IConfig {
+	return c.Server
+}
+
+func (c *Config) GetProviders() map[string]interfaces.Provider {
+	return c.Providers
+}
+
+func (c *Config) GetConfigFilePath() string {
+	return c.Server.ConfigFile
+}
+
+func (c *Config) IsDebugMode() bool {
+	return c.Server.Debug
+}
+
+func (c *Config) GetConfigArgs() kbx.InitArgs {
+	return *c.Defaults
+}
+
+func (c *Config) IsCORSEnabled() bool {
+	return c.Server.EnableCORS
 }

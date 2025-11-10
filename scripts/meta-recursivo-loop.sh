@@ -199,18 +199,18 @@ _ensure_globals(){
   _workspace_path="/srv/apps/LIFE/KUBEX"                              # WORKSPACE PATH [OPTIONAL]
 
   # LookAtni Paths
-  _lookatni_path="${_workspace_path:-$(cwd)}/lookatni-file-markers"   # LOOKATNI ROOT PATH
+  _lookatni_path="${_workspace_path:-$(pwd)}/lookatni-file-markers"   # LOOKATNI ROOT PATH
   _lookatni_bin="${_lookatni_path:-}/dist/lookatni"                   # LOOKATNI BINARY
 
   # Grompt Paths
-  _grompt_path="${_workspace_path:-$(cwd)}/grompt"                    # GROMPT ROOT PATH
+  _grompt_path="${_workspace_path:-$(pwd)}/grompt"                    # GROMPT ROOT PATH
   _grompt_bin="${_grompt_path}/dist/grompt_linux_amd64"               # GROMPT BINARY
 
   # Examples Path
   _example_parent="${_grompt_path}/docs/examples/virt-cycles"         # TARGET TEST PARENT FOLDER
 
   # Example Project Paths
-  _example_project="${_example_parent:-$(cwd)}/test-project"            # 1: TEST TARGET
+  _example_project="${_example_parent:-$(pwd)}/test-project"            # 1: TEST TARGET
   _example_artifact="${_example_parent}/test-project-artifact.md"       # 2: LOOKATNI ARTIFACT
   _example_prompt="${_example_parent}/improvement-prompt.md"            # 3: GROMPT GENERATED SCREENING PROMPT
   _example_result="${_example_parent}/test-project-refactored"          # 4: PROJECT REFACTORED, ALREADY RE-EXPANDED WITH LOOKATNI

@@ -42,27 +42,27 @@ func (e *Engine) initializeProviders() {
 		e.providers = append(e.providers, provider)
 	}
 
-	// // Initialize Claude provider
-	// if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
-	// 	provider := types.NewClaudeAPI(apiKey)
-	// 	e.providers = append(e.providers, provider)
-	// }
+	// Initialize Claude provider
+	if apiKey := e.config.GetAPIKey("claude"); apiKey != "" {
+		provider := types.NewClaudeAPI(apiKey)
+		e.providers = append(e.providers, provider)
+	}
 
-	// // Initialize DeepSeek provider
-	// if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
-	// 	provider := types.NewDeepSeekAPI(apiKey)
-	// 	e.providers = append(e.providers, provider)
-	// }
+	// Initialize DeepSeek provider
+	if apiKey := e.config.GetAPIKey("deepseek"); apiKey != "" {
+		provider := types.NewDeepSeekAPI(apiKey)
+		e.providers = append(e.providers, provider)
+	}
 
-	// // Initialize Ollama provider (local - no API key needed)
-	// provider := types.NewOllamaAPI("")
-	// e.providers = append(e.providers, provider)
+	// Initialize Ollama provider (local - no API key needed)
+	provider := types.NewOllamaAPI("")
+	e.providers = append(e.providers, provider)
 
-	// // Initialize Gemini provider
-	// if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
-	// 	provider := types.NewGeminiAPI(apiKey)
-	// 	e.providers = append(e.providers, provider)
-	// }
+	// Initialize Gemini provider
+	if apiKey := e.config.GetAPIKey("gemini"); apiKey != "" {
+		provider := types.NewGeminiAPI(apiKey)
+		e.providers = append(e.providers, provider)
+	}
 }
 
 // ProcessPrompt processes a prompt with variables and returns the result
@@ -84,17 +84,18 @@ func (e *Engine) ProcessPrompt(ctx context.Context, template string, vars map[st
 
 	provider := e.providers[0]
 
-	// // Execute prompt with provider
-	// response, err := provider.Execute(context.Background(), processedPrompt)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("provider execution failed: %w", err)
-	// }
+	// Execute prompt with provider
+	response, err := provider.Execute(context.Background(), template, vars)
+	if err != nil {
+		return nil, fmt.Errorf("provider execution failed: %w", err)
+	}
+	// result := response
 
 	// Create result
 	result := &interfaces.Result{
 		ID:        generateID(),
 		Prompt:    processedPrompt,
-		// Response:  response,
+		Response:  response.Response,
 		Provider:  provider.Name(),
 		Variables: vars,
 		Timestamp: time.Now(),
@@ -247,8 +248,9 @@ func (e *Engine) InvokeProvider(ctx context.Context, providerName, prompt string
 	// if err != nil {
 	// 	return nil, fmt.Errorf("provider execution failed: %w", err)
 	// }
+	// // Create result
+	// result := response
 
-	// Create result
 	result := &interfaces.Result{
 		ID:        generateID(),
 		Prompt:    processedPrompt,

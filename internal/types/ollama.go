@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -133,7 +134,7 @@ func (o *OllamaAPI) GetAPIKey(provider string) string { return o.APIKey }
 
 func (o *OllamaAPI) GetBaseURL() string { return o.BaseURL }
 
-func (o *OllamaAPI) GetCapabilities() *interfaces.Capabilities {
+func (o *OllamaAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
 	models, err := o.ListModels()
 	if err != nil || len(models) == 0 {
 		return &interfaces.Capabilities{
@@ -153,4 +154,32 @@ func (o *OllamaAPI) GetCapabilities() *interfaces.Capabilities {
 		},
 	}
 	return capabilities
+}
+
+
+func (o *OllamaAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
+	// Implementar funcionalidade de chat se necessário
+	return nil, fmt.Errorf("chat não implementado para Ollama")
+}
+
+func (o *OllamaAPI) Notify(ctx context.Context, event interfaces.NotificationEvent) error {
+	// Implementar funcionalidade de notificação se necessário
+	return fmt.Errorf("notify não implementado para Ollama")
+}
+
+func (o *OllamaAPI) Execute(ctx context.Context, cmd string, args map[string]any) (*interfaces.Result, error) {
+	// Implementar funcionalidade de execução se necessário
+	return nil, fmt.Errorf("execute não implementado para Ollama")
+}
+
+func (o *OllamaAPI) KeyEnv() string {
+	return "OLLAMA_API_KEY"
+}
+
+func (o *OllamaAPI) Name() string {
+	return "claude"
+}
+
+func (o *OllamaAPI) Type() string {
+	return "claude"
 }

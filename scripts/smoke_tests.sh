@@ -5,8 +5,8 @@
 
 set -e
 
-BASE_URL="http://localhost:8666"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cwd)"
+BASE_URL="http://localhost:8080"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -72,7 +72,7 @@ check_server() {
         log_success "Server is running"
         return 0
     else
-        log_error "Server is not running. Start with: ./dist/analyzer_linux_amd64 gateway serve -p 8666"
+        log_error "Server is not running. Start with: ./dist/analyzer_linux_amd64 gateway serve -p 8080"
         exit 1
     fi
 }
