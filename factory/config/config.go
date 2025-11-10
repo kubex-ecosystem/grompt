@@ -8,12 +8,13 @@ import (
 
 	providersPkg "github.com/kubex-ecosystem/grompt/internal/providers"
 	"github.com/kubex-ecosystem/grompt/internal/types"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"gopkg.in/yaml.v3"
 
 	l "github.com/kubex-ecosystem/logz"
 )
 
-type Config = types.IConfig
+type Config = interfaces.IConfig
 
 // NewConfig reconstructs a legacy configuration using the updated engine internals.
 func NewConfig(
@@ -26,7 +27,7 @@ func NewConfig(
 	geminiKey,
 	chatGPTKey string,
 	logger l.Logger,
-) types.IConfig {
+) interfaces.IConfig {
 	return types.NewConfig(
 		bindAddr,
 		port,
@@ -40,7 +41,7 @@ func NewConfig(
 	)
 }
 
-func NewConfigFromFile(filePath string) types.IConfig {
+func NewConfigFromFile(filePath string) interfaces.IConfig {
 	var cfg types.Config
 	if _, statErr := os.Stat(filePath); statErr != nil {
 		return &types.Config{}

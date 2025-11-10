@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubex-ecosystem/grompt/internal/services/agents"
-	"github.com/kubex-ecosystem/grompt/internal/services/squad"
-	ii "github.com/kubex-ecosystem/grompt/internal/types"
+	ii "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	it "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type Handlers struct {
@@ -22,7 +21,7 @@ type Handlers struct {
 	chatGPTAPI  ii.IAPIConfig
 	geminiAPI   ii.IAPIConfig
 	ollamaAPI   ii.IAPIConfig
-	agentStore  *agents.Store
+	// agentStore  *agents.Store
 }
 
 // UnifiedRequest represents a request structure that supports both direct prompts
@@ -59,6 +58,95 @@ type UsageInfo struct {
 
 var llmKeyMap map[string]string
 
+type providerDescriptor struct {
+	Key              string
+	DisplayName      string
+	DefaultModel     string
+	Models           []string
+	SupportsBYOK     bool
+	RequiresEndpoint bool
+}
+
+type providerSummary struct {
+	Name         string   `json:"name"`
+	DisplayName  string   `json:"display_name"`
+	Available    bool     `json:"available"`
+	Configured   bool     `json:"configured"`
+	Models       []string `json:"models"`
+	DefaultModel string   `json:"default_model,omitempty"`
+	Endpoint     string   `json:"endpoint,omitempty"`
+	Status       string   `json:"status"`
+	Mode         string   `json:"mode"`
+	SupportsBYOK bool     `json:"supports_byok"`
+}
+
+var providerCatalog = []providerDescriptor{
+	{
+		Key:          "openai",
+		DisplayName:  "OpenAI",
+		DefaultModel: "gpt-4o-mini",
+		Models: []string{
+			"gpt-4o",
+			"gpt-4o-mini",
+			"gpt-4-turbo",
+			"gpt-3.5-turbo",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "claude",
+		DisplayName:  "Anthropic Claude",
+		DefaultModel: "claude-3-5-sonnet-20241022",
+		Models: []string{
+			"claude-3-5-sonnet-20241022",
+			"claude-3-sonnet-20240229",
+			"claude-3-haiku-20240307",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "gemini",
+		DisplayName:  "Google Gemini",
+		DefaultModel: "gemini-2.0-flash",
+		Models: []string{
+			"gemini-2.0-flash",
+			"gemini-2.0-flash-exp",
+			"gemini-2.5-pro",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "deepseek",
+		DisplayName:  "DeepSeek",
+		DefaultModel: "deepseek-v3",
+		Models: []string{
+			"deepseek-v3",
+			"deepseek-chat",
+			"deepseek-reasoner",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "chatgpt",
+		DisplayName:  "ChatGPT (OpenAI)",
+		DefaultModel: "gpt-4o-mini",
+		Models: []string{
+			"gpt-4o-mini",
+			"gpt-4o",
+			"gpt-4.1-mini",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:              "ollama",
+		DisplayName:      "Ollama (Local)",
+		DefaultModel:     "llama3.2",
+		Models:           []string{"llama3.2", "phi3", "mistral"},
+		SupportsBYOK:     false,
+		RequiresEndpoint: true,
+	},
+}
+
 // generateDemoResponse creates a fallback demo response when no API keys are available
 func (h *Handlers) generateDemoResponse(prompt string, purpose string) string {
 	return fmt.Sprintf(`# 🎭 Demo Mode Response
@@ -74,12 +162,12 @@ Configure an API key using one of these methods:
 
 ### Option 1: Server Configuration (Recommended)
 Set environment variables before starting Grompt:
-` + "```bash" + `
+`+"```bash"+`
 export OPENAI_API_KEY=sk-...
 export CLAUDE_API_KEY=sk-ant-...
 export GEMINI_API_KEY=AIza...
 ./grompt start
-` + "```" + `
+`+"```"+`
 
 ### Option 2: BYOK (Bring Your Own Key)
 Use the 🔑 button in the interface to provide your API key per request.
@@ -106,13 +194,13 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	}
 
 	llmKeyMap = hndr.getLLMAPIKeyMap(cfg)
-	hndr.claudeAPI = ii.NewClaudeAPI(llmKeyMap["claude"])
-	hndr.openaiAPI = ii.NewOpenAIAPI(llmKeyMap["openai"])
-	hndr.chatGPTAPI = ii.NewChatGPTAPI(llmKeyMap["chatgpt"])
-	hndr.deepseekAPI = ii.NewDeepSeekAPI(llmKeyMap["deepseek"])
-	hndr.ollamaAPI = ii.NewOllamaAPI(llmKeyMap["ollama"])
-	hndr.geminiAPI = ii.NewGeminiAPI(llmKeyMap["gemini"])
-	hndr.agentStore = agents.NewStore("agents.json")
+	hndr.claudeAPI = it.NewClaudeAPI(llmKeyMap["claude"])
+	hndr.openaiAPI = it.NewOpenAIAPI(llmKeyMap["openai"])
+	hndr.chatGPTAPI = it.NewChatGPTAPI(llmKeyMap["chatgpt"])
+	hndr.deepseekAPI = it.NewDeepSeekAPI(llmKeyMap["deepseek"])
+	hndr.ollamaAPI = it.NewOllamaAPI(llmKeyMap["ollama"])
+	hndr.geminiAPI = it.NewGeminiAPI(llmKeyMap["gemini"])
+	// hndr.agentStore = agents.NewStore("agents.json")
 
 	return hndr
 }
@@ -295,28 +383,105 @@ func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
 		h.getLLMAPIKeyMap(h.config)
 	}
 
+	providerDetails, providerOrder, readyProviders := h.describeProviders()
+	demoMode := len(readyProviders) == 0
+	defaultProvider := "openai"
+	if len(readyProviders) > 0 {
+		defaultProvider = readyProviders[0]
+	} else if len(providerOrder) > 0 {
+		defaultProvider = providerOrder[0]
+	}
+
+	serverInfo := map[string]string{
+		"name":    "Grompt Server",
+		"version": it.AppVersion,
+		"port":    h.config.GetPort(),
+		"status":  "ready",
+	}
+	if demoMode {
+		serverInfo["status"] = "demo"
+	}
+
 	// Prepare response with both raw config and availability flags
 	config := h.config
 	response := map[string]interface{}{
-		"port":             "8080",
-		"openai_api_key":   config.GetAPIKey("openai"),
-		"deepseek_api_key": config.GetAPIKey("deepseek"),
-		"ollama_endpoint":  config.GetAPIKey("ollama"),
-		"claude_api_key":   config.GetAPIKey("claude"),
-		"gemini_api_key":   config.GetAPIKey("gemini"),
-		"chatgpt_api_key":  config.GetAPIKey("chatgpt"),
-		"debug":            false,
-		// Availability flags for frontend
-		"openai_available":   h.isAPIEnabled("openai"),
-		"deepseek_available": h.isAPIEnabled("deepseek"),
-		"ollama_available":   h.isAPIEnabled("ollama"),
-		"claude_available":   h.isAPIEnabled("claude"),
-		"gemini_available":   h.isAPIEnabled("gemini"),
-		"chatgpt_available":  h.isAPIEnabled("chatgpt"),
+		"server":              serverInfo,
+		"environment":         map[string]bool{"demo_mode": demoMode},
+		"providers":           providerDetails,
+		"available_providers": providerOrder,
+		"default_provider":    defaultProvider,
+		"port":                h.config.GetPort(),
+		"openai_api_key":      config.GetAPIKey("openai"),
+		"deepseek_api_key":    config.GetAPIKey("deepseek"),
+		"ollama_endpoint":     config.GetAPIEndpoint("ollama"),
+		"claude_api_key":      config.GetAPIKey("claude"),
+		"gemini_api_key":      config.GetAPIKey("gemini"),
+		"chatgpt_api_key":     config.GetAPIKey("chatgpt"),
+		"debug":               false,
+		// Availability flags for frontend (legacy)
+		"openai_available":   providerDetails["openai"].Available,
+		"deepseek_available": providerDetails["deepseek"].Available,
+		"ollama_available":   providerDetails["ollama"].Available,
+		"claude_available":   providerDetails["claude"].Available,
+		"gemini_available":   providerDetails["gemini"].Available,
+		"chatgpt_available":  providerDetails["chatgpt"].Available,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []string) {
+	providers := make(map[string]providerSummary, len(providerCatalog))
+	order := make([]string, 0, len(providerCatalog))
+	ready := make([]string, 0, len(providerCatalog))
+
+	for _, descriptor := range providerCatalog {
+		order = append(order, descriptor.Key)
+
+		var configured bool
+		var endpoint string
+		if descriptor.RequiresEndpoint {
+			endpoint = h.config.GetAPIEndpoint(descriptor.Key)
+			configured = strings.TrimSpace(endpoint) != ""
+		} else {
+			configured = strings.TrimSpace(h.config.GetAPIKey(descriptor.Key)) != ""
+		}
+
+		status := "needs_api_key"
+		mode := "byok"
+		available := configured
+
+		if configured {
+			status = "ready"
+			mode = "server"
+			ready = append(ready, descriptor.Key)
+		} else if descriptor.RequiresEndpoint {
+			status = "offline"
+			mode = "offline"
+		}
+
+		providers[descriptor.Key] = providerSummary{
+			Name:         descriptor.Key,
+			DisplayName:  descriptor.DisplayName,
+			Available:    available,
+			Configured:   configured,
+			Models:       descriptor.Models,
+			DefaultModel: descriptor.DefaultModel,
+			Endpoint:     endpoint,
+			Status:       status,
+			Mode:         mode,
+			SupportsBYOK: descriptor.SupportsBYOK,
+		}
+	}
+
+	if summary, ok := providers["claude"]; ok {
+		alias := summary
+		alias.Name = "anthropic"
+		providers["anthropic"] = alias
+	}
+
+	return providers, order, ready
 }
 
 func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
@@ -727,7 +892,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.claudeAPI
 			if mode == "byok" {
-				api = ii.NewClaudeAPI(finalAPIKey)
+				api = it.NewClaudeAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "claude-3-5-sonnet-20241022"
@@ -747,7 +912,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.openaiAPI
 			if mode == "byok" {
-				api = ii.NewOpenAIAPI(finalAPIKey)
+				api = it.NewOpenAIAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gpt-4o-mini"
@@ -767,7 +932,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.deepseekAPI
 			if mode == "byok" {
-				api = ii.NewDeepSeekAPI(finalAPIKey)
+				api = it.NewDeepSeekAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "deepseek-chat"
@@ -787,7 +952,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.geminiAPI
 			if mode == "byok" {
-				api = ii.NewGeminiAPI(finalAPIKey)
+				api = it.NewGeminiAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gemini-2.0-flash-exp"
@@ -807,7 +972,7 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 			// Real API call
 			api := h.chatGPTAPI
 			if mode == "byok" {
-				api = ii.NewChatGPTAPI(finalAPIKey)
+				api = it.NewChatGPTAPI(finalAPIKey)
 			}
 			if model == "" {
 				model = "gpt-4o-mini"
@@ -1007,34 +1172,35 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 
 	// Reuse HandleAgentsGenerate inner logic via local function
 	// Build LLM function
-	llmFunc := func(prompt string) (string, error) {
-		if h.config.GetAPIKey("claude") != "" {
-			return h.claudeAPI.Complete(prompt, 4000, "claude-2")
-		}
-		if h.config.GetAPIKey("openai") != "" {
-			return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
-		}
-		if h.config.GetAPIKey("deepseek") != "" {
-			return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
-		}
-		return "", fmt.Errorf("no LLM API available")
-	}
+	// llmFunc := func(prompt string) (string, error) {
+	// 	if h.config.GetAPIKey("claude") != "" {
+	// 		return h.claudeAPI.Complete(prompt, 4000, "claude-2")
+	// 	}
+	// 	if h.config.GetAPIKey("openai") != "" {
+	// 		return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
+	// 	}
+	// 	if h.config.GetAPIKey("deepseek") != "" {
+	// 		return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
+	// 	}
+	// 	return "", fmt.Errorf("no LLM API available")
+	// }
 
 	// Use the same squad package as /api/v1/agents/generate
-	sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	markdown := squad.GenerateMarkdown(sqAgents)
+	// sqAgents, err := squad.ParseRequirementsWithLLM(content, llmFunc)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// markdown := squad.GenerateMarkdown(sqAgents)
 
-	resp := struct {
-		Agents   []squad.Agent `json:"agents"`
-		Markdown string        `json:"markdown"`
-	}{Agents: sqAgents, Markdown: markdown}
+	// resp := struct {
+	// 	Agents   []squad.Agent `json:"agents"`
+	// 	Markdown string        `json:"markdown"`
+	// }{Agents: sqAgents, Markdown: markdown}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	// json.NewEncoder(w).Encode(resp)
+	w.Write([]byte(`{"agents": [], "markdown": "Feature under development."}`))
 }
 
 func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
@@ -1043,7 +1209,7 @@ func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	healthStatus := map[string]interface{}{
 		"status":    "ok",
 		"timestamp": time.Now().Unix(),
-		"version":   ii.AppVersion,
+		"version":   it.AppVersion,
 		"apis": map[string]interface{}{
 			"claude": map[string]interface{}{
 				"configured": h.config.GetAPIKey("claude") != "",
@@ -1083,7 +1249,7 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 
 	provider := r.URL.Query().Get("provider")
 
-	var models []string
+	var models map[string]any
 	var err error
 
 	switch provider {
@@ -1092,34 +1258,40 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 			models, err = h.openaiAPI.ListModels()
 			if err != nil {
 				// Fallback to common models
-				models = h.openaiAPI.GetCommonModels()
+				models = map[string]any{
+					"common": h.openaiAPI.GetCommonModels(),
+				}
 			}
 		} else {
-			models = h.openaiAPI.GetCommonModels()
+			models = map[string]any{
+				"common": h.openaiAPI.GetCommonModels(),
+			}
 		}
 
 	case "deepseek":
-		models = h.deepseekAPI.GetCommonModels()
+		models = map[string]any{
+			"common": h.deepseekAPI.GetCommonModels(),
+		}
 
 	case "claude":
-		models = []string{
-			"claude-3-5-sonnet-20241022",
-			"claude-3-5-haiku-20241022",
-			"claude-3-opus-20240229",
-			"claude-3-sonnet-20240229",
-			"claude-3-haiku-20240307",
+		models = map[string]any{
+			"claude-3-5-sonnet-20241022": struct{}{},
+			"claude-3-5-haiku-20241022":  struct{}{},
+			"claude-3-opus-20240229":     struct{}{},
+			"claude-3-sonnet-20240229":   struct{}{},
+			"claude-3-haiku-20240307":    struct{}{},
 		}
 
 	case "ollama":
-		models = []string{
-			"llama3.2",
-			"llama3.1",
-			"codellama",
-			"mistral",
-			"neural-chat",
-			"vicuna",
-			"wizardcoder",
-			"llama2",
+		models = map[string]any{
+			"llama3.2":    struct{}{},
+			"llama3.1":    struct{}{},
+			"codellama":   struct{}{},
+			"mistral":     struct{}{},
+			"neural-chat": struct{}{},
+			"vicuna":      struct{}{},
+			"wizardcoder": struct{}{},
+			"llama2":      struct{}{},
 		}
 
 	default:
@@ -1247,14 +1419,14 @@ func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appVersion := ii.CurrentVersion
+	appVersion := it.CurrentVersion
 	if appVersion == "" {
-		appVersion = ii.AppVersion
+		appVersion = it.AppVersion
 	}
 
 	versionInfo := map[string]string{
 		"version": appVersion,
-		"name":    ii.AppName,
+		"name":    it.AppName,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1304,7 +1476,7 @@ func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
 	aboutInfo := map[string]string{
 		"name":        "Grompt",
 		"description": "A tool for building prompts with AI assistance using real engineering practices.",
-		"version":     ii.AppVersion,
+		"version":     it.AppVersion,
 		"author":      "Rafa Mori",
 		"license":     "MIT",
 	}
@@ -1324,7 +1496,7 @@ func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
 	status := map[string]string{
 		"status":    "running",
 		"timestamp": time.Now().Format(time.RFC3339),
-		"version":   ii.AppVersion,
+		"version":   it.AppVersion,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Idea } from '../types';
+import { Idea } from '@/types';
 import { getDraft, saveDraft } from '../services/storageService';
 
 export const useAutosaveDraft = () => {

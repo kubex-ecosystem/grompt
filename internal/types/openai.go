@@ -2,11 +2,15 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 type OpenAIAPI struct{ *APIConfig }
@@ -19,7 +23,7 @@ type OpenAIRequest struct {
 
 type OpenAIAPIRequest struct {
 	Model       string    `json:"model"`
-	Messages    []Message `json:"messages"`
+	Messages    []interfaces.Message `json:"messages"`
 	MaxTokens   int       `json:"max_tokens"`
 	Temperature float64   `json:"temperature"`
 	Stream      bool      `json:"stream"`
@@ -31,12 +35,12 @@ type OpenAIAPIResponse struct {
 	Created int64    `json:"created"`
 	Model   string   `json:"model"`
 	Choices []Choice `json:"choices"`
-	Usage   Usage    `json:"usage"`
+	Usage   interfaces.Usage    `json:"usage"`
 }
 
 type Choice struct {
 	Index        int     `json:"index"`
-	Message      Message `json:"message"`
+	Message      interfaces.Message `json:"message"`
 	FinishReason string  `json:"finish_reason"`
 }
 
@@ -72,7 +76,7 @@ func (o *OpenAIAPI) Complete(prompt string, maxTokens int, model string) (string
 
 	requestBody := OpenAIAPIRequest{
 		Model: model,
-		Messages: []Message{
+		Messages: []interfaces.Message{
 			{
 				Role:    "user",
 				Content: prompt,
@@ -136,7 +140,7 @@ func (o *OpenAIAPI) IsAvailable() bool {
 	// Fazer uma requisição simples para verificar se a API está funcionando
 	testReq := OpenAIAPIRequest{
 		Model: "gpt-3.5-turbo",
-		Messages: []Message{
+		Messages: []interfaces.Message{
 			{
 				Role:    "user",
 				Content: "test",
@@ -172,7 +176,7 @@ func (o *OpenAIAPI) IsAvailable() bool {
 }
 
 // ListModels Listar modelos disponíveis
-func (o *OpenAIAPI) ListModels() ([]string, error) {
+func (o *OpenAIAPI) ListModels() (map[string]any, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
@@ -207,11 +211,11 @@ func (o *OpenAIAPI) ListModels() ([]string, error) {
 		return nil, err
 	}
 
-	var models []string
+	var models = make(map[string]any)
 	for _, model := range modelsResp.Data {
 		// Filtrar apenas modelos de chat
 		if model.Object == "model" {
-			models = append(models, model.ID)
+			models[model.ID] = model
 		}
 	}
 
@@ -230,8 +234,71 @@ func (o *OpenAIAPI) GetCommonModels() []string {
 	}
 }
 
-// GetVersion returns the version of the API
-func (o *OpenAIAPI) GetVersion() string { return o.version }
+// Version returns the version of the API
+func (o *OpenAIAPI) Version() string { return o.version }
 
 // IsDemoMode indicates if the API is in demo mode
 func (o *OpenAIAPI) IsDemoMode() bool { return o.demoMode }
+
+func (o *OpenAIAPI) GetBaseURL() string { return o.baseURL }
+
+func (o *OpenAIAPI) GetAPIKey() string { return o.apiKey }
+
+func (o *OpenAIAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
+	return nil, fmt.Errorf("chat streaming não implementado para OpenAIAPI")
+}
+
+func (o *OpenAIAPI) Execute(ctx context.Context, template string, vars map[string]any) (*interfaces.Result, error) {
+	manager := NewManager("openai")
+	processedPrompt, err := manager.Process(template, vars)
+
+	if err != nil {
+		return nil, fmt.Errorf("erro ao processar template: %v", err)
+	}
+
+	responseText, err := o.Complete(processedPrompt, 2048, "")
+	if err != nil {
+		return nil, fmt.Errorf("erro na chamada à OpenAI: %v", err)
+	}
+
+	result := &interfaces.Result{
+		ID:        uuid.New().String(),
+		Provider:  "openai",
+		Prompt:    processedPrompt,
+		Response:  responseText,
+		Timestamp: time.Now(),
+	}
+
+	return result, nil
+}
+
+func (o *OpenAIAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
+	models, err := o.ListModels()
+	if err != nil {
+		models = make(map[string]any)
+	}
+
+	return &interfaces.Capabilities{
+		MaxTokens:         4096,
+		SupportsBatch:     false,
+		SupportsStreaming: true,
+		Models:            models,
+	}
+}
+
+func (o *OpenAIAPI) KeyEnv() string {
+	return "OPENAI_API_KEY"
+}
+
+func (o *OpenAIAPI) Name() string {
+	return "OpenAI"
+}
+
+func (o *OpenAIAPI) Type() string {
+	return "openai"
+}
+
+func (o *OpenAIAPI) Notify(ctx context.Context, event interfaces.NotificationEvent) error {
+	// Notificações não implementadas para OpenAIAPI
+	return nil
+}

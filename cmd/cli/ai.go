@@ -9,6 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	p "github.com/kubex-ecosystem/grompt/internal/providers"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz"
@@ -24,8 +26,8 @@ func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
 }
 
 // setupConfig creates configuration with proper API key distribution
-func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig, error) {
-	var cfg t.IConfig
+func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (i.IConfig, error) {
+	var cfg i.IConfig
 	var err error
 	logger := l.GetLogger("Grompt")
 
@@ -57,18 +59,23 @@ func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (t.IConfig
 }
 
 // setupProvider initializes and validates the AI provider
-func setupProvider(cfg t.IConfig, provider, apiKey string) (t.IAPIConfig, string, error) {
+func setupProvider(cfg i.IConfig, provider, apiKey string) (i.IAPIConfig, string, error) {
 	if provider == "" {
 		provider = getDefaultProvider(cfg)
 	}
 
-	providerObj := t.NewProvider(
+	providerObjInterface := p.NewProvider(
 		provider,
 		utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
+		"",
 		cfg,
 	)
-	if providerObj == nil {
+	if providerObjInterface == nil {
 		return nil, "", fmt.Errorf("unknown provider: %s", provider)
+	}
+	providerObj, ok := providerObjInterface.(*t.ProviderImpl)
+	if !ok {
+		return nil, "", fmt.Errorf("failed to assert provider type for: %s", provider)
 	}
 
 	if providerObj.VConfig == nil {
@@ -81,7 +88,7 @@ func setupProvider(cfg t.IConfig, provider, apiKey string) (t.IAPIConfig, string
 		return nil, "", fmt.Errorf("provider '%s' is not configured or available", provider)
 	}
 
-	if !providerObj.Available() {
+	if !providerObj.IsAvailable() {
 		return nil, "", fmt.Errorf("provider '%s' is not available. Please check your API key and configuration", provider)
 	}
 
@@ -325,7 +332,7 @@ Examples:
 			if debug {
 				gl.SetDebugMode(true)
 			}
-			var cfg t.IConfig
+			var cfg i.IConfig
 			var err error
 
 			if configFile != "" {
@@ -356,17 +363,22 @@ Examples:
 				provider = getDefaultProvider(cfg)
 			}
 
-			providerObj := t.NewProvider(
+			providerObjInterface := p.NewProvider(
 				provider,
 				utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
+				"",
 				cfg,
 			)
-			if providerObj == nil {
+			if providerObjInterface == nil {
 				gl.Log("fatal", fmt.Sprintf("Unknown provider: %s", provider))
-			} else {
-				if providerObj.VConfig == nil {
-					gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured", provider))
-				}
+			}
+
+			if providerObjInterface == nil {
+				return nil
+			}
+			providerObj, ok := providerObjInterface.(*t.ProviderImpl)
+			if !ok {
+				return nil
 			}
 
 			providerObj.VConfig.SetAPIKey(provider, apiKey)
@@ -375,7 +387,7 @@ Examples:
 				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not configured or available", provider))
 			}
 
-			if !providerObj.Available() {
+			if !providerObj.IsAvailable() {
 				gl.Log("fatal", fmt.Sprintf("Provider '%s' is not available. Please check your API key and configuration.", provider))
 			}
 
@@ -453,7 +465,7 @@ Examples:
 }
 
 // getDefaultProvider returns the first available provider
-func getDefaultProvider(cfg t.IConfig) string {
+func getDefaultProvider(cfg i.IConfig) string {
 	providers := []string{"gemini", "claude", "openai", "deepseek", "ollama", "chatgpt"}
 
 	for _, provider := range providers {

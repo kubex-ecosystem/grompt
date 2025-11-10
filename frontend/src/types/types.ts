@@ -74,6 +74,7 @@ export interface MultiAIConfig {
     [AIProvider.GEMINI]?: {
       apiKey: string;
       defaultModel: GeminiModels;
+      models?: string[];
       baseURL?: string;
       project?: string;
       location?: string;
@@ -90,6 +91,7 @@ export interface MultiAIConfig {
     [AIProvider.OPENAI]?: {
       apiKey: string;
       defaultModel: OpenAIModels;
+      models?: string[];
       options?: {
         baseURL?: string;
         organization?: string;
@@ -107,6 +109,7 @@ export interface MultiAIConfig {
     [AIProvider.ANTHROPIC]?: {
       apiKey: string;
       defaultModel: AnthropicModels;
+      models?: string[];
       options?: {
         baseURL?: string;
         defaultHeaders?: Record<string, string>;
@@ -121,6 +124,7 @@ export interface MultiAIConfig {
     [AIProvider.DEEPSEEK]?: {
       apiKey: string;
       defaultModel: DeepSeekModels;
+      models?: string[];
       options?: {
         baseURL?: string;
         defaultQuery?: {
@@ -132,8 +136,8 @@ export interface MultiAIConfig {
       };
     };
   };
-  defaultProvider: AIProvider;
-  defaultModel: AIModel;
+  defaultProvider?: AIProvider;
+  defaultModel?: AIModel;
   enableCache?: boolean;
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Language } from '../types';
+import { Language } from '@/types';
 import { translations } from '../i18n/translations';
 
 export const useLanguage = () => {

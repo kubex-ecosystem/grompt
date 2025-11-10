@@ -8,9 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/middleware"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
-	"github.com/kubex-ecosystem/grompt/internal/gateway/transport"
+	"github.com/kubex-ecosystem/grompt/internal/gateway/routes"
 )
 
 // ServerConfig holds configuration for the gateway server
@@ -26,6 +27,8 @@ type Server struct {
 	config     *ServerConfig
 	registry   *registry.Registry
 	middleware *middleware.ProductionMiddleware
+	router     *gin.Engine
+	routes     *routes.GatewayRoutes
 }
 
 // NewServer creates a new gateway server instance
@@ -35,6 +38,12 @@ func NewServer(config *ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !config.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
 
 	// Initialize production middleware
 	prodConfig := middleware.DefaultProductionConfig()
@@ -49,6 +58,8 @@ func NewServer(config *ServerConfig) (*Server, error) {
 		config:     config,
 		registry:   reg,
 		middleware: prodMiddleware,
+		router:     router,
+		routes:     routes.NewGatewayRoutes(reg),
 	}, nil
 }
 
@@ -64,32 +75,28 @@ func (s *Server) Start() error {
 		os.Exit(0)
 	}()
 
-	// Setup HTTP routes
-	mux := http.NewServeMux()
-	transport.WireHTTP(mux, s.registry, s.middleware)
-
-	// Apply CORS if enabled
-	var handler http.Handler = mux
 	if s.config.EnableCORS {
-		handler = withCORS(handler)
+		s.router.Use(corsMiddleware())
 	}
 
+	s.routes.Register(s.router)
+
 	log.Printf("🚀 grompt-gw listening on %s with ENTERPRISE features!", s.config.Addr)
-	return http.ListenAndServe(s.config.Addr, handler)
+	return s.router.Run(s.config.Addr)
 }
 
-// withCORS adds CORS headers to responses
-func withCORS(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "content-type, authorization, x-external-api-key, x-tenant-id, x-user-id")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(204)
+// corsMiddleware reproduz a lógica anterior usando o pipeline do gin.
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Headers", "content-type, authorization, x-external-api-key, x-tenant-id, x-user-id")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		h.ServeHTTP(w, r)
-	})
+		c.Next()
+	}
 }
 
 // getEnv returns environment variable value or default

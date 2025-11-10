@@ -1,5 +1,4 @@
-// Package types defines common types used throughout the application.
-package types
+package interfaces
 
 import "time"
 

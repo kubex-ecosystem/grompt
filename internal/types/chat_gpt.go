@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 type ChatGPTAPI struct{ *APIConfig }
@@ -59,7 +61,7 @@ type ChatGPTErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewChatGPTAPI(apiKey string) IAPIConfig {
+func NewChatGPTAPI(apiKey string) interfaces.IAPIConfig {
 	return &ChatGPTAPI{
 		APIConfig: &APIConfig{
 			apiKey:  apiKey,
@@ -183,7 +185,7 @@ func (o *ChatGPTAPI) IsAvailable() bool {
 }
 
 // ListModels Listar modelos disponíveis
-func (o *ChatGPTAPI) ListModels() ([]string, error) {
+func (o *ChatGPTAPI) ListModels() (map[string]any, error) {
 	if o.apiKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
@@ -218,11 +220,13 @@ func (o *ChatGPTAPI) ListModels() ([]string, error) {
 		return nil, err
 	}
 
-	var models []string
+	var models = make(map[string]any)
 	for _, model := range modelsResp.Data {
 		// Filtrar apenas modelos de chat
 		if model.Object == "model" {
-			models = append(models, model.ID)
+			models[model.ID] = struct{}{}
+		} else {
+			continue
 		}
 	}
 
@@ -241,8 +245,27 @@ func (o *ChatGPTAPI) GetCommonModels() []string {
 	}
 }
 
-// GetVersion returns the version of the API
-func (o *ChatGPTAPI) GetVersion() string { return o.version }
+// Version returns the version of the API
+func (o *ChatGPTAPI) Version() string {
+	return o.version
+}
 
 // IsDemoMode indicates if the API is in demo mode
-func (o *ChatGPTAPI) IsDemoMode() bool { return o.demoMode }
+func (o *ChatGPTAPI) IsDemoMode() bool {
+	return o.demoMode
+}
+
+func (o *ChatGPTAPI) GetAPIKey(provider string) string {
+	if provider == "" || provider != "openai" {
+		return ""
+	}
+	return o.apiKey
+}
+
+func (o *ChatGPTAPI) GetBaseURL() string {
+	return o.baseURL
+}
+
+func (o *ChatGPTAPI) GetCapabilities() *interfaces.Capabilities {
+	return defaultCapabilities("chatgpt", "")
+}

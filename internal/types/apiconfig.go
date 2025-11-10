@@ -5,16 +5,6 @@ import (
 	"errors"
 )
 
-// APIConfig mirrors the legacy engine API configuration contract.
-type APIConfig interface {
-	IsAvailable() bool
-	IsDemoMode() bool
-	GetVersion() string
-	ListModels() ([]string, error)
-	GetCommonModels() []string
-	Complete(prompt string, maxTokens int, model string) (string, error)
-}
-
 // ---------- API config implementation ----------
 
 type apiConfig struct {
@@ -31,7 +21,7 @@ func (a *apiConfig) IsAvailable() bool {
 
 func (a *apiConfig) IsDemoMode() bool { return false }
 
-func (a *apiConfig) GetVersion() string { return "gateway-v1" }
+func (a *apiConfig) Version() string { return "gateway-v1" }
 
 func (a *apiConfig) ListModels() ([]string, error) {
 	model := a.cfg.defaultModels[a.provider]
@@ -58,7 +48,7 @@ func (a *apiConfig) Complete(prompt string, maxTokens int, model string) (string
 		vars["model"] = model
 	}
 
-	result, err := a.cfg.engine.invokeProvider(context.Background(), a.provider, prompt, vars)
+	result, err := a.cfg.engine.InvokeProvider(context.Background(), a.provider, prompt, vars)
 	if err != nil {
 		return "", err
 	}

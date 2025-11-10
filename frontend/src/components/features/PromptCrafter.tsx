@@ -2,7 +2,7 @@ import { AlertTriangle, BrainCircuit, Clipboard, ClipboardCheck, Code, Eye, Hist
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { HistoryItem, Idea, Theme } from '../../../types';
+import { HistoryItem, Idea, Theme } from '@/types';
 import { LanguageContext } from '../../context/LanguageContext';
 import { configService, type ProviderInfo } from '../../services/configService';
 import { generateStructuredPrompt } from '../../services/unifiedAIService';

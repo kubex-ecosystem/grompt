@@ -284,11 +284,11 @@ export GROMPT_ENV="dev"
 When running `grompt start` or `grompt gateway start`:
 
 ```plaintext
-GET  /api/config      # Available providers & configuration
+GET  /api/v1/config      # Available providers & configuration
 GET  /api/health      # Server health status
 GET  /api/models      # Available models per provider
 
-POST /api/unified     # Unified endpoint (all providers)
+POST /api/v1/unified     # Unified endpoint (all providers)
 POST /api/openai      # OpenAI-specific
 POST /api/gemini      # Gemini-specific
 POST /api/claude      # Claude-specific
@@ -301,7 +301,7 @@ POST /api/ollama      # Ollama-specific
 External API keys can be provided per request:
 
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-your-key" \
   -d '{"provider":"openai","prompt":"Hello","max_tokens":100}'

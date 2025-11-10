@@ -5,7 +5,14 @@
  */
 
 import { MultiAIWrapper } from '../core/llm/wrapper/MultiAIWrapper'
-import { AIProvider, AIModel, MultiAIConfig } from '../types/types'
+import {
+  AIProvider,
+  AIModel,
+  AnthropicModels,
+  GeminiModels,
+  MultiAIConfig,
+  OpenAIModels
+} from '@/types/types'
 import { enhancedAPI } from './enhancedAPI'
 import { GenerateRequest, GenerateResponse, Provider } from './api'
 
@@ -17,16 +24,19 @@ export interface MultiProviderConfig {
     [AIProvider.OPENAI]?: {
       apiKey: string
       defaultModel: string
+      models?: string[]
       baseURL?: string
     }
     [AIProvider.ANTHROPIC]?: {
       apiKey: string
       defaultModel: string
+      models?: string[]
       baseURL?: string
     }
     [AIProvider.GEMINI]?: {
       apiKey: string
       defaultModel: string
+      models?: string[]
       baseURL?: string
     }
   }
@@ -87,42 +97,57 @@ export class MultiProviderService {
 
     // Convert to MultiAIConfig format
     const multiAIConfig: MultiAIConfig = {
-      providers: {}
+      providers: {},
+      enableCache: config.cacheResponses
     }
+    const configuredOrder: AIProvider[] = []
 
     // Configure OpenAI
     if (config.providers[AIProvider.OPENAI]) {
       const openaiConfig = config.providers[AIProvider.OPENAI]!
       multiAIConfig.providers[AIProvider.OPENAI] = {
+        defaultModel: openaiConfig.defaultModel as OpenAIModels,
+        models: openaiConfig.models,
         apiKey: openaiConfig.apiKey,
         options: {
           baseURL: openaiConfig.baseURL,
           defaultQuery: {}
         }
       }
+      configuredOrder.push(AIProvider.OPENAI)
     }
 
     // Configure Anthropic
     if (config.providers[AIProvider.ANTHROPIC]) {
       const anthropicConfig = config.providers[AIProvider.ANTHROPIC]!
       multiAIConfig.providers[AIProvider.ANTHROPIC] = {
+        defaultModel: anthropicConfig.defaultModel as AnthropicModels,
+        models: anthropicConfig.models,
         apiKey: anthropicConfig.apiKey,
         options: {
           baseURL: anthropicConfig.baseURL,
           defaultQuery: {}
         }
       }
+      configuredOrder.push(AIProvider.ANTHROPIC)
     }
 
     // Configure Gemini
     if (config.providers[AIProvider.GEMINI]) {
       const geminiConfig = config.providers[AIProvider.GEMINI]!
       multiAIConfig.providers[AIProvider.GEMINI] = {
+        defaultModel: geminiConfig.defaultModel as GeminiModels,
+        models: geminiConfig.models,
         apiKey: geminiConfig.apiKey,
         options: {
           generationConfig: {}
         }
       }
+      configuredOrder.push(AIProvider.GEMINI)
+    }
+
+    if (configuredOrder.length > 0) {
+      multiAIConfig.defaultProvider = configuredOrder[0]
     }
 
     // Initialize MultiAIWrapper if we have any provider configured

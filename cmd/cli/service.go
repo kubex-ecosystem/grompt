@@ -11,6 +11,7 @@ import (
 	gl "github.com/kubex-ecosystem/logz/logger"
 	"gopkg.in/yaml.v3"
 
+	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
 	s "github.com/kubex-ecosystem/grompt/internal/services/server"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 	l "github.com/kubex-ecosystem/logz"
@@ -43,7 +44,7 @@ func startServer() *cobra.Command {
 			"This command initializes the Grompt server and starts waiting for help to build prompts.",
 		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger := l.GetLogger("Grompt")
+			// logger := l.GetLogger("Grompt")
 			if debug {
 				gl.SetDebugMode(true)
 			}
@@ -71,7 +72,7 @@ func startServer() *cobra.Command {
 				return
 			}
 
-			var cfg t.IConfig
+			var cfg i.IConfig
 			var err error
 
 			if configFilePath != "" {
@@ -90,7 +91,7 @@ func startServer() *cobra.Command {
 					utils.GetEnvOr("CLAUDE_API_KEY", claudeKey),
 					utils.GetEnvOr("GEMINI_API_KEY", geminiKey),
 					utils.GetEnvOr("CHATGPT_API_KEY", chatGPTKey),
-					logger,
+					gl.LoggerG,
 				)
 			}
 
@@ -160,7 +161,7 @@ func startServerService() *cobra.Command {
 				gl.SetDebugMode(true)
 			}
 
-			var cfg t.IConfig
+			var cfg i.IConfig
 			var err error
 
 			if configFilePath != "" {

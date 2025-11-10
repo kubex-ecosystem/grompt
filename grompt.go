@@ -7,30 +7,33 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubex-ecosystem/grompt/types"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	itypes "github.com/kubex-ecosystem/grompt/internal/types"
+
 	logz "github.com/kubex-ecosystem/logz"
 )
 
 // Result represents the outcome of a processed prompt.
-type Result = types.Result
+type Result = interfaces.Result
 
 // Capabilities describes provider abilities (legacy compatibility).
-type Capabilities = types.Capabilities
+type Capabilities = interfaces.Capabilities
 
 // Pricing captures basic usage pricing metadata.
-type Pricing = types.Pricing
+type Pricing = interfaces.Pricing
 
 // PromptEngine exposes legacy prompt-processing capabilities.
-type PromptEngine = types.PromptEngine
+type PromptEngine = itypes.PromptEngine
 
 // Provider is the legacy provider interface exposed to consumers.
-type Provider = types.Provider
+type Provider = interfaces.Provider
 
-// APIConfig mirrors the legacy engine API configuration contract.
-type APIConfig = types.APIConfig
+// IAPIConfig mirrors the legacy engine API configuration contract.
+type IAPIConfig = interfaces.IAPIConfig
+type APIConfig = itypes.APIConfig
 
 // Config mirrors the legacy engine configuration contract.
-type Config = types.Config
+type Config = itypes.Config
 
 // Prompt represents a command-line prompt with a message and an optional default value.
 type Prompt struct {
@@ -41,8 +44,8 @@ type Prompt struct {
 // ---------- Public constructors ----------
 
 // DefaultConfig rebuilds a legacy-compatible configuration.
-func DefaultConfig(configFilePath string) Config {
-	return types.DefaultConfig(configFilePath)
+func DefaultConfig(configFilePath string) interfaces.IConfig {
+	return itypes.DefaultConfig(configFilePath)
 }
 
 // NewConfig constructs a configuration using explicit parameters.
@@ -56,8 +59,8 @@ func NewConfig(
 	geminiKey string,
 	chatGPTKey string,
 	logger logz.Logger,
-) Config {
-	return types.NewConfig(
+) interfaces.IConfig {
+	return itypes.NewConfig(
 		bindAddr,
 		port,
 		openAIKey,
@@ -71,8 +74,8 @@ func NewConfig(
 }
 
 // NewPromptEngine returns a legacy-compatible engine backed by the new gateway stack.
-func NewPromptEngine(cfg Config) PromptEngine {
-	return types.NewPromptEngine(cfg)
+func NewPromptEngine(cfg interfaces.IConfig) PromptEngine {
+	return itypes.NewPromptEngine(cfg)
 }
 
 // NewPrompt creates a new Prompt instance with the given message and default value.

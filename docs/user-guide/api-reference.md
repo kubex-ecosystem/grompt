@@ -33,7 +33,7 @@ GET /api/health
 Obtém informações sobre provedores disponíveis e configuração atual.
 
 ```http
-GET /api/config
+GET /api/v1/config
 ```
 
 **Response:**
@@ -100,7 +100,7 @@ GET /api/models
 Gera prompts estruturados a partir de ideias brutas.
 
 ```http
-POST /api/unified
+POST /api/v1/unified
 ```
 
 **Request Body:**
@@ -393,7 +393,7 @@ for agent in squad["data"]["agents"]:
 
 ```bash
 # Gerar prompt
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -d '{
     "ideas": [

@@ -1,4 +1,4 @@
-import type { Agent, AgentsGenerationResult, StoredAgent } from '../../types';
+import type { Agent, AgentsGenerationResult, StoredAgent } from '@/types';
 
 const BASE_PATH = '/api/v1/agents';
 

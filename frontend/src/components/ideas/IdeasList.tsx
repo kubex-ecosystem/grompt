@@ -1,7 +1,8 @@
 import { AlertCircle, Edit3, Loader2, Trash2, Wand2 } from 'lucide-react';
 import * as React from 'react';
 import { useGromptAPI } from '../../hooks/useGromptAPI';
-import { Idea, OutputType } from '../../hooks/usePromptCrafter';
+import type { Idea } from '@/types';
+import { OutputType } from '../../hooks/usePromptCrafter';
 
 interface Theme {
   [key: string]: string;

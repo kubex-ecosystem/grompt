@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 type OllamaAPI struct{ *APIConfig }
@@ -98,15 +100,57 @@ func (o *OllamaAPI) GetCommonModels() []string {
 	}
 }
 
-func (o *OllamaAPI) ListModels() ([]string, error) {
-	return []string{
-		"ollama-chat",
-		"ollama-coder",
-		"ollama-math",
-		"ollama-reasoner",
-	}, nil
+func (o *OllamaAPI) ListModels() (map[string]any, error) {
+	endpoint := fmt.Sprintf("%s/api/models", o.baseURL)
+
+	resp, err := o.httpClient.Get(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("erro na requisição para Ollama: %v", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao ler resposta: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("ollama retornou status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var models map[string]any
+	if err := json.Unmarshal(body, &models); err != nil {
+		return nil, fmt.Errorf("erro ao decodificar resposta: %v", err)
+	}
+
+	return models, nil
 }
 
-func (o *OllamaAPI) GetVersion() string { return o.version }
+func (o *OllamaAPI) Version() string { return o.version }
 
 func (o *OllamaAPI) IsDemoMode() bool { return o.demoMode }
+
+func (o *OllamaAPI) GetAPIKey(provider string) string { return o.apiKey }
+
+func (o *OllamaAPI) GetBaseURL() string { return o.baseURL }
+
+func (o *OllamaAPI) GetCapabilities() *interfaces.Capabilities {
+	models, err := o.ListModels()
+	if err != nil || len(models) == 0 {
+		return &interfaces.Capabilities{
+			SupportsStreaming: false,
+			MaxTokens: 2048,
+		}
+	}
+  capabilities := &interfaces.Capabilities{
+		SupportsStreaming: false,
+		MaxTokens: 2048,
+		Models: models,
+		SupportsBatch: false,
+		Pricing: &interfaces.Pricing{
+			InputCostPer1K: 0.0,
+			OutputCostPer1K: 0.0,
+			Currency: "USD",
+		},
+	}
+	return capabilities
+}

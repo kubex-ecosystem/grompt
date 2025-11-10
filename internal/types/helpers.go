@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
 // ---------- Helpers ----------
@@ -53,30 +55,30 @@ func executeTemplate(tmpl string, vars map[string]interface{}) (string, error) {
 	return buff.String(), nil
 }
 
-func defaultCapabilities(provider, model string) *Capabilities {
-	caps := &Capabilities{
+func defaultCapabilities(provider, model string) *interfaces.Capabilities {
+	caps := &interfaces.Capabilities{
 		SupportsBatch:     true,
 		SupportsStreaming: true,
-		Models:            []string{},
+		Models:            map[string]any{},
 	}
 
 	if model != "" {
-		caps.Models = append(caps.Models, model)
+		caps.Models[model] = struct{}{}
 	}
 
 	switch provider {
 	case "openai":
 		caps.MaxTokens = 128000
-		caps.Pricing = &Pricing{InputCostPer1K: 0.0005, OutputCostPer1K: 0.0015, Currency: "USD"}
+		caps.Pricing = &interfaces.Pricing{InputCostPer1K: 0.0005, OutputCostPer1K: 0.0015, Currency: "USD"}
 	case "claude":
 		caps.MaxTokens = 200000
-		caps.Pricing = &Pricing{InputCostPer1K: 0.003, OutputCostPer1K: 0.015, Currency: "USD"}
+		caps.Pricing = &interfaces.Pricing{InputCostPer1K: 0.003, OutputCostPer1K: 0.015, Currency: "USD"}
 	case "gemini":
 		caps.MaxTokens = 1000000
-		caps.Pricing = &Pricing{InputCostPer1K: 0.000125, OutputCostPer1K: 0.000375, Currency: "USD"}
+		caps.Pricing = &interfaces.Pricing{InputCostPer1K: 0.000125, OutputCostPer1K: 0.000375, Currency: "USD"}
 	case "groq":
 		caps.MaxTokens = 128000
-		caps.Pricing = &Pricing{InputCostPer1K: 0.0002, OutputCostPer1K: 0.0002, Currency: "USD"}
+		caps.Pricing = &interfaces.Pricing{InputCostPer1K: 0.0002, OutputCostPer1K: 0.0002, Currency: "USD"}
 	default:
 		caps.MaxTokens = 32000
 	}

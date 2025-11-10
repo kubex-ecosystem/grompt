@@ -1,13 +1,15 @@
+// Package transport implements HTTP transport handlers for server-sent events (SSE) in the Grompt application.
 package transport
 
 import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kubex-ecosystem/grompt/internal/advise"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/scorecard"
-	providers "github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 type httpHandlersSSE struct {
@@ -15,59 +17,52 @@ type httpHandlersSSE struct {
 	engine *scorecard.Engine // Add scorecard engine
 }
 
-// WireHTTP sets up HTTP routes
-// func WireHTTP(mux *http.ServeMux, reg *registry.Registry) {
-// 	h := &httpHandlers{registry: reg}
-
-// 	mux.HandleFunc("/healthz", h.healthCheck)
-// 	mux.HandleFunc("/v1/chat", h.chatSSE)
-// 	mux.HandleFunc("/v1/providers", h.listProviders)
-// }
-
-func WireHTTPSSE(mux *http.ServeMux, reg *registry.Registry) {
+func WireHTTPSSE(router gin.IRouter, reg *registry.Registry) {
 	hh := &httpHandlersSSE{reg: reg, engine: nil} // TODO: Initialize engine when ready
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })
-	mux.HandleFunc("/v1/chat", hh.chatSSE)
-	mux.HandleFunc("/v1/session", hh.session)
-	mux.HandleFunc("/v1/providers", hh.providers) // status simples
-	mux.HandleFunc("/v1/auth/login", hh.authLoginPassthrough)
-	mux.HandleFunc("/v1/state/export", hh.stateExport)
-	mux.HandleFunc("/v1/state/import", hh.stateImport)
-	mux.Handle("/v1/advise", advise.New(reg))
+	router.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+
+	v1 := router.Group("/v1")
+	v1.Any("/chat", hh.chatSSE)
+	v1.Any("/session", hh.session)
+	v1.Any("/providers", hh.providers) // status simples
+	v1.Any("/auth/login", hh.authLoginPassthrough)
+	v1.Any("/state/export", hh.stateExport)
+	v1.Any("/state/import", hh.stateImport)
+	v1.Any("/advise", gin.WrapH(advise.New(reg)))
 
 	// Repository Intelligence APIs (to be implemented)
-	// mux.HandleFunc("/api/v1/scorecard", hh.handleScorecard)
-	// mux.HandleFunc("/api/v1/scorecard/advice", hh.handleScorecardAdvice)
-	// mux.HandleFunc("/api/v1/metrics/ai", hh.handleAIMetrics)
-	// mux.HandleFunc("/api/v1/health", hh.handleHealthRI)
+	// v1.Any("/scorecard", hh.handleScorecard)
+	// v1.Any("/scorecard/advice", hh.handleScorecardAdvice)
+	// v1.Any("/metrics/ai", hh.handleAIMetrics)
+	// v1.Any("/health", hh.handleHealthRI)
 }
 
 type chatReq struct {
-	Provider string              `json:"provider"`
-	Model    string              `json:"model"`
-	Messages []providers.Message `json:"messages"`
-	Temp     float32             `json:"temperature"`
-	Stream   bool                `json:"stream"`
-	Meta     map[string]any      `json:"meta"`
+	Provider string               `json:"provider"`
+	Model    string               `json:"model"`
+	Messages []interfaces.Message `json:"messages"`
+	Temp     float32              `json:"temperature"`
+	Stream   bool                 `json:"stream"`
+	Meta     map[string]any       `json:"meta"`
 }
 
-func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandlersSSE) chatSSE(c *gin.Context) {
 	var in chatReq
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	p := h.reg.Resolve(in.Provider)
 	if p == nil {
-		http.Error(w, "bad provider", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "bad provider")
 		return
 	}
 	headers := map[string]string{
-		"x-external-api-key": r.Header.Get("x-external-api-key"),
-		"x-tenant-id":        r.Header.Get("x-tenant-id"),
-		"x-user-id":          r.Header.Get("x-user-id"),
+		"x-external-api-key": c.GetHeader("x-external-api-key"),
+		"x-tenant-id":        c.GetHeader("x-tenant-id"),
+		"x-user-id":          c.GetHeader("x-user-id"),
 	}
-	ch, err := p.Chat(r.Context(), providers.ChatRequest{
+	ch, err := p.Chat(c.Request.Context(), interfaces.ChatRequest{
 		Provider: in.Provider,
 		Model:    in.Model,
 		Messages: in.Messages,
@@ -77,13 +72,14 @@ func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
 		Headers:  headers,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		c.String(http.StatusBadGateway, err.Error())
 		return
 	}
 
+	w := c.Writer
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
-	w.WriteHeader(http.StatusOK)
+	c.Status(http.StatusOK)
 	fl, _ := w.(http.Flusher)
 
 	enc := func(v any) []byte { b, _ := json.Marshal(v); return b }
@@ -92,9 +88,9 @@ func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
 		if c.Content != "" {
 			payload["content"] = c.Content
 		}
-		if c.ToolCall != nil {
-			payload["toolCall"] = c.ToolCall
-		}
+		// if c.ToolCall != nil {
+		// 	payload["toolCall"] = c.ToolCall
+		// }
 		if c.Done {
 			payload["done"] = true
 			if c.Usage != nil {
@@ -113,29 +109,33 @@ func (h *httpHandlersSSE) chatSSE(w http.ResponseWriter, r *http.Request) {
 }
 
 // /v1/providers — lista nomes e tipos carregados (pra pintar “verde” no dropdown)
-func (h *httpHandlersSSE) providers(w http.ResponseWriter, r *http.Request) {
+
+func (h *httpHandlersSSE) providers(c *gin.Context) {
 	cfg := h.reg.Config() // adicione um getter simples no registry
 	type item struct{ Name, Type string }
 	out := []item{}
 	for name, pc := range cfg.Providers {
-		out = append(out, item{Name: name, Type: pc.Type})
+		out = append(out, item{Name: name, Type: pc.Type()})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{"providers": out})
+	c.JSON(http.StatusOK, gin.H{"providers": out})
 }
 
-func (h *httpHandlersSSE) session(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandlersSSE) session(c *gin.Context) {
 	// Implementar lógica para gerenciar sessões
+	c.AbortWithStatus(http.StatusNotImplemented)
 }
 
-func (h *httpHandlersSSE) authLoginPassthrough(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandlersSSE) authLoginPassthrough(c *gin.Context) {
 	// Implementar lógica para login via passthrough
+	c.AbortWithStatus(http.StatusNotImplemented)
 }
 
-func (h *httpHandlersSSE) stateExport(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandlersSSE) stateExport(c *gin.Context) {
 	// Implementar lógica para exportar estado
+	c.AbortWithStatus(http.StatusNotImplemented)
 }
 
-func (h *httpHandlersSSE) stateImport(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandlersSSE) stateImport(c *gin.Context) {
 	// Implementar lógica para importar estado
+	c.AbortWithStatus(http.StatusNotImplemented)
 }

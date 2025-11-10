@@ -1,4 +1,4 @@
-package types
+package interfaces
 
 import "sync"
 
@@ -10,14 +10,14 @@ type historyStore struct {
 	limit   int
 }
 
-func newHistoryStore(limit int) *historyStore {
+func NewHistoryStore(limit int) IHistoryManager {
 	if limit <= 0 {
 		limit = 100
 	}
 	return &historyStore{entries: make([]Result, 0, limit), limit: limit}
 }
 
-func (h *historyStore) add(result Result) {
+func (h *historyStore) Add(result Result) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -27,11 +27,19 @@ func (h *historyStore) add(result Result) {
 	}
 }
 
-func (h *historyStore) snapshot() []Result {
+func (h *historyStore) Snapshot() []Result {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
 	out := make([]Result, len(h.entries))
 	copy(out, h.entries)
 	return out
+}
+
+type IHistoryManager interface {
+	// Add adds a new result to the history
+	Add(result Result)
+
+	// Snapshot returns a copy of the current history entries
+	Snapshot() []Result
 }

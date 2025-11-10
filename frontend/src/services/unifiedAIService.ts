@@ -1,8 +1,8 @@
 // Unified AI Service for Grompt frontend
 // Communicates with backend's unified API endpoints
 
-import { Idea } from '../../types';
-import { configService, type ProviderInfo } from './configService';
+import { Idea } from '@/types';
+import { configService, type ProviderInfo, type ServerConfig } from './configService';
 
 export interface UnifiedRequest {
   lang?: string;
@@ -59,28 +59,26 @@ class UnifiedAIService {
       // Get config to determine the best provider to use
       const config = await configService.getConfig();
 
-      // Use provided provider or get default available one
-      const targetProvider = provider || config.default_provider;
-
-      if (!targetProvider) {
-        throw new Error('No AI providers are configured. Please configure an API key.');
-      }
-
-      // Check if provider is available
+      const targetProvider = this.resolveProvider(config, provider);
       const providerInfo = config.providers[targetProvider];
-      if (!providerInfo || !providerInfo.available) {
-        throw new Error(`Provider ${targetProvider} is not available or configured.`);
+      if (!providerInfo) {
+        throw new Error(`Provider ${targetProvider} is not defined in the server configuration.`);
       }
 
       // Convert ideas to strings
       const ideaTexts = ideas.map(idea => idea.text);
+      const modelToUse = this.resolveModel(model, providerInfo);
+      const providerReady = providerInfo.available || (!!apiKey && providerInfo.supports_byok);
+      if (!providerReady) {
+        throw new Error(`Provider ${targetProvider} requires an API key. Configure it on the server or provide a BYOK key.`);
+      }
 
       // Prepare request
       const request: UnifiedRequest = {
         ideas: ideaTexts,
         purpose: purpose,
         provider: targetProvider,
-        model: model || providerInfo.models[0], // Use first available model if none specified
+        model: modelToUse,
         lang: 'português',
         max_tokens: 5000,
       };
@@ -96,7 +94,7 @@ class UnifiedAIService {
       }
 
       // Call unified API
-      const response = await fetch('/api/unified', {
+      const response = await fetch('/api/v1/unified', {
         method: 'POST',
         headers,
         body: JSON.stringify(request),
@@ -142,16 +140,21 @@ class UnifiedAIService {
   ): Promise<UnifiedResponse> {
     try {
       const config = await configService.getConfig();
-      const targetProvider = provider || config.default_provider;
+      const targetProvider = this.resolveProvider(config, provider);
+      const providerInfo = config.providers[targetProvider];
+      if (!providerInfo) {
+        throw new Error(`Provider ${targetProvider} is not defined in the server configuration.`);
+      }
 
-      if (!targetProvider) {
-        throw new Error('No AI providers are configured. Please configure an API key.');
+      const providerReady = providerInfo.available || (!!apiKey && providerInfo.supports_byok);
+      if (!providerReady) {
+        throw new Error(`Provider ${targetProvider} requires an API key. Configure it on the server or provide a BYOK key.`);
       }
 
       const request: UnifiedRequest = {
         prompt: prompt,
         provider: targetProvider,
-        model: model,
+        model: this.resolveModel(model, providerInfo),
         max_tokens: maxTokens,
       };
 
@@ -165,7 +168,7 @@ class UnifiedAIService {
         headers['X-API-Key'] = apiKey;
       }
 
-      const response = await fetch('/api/unified', {
+      const response = await fetch('/api/v1/unified', {
         method: 'POST',
         headers,
         body: JSON.stringify(request),
@@ -202,7 +205,7 @@ class UnifiedAIService {
    */
   async testProvider(provider: string): Promise<{ available: boolean; message: string }> {
     try {
-      const response = await fetch(`/api/test?provider=${provider}`, {
+      const response = await fetch(`/api/v1/test?provider=${provider}`, {
         method: 'GET',
       });
 
@@ -280,6 +283,35 @@ This prompt was generated using Grompt, part of the Kubex Ecosystem, following p
         totalTokenCount: estimatedTokens,
       },
     };
+  }
+
+  private resolveProvider(config: ServerConfig, requested?: string): string {
+    if (requested && config.providers[requested]) {
+      return requested;
+    }
+
+    if (config.default_provider && config.providers[config.default_provider]) {
+      return config.default_provider;
+    }
+
+    const available = config.available_providers.find(name => config.providers[name]);
+    if (available) {
+      return available;
+    }
+
+    const fallback = Object.keys(config.providers)[0];
+    if (fallback) {
+      return fallback;
+    }
+
+    throw new Error('No AI providers are configured. Please configure an API key or use BYOK.');
+  }
+
+  private resolveModel(preferred: string | undefined, providerInfo: ProviderInfo): string {
+    if (preferred) return preferred;
+    if (providerInfo.default_model) return providerInfo.default_model;
+    if (providerInfo.models.length > 0) return providerInfo.models[0];
+    throw new Error(`Provider ${providerInfo.display_name ?? providerInfo.name} does not expose any models.`);
   }
 }
 

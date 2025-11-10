@@ -2,15 +2,16 @@
 package providers
 
 import (
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/types"
 )
 
 // Provider defines the interface for AI providers.
-type Provider = types.Provider
+type Provider = interfaces.Provider
 
-type Capabilities = types.Capabilities
+type Capabilities = interfaces.Capabilities
 
-type Pricing = types.Pricing
+type Pricing = interfaces.Pricing
 
 // Individual provider constructors for engine initialization
 
@@ -67,7 +68,7 @@ func NewChatGPTProvider(apiKey string) Provider {
 	}
 }
 
-func NewProvider(name, apiKey, version string, cfg types.IConfig) Provider {
+func NewProvider(name, apiKey, version string, cfg interfaces.IConfig) Provider {
 	return &types.ProviderImpl{
 		VName:    name,
 		VVersion: version,

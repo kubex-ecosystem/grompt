@@ -1,301 +1,328 @@
-// Package types defines the configuration and versioning for the Grompt application.
 package types
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
-	"net"
-	"net/http"
-	"net/netip"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
-	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
-	"github.com/kubex-ecosystem/grompt/utils"
-	l "github.com/kubex-ecosystem/logz"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	"github.com/goccy/go-yaml"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	"github.com/kubex-ecosystem/logz"
 )
 
-var (
-	CurrentVersion string    = vs.GetVersion()
-	LatestVersion  string    = vs.GetLatestVersionFromGit()
-	LastCheckTime  time.Time = time.Now()
-)
-
-func init() {
-	// Initialize the CurrentVersion and LatestVersion
-	// This will run in a goroutine to avoid blocking the main execution
-	// and will check for the latest version from Git if needed.
-	// If the CurrentVersion is not set, it will use the version from the version package
-	// and will update the LatestVersion if the last check was more than 24 hours ago
-	// or if it is the first run.
-	ctx := context.Background()
-	cancel, cancelFunc := context.WithCancel(ctx)
-	defer cancelFunc()
-
-	// Use a goroutine to avoid blocking the main execution
-	go func(cancel context.Context) {
-		select {
-		case <-cancel.Done():
-			return // Exit if the context is cancelled
-		default:
-			if CurrentVersion == "" {
-				CurrentVersion = vs.GetVersion()
-			}
-			if LastCheckTime.IsZero() || LastCheckTime.Before(time.Now().Add(-24*time.Hour)) {
-				// Check for the latest version from Git
-				LatestVersion = vs.GetLatestVersionFromGit()
-				if LatestVersion == "" {
-					LatestVersion = CurrentVersion // Fallback to current version if check fails
-				}
-				LastCheckTime = time.Now()
-			}
-		}
-	}(cancel)
-
-	// // Ensure that the CurrentVersion is always set
-	// if CurrentVersion == "" {
-	// 	CurrentVersion = vs.GetVersion()
-	// }
-	// if LatestVersion == "" {
-	// 	LatestVersion = vs.GetLatestVersionFromGit()
-	// }
+type legacyFileConfig struct {
+	Port               string            `json:"port" yaml:"port"`
+	DefaultProvider    string            `json:"default_provider" yaml:"default_provider"`
+	HistoryLimit       int               `json:"history_limit" yaml:"history_limit"`
+	TimeoutSec         int               `json:"timeout_sec" yaml:"timeout_sec"`
+	APIKeys            map[string]string `json:"api_keys" yaml:"api_keys"`
+	Endpoints          map[string]string `json:"endpoints" yaml:"endpoints"`
+	Models             map[string]string `json:"models" yaml:"models"`
+	ProviderConfigPath string            `json:"provider_config" yaml:"provider_config"`
 }
 
-var AppVersion = vs.GetVersion()
 
-const (
-	AppName     = "Grompt"
-	DefaultPort = "8080"
-)
 
-type IAPIConfig interface {
-	IsAvailable() bool
-	IsDemoMode() bool
-	GetVersion() string
-	ListModels() ([]string, error)
-	GetCommonModels() []string
-	Complete(prompt string, maxTokens int, model string) (string, error)
-}
-
-type APIConfig struct {
-	apiKey     string
-	baseURL    string
-	version    string
-	httpClient *http.Client
-	demoMode   bool
-}
-
-type IConfig interface {
-	GetAPIConfig(provider string) IAPIConfig
-	GetPort() string
-	GetAPIKey(provider string) string
-	SetAPIKey(provider string, key string) error
-	GetAPIEndpoint(provider string) string
-	GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string
-}
-
-type Config struct {
-	Logger    l.Logger
-	Server    *ServerConfig             `yaml:"server"`
-	Defaults  *DefaultsConfig           `yaml:"defaults"`
-	Providers map[string]ProviderConfig `yaml:"providers"`
-
-	BindAddr       string `json:"bind_addr,omitempty" gorm:"default:'localhost'"`
-	Port           string `json:"port" gorm:"default:8080"`
-	OpenAIAPIKey   string `json:"openai_api_key,omitempty" gorm:"default:''"`
-	DeepSeekAPIKey string `json:"deepseek_api_key,omitempty" gorm:"default:''"`
-	OllamaEndpoint string `json:"ollama_endpoint,omitempty" gorm:"default:'http://localhost:11434'"`
-	ClaudeAPIKey   string `json:"claude_api_key,omitempty" gorm:"default:''"`
-	GeminiAPIKey   string `json:"gemini_api_key,omitempty" gorm:"default:''"`
-	ChatGPTAPIKey  string `json:"chatgpt_api_key,omitempty" gorm:"default:''"`
-	Debug          bool   `json:"debug" gorm:"default:false"`
-}
-
-func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey, chatGPTKey string, logger l.Logger) *Config {
-	if logger == nil {
-		logger = l.GetLogger("Grompt")
+// DefaultConfig rebuilds a legacy-compatible configuration.
+func DefaultConfig(configFilePath string) interfaces.ServerConfig {
+	cfg := newServerConfig()
+	if configFilePath != "" {
+		_ = cfg.loadFromFile(configFilePath)
 	}
-	return &Config{
-		Logger:         logger,
-		BindAddr:       bindAddr,
-		Port:           port,
-		OpenAIAPIKey:   openAIKey,
-		DeepSeekAPIKey: deepSeekKey,
-		OllamaEndpoint: ollamaEndpoint,
-		ClaudeAPIKey:   claudeKey,
-		GeminiAPIKey:   geminiKey,
-	}
+	cfg.loadFromEnv()
+	return cfg
 }
 
-func (c *Config) GetAPIConfig(provider string) IAPIConfig {
-	if c == nil {
-		gl.Log("error", "Config is nil")
+// NewConfig constructs a configuration using explicit parameters.
+
+func NewServerConfig(
+	bindAddr string,
+	port string,
+	openAIKey string,
+	deepSeekKey string,
+	ollamaEndpoint string,
+	claudeKey string,
+	geminiKey string,
+	chatGPTKey string,
+	logger logz.Logger,
+) interfaces.ServerConfig {
+	cfg := newServerConfig()
+	cfg.bindAddr = bindAddr
+	if port != "" {
+		cfg.port = port
+	}
+	cfg.logger = logger
+	if openAIKey != "" {
+		cfg.apiKeys["openai"] = openAIKey
+	}
+	if claudeKey != "" {
+		cfg.apiKeys["claude"] = claudeKey
+	}
+	if geminiKey != "" {
+		cfg.apiKeys["gemini"] = geminiKey
+	}
+	if deepSeekKey != "" {
+		cfg.apiKeys["deepseek"] = deepSeekKey
+	}
+	if chatGPTKey != "" {
+		cfg.apiKeys["chatgpt"] = chatGPTKey
+	}
+	if ollamaEndpoint != "" {
+		cfg.endpoints["ollama"] = ollamaEndpoint
+	}
+	return cfg
+}
+
+// ---------- Config implementation ----------
+
+var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama", "chatgpt", "groq"}
+
+type configImpl struct {
+	logger             logz.Logger
+	bindAddr           string
+	port               string
+	apiKeys            map[string]string
+	endpoints          map[string]string
+	defaultModels      map[string]string
+	providerTypes      map[string]string
+	defaultProvider    string
+	defaultTemperature float32
+	historyLimit       int
+	timeout            time.Duration
+	providerConfigPath string
+
+	engine interfaces.IEngine
+	mu     sync.RWMutex
+}
+
+func newServerConfig() *configImpl {
+	cfg := &configImpl{
+		port:               "8080",
+		apiKeys:            map[string]string{},
+		endpoints:          map[string]string{},
+		defaultModels:      map[string]string{},
+		providerTypes:      map[string]string{},
+		defaultProvider:    "openai",
+		defaultTemperature: 0.7,
+		historyLimit:       100,
+		timeout:            60 * time.Second,
+	}
+
+	cfg.providerTypes["openai"] = "openai"
+	cfg.providerTypes["claude"] = "anthropic"
+	cfg.providerTypes["gemini"] = "gemini"
+	cfg.providerTypes["groq"] = "groq"
+
+	cfg.defaultModels["openai"] = "gpt-4o-mini"
+	cfg.defaultModels["claude"] = "claude-3-5-sonnet-20241022"
+	cfg.defaultModels["gemini"] = "gemini-1.5-pro"
+	cfg.defaultModels["groq"] = "llama-3.1-70b-versatile"
+
+	cfg.endpoints["openai"] = "https://api.openai.com"
+	cfg.endpoints["claude"] = "https://api.anthropic.com"
+	cfg.endpoints["gemini"] = "https://generativelanguage.googleapis.com"
+	cfg.endpoints["groq"] = "https://api.groq.com"
+
+	return cfg
+}
+
+// func (c *configImpl) attachEngine(engine interfaces.IEngine) {
+// 	c.mu.Lock()
+// 	defer c.mu.Unlock()
+// 	c.engine = engine
+// }
+
+func (c *configImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
+	return c.registryConfig().GetAPIConfig(provider)
+}
+
+func (c *configImpl) GetLegacyAPIConfig(provider string) interfaces.LegacyAPIConfig {
+	return &apiConfig{provider: provider, cfg: c}
+}
+
+func (c *configImpl) GetPort() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.port
+}
+
+func (c *configImpl) GetAPIKey(provider string) string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.apiKeys[strings.ToLower(provider)]
+}
+
+func (c *configImpl) SetAPIKey(provider, key string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if key == "" {
+		delete(c.apiKeys, strings.ToLower(provider))
 		return nil
 	}
-	switch provider {
-	case "openai":
-		return NewOpenAIAPI(c.GetAPIKey("openai"))
-	case "deepseek":
-		return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
-	case "ollama":
-		return NewOllamaAPI(c.GetAPIEndpoint("ollama"))
-	case "claude":
-		return NewClaudeAPI(c.GetAPIKey("claude"))
-	case "gemini":
-		return NewGeminiAPI(c.GetAPIKey("gemini"))
-	case "chatgpt":
-		return NewChatGPTAPI(c.GetAPIKey("chatgpt"))
-	default:
-		return nil
-	}
-}
-
-func (c *Config) GetPort() string {
-	if c.Port == "" {
-		return DefaultPort
-	}
-	return c.Port
-}
-
-func (c *Config) GetAPIKey(provider string) string {
-	switch provider {
-	case "openai":
-		if c.OpenAIAPIKey == "" {
-			c.OpenAIAPIKey = utils.GetEnvOr("OPENAI_API_KEY", c.OpenAIAPIKey)
-		}
-		return c.OpenAIAPIKey
-	case "deepseek":
-		if c.DeepSeekAPIKey == "" {
-			c.DeepSeekAPIKey = utils.GetEnvOr("DEEPSEEK_API_KEY", c.DeepSeekAPIKey)
-		}
-		return c.DeepSeekAPIKey
-	case "ollama":
-		if c.OllamaEndpoint == "" {
-			c.OllamaEndpoint = utils.GetEnvOr("OLLAMA_ENDPOINT", c.OllamaEndpoint)
-		}
-		return c.OllamaEndpoint
-	case "claude":
-		if c.ClaudeAPIKey == "" {
-			c.ClaudeAPIKey = utils.GetEnvOr("CLAUDE_API_KEY", c.ClaudeAPIKey)
-		}
-		return c.ClaudeAPIKey
-	case "gemini":
-		if c.GeminiAPIKey == "" {
-			c.GeminiAPIKey = utils.GetEnvOr("GEMINI_API_KEY", c.GeminiAPIKey)
-		}
-		return c.GeminiAPIKey
-	case "chatgpt":
-		if c.ChatGPTAPIKey == "" {
-			c.ChatGPTAPIKey = utils.GetEnvOr("CHATGPT_API_KEY", c.ChatGPTAPIKey)
-		}
-		return c.ChatGPTAPIKey
-	default:
-		return ""
-	}
-}
-
-func (c *Config) SetAPIKey(provider string, key string) error {
-	switch provider {
-	case "openai":
-		c.OpenAIAPIKey = key
-	case "deepseek":
-		c.DeepSeekAPIKey = key
-	case "ollama":
-		c.OllamaEndpoint = key
-	case "claude":
-		c.ClaudeAPIKey = key
-	case "gemini":
-		c.GeminiAPIKey = key
-	case "chatgpt":
-		c.ChatGPTAPIKey = key
-	default:
-		return fmt.Errorf("unknown provider: %s", provider)
-	}
+	c.apiKeys[strings.ToLower(provider)] = key
 	return nil
 }
 
-func (c *Config) GetAPIEndpoint(provider string) string {
-	if provider == "ollama" {
-		return c.OllamaEndpoint
-	}
-	return ""
+func (c *configImpl) GetAPIEndpoint(provider string) string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.endpoints[strings.ToLower(provider)]
 }
 
-func (c *Config) checkOllamaConnection() bool {
-	ip, err := netip.ParseAddr(c.OllamaEndpoint)
-	if err != nil {
-		return false
-	}
-	conn, err := net.DialTimeout("tcp", ip.String()+":11434", 2*time.Second)
-	if err != nil {
-		return false
-	}
-	defer conn.Close()
-	return true
-}
-
-// GetBaseGenerationPrompt transforms raw ideas into a structured prompt engineering template.
-// This method applies professional prompt engineering techniques to convert unorganized ideas
-// into well-structured, effective prompts for AI interactions.
-func (c *Config) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
-	// Set default values
-	if ideas == nil {
-		ideas = []string{}
-	}
-	if lang == "" {
-		lang = "english"
-	}
-	if maxLength <= 0 {
-		maxLength = 2000
-	}
-	if purposeType == "" {
-		purposeType = "Code"
-	}
-
-	// Build ideas list
-	ideasListStr := ""
-	for i, idea := range ideas {
-		ideasListStr += fmt.Sprintf("%d. \"%s\"\n", i+1, idea)
-	}
-
-	// Build purpose text
-	purposeText := purposeType
+func (c *configImpl) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
+	var builder strings.Builder
+	builder.WriteString("You are Kubex Grompt assistant.")
 	if purpose != "" {
-		purposeText += ` (` + purpose + `)`
+		builder.WriteString("Purpose: " + purpose + "")
+	}
+	if purposeType != "" {
+		builder.WriteString("Type: " + purposeType + "")
+	}
+	if lang != "" {
+		builder.WriteString("Language: " + lang + "")
+	}
+	if maxLength > 0 {
+		builder.WriteString(fmt.Sprintf("Limit response to %d characters.", maxLength))
+	}
+	if len(ideas) > 0 {
+		builder.WriteString("Ideas:")
+		for _, idea := range ideas {
+			builder.WriteString("- " + idea + "")
+		}
+	}
+	builder.WriteString("Respond with detailed, actionable output.")
+	return builder.String()
+}
+
+func (c *configImpl) loadFromEnv() {
+	for _, provider := range legacyProviders {
+		if envKey := defaultEnvKey(provider); envKey != "" {
+			if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
+				c.apiKeys[provider] = value
+			}
+		}
 	}
 
-	engineeringPrompt := `
-Você é um especialista em engenharia de prompts com conhecimento profundo em técnicas de prompt engineering. Sua tarefa é transformar ideias brutas e desorganizadas em um prompt estruturado, profissional e eficaz.
-
-CONTEXTO: O usuário inseriu as seguintes notas/ideias brutas:
-` + ideasListStr + `
-
-PROPÓSITO DO PROMPT: ` + purposeText + `
-IDIOMA DE RESPOSTA: ` + lang + `
-TAMANHO MÁXIMO: ` + fmt.Sprintf("%d", maxLength) + ` caracteres
-
-INSTRUÇÕES PARA ESTRUTURAÇÃO:
-1. **Análise**: Identifique o objetivo principal e temas centrais das ideias
-2. **Organização**: Estruture logicamente as informações em hierarquia clara
-3. **Técnicas de Prompt Engineering**:
-   - Definição clara de contexto e papel (persona)
-   - Instruções específicas, mensuráveis e testáveis
-   - Exemplos concretos quando apropriado
-   - Formato de saída bem definido e estruturado
-   - Chain-of-thought para raciocínios complexos
-   - Few-shot examples se necessário
-4. **Formatação**: Use markdown para estruturação visual clara
-5. **Tom**: Seja preciso, objetivo, profissional e acionável
-6. **Escopo**: Mantenha dentro do limite de caracteres especificado
-
-CRITÉRIOS DE QUALIDADE:
-- Clareza: Instruções inequívocas e fáceis de seguir
-- Completude: Cubra todos os aspectos relevantes das ideias originais
-- Eficácia: Optimize para obter os melhores resultados da IA
-- Usabilidade: Pronto para uso imediato sem ajustes
-
-IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explicações adicionais, metadados ou texto introdutório. O prompt deve ser completo, autossuficiente e pronto para uso.
-`
-
-	return engineeringPrompt
+	if v := strings.TrimSpace(os.Getenv("GROMPT_DEFAULT_PROVIDER")); v != "" {
+		c.defaultProvider = strings.ToLower(v)
+	}
+	if v := strings.TrimSpace(os.Getenv("GROMPT_HISTORY_LIMIT")); v != "" {
+		if parsed, err := parsePositiveInt(v); err == nil {
+			c.historyLimit = parsed
+		}
+	}
+	if v := strings.TrimSpace(os.Getenv("GROMPT_REQUEST_TIMEOUT")); v != "" {
+		if dur, err := time.ParseDuration(v); err == nil {
+			c.timeout = dur
+		}
+	}
 }
+
+func (c *configImpl) loadFromFile(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	var fileCfg legacyFileConfig
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".yaml", ".yml":
+		if err := yaml.Unmarshal(data, &fileCfg); err != nil {
+			return err
+		}
+	case ".json":
+		if err := json.Unmarshal(data, &fileCfg); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unsupported config file extension: %s", filepath.Ext(path))
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if fileCfg.Port != "" {
+		c.port = fileCfg.Port
+	}
+	if fileCfg.DefaultProvider != "" {
+		c.defaultProvider = strings.ToLower(fileCfg.DefaultProvider)
+	}
+	if fileCfg.HistoryLimit > 0 {
+		c.historyLimit = fileCfg.HistoryLimit
+	}
+	if fileCfg.TimeoutSec > 0 {
+		c.timeout = time.Duration(fileCfg.TimeoutSec) * time.Second
+	}
+
+	mergeMap := func(dst map[string]string, src map[string]string) {
+		for k, v := range src {
+			if strings.TrimSpace(v) != "" {
+				dst[strings.ToLower(k)] = v
+			}
+		}
+	}
+
+	mergeMap(c.apiKeys, fileCfg.APIKeys)
+	mergeMap(c.endpoints, fileCfg.Endpoints)
+
+	for provider, model := range fileCfg.Models {
+		if strings.TrimSpace(model) != "" {
+			c.defaultModels[strings.ToLower(provider)] = model
+		}
+	}
+
+	if fileCfg.ProviderConfigPath != "" {
+		c.providerConfigPath = fileCfg.ProviderConfigPath
+	}
+
+	return nil
+}
+
+func (c *configImpl) registryConfig() interfaces.ServerConfig {
+	// cfg := Config{
+	// 	Providers: map[string]ProviderImpl{},
+	// }
+
+	// c.mu.RLock()
+	// defer c.mu.RUnlock()
+
+	// for name, apiKey := range c.apiKeys { // pragma: allowlist secret
+	// 	providerType := c.providerTypes[name]
+	// 	if providerType == "" {
+	// 		providerType = name
+	// 	}
+
+
+	// }
+	cfg := NewServerConfig(
+		c.bindAddr,
+		c.port,
+		c.apiKeys["openai"],
+		c.apiKeys["deepseek"],
+		c.endpoints["ollama"],
+		c.apiKeys["claude"],
+		c.apiKeys["gemini"],
+		c.apiKeys["chatgpt"],
+		c.logger,
+	)
+
+	return cfg
+}
+
+// injectTempEnv ensures registry constructors can continue to read API keys from env vars.
+// func (c *configImpl) injectTempEnv(provider, key string) string {
+// 	envKey := fmt.Sprintf("GROMPT_PROVIDER_%s_KEY", strings.ToUpper(provider))
+// 	_ = os.Setenv(envKey, key)
+// 	return envKey
+// }
+
+// func (c *configImpl) requestTimeout() time.Duration {
+// 	if c.timeout <= 0 {
+// 		return 60 * time.Second
+// 	}
+// 	return c.timeout
+// }

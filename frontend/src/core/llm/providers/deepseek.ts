@@ -13,7 +13,7 @@ import {
   type AIResponse,
   type GenerateContentParams,
   type MultiAIConfig
-} from "../types";
+} from "@/types/types";
 
 export class DeepSeekProvider extends BaseProvider {
   private anthropic: DeepSeek;

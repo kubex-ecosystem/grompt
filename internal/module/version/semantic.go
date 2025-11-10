@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var gl = logger.GetLogger[ServiceImpl](nil)
+var gl = logger.LoggerG.GetLogger()
 var (
 	info manifest.Manifest
 	vrs  Service

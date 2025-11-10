@@ -44,7 +44,9 @@ func (m *Grompt) Execute() error {
 	return m.Command().Execute()
 }
 func (m *Grompt) Command() *cobra.Command {
-	gl.Log("debug", "Starting Grompt CLI...")
+	// Initialize logger
+
+	gl.LoggerG.GetLogger().Log("debug", "Starting Grompt CLI...")
 
 	var rtCmd = &cobra.Command{
 		Use:     m.Module(),
@@ -58,9 +60,12 @@ func (m *Grompt) Command() *cobra.Command {
 	}
 
 	rtCmd.AddCommand(cc.ServerCmdList()...)
-	rtCmd.AddCommand(cc.SquadCmdList()...)
+	// rtCmd.AddCommand(cc.SquadCmdList()...)
 	rtCmd.AddCommand(cc.AICmdList()...)
 	rtCmd.AddCommand(vs.CliCommand())
+	rtCmd.AddCommand(cc.NewDaemonCommand())
+	rtCmd.AddCommand(cc.GatewayCmd())
+
 
 	// Set usage definitions for the command and its subcommands
 	setUsageDefinition(rtCmd)
