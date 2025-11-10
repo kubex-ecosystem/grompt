@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"path"
 	"reflect"
 	"strings"
@@ -352,6 +353,61 @@ func (h *Handlers) getAPIConfigKey(provider string) string {
 	}
 }
 
+// getEnvVarForProvider reads API keys directly from environment variables
+// This is the fallback when config doesn't have the keys
+func (h *Handlers) getEnvVarForProvider(provider string) string {
+	var envKey, envVarName string
+	switch provider {
+	case "claude":
+		envVarName = "CLAUDE_API_KEY"
+		envKey = os.Getenv(envVarName)
+	case "openai":
+		envVarName = "OPENAI_API_KEY"
+		envKey = os.Getenv(envVarName)
+	case "deepseek":
+		envVarName = "DEEPSEEK_API_KEY"
+		envKey = os.Getenv(envVarName)
+	case "ollama":
+		envVarName = "OLLAMA_ENDPOINT"
+		envKey = os.Getenv(envVarName)
+	case "gemini":
+		envVarName = "GEMINI_API_KEY"
+		envKey = os.Getenv(envVarName)
+	case "chatgpt":
+		// ChatGPT uses same key as OpenAI
+		envVarName = "OPENAI_API_KEY"
+		envKey = os.Getenv(envVarName)
+	default:
+		envKey = ""
+	}
+
+	// Debug logging with more details
+	fmt.Printf("[DEBUG-ENV] Provider: %s, EnvVar: %s, Found: %v (len: %d)\n", provider, envVarName, envKey != "", len(envKey))
+
+	// List ALL environment variables for debugging
+	if provider == "gemini" {
+		fmt.Printf("[DEBUG-ENV-DUMP] Checking environment for GEMINI related vars:\n")
+		for _, env := range os.Environ() {
+			if strings.Contains(env, "GEMINI") || strings.Contains(env, "API") {
+				parts := strings.SplitN(env, "=", 2)
+				if len(parts) == 2 {
+					fmt.Printf("[DEBUG-ENV-DUMP]   %s = %s...\n", parts[0], parts[1][:min(20, len(parts[1]))])
+				}
+			}
+		}
+	}
+
+	return envKey
+}
+
+// min helper function
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func (h *Handlers) HandleConfig(c *gin.Context) {
 	h.setCORSHeaders(c)
 
@@ -459,11 +515,16 @@ func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []
 			}
 			configured = strings.TrimSpace(endpoint) != ""
 		} else {
+			// Try config first, then fall back to envvars
+			apiKey := ""
 			if cfg != nil {
-				configured = strings.TrimSpace(cfg.GetAPIKey(descriptor.Key)) != ""
-			} else {
-				configured = strings.TrimSpace(h.getAPIConfigKey(descriptor.Key)) != ""
+				apiKey = cfg.GetAPIKey(descriptor.Key)
 			}
+			// If config doesn't have it, try envvar
+			if strings.TrimSpace(apiKey) == "" {
+				apiKey = h.getEnvVarForProvider(descriptor.Key)
+			}
+			configured = strings.TrimSpace(apiKey) != ""
 		}
 
 		status := "needs_api_key"

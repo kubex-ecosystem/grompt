@@ -117,10 +117,13 @@ func getGinHandlerFunc(f http.HandlerFunc) gin.HandlerFunc {
 }
 
 func (s *Server) setupRoutes() {
-	s.setupStaticRoutes()
+	// Register API routes first (must be before NoRoute)
 	s.setupAPIRoutes()
 	s.setupGatewayRoutes()
 	s.mountAPIRouter()
+
+	// Static routes with NoRoute must be last
+	s.setupStaticRoutes()
 }
 
 func (s *Server) setupStaticRoutes() {
@@ -131,10 +134,14 @@ func (s *Server) setupStaticRoutes() {
 		return
 	}
 
-	s.ServerImpl.Router().GET(
-		"/",
-		gin.WrapH(http.FileServer(http.FS(buildFS))),
-	)
+	// Serve all static files including assets
+	// NoRoute is only for non-API routes (SPA fallback)
+	fileServer := http.FileServer(http.FS(buildFS))
+	s.ServerImpl.Router().NoRoute(func(c *gin.Context) {
+		// Only serve static files for non-API routes
+		// API routes (/api/*, /v1/*, /healthz) are already registered and will be handled before NoRoute
+		fileServer.ServeHTTP(c.Writer, c.Request)
+	})
 }
 
 func (s *Server) setupAPIRoutes() {
@@ -209,7 +216,10 @@ func (s *Server) setupGatewayRoutes() {
 		prodMiddleware.RegisterProvider(providerName)
 	}
 
-	routes.NewGatewayRoutes(reg, prodMiddleware).Register(s.apiRouter.Group(""))
+	// Register gateway routes on main router (not apiRouter)
+	// This allows routes like /healthz to be at root level
+	mainRouter := s.ServerImpl.GetRouter()
+	routes.NewGatewayRoutes(reg, prodMiddleware).Register(mainRouter.Group(""))
 }
 
 func openBrowser(url string) {

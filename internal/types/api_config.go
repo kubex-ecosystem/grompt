@@ -240,37 +240,62 @@ func (c *Config) GetAPIKey(provider string) string {
 func (c *Config) SetAPIKey(provider string, key string) error {
 	switch provider {
 	case "openai":
-		if err := os.Setenv("OPENAI_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("OPENAI_API_KEY", key); err == nil { // pragma: allowlist secret
+				c.OpenAIAPIKey = "OPENAI_API_KEY" // pragma: allowlist secret
+			}
+		} else if os.Getenv("OPENAI_API_KEY") != "" {
+			// Key exists in environment, use it
 			c.OpenAIAPIKey = "OPENAI_API_KEY" // pragma: allowlist secret
-		}else {
+		} else {
 			c.OpenAIAPIKey = ""
 		}
 	case "deepseek":
-		if err := os.Setenv("DEEPSEEK_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("DEEPSEEK_API_KEY", key); err == nil { // pragma: allowlist secret
+				c.DeepSeekAPIKey = "DEEPSEEK_API_KEY" // pragma: allowlist secret
+			}
+		} else if os.Getenv("DEEPSEEK_API_KEY") != "" {
 			c.DeepSeekAPIKey = "DEEPSEEK_API_KEY" // pragma: allowlist secret
 		} else {
 			c.DeepSeekAPIKey = ""
 		}
 	case "ollama":
-		if err := os.Setenv("OLLAMA_ENDPOINT", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("OLLAMA_ENDPOINT", key); err == nil { // pragma: allowlist secret
+				c.OllamaEndpoint = "OLLAMA_ENDPOINT" // pragma: allowlist secret
+			}
+		} else if os.Getenv("OLLAMA_ENDPOINT") != "" {
 			c.OllamaEndpoint = "OLLAMA_ENDPOINT" // pragma: allowlist secret
 		} else {
 			c.OllamaEndpoint = ""
 		}
 	case "claude":
-		if err := os.Setenv("CLAUDE_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("CLAUDE_API_KEY", key); err == nil { // pragma: allowlist secret
+				c.ClaudeAPIKey = "CLAUDE_API_KEY" // pragma: allowlist secret
+			}
+		} else if os.Getenv("CLAUDE_API_KEY") != "" {
 			c.ClaudeAPIKey = "CLAUDE_API_KEY" // pragma: allowlist secret
 		} else {
 			c.ClaudeAPIKey = ""
 		}
 	case "gemini":
-		if err := os.Setenv("GEMINI_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("GEMINI_API_KEY", key); err == nil { // pragma: allowlist secret
+				c.GeminiAPIKey = "GEMINI_API_KEY" // pragma: allowlist secret
+			}
+		} else if os.Getenv("GEMINI_API_KEY") != "" {
 			c.GeminiAPIKey = "GEMINI_API_KEY" // pragma: allowlist secret
 		} else {
 			c.GeminiAPIKey = ""
 		}
 	case "chatgpt":
-		if err := os.Setenv("CHATGPT_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+		if key != "" { // pragma: allowlist secret
+			if err := os.Setenv("CHATGPT_API_KEY", key); err == nil { // pragma: allowlist secret
+				c.ChatGPTAPIKey = "CHATGPT_API_KEY" // pragma: allowlist secret
+			}
+		} else if os.Getenv("CHATGPT_API_KEY") != "" {
 			c.ChatGPTAPIKey = "CHATGPT_API_KEY" // pragma: allowlist secret
 		} else {
 			c.ChatGPTAPIKey = ""
