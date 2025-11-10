@@ -16,14 +16,14 @@ import (
 )
 
 type legacyFileConfig struct {
-	Port               string            `json:"port" yaml:"port"`
-	DefaultProvider    string            `json:"default_provider" yaml:"default_provider"`
-	HistoryLimit       int               `json:"history_limit" yaml:"history_limit"`
-	TimeoutSec         int               `json:"timeout_sec" yaml:"timeout_sec"`
-	APIKeys            map[string]string `json:"api_keys" yaml:"api_keys"`
-	Endpoints          map[string]string `json:"endpoints" yaml:"endpoints"`
-	Models             map[string]string `json:"models" yaml:"models"`
-	ProviderConfigPath string            `json:"provider_config" yaml:"provider_config"`
+	Port               string            `json:"port,omitempty" yaml:"port,omitempty"`
+	DefaultProvider    string            `json:"default_provider,omitempty" yaml:"default_provider,omitempty"`
+	HistoryLimit       int               `json:"history_limit,omitempty" yaml:"history_limit,omitempty"`
+	TimeoutSec         int               `json:"timeout_sec,omitempty" yaml:"timeout_sec,omitempty"`
+	APIKeys            map[string]string `json:"api_keys,omitempty" yaml:"api_keys,omitempty"`
+	Endpoints          map[string]string `json:"endpoints,omitempty" yaml:"endpoints,omitempty"`
+	Models             map[string]string `json:"models,omitempty" yaml:"models,omitempty"`
+	ProviderConfigPath string            `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty"`
 }
 
 
@@ -132,25 +132,25 @@ func NewServerConfig(
 var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama", "chatgpt", "groq"}
 
 type ServerConfigImpl struct {
-	Name               string
-	Debug              bool
+	Name               string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
+	Debug              bool   `json:"debug,omitempty" yaml:"debug,omitempty" mapstructure:"debug,omitempty"`
 	Logger             logz.Logger
-	BindAddr           string
-	Port               string
-	TempDir            string
-	LogFile           string
-	EnvFile           string
-	ConfigFile        string
-	Cwd               string
-	APIKeys            map[string]string
-	Endpoints          map[string]string
-	DefaultModels      map[string]string
-	ProviderTypes      map[string]string
-	DefaultProvider    string
-	DefaultTemperature float32
-	HistoryLimit       int
-	Timeout            time.Duration
-	ProviderConfigPath string
+	BindAddr           string `json:"bind_addr,omitempty" yaml:"bind_addr,omitempty" mapstructure:"bind_addr,omitempty"`
+	Port               string `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
+	TempDir            string `json:"temp_dir,omitempty" yaml:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
+	LogFile            string `json:"log_file,omitempty" yaml:"log_file,omitempty" mapstructure:"log_file,omitempty"`
+	EnvFile            string `json:"env_file,omitempty" yaml:"env_file,omitempty" mapstructure:"env_file,omitempty"`
+	ConfigFile         string `json:"config_file,omitempty" yaml:"config_file,omitempty" mapstructure:"config_file,omitempty"`
+	Cwd                string `json:"cwd,omitempty" yaml:"cwd,omitempty" mapstructure:"cwd,omitempty"`
+	APIKeys            map[string]string `json:"api_keys,omitempty" yaml:"api_keys,omitempty" mapstructure:"api_keys,omitempty"`
+	Endpoints          map[string]string `json:"endpoints,omitempty" yaml:"endpoints,omitempty" mapstructure:"endpoints,omitempty"`
+	DefaultModels      map[string]string `json:"default_models,omitempty" yaml:"default_models,omitempty" mapstructure:"default_models,omitempty"`
+	ProviderTypes      map[string]string `json:"provider_types,omitempty" yaml:"provider_types,omitempty" mapstructure:"provider_types,omitempty"`
+	DefaultProvider    string `json:"default_provider,omitempty" yaml:"default_provider,omitempty" mapstructure:"default_provider,omitempty"`
+	DefaultTemperature float32 `json:"default_temperature,omitempty" yaml:"default_temperature,omitempty" mapstructure:"default_temperature,omitempty"`
+	HistoryLimit       int    `json:"history_limit,omitempty" yaml:"history_limit,omitempty" mapstructure:"history_limit,omitempty"`
+	Timeout            time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty" mapstructure:"timeout,omitempty"`
+	ProviderConfigPath string `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty" mapstructure:"provider_config_path,omitempty"`
 
 	Engine interfaces.IEngine
 	Mu     sync.RWMutex
