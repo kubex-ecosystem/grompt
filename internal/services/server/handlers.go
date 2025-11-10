@@ -292,8 +292,7 @@ func (h *Handlers) GetLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
 		h.Config = cfg
 	}
 	for _, provider := range []string{"claude", "openai", "chatgpt", "deepseek", "ollama", "gemini"} {
-		providerAPIKey := cfg.GetAPIKey(provider)
-		llmKeyMap[provider] = providerAPIKey
+		llmKeyMap[provider] = cfg.GetAPIKey(provider)
 	}
 	return llmKeyMap
 }
@@ -313,17 +312,17 @@ func (h *Handlers) isAPIEnabled(provider string) bool {
 
 	switch provider {
 	case "claude":
-		return llmKeyMap["claude"] != ""
+		return h.Config.GetAPIKey("claude") != ""
 	case "openai":
-		return llmKeyMap["openai"] != ""
+		return h.Config.GetAPIKey("openai") != ""
 	case "chatgpt":
-		return llmKeyMap["chatgpt"] != ""
+		return h.Config.GetAPIKey("chatgpt") != ""
 	case "deepseek":
-		return llmKeyMap["deepseek"] != ""
+		return h.Config.GetAPIKey("deepseek") != ""
 	case "ollama":
-		return llmKeyMap["ollama"] != ""
+		return h.Config.GetAPIKey("ollama") != ""
 	case "gemini":
-		return llmKeyMap["gemini"] != ""
+		return h.Config.GetAPIKey("gemini") != ""
 	default:
 		return false
 	}

@@ -76,7 +76,6 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
           <Card key={feature.title} title={feature.title} description={feature.description}>
             <div className="flex items-center justify-between pt-1 text-xs text-[#64748b] dark:text-[#94a3b8]">
               <span>Conectado ao fluxo Kubex</span>
-              <span>Sem lock-in</span>
             </div>
           </Card>
         ))}

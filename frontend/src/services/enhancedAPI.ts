@@ -809,6 +809,10 @@ Formate sua resposta como um plano de ação detalhado.`
         }
 
         try {
+          if (`${this.baseURL}${item.endpoint}`.startsWith('/api/config')) {
+            console.error('Skipping config sync in offline queue');
+            throw new Error('Skipping config sync in offline queue');
+          }
           const response = await fetch(`${this.baseURL}${item.endpoint}`, {
             method: item.method,
             headers: { 'Content-Type': 'application/json' },

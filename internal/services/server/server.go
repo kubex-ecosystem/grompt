@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,21 +25,22 @@ import (
 	gl "github.com/kubex-ecosystem/logz/logger"
 )
 
-var reactApp = grompt.NewGUIGrompt()
-
-type Server struct {
-	*gateway.ServerImpl
-	apiRouter *gin.RouterGroup
-	config   *t.Config
-	handlers *Handlers
-}
-
 type ReactApp struct {
-	FS          []fs.DirEntry
+	*gin.Engine
+
+	FS          *grompt.GUIGrompt
 	Wasms       *[]fs.File
 	ReactRoutes map[string]string
 	WasmRoutes  map[string]string
 }
+
+type Server struct {
+	*gateway.ServerImpl
+	config   *t.Config
+	handlers *Handlers
+	reactApp *ReactApp
+}
+
 
 func NewServer(cfg interfaces.IConfig) *Server {
 	if cfg == nil {
@@ -67,9 +69,16 @@ func NewServer(cfg interfaces.IConfig) *Server {
 		return nil
 	}
 
+	reactApp := &ReactApp{
+		FS:    	grompt.NewGUIGrompt(),
+		Engine: gin.New(),
+	}
+	reactApp.Engine.Use(gin.Recovery())
+
 	return &Server{
 		ServerImpl:   server,
 		config:    baseCfg,
+		reactApp:  reactApp,
 		handlers:  NewHandlers(cfg),
 	}
 }
@@ -77,30 +86,46 @@ func NewServer(cfg interfaces.IConfig) *Server {
 func (s *Server) Start() error {
 	// Configurar roteamento
 	s.setupRoutes()
+	var url string
 
-	url := fmt.Sprintf("http://localhost:%s", s.config.Port)
-
-	gl.Log("info", "🌐 Gateway started: %s\n", url)
-	gl.Log("info", "📁 Serving embedded React application\n")
-	gl.Log("info", "🔧 Available APIs:\n")
-	gl.Log("info", "   • /api/v1/config - Configuration\n")
-	gl.Log("info", "   • /api/v1/models - Available Models\n")
-	gl.Log("info", "   • /api/v1/test - API Test\n")
-	gl.Log("info", "   • /api/v1/unified - Unified API\n")
-	gl.Log("info", "   • /api/v1/openai - OpenAI API\n")
-	gl.Log("info", "   • /api/v1/deepseek - DeepSeek API\n")
-	gl.Log("info", "   • /api/v1/claude - Claude API\n")
-	gl.Log("info", "   • /api/v1/gemini - Gemini API\n")
-	gl.Log("info", "   • /api/v1/chatgpt - ChatGPT API\n")
-	gl.Log("info", "   • /api/v1/ollama - Ollama Local\n")
-	gl.Log("info", "   • /api/v1/health - Server Status\n")
-	gl.Log("info", "💡 Press Ctrl+C to stop\n\n")
-
-	// Detecta se há a página aberta em algum lugar
+	// Listen and server frontend routes in a goroutine
+	go func(cs *Server) {
+		cs.setupStaticRoutes()
+		intPort, err := strconv.Atoi(cs.config.Port)
+		if err != nil {
+			gl.Log("error", "❌ Invalid port number: %v", err)
+			return
+		}
+		cs.reactApp.Engine.MaxMultipartMemory = 8 << 20 // 8 MiB
+		intPort++
+		url = fmt.Sprintf("http://localhost:%s", strconv.Itoa(intPort))
+		if err := cs.reactApp.Engine.Run(
+			net.JoinHostPort(cs.config.BindAddr, strconv.Itoa(intPort)),
+		); err != nil && err != http.ErrServerClosed {
+			gl.Log("error", "❌ Failed to start React frontend server: %v", err)
+		}
+	}(s)
 
 	// Abrir navegador após delay
 	go func() {
-		time.Sleep(1 * time.Second)
+		<-time.After(1 * time.Second)
+
+		gl.Log("info", "🌐 Gateway started: %s\n", url)
+		gl.Log("info", "📁 Serving embedded React application\n")
+		gl.Log("info", "🔧 Available APIs:\n")
+		gl.Log("info", "   • /api/v1/config - Configuration\n")
+		gl.Log("info", "   • /api/v1/models - Available Models\n")
+		gl.Log("info", "   • /api/v1/test - API Test\n")
+		gl.Log("info", "   • /api/v1/unified - Unified API\n")
+		gl.Log("info", "   • /api/v1/openai - OpenAI API\n")
+		gl.Log("info", "   • /api/v1/deepseek - DeepSeek API\n")
+		gl.Log("info", "   • /api/v1/claude - Claude API\n")
+		gl.Log("info", "   • /api/v1/gemini - Gemini API\n")
+		gl.Log("info", "   • /api/v1/chatgpt - ChatGPT API\n")
+		gl.Log("info", "   • /api/v1/ollama - Ollama Local\n")
+		gl.Log("info", "   • /api/v1/health - Server Status\n")
+		gl.Log("info", "💡 Press Ctrl+C to stop\n\n")
+
 		openBrowser(url)
 	}()
 
@@ -110,34 +135,51 @@ func (s *Server) Start() error {
 	)
 }
 
-func getGinHandlerFunc(f http.HandlerFunc) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		f(c.Writer, c.Request)
-	}
-}
-
 func (s *Server) setupRoutes() {
-	s.setupStaticRoutes()
 	s.setupAPIRoutes()
 	s.setupGatewayRoutes()
 	s.mountAPIRouter()
 }
 
 func (s *Server) setupStaticRoutes() {
-	buildFS, err := fs.Sub(reactApp.GetWebFS(), "embedded/guiweb")
-	if err != nil {
-		gl.LoggerG.GetLogger().Log("warn", fmt.Sprintf("⚠️ build embed não encontrado: %v", err))
-		_ = s.setupFallbackRoutes()
-		return
-	}
+	// Rota para servir arquivos estáticos do React
+	s.reactApp.Engine.GET(
+		"/*filepath",
+		func(c *gin.Context) {
+			path := filepath.Clean(c.Request.URL.Path)
 
-	s.ServerImpl.Router().GET(
-		"/",
-		gin.WrapH(http.FileServer(http.FS(buildFS))),
+			if strings.HasPrefix(path, "/api/v1/") {
+				c.Next()
+				return
+			}
+			if path == "/" {
+				path = "/index.html"
+			}
+			fullPath := strings.TrimSuffix(path, "/")
+			file, err := s.reactApp.FS.GetEmbeddedFS().F.Open(fullPath)
+			if err != nil {
+				// Arquivo não encontrado, retornar 404
+				c.Next()
+				return
+			}
+			defer file.Close()
+
+			SetStaticHeaders(c.Writer, path)
+			content, err := s.reactApp.FS.GetWebFile(fullPath)
+			if err != nil {
+				c.Next()
+				return
+			}
+			c.Writer.Write(content)
+		},
 	)
+
+
 }
 
 func (s *Server) setupAPIRoutes() {
+
+	// 1) Rotas básicas
 	s.ServerImpl.Router().GET("/api/v1/health", s.handlers.HandleHealth)
 	s.ServerImpl.Router().GET("/api/v1/config", s.handlers.HandleConfig)
 	s.ServerImpl.Router().POST("/api/v1/config", s.handlers.HandleConfig)
@@ -192,8 +234,7 @@ init('/wasm/lookatni_wasm_bg.wasm').then(() => {
 }
 
 func (s *Server) mountAPIRouter() {
-	router := s.ServerImpl.GetRouter()
-	s.apiRouter = router.Group("/api/v1", s.handlers.setCORSHeaders)
+	s.ServerImpl.Router().Group("/api/v1", s.handlers.setCORSHeaders)
 }
 
 func (s *Server) setupGatewayRoutes() {
@@ -209,7 +250,7 @@ func (s *Server) setupGatewayRoutes() {
 		prodMiddleware.RegisterProvider(providerName)
 	}
 
-	routes.NewGatewayRoutes(reg, prodMiddleware).Register(s.apiRouter.Group(""))
+	routes.NewGatewayRoutes(reg, prodMiddleware).Register(s.ServerImpl.Router().Group(""))
 }
 
 func openBrowser(url string) {
@@ -230,149 +271,6 @@ func openBrowser(url string) {
 		gl.Log("warn", "⚠️  Error opening browser: %v\n", err)
 		gl.Log("info", "🌐 Open your browser at: %s\n", url)
 	}
-}
-
-func (s *Server) setupFallbackRoutes() error {
-	// Fallback route for when the React frontend is not found
-	// This route serves a simple HTML page explaining that the React frontend is not available
-	// It provides instructions on how to build the React app and recompile the Go server.
-	s.ServerImpl.Router().GET(
-		"/",
-		gin.WrapH(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/v1/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		html := `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Crafter - Setup Necessário</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #ffffff;
-        }
-        .container {
-            background: #2d2d2d;
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #404040;
-        }
-        h1 { color: #60a5fa; margin-bottom: 20px; }
-        h2 { color: #34d399; margin-top: 30px; }
-        pre {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            border: 1px solid #404040;
-        }
-        code { color: #fbbf24; }
-        .warning {
-            background: #451a03;
-            border: 1px solid #f59e0b;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .step {
-            background: #1e3a8a;
-            border: 1px solid #3b82f6;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 Prompt Crafter</h1>
-
-        <div class="warning">
-            <strong>⚠️ Frontend React não encontrado!</strong><br>
-            O servidor Go está rodando, mas o frontend React não foi embarcado no binário.
-        </div>
-
-        <h2>🔧 Como corrigir:</h2>
-
-        <div class="step">
-            <strong>Passo 1:</strong> Build do Frontend React
-            <pre><code>cd frontend
-npm install
-npm run build
-cd ..</code></pre>
-        </div>
-
-        <div class="step">
-            <strong>Passo 2:</strong> Recompilar Go com Frontend Embarcado
-            <pre><code>go build -o prompt-crafter .</code></pre>
-        </div>
-
-        <div class="step">
-            <strong>Passo 3:</strong> Executar Novamente
-            <pre><code>./prompt-crafter</code></pre>
-        </div>
-
-        <h2>📚 Ou use o Makefile:</h2>
-        <pre><code>make build-all</code></pre>
-
-        <h2>🔗 APIs Disponíveis:</h2>
-        <ul>
-            <li><a href="/api/v1/health" style="color: #60a5fa;">/api/v1/health</a> - Status do servidor</li>
-            <li><a href="/api/v1/config" style="color: #60a5fa;">/api/v1/config</a> - Configuração das APIs</li>
-        </ul>
-
-        <p><strong>💡 Dica:</strong> Este servidor Go está funcionando corretamente. Você só precisa buildar e embarca o frontend React!</p>
-    </div>
-</body>
-</html>`
-		w.Write([]byte(html))
-	})),
-	)
-
-	// Fallback API routes
-	// These routes handle API requests when the React frontend is not available.
-	// They provide basic functionality to ensure the server can still respond to API requests.
-	s.apiRouter.GET("/api/v1/models", s.handlers.HandleModels)
-	s.apiRouter.GET("/api/v1/claude", s.handlers.HandleClaude)
-	s.apiRouter.GET("/api/v1/ollama", s.handlers.HandleOllama)
-	s.apiRouter.GET("/api/v1/openai", s.handlers.HandleOpenAI)
-	s.apiRouter.GET("/api/v1/chatgpt", s.handlers.HandleChatGPT)
-	s.apiRouter.GET("/api/v1/gemini", s.handlers.HandleGemini)
-	s.apiRouter.GET("/api/v1/deepseek", s.handlers.HandleDeepSeek)
-	s.apiRouter.GET("/api/v1/unified", s.handlers.HandleUnified)
-	// s.router.HandleFunc("/api/v1/agents", s.handlers.HandleAgents)
-	// s.router.HandleFunc("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate)
-	// s.router.HandleFunc("/api/v1/agents/", s.handlers.HandleAgent)
-	// s.router.HandleFunc("/api/v1/agents.md", s.handlers.HandleAgentsMarkdown)
-
-	// Config route
-	// This route returns the server's configuration, such as API keys and endpoints.
-	// It is useful for clients to know how to interact with the server's APIs.
-	s.apiRouter.GET("/api/v1/config", s.handlers.HandleConfig)
-
-	// Test route
-	// This route is used to test the server's API functionality.
-	// It can be used to verify that the server is running and responding correctly.
-	s.apiRouter.GET("/api/v1/test", s.handlers.HandleTest)
-
-	// Health check route
-	// This route checks the health of the server and returns a simple JSON response.
-	// It is useful for monitoring and ensuring the server is running correctly.
-	s.apiRouter.GET("/api/v1/health", s.handlers.HandleHealth)
-
-	// Log the fallback routes setup
-	gl.Log("warn", "⚠️  Fallback routes: Unavailable React frontend, serving API endpoints only")
-
-	return nil
 }
 
 func stopAllServices() {

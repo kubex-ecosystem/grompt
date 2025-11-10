@@ -45,7 +45,7 @@ const Footer: React.FC = () => {
         <p className="mt-1 font-orbitron tracking-wider">{t('motto')}</p>
       </div>
       <div className="text-[10px] opacity-70">
-        <p>Grompt v2.0 • Made with ❤️ in Brasil • Open Source • No Lock-in</p>
+        <p>Grompt v2.0 • Made with ❤️ in Brasil • Open Source</p>
       </div>
     </footer>
   );

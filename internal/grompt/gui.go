@@ -2,33 +2,49 @@
 package grompt
 
 import (
-	"embed"
+	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/kubex-ecosystem/grompt/internal/grompt/embedded"
 )
 
-//go:embed all:embedded/guiweb
-var guiWebFS embed.FS
+
+var guiWebFS *embedded.EmbeddedFS
+
+func init(){
+	guiWebFS = embedded.GetEmbeddedFS()
+}
 
 // GUIGrompt analyzes GUI-related metrics and provides insights
 type GUIGrompt struct {
-	guiWebFS *embed.FS
+	guiWebFS *embedded.EmbeddedFS
 }
 
 // NewGUIGrompt creates a new instance of GUIGrompt
 func NewGUIGrompt() *GUIGrompt {
 	return &GUIGrompt{
-		guiWebFS: &guiWebFS,
+		guiWebFS: guiWebFS,
 	}
 }
 
 // GetWebFS returns the embedded filesystem for GUI web assets
-func (g *GUIGrompt) GetWebFS() *embed.FS {
+func (g *GUIGrompt) GetWebFS() fs.FS {
 	if g == nil {
 		return nil
 	}
 	if g.guiWebFS == nil {
-		g.guiWebFS = &guiWebFS
+		g.guiWebFS = guiWebFS
+	}
+	return g.guiWebFS.F
+}
+
+func (g *GUIGrompt) GetEmbeddedFS() *embedded.EmbeddedFS {
+	if g == nil {
+		return nil
+	}
+	if g.guiWebFS == nil {
+		g.guiWebFS = guiWebFS
 	}
 	return g.guiWebFS
 }
@@ -38,15 +54,7 @@ func (g *GUIGrompt) GetWebRoot(path string) *os.DirEntry {
 	if g == nil {
 		return nil
 	}
-	embedFS := g.GetWebFS()
-	if embedFS == nil {
-		return nil
-	}
-	dirEntries, err := embedFS.ReadDir("embedded/guiweb")
-	if err != nil || len(dirEntries) == 0 {
-		return nil
-	}
-	for _, entry := range dirEntries {
+	for _, entry := range g.guiWebFS.S {
 		if entry.Name() == path {
 			return &entry
 		}
@@ -59,15 +67,13 @@ func (g *GUIGrompt) GetWebFile(path string) ([]byte, error) {
 	if g == nil {
 		return nil, os.ErrNotExist
 	}
-	embedFS := g.GetWebFS()
-	if embedFS == nil {
-		return nil, os.ErrNotExist
+	file, err := g.guiWebFS.F.Open(path)
+	if err != nil {
+		return nil, err
 	}
-	fullPath := filepath.Join("embedded/guiweb", path)
-	if _, err := embedFS.Open(fullPath); err != nil {
-		return nil, os.ErrNotExist
-	}
-	data, err := embedFS.ReadFile(fullPath)
+	defer file.Close()
+
+	data, err := fs.ReadFile(g.guiWebFS.F, filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

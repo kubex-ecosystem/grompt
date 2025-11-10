@@ -1,16 +1,56 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+
+    <!-- Basic PWA Meta Tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Grompt - AI Prompt Crafter</title>
+    <meta name="theme-color" content="#9333ea" />
+    <meta name="background-color" content="#030712" />
+    <meta name="description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="Grompt" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Grompt" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-config" content="./browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="#9333ea" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Grompt - AI Prompt Engineering Tool" />
+    <meta property="og:description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+    <meta property="og:site_name" content="Grompt" />
+    <meta property="og:url" content="https://grompt.kubex.dev/" />
+    <meta property="og:image" content="/images/og-image.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Grompt - AI Prompt Engineering Tool" />
+    <meta name="twitter:description"
+      content="Transforme suas ideias em prompts eficazes para modelos de IA. Funciona offline com templates inteligentes." />
+    <meta name="twitter:image" content="/images/twitter-card.png" />
+
+    <!-- Title -->
+    <title>Grompt - AI Prompt Engineering Tool</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root {
@@ -19,27 +59,14 @@
       body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        transition: background-color 0.4s ease, color 0.4s ease;
-        background-color: #f9fafb;
-        color: #334155;
-      }
-      body.dark-theme {
-        background-color: #0a0f14;
+        background-color: #010409;
         background-image:
-          linear-gradient(rgba(9, 20, 35, 0.45) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(9, 20, 35, 0.45) 1px, transparent 1px);
-        background-size: 24px 24px;
-        color: #e5f2f2;
-      }
-      body.light-theme {
-        background-color: #f9fafb;
-        background-image:
-          radial-gradient(circle at 1px 1px, rgba(8, 145, 178, 0.08) 1px, transparent 0);
-        background-size: 26px 26px;
-        color: #334155;
+          linear-gradient(rgba(11, 23, 45, 0.6) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(11, 23, 45, 0.6) 1px, transparent 1px);
+        background-size: 20px 20px;
       }
       .font-orbitron { font-family: 'Orbitron', sans-serif; }
-      .font-plex-mono { font-family: 'IBM Plex Mono', monospace; }
+      .font-space-mono { font-family: 'Space Mono', monospace; }
       .glow-border {
         box-shadow: 0 0 18px -6px rgba(0, 136, 255, 0.18), 0 0 28px -8px rgba(168, 85, 247, 0.16);
       }
@@ -84,15 +111,15 @@
               },
             },
             boxShadow: {
-              'soft-card': '0 18px 40px -28px rgba(15, 23, 42, 0.45)',
-              'glow-cyan': '0 0 22px -6px rgba(0, 136, 255, 0.35)',
+                'neon-cyan': '0 0 5px #00e5ff, 0 0 10px #00e5ff, 0 0 20px #00e5ff',
+                'neon-green': '0 0 5px #39d353, 0 0 10px #39d353, 0 0 20px #39d353',
             }
           },
         },
       }
     </script>
 
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
@@ -105,11 +132,11 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="./assets/main-c-6vCLbz.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-CdglivQu.js">
+  <script type="module" crossorigin src="./assets/main-DlRAdlpG.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/main-tn0RQdqM.css">
 </head>
-  <body class="font-sans light-theme">
+  <body class="bg-background text-foreground font-sans">
     <div id="root"></div>
   </body>
+
 </html>
