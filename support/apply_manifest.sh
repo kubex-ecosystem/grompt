@@ -27,7 +27,7 @@ _MANIFEST_SUBPATH=${_MANIFEST_SUBPATH:-'internal/module/info/manifest.json'}
 
 __get_values_from_manifest() {
   # # Define the root directory (assuming this script is in lib/ under the root)
-  _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)"
+  _ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
   # shellcheck disable=SC2005
   _APP_NAME="$(jq -r '.bin' "$_ROOT_DIR/$_MANIFEST_SUBPATH" 2>/dev/null || echo "$(basename "${_ROOT_DIR:-}")")"
