@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
@@ -201,21 +202,60 @@ func loadConfigFile(f string) (*t.Config, error) {
 	var cfg = &t.Config{}
 
 	mapper := t.NewMapper(cfg, f)
-	cfgData, err := mapper.DeserializeFromFile(filepath.Ext(f)[1:])
+	format := strings.TrimPrefix(filepath.Ext(f), ".")
+	cfgData, err := mapper.DeserializeFromFile(format)
 	if err != nil {
 		return nil, err
 	}
+
+	// Quando DeserializeFromFile retorna nil, tentamos fazer o parse direto dos bytes
 	if cfgData == nil {
 		fileData, err := os.ReadFile(f)
 		if err != nil {
 			return nil, err
 		}
-		cfgData, err = mapper.Deserialize(fileData, filepath.Ext(f))
+		cfgData, err = mapper.Deserialize(fileData, format)
 		if err != nil {
 			return nil, err
 		}
-		return cfgData, nil
 	}
-	cfg = getDefaultConfig(initArgs).(*t.Config)
-	return cfg, nil
+
+	if cfgData == nil {
+		return nil, fmt.Errorf("não foi possível carregar a configuração de %s", f)
+	}
+
+	// Garante que o caminho do arquivo fique registrado para futuros carregamentos
+	if cfgData.Server == nil {
+		cfgData.Server = t.NewConfig(
+			initArgs.Name,
+			initArgs.Debug,
+			l.LoggerG.GetLogger(),
+			initArgs.Bind,
+			initArgs.Port,
+			initArgs.TempDir,
+			initArgs.LogFile,
+			initArgs.EnvFile,
+			f,
+			initArgs.Cwd,
+			initArgs.OpenAIKey,
+			initArgs.ClaudeKey,
+			initArgs.GeminiKey,
+			initArgs.DeepSeekKey,
+			initArgs.ChatGPTKey,
+			initArgs.OllamaEndpoint,
+			make(map[string]string),
+			make(map[string]string),
+			make(map[string]string),
+			make(map[string]string),
+			initArgs.DefaultProvider,
+			initArgs.DefaultTemperature,
+			initArgs.HistorySize,
+			initArgs.Timeout,
+			initArgs.ProviderConfigPath,
+		).GetServerConfig().(*t.ServerConfigImpl)
+	} else if cfgData.Server.ConfigFile == "" {
+		cfgData.Server.ConfigFile = f
+	}
+
+	return cfgData, nil
 }

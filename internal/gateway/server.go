@@ -2,6 +2,7 @@
 package gateway
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -24,17 +25,17 @@ type ServerConfig struct {
 	EnableCORS      bool
 }
 
-// Server represents the gateway server
-type Server struct {
+// ServerImpl represents the gateway server
+type ServerImpl struct {
 	config     interfaces.IConfig
 	registry   *registry.Registry
 	middleware *middleware.ProductionMiddleware
 	router     *gin.Engine
-	routes     *routes.GatewayRoutes
+	routes     interfaces.GatewayRoutes
 }
 
 // NewServer creates a new gateway server instance
-func NewServer(config interfaces.IConfig) (*Server, error) {
+func NewServer(config interfaces.IConfig) (*ServerImpl, error) {
 	// Load providers registry
 	reg, err := registry.Load(config.GetConfigFilePath())
 	if err != nil {
@@ -56,7 +57,7 @@ func NewServer(config interfaces.IConfig) (*Server, error) {
 		prodMiddleware.RegisterProvider(providerName)
 	}
 
-	return &Server{
+	return &ServerImpl{
 		config:     config,
 		registry:   reg,
 		middleware: prodMiddleware,
@@ -66,7 +67,7 @@ func NewServer(config interfaces.IConfig) (*Server, error) {
 }
 
 // Start starts the gateway server
-func (s *Server) Start() error {
+func (s *ServerImpl) Start() error {
 	// Setup graceful shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -95,6 +96,36 @@ func (s *Server) Start() error {
 			s.config.GetConfigArgs().Port,
 		),
 	)
+}
+
+func (s *ServerImpl) Stop() error {
+	s.middleware.Stop()
+	return nil
+}
+
+func (s *ServerImpl) Router() *gin.Engine {
+	return s.router
+}
+
+func (s *ServerImpl) RegisterRoutes(routes ...interfaces.GatewayRoutes) error {
+	if len(routes) == 0 {
+		return fmt.Errorf("no routes provided for registration")
+	}
+
+	for _, route := range routes {
+		route.Register(s.router)
+	}
+
+	return nil
+}
+
+func (s *ServerImpl) RegisterRoutesByHandlers(handlers interfaces.Handlers) error {
+	s.routes.Register(s.router)
+	return nil
+}
+
+func (s *ServerImpl) GetRouter() *gin.Engine {
+	return s.router
 }
 
 // corsMiddleware reproduz a lógica anterior usando o pipeline do gin.

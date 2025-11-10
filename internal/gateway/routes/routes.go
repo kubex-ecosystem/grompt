@@ -6,22 +6,31 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/gateway/middleware"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/registry"
 	"github.com/kubex-ecosystem/grompt/internal/gateway/transport"
+	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 )
 
-// GatewayRoutes centraliza o registro das rotas HTTP do gateway.
+// GatewayRoutesImpl centraliza o registro das rotas HTTP do gateway.
 // A ideia é manter um ponto único para evoluir, versionar ou adicionar
 // novos grupos de rotas sem precisar tocar diretamente no servidor.
-type GatewayRoutes struct {
+type GatewayRoutesImpl struct {
 	registry   *registry.Registry
 	middleware *middleware.ProductionMiddleware
 }
 
 // NewGatewayRoutes cria um registrador de rotas para o gateway.
-func NewGatewayRoutes(reg *registry.Registry, mw *middleware.ProductionMiddleware) *GatewayRoutes {
-	return &GatewayRoutes{registry: reg, middleware: mw}
+func NewGatewayRoutes(reg *registry.Registry, mw *middleware.ProductionMiddleware) interfaces.GatewayRoutes {
+	return &GatewayRoutesImpl{registry: reg, middleware: mw}
 }
 
 // Register injeta todas as rotas conhecidas no router informado.
-func (gr *GatewayRoutes) Register(router gin.IRouter) {
+func (gr *GatewayRoutesImpl) Register(router gin.IRouter) {
 	transport.WireHTTPSSE(router, gr.registry, gr.middleware)
+}
+
+func (gr *GatewayRoutesImpl) GetRegistry() interfaces.Registry {
+	return gr.registry
+}
+
+func (gr *GatewayRoutesImpl) GetMiddleware() *middleware.ProductionMiddleware {
+	return gr.middleware
 }

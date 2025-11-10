@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -15,14 +16,7 @@ import (
 )
 
 type Handlers struct {
-	config      ii.IConfig
-	claudeAPI   ii.IAPIConfig
-	openaiAPI   ii.IAPIConfig
-	deepseekAPI ii.IAPIConfig
-	chatGPTAPI  ii.IAPIConfig
-	geminiAPI   ii.IAPIConfig
-	ollamaAPI   ii.IAPIConfig
-	// agentStore  *agents.Store
+	*ii.Handlers
 }
 
 // UnifiedRequest represents a request structure that supports both direct prompts
@@ -187,21 +181,29 @@ Use the 🔑 button in the interface to provide your API key per request.
 }
 
 func NewHandlers(cfg ii.IConfig) *Handlers {
-	hndr := &Handlers{}
-	if cfg == nil {
-		return &Handlers{}
-	} else {
-		hndr.config = cfg
+	hndr := &Handlers{
+		Handlers: &ii.Handlers{},
 	}
+	if cfg == nil {
+		return &Handlers{
+			Handlers: &ii.Handlers{},
+		}
+	} else {
+		hndr.Config = cfg
+	}
+	// var err error
+	// hndr.Gateway, err = gateway.NewServer(cfg)
+	// if err != nil {
+	// 	return nil
+	// }
 
-	llmKeyMap = hndr.getLLMAPIKeyMap(cfg)
-	hndr.claudeAPI = it.NewClaudeAPI(llmKeyMap["claude"])
-	hndr.openaiAPI = it.NewOpenAIAPI(llmKeyMap["openai"])
-	hndr.chatGPTAPI = it.NewChatGPTAPI(llmKeyMap["chatgpt"])
-	hndr.deepseekAPI = it.NewDeepSeekAPI(llmKeyMap["deepseek"])
-	hndr.ollamaAPI = it.NewOllamaAPI(llmKeyMap["ollama"])
-	hndr.geminiAPI = it.NewGeminiAPI(llmKeyMap["gemini"])
-	// hndr.agentStore = agents.NewStore("agents.json")
+	llmKeyMap = hndr.GetLLMAPIKeyMap(cfg)
+	hndr.ClaudeAPI = it.NewClaudeAPI(llmKeyMap["claude"])
+	hndr.OpenaiAPI = it.NewOpenAIAPI(llmKeyMap["openai"])
+	hndr.ChatGPTAPI = it.NewChatGPTAPI(llmKeyMap["chatgpt"])
+	hndr.DeepseekAPI = it.NewDeepSeekAPI(llmKeyMap["deepseek"])
+	hndr.OllamaAPI = it.NewOllamaAPI(llmKeyMap["ollama"])
+	hndr.GeminiAPI = it.NewGeminiAPI(llmKeyMap["gemini"])
 
 	return hndr
 }
@@ -210,10 +212,6 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Bloqueia chamadas para /api/*
 		p := strings.TrimPrefix(r.URL.Path, "/")
-		if strings.HasPrefix(p, "api/") {
-			http.NotFound(w, r)
-			return
-		}
 
 		// 🧼 normaliza caminho e bloqueia traversal
 		p = path.Clean(p)
@@ -226,10 +224,7 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 			return
 		}
 
-		if strings.Contains(p, "v1") && r.Method == http.MethodGet {
-			http.NotFound(w, r)
-			return
-		} else if strings.Contains(p, "v1") && r.Method != http.MethodGet {
+		if strings.Contains(p, "v1") && r.Method != http.MethodGet {
 			// Define headers para evitar caching durante desenvolvimento
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
 			w.Header().Set("Pragma", "no-cache")
@@ -289,18 +284,29 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 	}
 }
 
-func (h *Handlers) getLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
+func (h *Handlers) GetLLMAPIKeyMap(cfg ii.IConfig) map[string]string {
 	if llmKeyMap == nil {
 		llmKeyMap = make(map[string]string)
 	}
-	if h.config == nil && cfg != nil {
-		h.config = cfg
+	if h.Config == nil && cfg != nil {
+		h.Config = cfg
 	}
 	for _, provider := range []string{"claude", "openai", "chatgpt", "deepseek", "ollama", "gemini"} {
 		providerAPIKey := cfg.GetAPIKey(provider)
 		llmKeyMap[provider] = providerAPIKey
 	}
 	return llmKeyMap
+}
+
+func (h *Handlers) activeConfig() ii.IConfig {
+	if h == nil || h.Config == nil {
+		return nil
+	}
+	v := reflect.ValueOf(h.Config)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return nil
+	}
+	return h.Config
 }
 
 func (h *Handlers) isAPIEnabled(provider string) bool {
@@ -324,22 +330,23 @@ func (h *Handlers) isAPIEnabled(provider string) bool {
 }
 
 func (h *Handlers) getAPIConfigKey(provider string) string {
-	if h.config == nil {
+	cfg := h.activeConfig()
+	if cfg == nil {
 		return ""
 	}
 	switch provider {
 	case "claude":
-		return h.config.GetAPIKey("claude")
+		return cfg.GetAPIKey("claude")
 	case "openai":
-		return h.config.GetAPIKey("openai")
+		return cfg.GetAPIKey("openai")
 	case "deepseek":
-		return h.config.GetAPIKey("deepseek")
+		return cfg.GetAPIKey("deepseek")
 	case "ollama":
-		return h.config.GetAPIKey("ollama")
+		return cfg.GetAPIKey("ollama")
 	case "gemini":
-		return h.config.GetAPIKey("gemini")
+		return cfg.GetAPIKey("gemini")
 	case "chatgpt":
-		return h.config.GetAPIKey("chatgpt")
+		return cfg.GetAPIKey("chatgpt")
 	default:
 		return ""
 	}
@@ -365,23 +372,23 @@ func (h *Handlers) HandleConfig(c *gin.Context) {
 			if strValue, ok := value.(string); ok {
 				switch key {
 				case "gemini_api_key":
-					h.config.SetAPIKey("gemini", strValue)
+					h.Config.SetAPIKey("gemini", strValue)
 				case "openai_api_key":
-					h.config.SetAPIKey("openai", strValue)
+					h.Config.SetAPIKey("openai", strValue)
 				case "claude_api_key":
-					h.config.SetAPIKey("claude", strValue)
+					h.Config.SetAPIKey("claude", strValue)
 				case "deepseek_api_key":
-					h.config.SetAPIKey("deepseek", strValue)
+					h.Config.SetAPIKey("deepseek", strValue)
 				case "chatgpt_api_key":
-					h.config.SetAPIKey("chatgpt", strValue)
+					h.Config.SetAPIKey("chatgpt", strValue)
 				case "ollama_endpoint":
-					h.config.SetAPIKey("ollama", strValue)
+					h.Config.SetAPIKey("ollama", strValue)
 				}
 			}
 		}
 
 		// Refresh the API map
-		h.getLLMAPIKeyMap(h.config)
+		h.GetLLMAPIKeyMap(h.Config)
 	}
 
 	providerDetails, providerOrder, readyProviders := h.describeProviders()
@@ -396,7 +403,7 @@ func (h *Handlers) HandleConfig(c *gin.Context) {
 	serverInfo := map[string]string{
 		"name":    "Grompt Server",
 		"version": it.AppVersion,
-		"port":    h.config.GetPort(),
+		"port":    h.Config.GetPort(),
 		"status":  "ready",
 	}
 	if demoMode {
@@ -404,14 +411,14 @@ func (h *Handlers) HandleConfig(c *gin.Context) {
 	}
 
 	// Prepare response with both raw config and availability flags
-	config := h.config
+	config := h.Config
 	response := map[string]interface{}{
 		"server":              serverInfo,
 		"environment":         map[string]bool{"demo_mode": demoMode},
 		"providers":           providerDetails,
 		"available_providers": providerOrder,
 		"default_provider":    defaultProvider,
-		"port":                h.config.GetPort(),
+		"port":                h.Config.GetPort(),
 		"openai_api_key":      config.GetAPIKey("openai"),
 		"deepseek_api_key":    config.GetAPIKey("deepseek"),
 		"ollama_endpoint":     config.GetAPIEndpoint("ollama"),
@@ -432,6 +439,11 @@ func (h *Handlers) HandleConfig(c *gin.Context) {
 }
 
 func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []string) {
+	cfg := h.activeConfig()
+	if h == nil || cfg == nil {
+		return map[string]providerSummary{}, []string{}, []string{}
+	}
+
 	providers := make(map[string]providerSummary, len(providerCatalog))
 	order := make([]string, 0, len(providerCatalog))
 	ready := make([]string, 0, len(providerCatalog))
@@ -442,10 +454,16 @@ func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []
 		var configured bool
 		var endpoint string
 		if descriptor.RequiresEndpoint {
-			endpoint = h.config.GetAPIEndpoint(descriptor.Key)
+			if cfg != nil {
+				endpoint = cfg.GetAPIEndpoint(descriptor.Key)
+			}
 			configured = strings.TrimSpace(endpoint) != ""
 		} else {
-			configured = strings.TrimSpace(h.config.GetAPIKey(descriptor.Key)) != ""
+			if cfg != nil {
+				configured = strings.TrimSpace(cfg.GetAPIKey(descriptor.Key)) != ""
+			} else {
+				configured = strings.TrimSpace(h.getAPIConfigKey(descriptor.Key)) != ""
+			}
 		}
 
 		status := "needs_api_key"
@@ -512,19 +530,19 @@ func (h *Handlers) HandleClaude(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate prompt"})
 		return
 	}
 
-	if key := h.config.GetAPIKey("claude"); key == "" {
+	if key := h.Config.GetAPIKey("claude"); key == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Claude API Key not configured"})
 		return
 	}
 
-	response, err := h.claudeAPI.Complete(prompt, req.MaxTokens, "")
+	response, err := h.ClaudeAPI.Complete(prompt, req.MaxTokens, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Claude API: %v", err)})
 		return
@@ -562,14 +580,14 @@ func (h *Handlers) HandleOpenAI(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
-	if key := h.config.GetAPIKey("openai"); key == "" {
+	if key := h.Config.GetAPIKey("openai"); key == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "OpenAI API Key not configured"})
 		return
 	}
@@ -580,7 +598,7 @@ func (h *Handlers) HandleOpenAI(c *gin.Context) {
 		model = "gpt-4o-mini"
 	}
 
-	response, err := h.openaiAPI.Complete(prompt, req.MaxTokens, model)
+	response, err := h.OpenaiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in OpenAI API: %v", err)})
 		return
@@ -618,14 +636,14 @@ func (h *Handlers) HandleDeepSeek(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
-	if key := h.config.GetAPIKey("deepseek"); key == "" {
+	if key := h.Config.GetAPIKey("deepseek"); key == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "DeepSeek API Key not configured"})
 		return
 	}
@@ -636,7 +654,7 @@ func (h *Handlers) HandleDeepSeek(c *gin.Context) {
 		model = "deepseek-chat"
 	}
 
-	response, err := h.deepseekAPI.Complete(prompt, req.MaxTokens, model)
+	response, err := h.DeepseekAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in DeepSeek API: %v", err)})
 		return
@@ -674,14 +692,14 @@ func (h *Handlers) HandleGemini(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
-	if key := h.config.GetAPIKey("gemini"); key == "" {
+	if key := h.Config.GetAPIKey("gemini"); key == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Gemini API Key not configured"})
 		return
 	}
@@ -692,7 +710,7 @@ func (h *Handlers) HandleGemini(c *gin.Context) {
 		model = "gemini-2.0-flash"
 	}
 
-	response, err := h.geminiAPI.Complete(prompt, req.MaxTokens, model)
+	response, err := h.GeminiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Gemini API: %v", err)})
 		return
@@ -730,14 +748,14 @@ func (h *Handlers) HandleChatGPT(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
-	if key := h.config.GetAPIKey("chatgpt"); key == "" {
+	if key := h.Config.GetAPIKey("chatgpt"); key == "" {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "ChatGPT API Key not configured"})
 		return
 	}
@@ -748,7 +766,7 @@ func (h *Handlers) HandleChatGPT(c *gin.Context) {
 		model = "gpt-4o-mini"
 	}
 
-	response, err := h.chatGPTAPI.Complete(prompt, req.MaxTokens, model)
+	response, err := h.ChatGPTAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in ChatGPT API: %v", err)})
 		return
@@ -786,7 +804,7 @@ func (h *Handlers) HandleOllama(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
@@ -804,7 +822,7 @@ func (h *Handlers) HandleOllama(c *gin.Context) {
 		maxTokens = 2048
 	}
 
-	response, err := h.ollamaAPI.Complete(model, maxTokens, prompt)
+	response, err := h.OllamaAPI.Complete(model, maxTokens, prompt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Ollama API: %v", err)})
 		return
@@ -843,7 +861,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 	if req.Prompt != "" {
 		prompt = req.Prompt
 	} else {
-		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
+		prompt = h.Config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
@@ -874,8 +892,8 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 	if externalKey != "" {
 		finalAPIKey = externalKey
 		mode = "byok"
-	} else if h.config != nil && h.config.GetAPIKey(req.Provider) != "" {
-		finalAPIKey = h.config.GetAPIKey(req.Provider)
+	} else if h.Config != nil && h.Config.GetAPIKey(req.Provider) != "" {
+		finalAPIKey = h.Config.GetAPIKey(req.Provider)
 		mode = "server"
 	}
 
@@ -890,7 +908,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 			response = h.generateDemoResponse(prompt, req.Purpose)
 		} else {
 			// Real API call
-			api := h.claudeAPI
+			api := h.ClaudeAPI
 			if mode == "byok" {
 				api = it.NewClaudeAPI(finalAPIKey)
 			}
@@ -910,7 +928,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 			response = h.generateDemoResponse(prompt, req.Purpose)
 		} else {
 			// Real API call
-			api := h.openaiAPI
+			api := h.OpenaiAPI
 			if mode == "byok" {
 				api = it.NewOpenAIAPI(finalAPIKey)
 			}
@@ -930,7 +948,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 			response = h.generateDemoResponse(prompt, req.Purpose)
 		} else {
 			// Real API call
-			api := h.deepseekAPI
+			api := h.DeepseekAPI
 			if mode == "byok" {
 				api = it.NewDeepSeekAPI(finalAPIKey)
 			}
@@ -950,7 +968,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 			response = h.generateDemoResponse(prompt, req.Purpose)
 		} else {
 			// Real API call
-			api := h.geminiAPI
+			api := h.GeminiAPI
 			if mode == "byok" {
 				api = it.NewGeminiAPI(finalAPIKey)
 			}
@@ -970,7 +988,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 			response = h.generateDemoResponse(prompt, req.Purpose)
 		} else {
 			// Real API call
-			api := h.chatGPTAPI
+			api := h.ChatGPTAPI
 			if mode == "byok" {
 				api = it.NewChatGPTAPI(finalAPIKey)
 			}
@@ -985,7 +1003,7 @@ func (h *Handlers) HandleUnified(c *gin.Context) {
 		if model == "" {
 			model = "llama3.2"
 		}
-		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
+		response, err = h.OllamaAPI.Complete(model, maxTokens, prompt)
 
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported provider: " + req.Provider})
@@ -1074,55 +1092,55 @@ func (h *Handlers) HandleAsk(c *gin.Context) {
 
 	switch provider {
 	case "openai":
-		if h.config.GetAPIKey("openai") == "" {
+		if h.Config.GetAPIKey("openai") == "" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "OpenAI API Key not configured"})
 			return
 		}
 		if model == "" {
 			model = "gpt-4o-mini"
 		}
-		response, err = h.openaiAPI.Complete(prompt, maxTokens, model)
+		response, err = h.OpenaiAPI.Complete(prompt, maxTokens, model)
 	case "claude":
-		if h.config.GetAPIKey("claude") == "" {
+		if h.Config.GetAPIKey("claude") == "" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Claude API Key not configured"})
 			return
 		}
 		if model == "" {
 			model = "claude-3-5-sonnet-20241022"
 		}
-		response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
+		response, err = h.ClaudeAPI.Complete(prompt, maxTokens, model)
 	case "deepseek":
-		if h.config.GetAPIKey("deepseek") == "" {
+		if h.Config.GetAPIKey("deepseek") == "" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "DeepSeek API Key not configured"})
 			return
 		}
 		if model == "" {
 			model = "deepseek-chat"
 		}
-		response, err = h.deepseekAPI.Complete(prompt, maxTokens, model)
+		response, err = h.DeepseekAPI.Complete(prompt, maxTokens, model)
 	case "ollama":
 		if model == "" {
 			model = "llama3.2"
 		}
-		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
+		response, err = h.OllamaAPI.Complete(model, maxTokens, prompt)
 	case "gemini":
-		if h.config.GetAPIKey("gemini") == "" {
+		if h.Config.GetAPIKey("gemini") == "" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Gemini API Key not configured"})
 			return
 		}
 		if model == "" {
 			model = "gemini-1.5-flash"
 		}
-		response, err = h.geminiAPI.Complete(prompt, maxTokens, model)
+		response, err = h.GeminiAPI.Complete(prompt, maxTokens, model)
 	case "chatgpt":
-		if h.config.GetAPIKey("chatgpt") == "" {
+		if h.Config.GetAPIKey("chatgpt") == "" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "ChatGPT API Key not configured"})
 			return
 		}
 		if model == "" {
 			model = "gpt-4o-mini"
 		}
-		response, err = h.chatGPTAPI.Complete(prompt, maxTokens, model)
+		response, err = h.ChatGPTAPI.Complete(prompt, maxTokens, model)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported provider: " + provider})
 		return
@@ -1172,13 +1190,13 @@ func (h *Handlers) HandleSquad(c *gin.Context) {
 	// Reuse HandleAgentsGenerate inner logic via local function
 	// Build LLM function
 	// llmFunc := func(prompt string) (string, error) {
-	// 	if h.config.GetAPIKey("claude") != "" {
+	// 	if h.Config.GetAPIKey("claude") != "" {
 	// 		return h.claudeAPI.Complete(prompt, 4000, "claude-2")
 	// 	}
-	// 	if h.config.GetAPIKey("openai") != "" {
+	// 	if h.Config.GetAPIKey("openai") != "" {
 	// 		return h.openaiAPI.Complete(prompt, 4000, "gpt-4")
 	// 	}
-	// 	if h.config.GetAPIKey("deepseek") != "" {
+	// 	if h.Config.GetAPIKey("deepseek") != "" {
 	// 		return h.deepseekAPI.Complete(prompt, 4000, "deepseek-chat")
 	// 	}
 	// 	return "", fmt.Errorf("no LLM API available")
@@ -1211,21 +1229,21 @@ func (h *Handlers) HandleHealth(c *gin.Context) {
 		"version":   it.AppVersion,
 		"apis": map[string]interface{}{
 			"claude": map[string]interface{}{
-				"configured": h.config.GetAPIKey("claude") != "",
+				"configured": h.Config.GetAPIKey("claude") != "",
 				"available":  h.isAPIEnabled("claude"),
 			},
 			"openai": map[string]interface{}{
-				"configured": h.config.GetAPIKey("openai") != "",
+				"configured": h.Config.GetAPIKey("openai") != "",
 				"available":  h.isAPIEnabled("openai"),
 			},
 			"deepseek": map[string]interface{}{
-				"configured": h.config.GetAPIKey("deepseek") != "",
+				"configured": h.Config.GetAPIKey("deepseek") != "",
 				"available":  h.isAPIEnabled("deepseek"),
 			},
 			"ollama": map[string]interface{}{
-				"configured": h.config.GetAPIKey("ollama") != "",
+				"configured": h.Config.GetAPIKey("ollama") != "",
 				"available":  h.isAPIEnabled("ollama"),
-				// "endpoint":   h.config.OllamaEndpoint,
+				// "endpoint":   h.Config.OllamaEndpoint,
 			},
 		},
 		"features": map[string]bool{
@@ -1254,22 +1272,22 @@ func (h *Handlers) HandleModels(c *gin.Context) {
 	switch provider {
 	case "openai":
 		if h.isAPIEnabled("openai") {
-			models, err = h.openaiAPI.ListModels()
+			models, err = h.OpenaiAPI.ListModels()
 			if err != nil {
 				// Fallback to common models
 				models = map[string]any{
-					"common": h.openaiAPI.GetCommonModels(),
+					"common": h.OpenaiAPI.GetCommonModels(),
 				}
 			}
 		} else {
 			models = map[string]any{
-				"common": h.openaiAPI.GetCommonModels(),
+				"common": h.OpenaiAPI.GetCommonModels(),
 			}
 		}
 
 	case "deepseek":
 		models = map[string]any{
-			"common": h.deepseekAPI.GetCommonModels(),
+			"common": h.DeepseekAPI.GetCommonModels(),
 		}
 
 	case "claude":
@@ -1296,8 +1314,8 @@ func (h *Handlers) HandleModels(c *gin.Context) {
 	default:
 		// Return all models
 		allModels := map[string][]string{
-			"openai":   h.openaiAPI.GetCommonModels(),
-			"deepseek": h.deepseekAPI.GetCommonModels(),
+			"openai":   h.OpenaiAPI.GetCommonModels(),
+			"deepseek": h.DeepseekAPI.GetCommonModels(),
 			"claude": {
 				"claude-3-5-sonnet-20241022",
 				"claude-3-5-haiku-20241022",
@@ -1340,7 +1358,7 @@ func (h *Handlers) HandleTest(c *gin.Context) {
 
 	switch provider {
 	case "claude":
-		available = h.config.GetAPIKey("claude") != ""
+		available = h.Config.GetAPIKey("claude") != ""
 		if available {
 			message = "Claude API configured"
 		} else {
@@ -1348,32 +1366,32 @@ func (h *Handlers) HandleTest(c *gin.Context) {
 		}
 
 	case "openai":
-		available = h.config.GetAPIKey("openai") != "" && h.openaiAPI.IsAvailable()
-		if h.config.GetAPIKey("openai") == "" {
+		available = h.Config.GetAPIKey("openai") != "" && h.OpenaiAPI.IsAvailable()
+		if h.Config.GetAPIKey("openai") == "" {
 			message = "OpenAI API Key not configured"
-		} else if !h.openaiAPI.IsAvailable() {
+		} else if !h.OpenaiAPI.IsAvailable() {
 			message = "OpenAI API is not responding"
 		} else {
 			message = "OpenAI API is working"
 		}
 
 	case "deepseek":
-		available = h.config.GetAPIKey("deepseek") != "" && h.deepseekAPI.IsAvailable()
-		if h.config.GetAPIKey("deepseek") == "" {
+		available = h.Config.GetAPIKey("deepseek") != "" && h.DeepseekAPI.IsAvailable()
+		if h.Config.GetAPIKey("deepseek") == "" {
 			message = "DeepSeek API Key not configured"
-		} else if !h.deepseekAPI.IsAvailable() {
+		} else if !h.DeepseekAPI.IsAvailable() {
 			message = "DeepSeek API is not responding"
 		} else {
 			message = "DeepSeek API is working"
 		}
 
 	case "ollama":
-		ollama := h.config.GetAPIConfig("ollama")
-		available = h.ollamaAPI.IsAvailable()
+		ollama := h.Config.GetAPIConfig("ollama")
+		available = h.OllamaAPI.IsAvailable()
 		if available && ollama != nil {
-			message = "Ollama is working at " + h.config.GetAPIEndpoint("ollama")
+			message = "Ollama is working at " + h.Config.GetAPIEndpoint("ollama")
 		} else {
-			message = "Ollama is not responding at " + h.config.GetAPIEndpoint("ollama")
+			message = "Ollama is not responding at " + h.Config.GetAPIEndpoint("ollama")
 		}
 
 	default:
