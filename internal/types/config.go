@@ -12,6 +12,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/kubex-ecosystem/logz"
 )
 
@@ -74,19 +75,20 @@ func NewServerConfig(
 	}
 	cfg.Logger = logger
 	if openAIKey != "" {
-		cfg.APIKeys["openai"] = openAIKey
+		// cfg.APIKeys["openai"] = openAIKey
+		cfg.APIKeys["openai"] = "OPENAI_API_KEY"
 	}
 	if claudeKey != "" {
-		cfg.APIKeys["claude"] = claudeKey
+		cfg.APIKeys["claude"] = "CLAUDE_API_KEY"
 	}
 	if geminiKey != "" {
-		cfg.APIKeys["gemini"] = geminiKey
+		cfg.APIKeys["gemini"] = "GEMINI_API_KEY"
 	}
 	if deepSeekKey != "" {
-		cfg.APIKeys["deepseek"] = deepSeekKey
+		cfg.APIKeys["deepseek"] = "DEEPSEEK_API_KEY"
 	}
 	if chatGPTKey != "" {
-		cfg.APIKeys["chatgpt"] = chatGPTKey
+		cfg.APIKeys["chatgpt"] = "CHATGPT_API_KEY"
 	}
 	if ollamaEndpoint != "" {
 		cfg.Endpoints["ollama"] = ollamaEndpoint
@@ -210,7 +212,7 @@ func (c *ServerConfigImpl) GetPort() string {
 func (c *ServerConfigImpl) GetAPIKey(provider string) string {
 	c.Mu.RLock()
 	defer c.Mu.RUnlock()
-	return c.APIKeys[strings.ToLower(provider)]
+	return kbx.GetEnvOrDefault(c.APIKeys[strings.ToLower(provider)], "") // pragma: allowlist secret
 }
 
 func (c *ServerConfigImpl) SetAPIKey(provider, key string) error {

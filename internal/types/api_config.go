@@ -14,7 +14,6 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
-	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz/logger"
 )
 
@@ -182,12 +181,12 @@ func (c *Config) GetAPIConfig(provider string) interfaces.IAPIConfig {
 	switch provider {
 	case "openai":
 		return NewOpenAIAPI(c.GetAPIKey("openai"))
-	// case "deepseek":
-	// 	return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
+	case "deepseek":
+		return NewDeepSeekAPI(c.GetAPIKey("deepseek"))
 	case "ollama":
 		return NewOllamaAPI(c.GetAPIEndpoint("ollama"))
-	// case "claude":
-	// 	return NewClaudeAPI(c.GetAPIKey("claude"))
+	case "claude":
+		return NewClaudeAPI(c.GetAPIKey("claude"))
 	case "gemini":
 		return NewGeminiAPI(c.GetAPIKey("gemini"))
 	case "chatgpt":
@@ -208,32 +207,32 @@ func (c *Config) GetAPIKey(provider string) string {
 	switch provider {
 	case "openai":
 		if c.OpenAIAPIKey == "" {
-			c.OpenAIAPIKey = utils.GetEnvOr("OPENAI_API_KEY", c.OpenAIAPIKey) // pragma: allowlist secret
+			c.OpenAIAPIKey = kbx.GetEnvOrDefault("OPENAI_API_KEY", c.OpenAIAPIKey) // pragma: allowlist secret
 		}
 		return c.OpenAIAPIKey
 	case "deepseek":
 		if c.DeepSeekAPIKey == "" {
-			c.DeepSeekAPIKey = utils.GetEnvOr("DEEPSEEK_API_KEY", c.DeepSeekAPIKey) // pragma: allowlist secret
+			c.DeepSeekAPIKey = kbx.GetEnvOrDefault("DEEPSEEK_API_KEY", c.DeepSeekAPIKey) // pragma: allowlist secret
 		}
 		return c.DeepSeekAPIKey
 	case "ollama":
 		if c.OllamaEndpoint == "" {
-			c.OllamaEndpoint = utils.GetEnvOr("OLLAMA_ENDPOINT", c.OllamaEndpoint) // pragma: allowlist secret
+			c.OllamaEndpoint = kbx.GetEnvOrDefault("OLLAMA_ENDPOINT", c.OllamaEndpoint) // pragma: allowlist secret
 		}
 		return c.OllamaEndpoint
 	case "claude":
 		if c.ClaudeAPIKey == "" {
-			c.ClaudeAPIKey = utils.GetEnvOr("CLAUDE_API_KEY", c.ClaudeAPIKey) // pragma: allowlist secret
+			c.ClaudeAPIKey = kbx.GetEnvOrDefault("CLAUDE_API_KEY", c.ClaudeAPIKey) // pragma: allowlist secret
 		}
 		return c.ClaudeAPIKey
 	case "gemini":
 		if c.GeminiAPIKey == "" {
-			c.GeminiAPIKey = utils.GetEnvOr("GEMINI_API_KEY", c.GeminiAPIKey) // pragma: allowlist secret
+			c.GeminiAPIKey = kbx.GetEnvOrDefault("GEMINI_API_KEY", c.GeminiAPIKey) // pragma: allowlist secret
 		}
 		return c.GeminiAPIKey
 	case "chatgpt":
 		if c.ChatGPTAPIKey == "" {
-			c.ChatGPTAPIKey = utils.GetEnvOr("CHATGPT_API_KEY", c.ChatGPTAPIKey) // pragma: allowlist secret
+			c.ChatGPTAPIKey = kbx.GetEnvOrDefault("CHATGPT_API_KEY", c.ChatGPTAPIKey) // pragma: allowlist secret
 		}
 		return c.ChatGPTAPIKey
 	default:
