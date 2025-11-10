@@ -268,7 +268,7 @@ func (c *Config) GetAPIEndpoint(provider string) string {
 	return ""
 }
 
-func (c *Config) checkOllamaConnection() bool {
+func (c *Config) CheckOllamaConnection() bool {
 	ip, err := netip.ParseAddr(c.OllamaEndpoint)
 	if err != nil {
 		return false
@@ -474,11 +474,12 @@ func (c *Config) Validate() error {
 		configFilePath = c.Server.ConfigFile
 	}
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		mapper := NewMapper(&c, configFilePath)
-		mapper.SerializeToFile("yaml")
-		if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-			return fmt.Errorf("failed to create default config file: %v", err)
-		}
+		ConfigObj := c
+		mapper := NewMapper(ConfigObj, configFilePath)
+		mapper.SerializeToFile(filepath.Ext(configFilePath)[1:])
+		// if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		// 	return fmt.Errorf("failed to create default config file: %v", err)
+		// }
 		glgr.Log("info", fmt.Sprintf("Default config file created at: %s", configFilePath))
 	}
 

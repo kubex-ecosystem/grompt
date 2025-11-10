@@ -27,12 +27,12 @@ import (
 // - XML: 1 doc.
 // - ENV: apenas map[string]string.
 type Mapper[T any] struct {
-	filePath string
-	ptr      *T
+	FilePath string
+	Ptr      *T
 }
 
 func NewMapper[T any](object *T, filePath string) ci.IMapper[T] {
-	return &Mapper[T]{filePath: filePath, ptr: object}
+	return &Mapper[T]{FilePath: filePath, Ptr: object}
 }
 
 func detectFormatByExt(path string) string {
@@ -63,23 +63,23 @@ func ensureParentDir(path string) error {
 // -------------------- Serialize --------------------
 
 func (m *Mapper[T]) Serialize(format string) ([]byte, error) {
-	if m.ptr == nil {
+	if m.Ptr == nil {
 		return nil, errors.New("mapper: ponteiro de destino nil")
 	}
 	switch strings.ToLower(format) {
 	case "json", "js":
-		return json.Marshal(m.ptr)
+		return json.Marshal(m.Ptr)
 	case "yaml", "yml":
-		return yaml.Marshal(m.ptr)
+		return yaml.Marshal(m.Ptr)
 	case "xml", "html":
-		return xml.Marshal(m.ptr)
+		return xml.Marshal(m.Ptr)
 	case "toml", "tml":
-		return toml.Marshal(m.ptr)
+		return toml.Marshal(m.Ptr)
 	case "asn", "asn1":
-		return asn1.Marshal(*m.ptr)
+		return asn1.Marshal(*m.Ptr)
 	case "env", "envs", ".env", "environment":
 		// Apenas map[string]string é suportado para ENV
-		rv := reflect.ValueOf(m.ptr).Elem()
+		rv := reflect.ValueOf(m.Ptr).Elem()
 		if rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String && rv.Type().Elem().Kind() == reflect.String {
 			env := make(map[string]string, rv.Len())
 			iter := rv.MapRange()
@@ -94,7 +94,7 @@ func (m *Mapper[T]) Serialize(format string) ([]byte, error) {
 			}
 			return []byte(b.String()), nil
 		}
-		return nil, fmt.Errorf("ENV exige map[string]string; recebido: %T", *m.ptr)
+		return nil, fmt.Errorf("ENV exige map[string]string; recebido: %T", *m.Ptr)
 	default:
 		return nil, fmt.Errorf("formato não suportado: %s", format)
 	}
@@ -102,18 +102,18 @@ func (m *Mapper[T]) Serialize(format string) ([]byte, error) {
 
 func (m *Mapper[T]) SerializeToFile(format string) {
 	if format == "" {
-		format = detectFormatByExt(m.filePath)
+		format = detectFormatByExt(m.FilePath)
 	}
 	data, err := m.Serialize(format)
 	if err != nil {
 		gl.Log("error", fmt.Sprintf("Error serializing object: %v", err))
 		return
 	}
-	if err := ensureParentDir(m.filePath); err != nil {
+	if err := ensureParentDir(m.FilePath); err != nil {
 		gl.Log("error", fmt.Sprintf("Error creating parent dir: %v", err))
 		return
 	}
-	f, err := os.OpenFile(m.filePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile(m.FilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
 		gl.Log("error", fmt.Sprintf("Error opening file: %v", err))
 		return
@@ -127,13 +127,13 @@ func (m *Mapper[T]) SerializeToFile(format string) {
 		gl.Log("error", fmt.Sprintf("Error writing file: %v", err))
 		return
 	}
-	gl.Log("debug", fmt.Sprintf("Serialized to %s (%s) [%d bytes]", m.filePath, strings.ToUpper(format), len(data)))
+	gl.Log("debug", fmt.Sprintf("Serialized to %s (%s) [%d bytes]", m.FilePath, strings.ToUpper(format), len(data)))
 }
 
 // -------------------- Deserialize (streaming) --------------------
 
 func (m *Mapper[T]) Deserialize(object []byte, format string) (*T, error) {
-	if m.ptr == nil {
+	if m.Ptr == nil {
 		return nil, errors.New("mapper: ponteiro de destino nil")
 	}
 	var r io.Reader = strings.NewReader(string(object))
@@ -141,13 +141,13 @@ func (m *Mapper[T]) Deserialize(object []byte, format string) (*T, error) {
 	case "json", "js":
 		return m.decodeJSONStream(r)
 	case "yaml", "yml":
-		return m.decodeYAMLStream(r)
+		return m.DecodeYAMLStream(r)
 	case "xml", "html":
-		return m.decodeXMLStream(r)
+		return m.DecodeXMLStream(r)
 	case "toml", "tml":
-		return m.decodeTOMLStream(r)
+		return m.DecodeTOMLStream(r)
 	case "env", "envs", ".env", "environment":
-		return m.decodeENVStream(r)
+		return m.DecodeENVStream(r)
 	case "asn", "asn1":
 		// ASN.1 não tem decoder streaming idiomático em std; teria que ler bytes.
 		// Como geralmente é pequeno para config, leremos via io.ReadAll? Evitamos: então rejeita aqui.
@@ -158,14 +158,14 @@ func (m *Mapper[T]) Deserialize(object []byte, format string) (*T, error) {
 }
 
 func (m *Mapper[T]) DeserializeFromFile(format string) (*T, error) {
-	if m.ptr == nil {
+	if m.Ptr == nil {
 		return nil, errors.New("mapper: ponteiro de destino nil")
 	}
-	if _, err := os.Stat(m.filePath); err != nil {
+	if _, err := os.Stat(m.FilePath); err != nil {
 		gl.Log("error", fmt.Sprintf("File does not exist: %v", err))
 		return nil, err
 	}
-	f, err := os.Open(m.filePath)
+	f, err := os.Open(m.FilePath)
 	if err != nil {
 		gl.Log("error", fmt.Sprintf("Error opening file: %v", err))
 		return nil, err
@@ -178,22 +178,22 @@ func (m *Mapper[T]) DeserializeFromFile(format string) (*T, error) {
 	}()
 
 	if format == "" {
-		format = detectFormatByExt(m.filePath)
+		format = detectFormatByExt(m.FilePath)
 		if format == "" {
-			return nil, fmt.Errorf("não foi possível detectar o formato pelo sufixo de %s; informe o formato", m.filePath)
+			return nil, fmt.Errorf("não foi possível detectar o formato pelo sufixo de %s; informe o formato", m.FilePath)
 		}
 	}
 	switch strings.ToLower(format) {
 	case "json", "js":
 		return m.decodeJSONStream(f)
 	case "yaml", "yml":
-		return m.decodeYAMLStream(f)
+		return m.DecodeYAMLStream(f)
 	case "xml", "html":
-		return m.decodeXMLStream(f)
+		return m.DecodeXMLStream(f)
 	case "toml", "tml":
-		return m.decodeTOMLStream(f)
+		return m.DecodeTOMLStream(f)
 	case "env", "envs", ".env", "environment":
-		return m.decodeENVStream(f)
+		return m.DecodeENVStream(f)
 	case "asn", "asn1":
 		// ASN.1 não tem decoder streaming idiomático em std; teria que ler bytes.
 		// Como geralmente é pequeno para config, leremos via io.ReadAll? Evitamos: então rejeita aqui.
@@ -206,7 +206,7 @@ func (m *Mapper[T]) DeserializeFromFile(format string) (*T, error) {
 func (m *Mapper[T]) decodeJSONStream(r io.Reader) (*T, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields() // opcional; ajuda a pegar chaves erradas
-	rt := reflect.TypeOf(*m.ptr)
+	rt := reflect.TypeOf(*m.Ptr)
 	if rt.Kind() == reflect.Slice {
 		// T = []E
 		elemType := rt.Elem()
@@ -265,19 +265,19 @@ func (m *Mapper[T]) decodeJSONStream(r io.Reader) (*T, error) {
 				sliceVal = reflect.Append(sliceVal, reflect.ValueOf(nextElem).Elem())
 			}
 		}
-		reflect.ValueOf(m.ptr).Elem().Set(sliceVal)
-		return m.ptr, nil
+		reflect.ValueOf(m.Ptr).Elem().Set(sliceVal)
+		return m.Ptr, nil
 	}
 
 	// T = objeto/map simples
-	if err := dec.Decode(m.ptr); err != nil {
+	if err := dec.Decode(m.Ptr); err != nil {
 		return nil, fmt.Errorf("JSON: erro decodificando objeto: %w", err)
 	}
 	// garantir que não há lixo após o objeto
 	if err := ensureJSONEOF(dec); err != nil {
 		return nil, err
 	}
-	return m.ptr, nil
+	return m.Ptr, nil
 }
 
 func consumeWhitespace(dec *json.Decoder) error {
@@ -310,9 +310,9 @@ func ensureJSONEOF(dec *json.Decoder) error {
 	return fmt.Errorf("JSON: dados extras após o objeto")
 }
 
-func (m *Mapper[T]) decodeYAMLStream(r io.Reader) (*T, error) {
+func (m *Mapper[T]) DecodeYAMLStream(r io.Reader) (*T, error) {
 	dec := yaml.NewDecoder(r)
-	rt := reflect.TypeOf(*m.ptr)
+	rt := reflect.TypeOf(*m.Ptr)
 	if rt.Kind() == reflect.Slice {
 		elemType := rt.Elem()
 		sliceVal := reflect.MakeSlice(rt, 0, 0)
@@ -327,38 +327,38 @@ func (m *Mapper[T]) decodeYAMLStream(r io.Reader) (*T, error) {
 			// documentos vazios podem vir como zero value; ainda assim anexamos
 			sliceVal = reflect.Append(sliceVal, reflect.ValueOf(elemPtr).Elem())
 		}
-		reflect.ValueOf(m.ptr).Elem().Set(sliceVal)
-		return m.ptr, nil
+		reflect.ValueOf(m.Ptr).Elem().Set(sliceVal)
+		return m.Ptr, nil
 	}
 
 	// um único doc
-	if err := dec.Decode(m.ptr); err != nil {
+	if err := dec.Decode(m.Ptr); err != nil {
 		return nil, fmt.Errorf("YAML: erro decodificando: %w", err)
 	}
-	return m.ptr, nil
+	return m.Ptr, nil
 }
 
-func (m *Mapper[T]) decodeTOMLStream(r io.Reader) (*T, error) {
+func (m *Mapper[T]) DecodeTOMLStream(r io.Reader) (*T, error) {
 	dec := toml.NewDecoder(r)
-	if err := dec.Decode(m.ptr); err != nil {
+	if err := dec.Decode(m.Ptr); err != nil {
 		return nil, fmt.Errorf("TOML: erro decodificando: %w", err)
 	}
-	return m.ptr, nil
+	return m.Ptr, nil
 }
 
-func (m *Mapper[T]) decodeXMLStream(r io.Reader) (*T, error) {
+func (m *Mapper[T]) DecodeXMLStream(r io.Reader) (*T, error) {
 	dec := xml.NewDecoder(r)
-	if err := dec.Decode(m.ptr); err != nil {
+	if err := dec.Decode(m.Ptr); err != nil {
 		return nil, fmt.Errorf("XML: erro decodificando: %w", err)
 	}
-	return m.ptr, nil
+	return m.Ptr, nil
 }
 
-func (m *Mapper[T]) decodeENVStream(r io.Reader) (*T, error) {
+func (m *Mapper[T]) DecodeENVStream(r io.Reader) (*T, error) {
 	// Apenas map[string]string
-	rv := reflect.ValueOf(m.ptr).Elem()
+	rv := reflect.ValueOf(m.Ptr).Elem()
 	if !(rv.Kind() == reflect.Map && rv.Type().Key().Kind() == reflect.String && rv.Type().Elem().Kind() == reflect.String) {
-		return nil, fmt.Errorf("ENV exige destino map[string]string; recebido: %T", *m.ptr)
+		return nil, fmt.Errorf("ENV exige destino map[string]string; recebido: %T", *m.Ptr)
 	}
 	if rv.IsNil() {
 		rv.Set(reflect.MakeMap(rv.Type()))
@@ -393,7 +393,7 @@ func (m *Mapper[T]) decodeENVStream(r io.Reader) (*T, error) {
 	if err := sc.Err(); err != nil {
 		return nil, fmt.Errorf("ENV: erro lendo arquivo: %w", err)
 	}
-	return m.ptr, nil
+	return m.Ptr, nil
 }
 
 func cutOnce(s string, sep byte) (head, tail string, ok bool) {

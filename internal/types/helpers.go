@@ -41,7 +41,7 @@ func parsePositiveInt(value string) (int, error) {
 	return parsed, nil
 }
 
-func executeTemplate(tmpl string, vars map[string]interface{}) (string, error) {
+func ExecuteTemplate(tmpl string, vars map[string]interface{}) (string, error) {
 	tpl, err := template.New("grompt").Parse(tmpl)
 	if err != nil {
 		return "", err

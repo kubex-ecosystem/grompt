@@ -15,7 +15,7 @@ import (
 	"github.com/kubex-ecosystem/logz"
 )
 
-type legacyFileConfig struct {
+type LegacyFileConfigImpl struct {
 	Port               string            `json:"port,omitempty" yaml:"port,omitempty"`
 	DefaultProvider    string            `json:"default_provider,omitempty" yaml:"default_provider,omitempty"`
 	HistoryLimit       int               `json:"history_limit,omitempty" yaml:"history_limit,omitempty"`
@@ -29,12 +29,12 @@ type legacyFileConfig struct {
 
 
 // DefaultConfig rebuilds a legacy-compatible configuration.
-func DefaultConfig(configFilePath string) interfaces.ServerConfig {
+func DefaultConfig(configFilePath string) interfaces.IConfig {
 	cfg := newServerConfig()
 	if configFilePath != "" {
-		_ = cfg.loadFromFile(configFilePath)
+		_ = cfg.LoadFromFile(configFilePath)
 	}
-	cfg.loadFromEnv()
+	cfg.LoadFromEnv()
 	return cfg
 }
 
@@ -66,7 +66,7 @@ func NewServerConfig(
 	historyLimit       int,
 	timeout            time.Duration,
 	providerConfigPath string,
-) interfaces.ServerConfig {
+) interfaces.IConfig {
 	cfg := newServerConfig()
 	cfg.BindAddr = bindAddr
 	if port != "" {
@@ -194,7 +194,7 @@ func newServerConfig() *ServerConfigImpl {
 // }
 
 func (c *ServerConfigImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
-	return c.registryConfig().GetAPIConfig(provider)
+	return c.RegistryConfig().GetAPIConfig(provider)
 }
 
 func (c *ServerConfigImpl) GetLegacyAPIConfig(provider string) interfaces.LegacyAPIConfig {
@@ -255,7 +255,7 @@ func (c *ServerConfigImpl) GetBaseGenerationPrompt(ideas []string, purpose, purp
 	return builder.String()
 }
 
-func (c *ServerConfigImpl) loadFromEnv() {
+func (c *ServerConfigImpl) LoadFromEnv() {
 	for _, provider := range legacyProviders {
 		if envKey := defaultEnvKey(provider); envKey != "" {
 			if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
@@ -279,13 +279,13 @@ func (c *ServerConfigImpl) loadFromEnv() {
 	}
 }
 
-func (c *ServerConfigImpl) loadFromFile(path string) error {
+func (c *ServerConfigImpl) LoadFromFile(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	var fileCfg legacyFileConfig
+	var fileCfg LegacyFileConfigImpl
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".yaml", ".yml":
 		if err := yaml.Unmarshal(data, &fileCfg); err != nil {
@@ -339,7 +339,7 @@ func (c *ServerConfigImpl) loadFromFile(path string) error {
 	return nil
 }
 
-func (c *ServerConfigImpl) registryConfig() interfaces.ServerConfig {
+func (c *ServerConfigImpl) RegistryConfig() interfaces.IConfig {
 	cfg := NewServerConfig(
 		c.BindAddr,
 		c.Debug,
@@ -376,5 +376,5 @@ func (c *ServerConfigImpl) Validate() error {
 	if _, err := net.LookupPort("tcp", c.GetPort()); err != nil {
 		return fmt.Errorf("invalid port: %s", c.GetPort())
 	}
-	return c.registryConfig().Validate()
+	return c.RegistryConfig().Validate()
 }
