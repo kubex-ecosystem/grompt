@@ -501,9 +501,14 @@ func getDefaultConfig(initArgs *kbx.InitArgs) i.IConfig {
 	} else {
 		defaultTimeout = defaultTimeoutInt
 	}
-	pwd, err := os.Getwd()
-	if err != nil {
-		pwd = "."
+	var cwd string
+	if initArgs.Cwd != "" {
+		cwd = initArgs.Cwd // pragma: allowlist secret
+	} else {
+		cwd, err = os.Getwd()
+		if err != nil {
+			cwd = "."
+		}
 	}
 	cfg := t.NewConfig(
 		kbx.GetEnvOrDefault("GROMPT_SERVER_NAME",initArgs.Name),
@@ -515,7 +520,7 @@ func getDefaultConfig(initArgs *kbx.InitArgs) i.IConfig {
 		kbx.GetEnvOrDefault("GROMPT_LOG_FILE", initArgs.LogFile),
 		kbx.GetEnvOrDefault("GROMPT_ENV_FILE", initArgs.EnvFile),
 		kbx.GetEnvOrDefault("GROMPT_CONFIG_FILE", initArgs.ConfigFile),
-		kbx.GetEnvOrDefault("GROMPT_PWD", pwd),
+		kbx.GetEnvOrDefault("GROMPT_PWD", cwd),
 		kbx.GetEnvOrDefault("OPENAI_API_KEY", getProviderAPIKey("openai",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.OpenAIKey))),
 		kbx.GetEnvOrDefault("CLAUDE_API_KEY", getProviderAPIKey("claude",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.ClaudeKey))),
 		kbx.GetEnvOrDefault("GEMINI_API_KEY", getProviderAPIKey("gemini",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.GeminiKey))),

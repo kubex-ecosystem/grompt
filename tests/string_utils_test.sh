@@ -2,7 +2,7 @@
 set -euo pipefail
 
 _ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
-_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}"
 _SCRIPT="$(realpath "$_ROOT_DIR/support/string_utils.sh")"
 _TMP="$(mktemp)"
 trap 'rm -f "$_TMP"' EXIT

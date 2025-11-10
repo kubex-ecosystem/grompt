@@ -17,7 +17,7 @@ fi
 IFS=$'\n\t'
 
 _ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
-_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}"
 
 declare -a _opt_md_main_args=( "$@" )
 
@@ -111,7 +111,7 @@ __opt_md_source_script_if_needed() {
   return 0
 }
 
-_SCRIPT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/support"
+_SCRIPT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}/support"
 __opt_md_source_script_if_needed "log" "${_SCRIPT_DIR}/log.sh" || exit 1
 __opt_md_source_script_if_needed "__get_values_from_manifest" "${_SCRIPT_DIR}/apply_manifest.sh" || exit 1
 

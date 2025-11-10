@@ -17,7 +17,7 @@ fi
 IFS=$'\n\t'
 
 _ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
-_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}"
 
 declare -a _main_args=( "$@" )
 
@@ -97,7 +97,7 @@ __first "${_main_args[@]}" >&2 || {
   exit 1
 }
 
-_SCRIPT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/support"
+_SCRIPT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}/support"
 source "${_SCRIPT_DIR}/utils.sh" || {
   echo "Error: Could not source ${_SCRIPT_DIR}/utils.sh. Please ensure it exists." >&2
   exit 1

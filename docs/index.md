@@ -1,6 +1,6 @@
 # Grompt
 
-**Modern AI Prompt Engineering Platform**
+***Modern AI Prompt Engineering Platform***
 
 Transform unstructured ideas into clean, effective prompts for AI models. Built with Go (backend) and React 19 (frontend), runs as a single binary with zero dependencies.
 
@@ -20,9 +20,11 @@ Transform unstructured ideas into clean, effective prompts for AI models. Built 
 ## Key Features
 
 ### 🔑 BYOK (Bring Your Own Key)
+
 Use your own API keys per request - maximum flexibility and security.
 
 ### 🔧 Multi-Provider Support
+
 - OpenAI (GPT-4, GPT-3.5)
 - Anthropic Claude (3.5 Sonnet, Haiku)
 - Google Gemini (2.0 Flash)
@@ -30,12 +32,15 @@ Use your own API keys per request - maximum flexibility and security.
 - Ollama (local)
 
 ### 💪 Resilience by Design
+
 **Hierarchical Fallback:**
+
 1. BYOK (Your API Key) → Priority
-2. Server Config (ENV vars) → Fallback  
+2. Server Config (ENV vars) → Fallback
 3. Demo Mode → Never fails!
 
 ### ⚡ Zero Dependencies
+
 Single ~15MB binary - no Docker, no Node, no Python required.
 
 ---

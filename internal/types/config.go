@@ -50,7 +50,7 @@ func NewServerConfig(
 	logFile           string,
 	envFile           string,
 	configFile        string,
-	pwd               string,
+	cwd               string,
 	openAIKey         string,
 	claudeKey        string,
 	geminiKey        string,
@@ -97,7 +97,7 @@ func NewServerConfig(
 	cfg.logFile = logFile
 	cfg.envFile = envFile
 	cfg.configFile = configFile
-	cfg.pwd = pwd // pragma: allowlist secret
+	cfg.cwd = cwd // pragma: allowlist secret
 	for k, v := range apiKeys {
 		cfg.apiKeys[k] = v
 	}
@@ -141,7 +141,7 @@ type ServerConfigImpl struct {
 	logFile           string
 	envFile           string
 	configFile        string
-	pwd               string
+	cwd               string
 	apiKeys            map[string]string
 	endpoints          map[string]string
 	defaultModels      map[string]string
@@ -350,7 +350,7 @@ func (c *ServerConfigImpl) registryConfig() interfaces.ServerConfig {
 		c.logFile,
 		c.envFile,
 		c.configFile,
-		c.pwd,
+		c.cwd,
 		c.apiKeys["openai"],
 		c.apiKeys["claude"],
 		c.apiKeys["gemini"],

@@ -62,7 +62,7 @@ _BINARY="${_BUILD_PATH:-}/${_APP_NAME:-}"
 _LOCAL_BIN="${HOME:-"~"}/.local/bin"
 _GLOBAL_BIN="/usr/local/bin"
 
-_SCRIPT_DIR="$(cd "$(dirname "${0:-${BASH_SOURCE[0]}}")" && pwd)"
+_SCRIPT_DIR="$(cd "$(dirname "${0:-${BASH_SOURCE[0]}}")" && cwd)"
 __source_script_if_needed "apply_manifest" "${_SCRIPT_DIR:-}/apply_manifest.sh" || exit 1
 __source_script_if_needed "get_current_shell" "${_SCRIPT_DIR:-}/utils.sh" || exit 1
 

@@ -109,7 +109,7 @@ func NewConfig(
 	logFile           string,
 	envFile           string,
 	configFile        string,
-	pwd               string,
+	cwd               string,
 	openAIKey         string,
 	claudeKey        string,
 	geminiKey        string,
@@ -126,8 +126,10 @@ func NewConfig(
 	timeout            time.Duration,
 	providerConfigPath string,
 ) *Config {
-	if logger == nil {
-		logger = l.LoggerG
+	if logger != nil {
+		glgr = logger
+	} else{
+		glgr = l.LoggerG.GetLogger()
 	}
 	if bindAddr == "" {
 		bindAddr = kbx.DefaultServerHost
@@ -142,7 +144,7 @@ func NewConfig(
 		logFile,
 		envFile,
 		configFile,
-		pwd,
+		cwd,
 		openAIKey,
 		claudeKey,
 		geminiKey,
@@ -346,6 +348,14 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explica√ß√
 }
 
 func (c *Config) Validate() error {
+	if glgr == nil {
+		if c.Logger != nil {
+			glgr = c.Logger
+		} else {
+			glgr = l.LoggerG.GetLogger()
+			c.Logger = glgr
+		}
+	}
 	// Example validation: Ensure port is a valid number
 	if _, err := net.LookupPort("tcp", c.GetPort()); err != nil {
 		return fmt.Errorf("invalid port: %s", c.GetPort())
@@ -371,7 +381,7 @@ func (c *Config) Validate() error {
 		glgr.Log("warn", "ChatGPT API key is not set")
 	}
 	if c.Defaults == nil {
-		pwd, err := os.Getwd()
+		cwd, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current working directory: %v", err)
 		}
@@ -379,11 +389,11 @@ func (c *Config) Validate() error {
 			Address: "localhost",
 			Port:    "8080",
 			Name:    vs.NewVersionService().GetName(),
-			Pwd:     pwd,
+			Cwd:     cwd,
 			TempDir: os.TempDir(),
-			EnvFile: filepath.Join(pwd, ".env"),
-			LogFile: filepath.Join(pwd, "config", "logs", "grompt.log"),
-			ConfigFile: filepath.Join(pwd, "config", "development.yml"),
+			EnvFile: filepath.Join(cwd, ".env"),
+			LogFile: filepath.Join(cwd, "config", "logs", "grompt.log"),
+			ConfigFile: filepath.Join(cwd, "config", "development.yml"),
 			ConfigType: "yaml",
 			Debug: 	false,
 			IsConfidential: false,
@@ -392,10 +402,10 @@ func (c *Config) Validate() error {
 			NotificationTimeoutSeconds: 30,
 			NotificationProvider: "email",
 			ConfigDBType: "sqlite",
-			ConfigDBFile: filepath.Join(pwd, "config", "data", "config.db"),
-			PubKeyPath: filepath.Join(pwd, "config", "keys", "pubkey.pem"),
-			PrivKeyPath: filepath.Join(pwd, "config", "keys", "privkey.pem"),
-			PubCertKeyPath: filepath.Join(pwd, "config", "keys", "pubcert.pem"),
+			ConfigDBFile: filepath.Join(cwd, "config", "data", "config.db"),
+			PubKeyPath: filepath.Join(cwd, "config", "keys", "pubkey.pem"),
+			PrivKeyPath: filepath.Join(cwd, "config", "keys", "privkey.pem"),
+			PubCertKeyPath: filepath.Join(cwd, "config", "keys", "pubcert.pem"),
 		}
 	}
 	if c.Server == nil {
@@ -450,25 +460,20 @@ func (c *Config) Validate() error {
 		}
 		file.Close()
 	}
-	if c.Server.pwd == "" {
+	if c.Server.cwd == "" {
 		var err error
-		c.Server.pwd, err = os.Getwd()
+		c.Server.cwd, err = os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current working directory: %v", err)
 		}
 	}
 	var configFilePath string
 	if c.Server.configFile == "" {
-		configFilePath = filepath.Join(c.Server.pwd, "config", "development.yml")
+		configFilePath = filepath.Join(c.Server.cwd, "config", "development.yml")
 	} else {
 		configFilePath = c.Server.configFile
 	}
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		if _, err := os.Create(configFilePath); err != nil {
-			return fmt.Errorf("failed to create config file: %v", err)
-		}
-		glgr.Log("info", fmt.Sprintf("Config file not found. Created new config file at: %s", configFilePath))
-		// Write default config to the newly created file
 		mapper := NewMapper(&c, configFilePath)
 		mapper.SerializeToFile("yaml")
 		if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
@@ -483,7 +488,7 @@ func (c *Config) Validate() error {
 	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.envFile))
 	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.logFile))
 	glgr.Log("info", fmt.Sprintf("Temporary directory set to: %s", tmpDir))
-	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.pwd))
+	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.cwd))
 
 	return nil
 }

@@ -47,7 +47,7 @@ type InitArgs struct {
 	PubCertKeyPath string `yaml:"pub_cert_key_path,omitempty" json:"pub_cert_key_path,omitempty" mapstructure:"pub_cert_key_path,omitempty"`
 	PubKeyPath     string `yaml:"pub_key_path,omitempty" json:"pub_key_path,omitempty" mapstructure:"pub_key_path,omitempty"`
 	PrivKeyPath    string `yaml:"priv_key_path,omitempty" json:"priv_key_path,omitempty" mapstructure:"priv_key_path,omitempty"`
-	Pwd            string `yaml:"pwd,omitempty" json:"pwd,omitempty" mapstructure:"pwd,omitempty"`
+	Cwd            string `yaml:"cwd,omitempty" json:"cwd,omitempty" mapstructure:"cwd,omitempty"`
 	TempDir       string `yaml:"temp_dir,omitempty" json:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
 	OpenAIKey 		string `yaml:"openai_key,omitempty" json:"openai_key,omitempty" mapstructure:"openai_key,omitempty"`
 	DeepSeekKey 	string `yaml:"deepseek_key,omitempty" json:"deepseek_key,omitempty" mapstructure:"deepseek_key,omitempty"`
@@ -85,7 +85,7 @@ func NewInitArgs(
 	address string,
 	pubCertKeyPath string,
 	pubKeyPath string,
-	pwd string,
+	cwd string,
 	openAIKey string,
 	deepSeekKey string,
 	ollamaEndpoint string,
@@ -142,7 +142,7 @@ func NewInitArgs(
 		Address:        net.JoinHostPort(bind, port),
 		PubCertKeyPath: GetValueOrDefaultSimple(pubCertKeyPath, os.ExpandEnv(DefaultGoBEKeyPath)),
 		PubKeyPath:     GetValueOrDefaultSimple(pubKeyPath, os.ExpandEnv(DefaultGoBECertPath)),
-		Pwd:            GetValueOrDefaultSimple(pwd, ""),
+		Cwd:            GetValueOrDefaultSimple(cwd, ""),
 		TempDir:       os.TempDir(),
 		OpenAIKey: 		openAIKey,
 		DeepSeekKey: 	deepSeekKey,

@@ -4,10 +4,12 @@ package main
 import (
 	"github.com/kubex-ecosystem/grompt/internal/module"
 	gl "github.com/kubex-ecosystem/logz/logger"
+	l "github.com/kubex-ecosystem/logz"
 )
 
 func main() {
+	l.GetLogger("Grompt")
 	if err := module.RegX().Command().Execute(); err != nil {
-		gl.LoggerG.GetLogger().Log("fatalc", err.Error())
+		gl.Log("fatalc", err.Error())
 	}
 }

@@ -10,7 +10,7 @@ set -o functrace # If a function fails, the shell will exit immediately
 IFS=$'\n\t'
 
 _ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null)"
-_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+_ROOT_DIR="${_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && cwd)}"
 _STRING_UTILS_SCRIPT="$(realpath "$_ROOT_DIR/support/string_utils.sh")"
 
 # Load string utilities

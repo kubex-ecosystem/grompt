@@ -6,7 +6,7 @@
 set -e
 
 BASE_URL="http://localhost:8666"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cwd)"
 
 # Colors for output
 RED='\033[0;31m'

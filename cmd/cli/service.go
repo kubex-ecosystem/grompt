@@ -5,16 +5,15 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
-	l "github.com/kubex-ecosystem/logz/logger"
-	"gopkg.in/yaml.v3"
-
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
-	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	s "github.com/kubex-ecosystem/grompt/internal/services/server"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
+	l "github.com/kubex-ecosystem/logz/logger"
 
+	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/spf13/cobra"
 )
 
@@ -123,6 +122,7 @@ func startServer() *cobra.Command {
 	startCmd.Flags().StringVarP(&initArgs.GeminiKey, "gemini-key", "g", "", "Gemini API key")
 	startCmd.Flags().StringVarP(&initArgs.ChatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
 	startCmd.Flags().StringVarP(&initArgs.ClaudeKey, "claude-key", "C", "", "Claude API key")
+	startCmd.Flags().StringVarP(&initArgs.Cwd, "working-dir", "w", "", "Working directory")
 	startCmd.Flags().BoolVarP(&initArgs.Background, "background", "B", false, "Run server in background")
 
 	return startCmd
@@ -191,22 +191,31 @@ func startServerService() *cobra.Command {
 	startCmd.Flags().StringVarP(&initArgs.GeminiKey, "gemini-key", "g", "", "Gemini API key")
 	startCmd.Flags().StringVarP(&initArgs.ChatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
 	startCmd.Flags().StringVarP(&initArgs.ClaudeKey, "claude-key", "C", "", "Claude API key")
+	startCmd.Flags().StringVarP(&initArgs.Cwd, "working-dir", "w", "", "Working directory")
 	startCmd.Flags().BoolVarP(&initArgs.Background, "background", "B", false, "Run server in background")
 
 	return startCmd
 }
 
 func loadConfigFile(f string) (*t.Config, error) {
-	file, err := os.Open(f)
+	var cfg = &t.Config{}
+
+	mapper := t.NewMapper(cfg, f)
+	cfgData, err := mapper.DeserializeFromFile(filepath.Ext(f)[1:])
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-
-	var cfg t.Config
-	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
-		return nil, err
+	if cfgData == nil {
+		fileData, err := os.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		cfgData, err = mapper.Deserialize(fileData, filepath.Ext(f))
+		if err != nil {
+			return nil, err
+		}
+		return cfgData, nil
 	}
-
-	return &cfg, nil
+	cfg = getDefaultConfig(initArgs).(*t.Config)
+	return cfg, nil
 }
