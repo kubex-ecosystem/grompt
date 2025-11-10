@@ -192,7 +192,7 @@ _ensure_globals(){
   # Markers for replace
   _llm_provider="gemini"                                              # LLM PROVIDER
   _llm_model="gemini-2.0-flash"                                       # LLM MODEL
-  _llm_api_key='AIzaSyAGVRdfCOiW5HZdp09Bbtf4cwqn0mfLUv8'              # GEMINI API KEY [OPTIONAL, CAN BE SET AS ENV VAR]
+  _llm_api_key='AIzaSyAGVRdfCOiW5HZdp09Bbtf4cwqn0mfLUv8'              # GEMINI API KEY [OPTIONAL, CAN BE SET AS ENV VAR] # pragma: allowlist secret
   _max_tokens=32000                                                   # MAX TOKENS (GEMINI-2.0-FLASH SUPPORTS UP TO 32000)
 
   # Workspace Path

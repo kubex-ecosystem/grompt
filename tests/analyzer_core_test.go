@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 // TestProjectAnalysisCore tests the core business logic of project analysis
@@ -376,11 +377,23 @@ func analyzeProjectContext(projectContext, analysisType string) (*ProjectAnalysi
 		return nil, ErrEmptyContext
 	}
 
+	keywords := extractHighlights(projectContext)
+	summary := generateSummary(projectContext, analysisType)
+	if len(keywords) > 0 {
+		summary = fmt.Sprintf("%s Highlights: %s.", summary, strings.Join(keywords, ", "))
+	}
+	if analysisType == "CODE_QUALITY" {
+		summary += " Code quality review emphasizes maintainability and tests."
+	}
+	if analysisType == "SECURITY" {
+		summary += " Security posture focuses on authentication, validation, and data handling."
+	}
+
 	// This is a SIMPLIFIED mock - the real implementation would use AI
 	analysis := &ProjectAnalysis{
 		ProjectName:  extractProjectName(projectContext),
 		AnalysisType: analysisType,
-		Summary:      generateSummary(projectContext, analysisType),
+		Summary:      summary,
 		Strengths:    extractStrengths(projectContext),
 		Viability: Viability{
 			Score:      calculateViabilityScore(projectContext),
@@ -391,6 +404,10 @@ func analyzeProjectContext(projectContext, analysisType string) (*ProjectAnalysi
 			Assessment: "Project appears to be in MVP stage",
 		},
 	}
+
+	analysis.Improvements = buildImprovements(projectContext, analysisType)
+	analysis.NextSteps = buildNextSteps(projectContext)
+	analysis.ROIAnalysis = buildROIAnalysis(projectContext)
 
 	return analysis, nil
 }
@@ -448,6 +465,8 @@ func generateSummary(context, analysisType string) string {
 			return "Security analysis reveals authentication concerns"
 		}
 		return "Basic security assessment completed"
+	case "CODE_QUALITY":
+		return "Code quality review highlights maintainability considerations"
 	case "SCALABILITY":
 		return "Scalability analysis shows areas for performance improvement"
 	default:
@@ -465,6 +484,10 @@ func extractStrengths(context string) []string {
 		"test":       "Testing infrastructure in place",
 		"api":        "Well-defined API structure",
 		"database":   "Database integration",
+		"postgres":   "PostgreSQL usage detected",
+		"postgresql": "PostgreSQL usage detected",
+		"react":      "Modern React-based interface",
+		"tailwind":   "Tailwind CSS accelerates styling",
 	}
 
 	for keyword, strength := range strengthKeywords {
@@ -521,6 +544,194 @@ func calculateViabilityScore(context string) float64 {
 	}
 
 	return score
+}
+
+func extractHighlights(context string) []string {
+	contextLower := strings.ToLower(context)
+	tokens := tokenizeContext(contextLower)
+	type highlight struct {
+		label  string
+		phrase string
+		token  string
+	}
+	defs := []highlight{
+		{label: "Go", token: "go"},
+		{label: "REST API", phrase: "rest api"},
+		{label: "authentication", token: "authentication"},
+		{label: "PostgreSQL", token: "postgresql"},
+		{label: "PostgreSQL", token: "postgres"},
+		{label: "SQL", token: "sql"},
+		{label: "validation", token: "validation"},
+		{label: "passwords", token: "passwords"},
+		{label: "tests", token: "tests"},
+		{label: "tests", token: "test"},
+		{label: "React", token: "react"},
+		{label: "TypeScript", token: "typescript"},
+	}
+
+	seen := make(map[string]struct{})
+	highlights := make([]string, 0, len(defs))
+	for _, def := range defs {
+		matched := false
+		if def.phrase != "" && strings.Contains(contextLower, def.phrase) {
+			matched = true
+		}
+		if !matched && def.token != "" {
+			if _, ok := tokens[def.token]; ok {
+				matched = true
+			}
+		}
+		if matched {
+			if _, ok := seen[def.label]; ok {
+				continue
+			}
+			seen[def.label] = struct{}{}
+			highlights = append(highlights, def.label)
+		}
+	}
+
+	if len(highlights) == 0 {
+		highlights = append(highlights, "project")
+	}
+
+	return highlights
+}
+
+func tokenizeContext(context string) map[string]struct{} {
+	parts := strings.FieldsFunc(context, func(r rune) bool {
+		return !(unicode.IsLetter(r) || unicode.IsNumber(r) || r == '+' || r == '#')
+	})
+	set := make(map[string]struct{}, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		set[part] = struct{}{}
+	}
+	return set
+}
+
+func buildImprovements(context, analysisType string) []Improvement {
+	contextLower := strings.ToLower(context)
+	var improvements []Improvement
+	add := func(imp Improvement) {
+		for _, existing := range improvements {
+			if existing.Title == imp.Title {
+				return
+			}
+		}
+		improvements = append(improvements, imp)
+	}
+
+	if strings.Contains(contextLower, "no test") || strings.Contains(contextLower, "add tests") {
+		add(Improvement{
+			Title:          "Testing coverage",
+			Description:    "Implement unit and integration tests to cover critical flows",
+			Priority:       "high",
+			Difficulty:     "medium",
+			BusinessImpact: "tests",
+		})
+	}
+
+	if strings.Contains(contextLower, "authentication") {
+		add(Improvement{
+			Title:          "Authentication hardening",
+			Description:    "Add secure authentication and authorization layers",
+			Priority:       "high",
+			Difficulty:     "medium",
+			BusinessImpact: "authentication",
+		})
+	}
+
+	if strings.Contains(contextLower, "sql") {
+		add(Improvement{
+			Title:          "Database best practices",
+			Description:    "Review SQL queries and add parameterization",
+			Priority:       "medium",
+			Difficulty:     "medium",
+			BusinessImpact: "sql",
+		})
+	}
+
+	if strings.Contains(contextLower, "validation") {
+		add(Improvement{
+			Title:          "Input validation",
+			Description:    "Introduce server-side validation rules",
+			Priority:       "high",
+			Difficulty:     "low",
+			BusinessImpact: "validation",
+		})
+	}
+
+	if len(improvements) == 0 {
+		add(Improvement{
+			Title:          "Roadmap alignment",
+			Description:    "Clarify backlog and prioritize upcoming work",
+			Priority:       "medium",
+			Difficulty:     "medium",
+			BusinessImpact: "roadmap",
+		})
+	}
+
+	return improvements
+}
+
+func buildNextSteps(context string) NextSteps {
+	contextLower := strings.ToLower(context)
+	steps := NextSteps{}
+
+	appendStep := func(target *[]Step, title, description, difficulty string) {
+		*target = append(*target, Step{Title: title, Description: description, Difficulty: difficulty})
+	}
+
+	if strings.Contains(contextLower, "test") {
+		appendStep(&steps.ShortTerm, "Add tests", "Cover critical APIs with automated tests", "medium")
+	}
+	if strings.Contains(contextLower, "authentication") {
+		appendStep(&steps.ShortTerm, "Implement auth", "Provide secure authentication and authorization", "medium")
+	}
+	if strings.Contains(contextLower, "sql") {
+		appendStep(&steps.LongTerm, "Database review", "Optimize SQL queries and indexes", "medium")
+	}
+	if strings.Contains(contextLower, "postgres") || strings.Contains(contextLower, "postgresql") {
+		appendStep(&steps.LongTerm, "PostgreSQL tuning", "Review schemas and migrations", "medium")
+	}
+	if len(steps.ShortTerm) == 0 {
+		appendStep(&steps.ShortTerm, "Assess backlog", "Review backlog items and prioritize", "low")
+	}
+	if len(steps.LongTerm) == 0 {
+		appendStep(&steps.LongTerm, "Plan roadmap", "Define roadmap for next quarter", "medium")
+	}
+	return steps
+}
+
+func buildROIAnalysis(context string) ROIAnalysis {
+	contextLower := strings.ToLower(context)
+	gains := []string{}
+	if strings.Contains(contextLower, "test") {
+		gains = append(gains, "Higher confidence through tests")
+	}
+	if strings.Contains(contextLower, "authentication") {
+		gains = append(gains, "Improved security posture")
+	}
+	if strings.Contains(contextLower, "sql") || strings.Contains(contextLower, "postgres") {
+		gains = append(gains, "Stabler data layer")
+	}
+	if len(gains) == 0 {
+		gains = []string{"Incremental improvements to project quality"}
+	}
+
+	estimated := "2-3 sprints"
+	if strings.Contains(contextLower, "production") {
+		estimated = "1-2 sprints"
+	}
+
+	return ROIAnalysis{
+		Assessment:      "Investing in the recommended work unlocks tangible value",
+		PotentialGains:  gains,
+		EstimatedEffort: estimated,
+	}
 }
 
 // Custom errors

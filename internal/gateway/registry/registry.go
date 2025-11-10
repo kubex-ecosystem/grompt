@@ -53,10 +53,10 @@ func (r *Registry) initializeProviders() error {
 		case "openai":
 			key := os.Getenv(pc.KeyEnv())
 			if key == "" {
-				fmt.Printf("Warning: Skipping OpenAI provider '%s' - no API key found in %s\n", name, pc.KeyEnv)
+				fmt.Printf("Warning: Skipping OpenAI provider '%s' - no API key found in %s\n", name, pc.KeyEnv())
 				continue
 			}
-			p := providers.NewOpenAIProvider( key)
+			p := providers.NewOpenAIProvider(key)
 			// if err != nil {
 			// 	return fmt.Errorf("failed to create OpenAI provider %s: %w", name, err)
 			// }
@@ -64,10 +64,10 @@ func (r *Registry) initializeProviders() error {
 		case "gemini":
 			key := os.Getenv(pc.KeyEnv())
 			if key == "" {
-				fmt.Printf("Warning: Skipping Gemini provider '%s' - no API key found in %s\n", name, pc.KeyEnv)
+				fmt.Printf("Warning: Skipping Gemini provider '%s' - no API key found in %s\n", name, pc.KeyEnv())
 				continue
 			}
-			p := providers.NewGeminiProvider( key)
+			p := providers.NewGeminiProvider(key)
 			// if err != nil {
 			// 	return fmt.Errorf("failed to create Gemini provider %s: %w", name, err)
 			// }
@@ -88,7 +88,7 @@ func (r *Registry) initializeProviders() error {
 		case "ollama":
 			fmt.Printf("Warning: Skipping Ollama provider '%s' - not yet implemented\n", name)
 		default:
-			fmt.Printf("Warning: Skipping provider '%s' - unknown type '%s'\n", name, pc.Type)
+			fmt.Printf("Warning: Skipping provider '%s' - unknown type '%s'\n", name, pc.Type())
 		}
 	}
 

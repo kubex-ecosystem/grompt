@@ -97,11 +97,16 @@ __load_available_tools(){
   return 0
 }
 
-if [[ "${BASH_SOURCE[0]:-}" == "${0}" || "${ENVAI_AUTOLOAD:-}" == "1" ]]; then
+if [[ "${BASH_SOURCE[0]:-}" == "${0}" ]]; then
   echo "envAI version: $(_version)"
   echo "Loading available tools..."
   __load_available_tools
   __show_org_files
+elif [[ "${ENVAI_AUTOLOAD:-1}" == "1" ]]; then
+  # Quando o script é "sourced", executa o bootstrap por padrão
+  echo "envAI version: $(_version)"
+  echo "Loading available tools..."
+  __load_available_tools
 fi
 
 
