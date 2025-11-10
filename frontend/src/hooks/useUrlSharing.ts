@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Idea } from '../types';
+import { Idea } from '@/types';
 
 interface UseUrlSharingProps {
     setIdeas: (ideas: Idea[]) => void;

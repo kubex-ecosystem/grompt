@@ -5,14 +5,15 @@ import {
   AIModel,
   AIProvider,
   AIResponse,
+  BaseProvider,
   CraftPromptParams,
   GenerateContentParams,
   MultiAIConfig,
   RefactorCodeParams
-} from "../../../types/types";
+} from "@/types/types";
 
 export class MultiAIWrapper {
-  private providers: Map<AIProvider, { generateContent: any; streamContent?: any }>;
+  private providers: Map<AIProvider, BaseProvider>;
   private config: MultiAIConfig;
   private cache: Map<string, AIResponse>;
 
@@ -69,10 +70,22 @@ export class MultiAIWrapper {
   }
 
   private getProvider(providerType?: AIProvider) {
-    const target = providerType || this.config.defaultProvider;
-    const p = this.providers.get(target);
-    if (!p) throw new Error(`Provider ${target} not configured or initialized`);
-    return { instance: p, type: target };
+    const target = providerType || this.resolveDefaultProvider();
+    const instance = this.providers.get(target);
+    if (!instance) throw new Error(`Provider ${target} not configured or initialized`);
+    return { instance, type: target };
+  }
+
+  private resolveDefaultProvider(): AIProvider {
+    if (this.config.defaultProvider && this.providers.has(this.config.defaultProvider)) {
+      return this.config.defaultProvider;
+    }
+    const first = this.providers.keys().next().value;
+    if (!first) {
+      throw new Error("No AI providers configured");
+    }
+    this.config.defaultProvider = first;
+    return first;
   }
 
   public async generateContent(params: GenerateContentParams): Promise<AIResponse> {
@@ -135,6 +148,16 @@ ${params.ideas.map(i => `- ${i}`).join('\n')}`;
 
   public getAvailableProviders(): AIProvider[] {
     return Array.from(this.providers.keys());
+  }
+
+  public getAvailableModels(provider: AIProvider): string[] {
+    const providerConfig = this.config.providers[provider];
+    if (!providerConfig) return [];
+    const models = (providerConfig as { models?: string[] }).models;
+    if (Array.isArray(models) && models.length > 0) {
+      return models;
+    }
+    return providerConfig.defaultModel ? [providerConfig.defaultModel] : [];
   }
 
   public clearCache(): void {

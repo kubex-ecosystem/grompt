@@ -41,6 +41,10 @@ type ReactApp struct {
 
 func NewServer(cfg interfaces.IConfig) *Server {
 	handlers := NewHandlers(cfg)
+	if cfg == nil {
+		gl.Log("error","❌ Configuração inválida fornecida ao criar o servidor")
+		return nil
+	}
 	return &Server{
 		IRouter:  gin.New(),
 		config:   cfg.(*t.Config),
@@ -50,6 +54,11 @@ func NewServer(cfg interfaces.IConfig) *Server {
 }
 
 func (s *Server) Start() error {
+	cfg := s.config
+	if !cfg.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	// Configurar roteamento
 	s.setupRoutes()
 

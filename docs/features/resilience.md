@@ -31,7 +31,7 @@ Grompt implements a **hierarchical resilience system** with three modes:
 - **Indicator**: Blue badge "🔑 Using Your API Key (BYOK)"
 
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "X-API-Key: sk-your-key" \
   -d '{"prompt":"Hello","provider":"openai"}'
 ```
@@ -318,7 +318,7 @@ export OPENAI_API_KEY=sk-server-key
 ### Check Current Configuration
 
 ```bash
-curl http://localhost:8080/api/config
+curl http://localhost:8080/api/v1/config
 ```
 
 Response:

@@ -40,7 +40,8 @@ BYOK works with:
    - Image Prompt Generator
 
 2. **Click the BYOK toggle**:
-   ```
+
+   ```txt
    🔑 Usar Sua Própria API Key (BYOK)
    ```
 
@@ -62,7 +63,7 @@ Send API keys via HTTP headers:
 
 ```bash
 # Generic header (works for all providers)
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-your-key-here" \
   -d '{
@@ -138,7 +139,7 @@ API keys are **never logged** in server logs.
 
 Use your personal API keys without sharing them with the server:
 
-```
+```txt
 User → BYOK Key → Grompt → AI Provider
                    (no storage)
 ```
@@ -176,7 +177,7 @@ curl ... -H "X-API-Key: AIza-gemini-key" -d '{"provider":"gemini",...}'
 
 Grompt uses a **hierarchical fallback** for API keys:
 
-### Priority Order:
+### Priority Order
 
 1. **BYOK** (Highest Priority)
    - Key from HTTP header (`X-API-Key`, etc.)
@@ -193,9 +194,9 @@ Grompt uses a **hierarchical fallback** for API keys:
    - Template-based responses
    - Mode: `demo`
 
-### Example Flow:
+### Example Flow
 
-```
+```txt
 Request with X-API-Key header
   ↓
 ✅ BYOK Mode → Use provided key
@@ -225,14 +226,14 @@ This prevents confusion and ensures transparency.
 
 ## Best Practices
 
-### ✅ Do:
+### ✅ Do
 
 - Use BYOK for personal projects and sensitive environments
 - Rotate your API keys regularly
 - Use HTTPS in production
 - Monitor your API usage on provider dashboards
 
-### ❌ Don't:
+### ❌ Don't
 
 - Share API keys between users
 - Hard-code keys in client-side code
@@ -262,6 +263,7 @@ A: **Yes.** Use BYOK when you need it, and fall back to server config otherwise.
 **Q: Is BYOK required?**
 
 A: **No.** BYOK is **optional**. You can also use:
+
 - Server config (environment variables)
 - Demo mode (no keys needed)
 

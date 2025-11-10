@@ -1,5 +1,8 @@
 // Configuration service for Grompt frontend
-// Handles communication with backend /api/config endpoint
+// Handles communication with backend /api/v1/config endpoint
+
+export type ProviderStatus = 'ready' | 'needs_api_key' | 'offline';
+export type ProviderMode = 'server' | 'byok' | 'demo' | 'offline';
 
 export interface ProviderInfo {
   name: string;
@@ -8,7 +11,10 @@ export interface ProviderInfo {
   configured: boolean;
   models: string[];
   endpoint?: string;
-  status: 'ready' | 'needs_api_key' | 'offline';
+  default_model?: string;
+  status: ProviderStatus;
+  mode?: ProviderMode;
+  supports_byok?: boolean;
 }
 
 export interface ServerConfig {
@@ -24,7 +30,7 @@ export interface ServerConfig {
   environment: {
     demo_mode: boolean;
   };
-  // Backwards compatibility
+  // Backwards compatibility flags expected by legacy UI bits
   openai_available: boolean;
   deepseek_available: boolean;
   ollama_available: boolean;
@@ -32,6 +38,86 @@ export interface ServerConfig {
   gemini_available: boolean;
   chatgpt_available: boolean;
 }
+
+const DEMO_PROVIDERS: ProviderInfo[] = [
+  {
+    name: 'openai',
+    display_name: 'OpenAI',
+    available: false,
+    configured: false,
+    models: ['gpt-4o-mini'],
+    default_model: 'gpt-4o-mini',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'claude',
+    display_name: 'Anthropic Claude',
+    available: false,
+    configured: false,
+    models: ['claude-3-5-sonnet-20241022'],
+    default_model: 'claude-3-5-sonnet-20241022',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'anthropic',
+    display_name: 'Anthropic Claude',
+    available: false,
+    configured: false,
+    models: ['claude-3-5-sonnet-20241022'],
+    default_model: 'claude-3-5-sonnet-20241022',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'gemini',
+    display_name: 'Google Gemini',
+    available: false,
+    configured: false,
+    models: ['gemini-2.0-flash', 'gemini-2.5-pro'],
+    default_model: 'gemini-2.0-flash',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'deepseek',
+    display_name: 'DeepSeek',
+    available: false,
+    configured: false,
+    models: ['deepseek-v1', 'deepseek-v2'],
+    default_model: 'deepseek-v2',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'chatgpt',
+    display_name: 'ChatGPT',
+    available: false,
+    configured: false,
+    models: ['gpt-4o-mini'],
+    default_model: 'gpt-4o-mini',
+    status: 'needs_api_key',
+    mode: 'byok',
+    supports_byok: true,
+  },
+  {
+    name: 'ollama',
+    display_name: 'Ollama (Local)',
+    available: false,
+    configured: false,
+    models: ['llama3.2'],
+    default_model: 'llama3.2',
+    status: 'offline',
+    mode: 'offline',
+    supports_byok: false,
+  },
+];
 
 class ConfigService {
   private config: ServerConfig | null = null;
@@ -50,7 +136,7 @@ class ConfigService {
     }
 
     try {
-      const response = await fetch('/api/config', {
+      const response = await fetch('/api/v1/config', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +170,9 @@ class ConfigService {
    */
   async getAvailableProviders(): Promise<ProviderInfo[]> {
     const config = await this.getConfig();
-    return config.available_providers.map(name => config.providers[name]);
+    return config.available_providers
+      .map(name => config.providers[name])
+      .filter((provider): provider is ProviderInfo => Boolean(provider));
   }
 
   /**
@@ -116,7 +204,7 @@ class ConfigService {
    */
   async updateProviderConfig(provider: string, apiKey: string): Promise<boolean> {
     try {
-      const response = await fetch('/api/config', {
+      const response = await fetch('/api/v1/config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,6 +250,11 @@ class ConfigService {
    * Fallback demo configuration
    */
   private getDemoConfig(): ServerConfig {
+    const providers: Record<string, ProviderInfo> = {};
+    for (const provider of DEMO_PROVIDERS) {
+      providers[provider.name] = provider;
+    }
+
     return {
       server: {
         name: 'Grompt Server (Demo)',
@@ -169,18 +262,9 @@ class ConfigService {
         port: '8080',
         status: 'demo',
       },
-      providers: {
-        gemini: {
-          name: 'gemini',
-          display_name: 'Google Gemini',
-          available: false,
-          configured: false,
-          models: ['gemini-2.0-flash', 'gemini-2.0-flash-exp'],
-          status: 'needs_api_key',
-        },
-      },
-      available_providers: [],
-      default_provider: 'gemini',
+      providers,
+      available_providers: Object.keys(providers),
+      default_provider: 'openai',
       environment: {
         demo_mode: true,
       },

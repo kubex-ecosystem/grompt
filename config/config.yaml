@@ -39,7 +39,7 @@ providers:
 
 development:
   # General Settings
-  logging_level: DEBUG
+  # logging_level: info
 
   # Server Configuration
   server:
@@ -231,13 +231,13 @@ provider_production:
 security:
   enable_https: true
   allowed_origins: ["https://kubex.world"]
-  jwt_secret: "your_production_jwt_secret_here"
+  jwt_secret: "your_production_jwt_secret_here" # pragma: allowlist secret
   api_keys:
     - "your_production_api_key_1"
     - "your_production_api_key_2"
     - "your_production_api_key_3"
     - GF_SECURITY_ADMIN_USER=admin
-    - GF_SECURITY_ADMIN_PASSWORD=securepassword
+    - GF_SECURITY_ADMIN_PASSWORD=securepassword # pragma: allowlist secret
     - "your_production_api_key_4"
 
 # Monitoring and Logging
@@ -253,14 +253,14 @@ monitoring:
   grafana:
     url: http://localhost:3000
     admin_user: admin
-    admin_password: securepassword
+    admin_password: securepassword # pragma: allowlist secret
 
   # Logging configuration
   logging:
     # Local logging configuration
     enabled: true
-    level: INFO
-    format: json
+    # level: INFO
+    # format: json
     output: /var/log/gemx-grompt/production.log
 
     # Log rotation settings
@@ -277,8 +277,8 @@ monitoring:
     external_logging_api_key: null # API key for the external logging service
     external_logging_endpoint: null # Endpoint URL for the external logging service
     log_request_response: false # Set to true to log full requests and responses (may include sensitive data)
-    log_level: INFO # Log level for the external logging service
-    log_format: json # Format for the external logging service (e.g., "json", "text")
+    # log_level: INFO # Log level for the external logging service
+    # log_format: json # Format for the external logging service (e.g., "json", "text")
 
   # Alerting configuration
   alerting:
@@ -367,7 +367,7 @@ monitoring:
         microsoft_teams:
           enabled: false
           endpoint: "your_microsoft_teams_webhook_url"
-          token: "your_microsoft_teams_bot_token"
+          token: "your_microsoft_teams_bot_token" # pragma: allowlist secret
           channel: "Alerts"
           username: "KubexTeamsBot"
           icon_emoji: ":teams:"
@@ -409,7 +409,7 @@ monitoring:
         discord:
           enabled: false
           endpoint: "your_discord_webhook_url"
-          token: "your_discord_bot_token"
+          token: "your_discord_bot_token" # pragma: allowlist secret
           channel: "alerts"
           username: "KubexDiscordBot"
           icon_emoji: ":discord:"
@@ -450,19 +450,19 @@ monitoring:
         # PagerDuty, OpsGenie, VictorOps Integrations
         pagerduty:
           enabled: false
-          service_key: "your_pagerduty_service_key"
+          service_key: "your_pagerduty_service_key" # pragma: allowlist secret
         opsgenie:
           enabled: false
-          api_key: "your_opsgenie_api_key"
+          api_key: "your_opsgenie_api_key" # pragma: allowlist secret
         victorops:
           enabled: false
-          api_key: "your_victorops_api_key"
+          api_key: "your_victorops_api_key" # pragma: allowlist secret
 
         # Meta Alerting Configuration
         meta:
           enabled: false
           url: "your_meta_alerting_url"
-          api_key: "your_meta_api_key"
+          api_key: "your_meta_api_key" # pragma: allowlist secret
           project_id: "your_meta_project_id"
           incident_severity: "high" # e.g., "low", "medium", "high", or "critical"
           notification_interval_min: 30 # Minimum interval between notifications in minutes
@@ -514,8 +514,8 @@ monitoring:
     # SMS Configuration
     sms:
       provider: "twilio" # e.g., "twilio", "nexmo", or "plivo"
-      api_key: "your_sms_provider_api_key"
-      api_secret: "your_sms_provider_api_secret"
+      api_key: "your_sms_provider_api_key" # pragma: allowlist secret
+      api_secret: "your_sms_provider_api_secret" # pragma: allowlist secret
       from_number: "your_sms_from_number"
       to_numbers:
         - "your_sms_to_number1"
@@ -527,7 +527,7 @@ monitoring:
       smtp_server: smtp.your-email-provider.com
       smtp_port: 587
       username: your-email-username
-      password: your-email-password
+      password: your-email-password # pragma: allowlist secret
       from_address: your-email-from-address
       to_addresses:
         - your-email-to-address1
@@ -550,12 +550,11 @@ monitoring:
       - level: "info"
         actions:
           - "send_email"
-
-Repository: https://github.com/kubex-ecosystem/kubex-gemx-grompt
-version: 1.0.0
-authors:
-  - "Kubex Dev Team <dev@kubex.world>"
-license: "MIT"
+# Repository: https://github.com/kubex-ecosystem/kubex-gemx-grompt
+# version: 1.0.0
+# authors:
+#   - "Kubex Dev Team <dev@kubex.world>"
+# license: "MIT"
 #
 #
 # We appreciate your support and feedback.

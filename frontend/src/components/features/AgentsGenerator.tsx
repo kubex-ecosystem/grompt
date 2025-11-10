@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { AgentsGenerationResult, Idea, StoredAgent } from '../../../types';
+import type { AgentsGenerationResult, Idea, StoredAgent } from '@/types';
 import { LanguageContext } from '../../context/LanguageContext';
 import { configService, type ProviderInfo } from '../../services/configService';
 import { agentsService } from '../../services/agentsService';

@@ -38,8 +38,9 @@ Grompt supports **BYOK (Bring Your Own Key)** functionality, allowing users to p
 ### 1. cURL Examples
 
 #### OpenAI with Generic Header
+
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-proj-YOUR_OPENAI_KEY_HERE" \
   -d '{
@@ -51,8 +52,9 @@ curl -X POST http://localhost:8080/api/unified \
 ```
 
 #### Gemini with Provider-Specific Header
+
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-GEMINI-Key: AIzaYOUR_GEMINI_KEY_HERE" \
   -d '{
@@ -65,8 +67,9 @@ curl -X POST http://localhost:8080/api/unified \
 ```
 
 #### Claude (Anthropic) Example
+
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-CLAUDE-Key: sk-ant-YOUR_CLAUDE_KEY" \
   -d '{
@@ -82,9 +85,10 @@ curl -X POST http://localhost:8080/api/unified \
 ### 2. JavaScript/TypeScript Examples
 
 #### Fetch API
+
 ```typescript
 async function generateWithBYOK(apiKey: string, prompt: string) {
-  const response = await fetch('http://localhost:8080/api/unified', {
+  const response = await fetch('http://localhost:8080/api/v1/unified', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -111,6 +115,7 @@ console.log(result.response);
 ```
 
 #### React Hook Example
+
 ```typescript
 import { useState } from 'react';
 
@@ -123,7 +128,7 @@ function useGromptBYOK() {
     setError(null);
 
     try {
-      const response = await fetch('/api/unified', {
+      const response = await fetch('/api/v1/unified', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,12 +184,13 @@ function PromptGenerator() {
 ### 3. Python Examples
 
 #### Using Requests Library
+
 ```python
 import requests
 
 def generate_prompt_byok(api_key: str, provider: str, prompt: str):
     """Generate prompt using external API key"""
-    url = "http://localhost:8080/api/unified"
+    url = "http://localhost:8080/api/v1/unified"
     headers = {
         "Content-Type": "application/json",
         "X-API-Key": api_key
@@ -209,6 +215,7 @@ print(result['response'])
 ```
 
 #### Async with HTTPX
+
 ```python
 import httpx
 import asyncio
@@ -216,7 +223,7 @@ import asyncio
 async def generate_async(api_key: str, provider: str, prompt: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "http://localhost:8080/api/unified",
+            "http://localhost:8080/api/v1/unified",
             json={"provider": provider, "prompt": prompt, "max_tokens": 1000},
             headers={"X-API-Key": api_key}
         )
@@ -231,14 +238,16 @@ result = asyncio.run(generate_async("sk-...", "openai", "Hello AI"))
 
 ## Security Best Practices
 
-### ✅ DO:
+### ✅ DO
+
 - **Use HTTPS** in production to encrypt API keys in transit
 - **Validate API keys** on the client before sending requests
 - **Store keys securely** using browser's `sessionStorage` or secure vaults
 - **Clear keys** from memory after use
 - **Use environment variables** for development
 
-### ❌ DON'T:
+### ❌ DON'T
+
 - Don't commit API keys to version control
 - Don't store keys in `localStorage` (vulnerable to XSS)
 - Don't log API keys in browser console
@@ -258,6 +267,7 @@ The Grompt web interface includes built-in BYOK support:
 5. Key is sent only for that request and never stored
 
 ### Security Notice
+>
 > 💡 Your API key is only used for the current request and is **never stored on our servers**. The key is transmitted securely and discarded after use.
 
 ---
@@ -267,27 +277,33 @@ The Grompt web interface includes built-in BYOK support:
 ### Common Errors
 
 #### Missing API Key
+
 ```json
 {
   "error": "OpenAI API Key not configured and not provided via X-API-Key header"
 }
 ```
+
 **Solution:** Provide a valid API key via `X-API-Key` header
 
 #### Invalid API Key
+
 ```json
 {
   "error": "Error in openai API: invalid_api_key"
 }
 ```
+
 **Solution:** Verify your API key is correct and active
 
 #### Unsupported Provider
+
 ```json
 {
   "error": "Unsupported provider: unknown_provider"
 }
 ```
+
 **Solution:** Use one of: `openai`, `claude`, `gemini`, `deepseek`, `chatgpt`, `ollama`
 
 ---
@@ -295,6 +311,7 @@ The Grompt web interface includes built-in BYOK support:
 ## Testing BYOK
 
 ### Quick Test Script
+
 ```bash
 #!/bin/bash
 
@@ -302,7 +319,7 @@ The Grompt web interface includes built-in BYOK support:
 API_KEY="sk-proj-YOUR_KEY_HERE"
 PROMPT="Write a haiku about programming"
 
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $API_KEY" \
   -d "{
@@ -314,7 +331,7 @@ curl -X POST http://localhost:8080/api/unified \
 # Test multiple providers
 for provider in openai claude gemini; do
   echo "Testing $provider..."
-  curl -s -X POST http://localhost:8080/api/unified \
+  curl -s -X POST http://localhost:8080/api/v1/unified \
     -H "Content-Type: application/json" \
     -H "X-API-Key: $API_KEY" \
     -d "{
@@ -330,18 +347,23 @@ done
 ## FAQ
 
 ### Q: Is my API key stored on the server?
+
 **A:** No. External API keys are only used for the current request and are never persisted.
 
 ### Q: Can I use different keys for different requests?
+
 **A:** Yes! Each request can use a different API key via headers.
 
 ### Q: What happens if I provide both server config and external key?
+
 **A:** External key takes priority and will be used instead of server configuration.
 
 ### Q: Does BYOK work with all providers?
+
 **A:** Yes! BYOK supports OpenAI, Claude, Gemini, DeepSeek, and ChatGPT.
 
 ### Q: Can I use BYOK with the web interface?
+
 **A:** Yes! The web UI includes a built-in BYOK input field in the Prompt Crafter.
 
 ---
@@ -349,6 +371,7 @@ done
 ## Troubleshooting
 
 ### CORS Issues
+
 If you encounter CORS errors when using BYOK from a web app:
 
 1. Ensure you're using the correct headers
@@ -356,17 +379,19 @@ If you encounter CORS errors when using BYOK from a web app:
 3. Verify CORS is properly configured in `handlers.go`
 
 The server should include these headers:
-```
+
+```txt
 Access-Control-Allow-Headers: Content-Type, Authorization, X-API-Key, X-OPENAI-Key, X-CLAUDE-Key, X-GEMINI-Key, X-DEEPSEEK-Key, X-CHATGPT-Key
 ```
 
 ### Network Issues
+
 ```bash
 # Test if server is running
 curl http://localhost:8080/api/health
 
 # Test with verbose output
-curl -v -X POST http://localhost:8080/api/unified \
+curl -v -X POST http://localhost:8080/api/v1/unified \
   -H "X-API-Key: test" \
   -d '{"provider":"openai","prompt":"test"}'
 ```
@@ -376,6 +401,7 @@ curl -v -X POST http://localhost:8080/api/unified \
 ## Implementation Details
 
 ### Backend (Go)
+
 The BYOK implementation in `handlers.go`:
 
 1. Extracts API key from request headers
@@ -385,6 +411,7 @@ The BYOK implementation in `handlers.go`:
 5. Uses external key for request, discards after response
 
 ### Frontend (TypeScript)
+
 The frontend implementation in `unifiedAIService.ts`:
 
 1. Accepts optional `apiKey` parameter
@@ -397,8 +424,9 @@ The frontend implementation in `unifiedAIService.ts`:
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/kubex-ecosystem/grompt/issues
-- Documentation: https://github.com/kubex-ecosystem/grompt/tree/main/docs
+
+- GitHub Issues: <https://github.com/kubex-ecosystem/grompt/issues>
+- Documentation: <https://github.com/kubex-ecosystem/grompt/tree/main/docs>
 
 ---
 

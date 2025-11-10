@@ -1,4 +1,4 @@
-import { HistoryItem, Draft } from '../types';
+import { HistoryItem, Draft } from '@/types';
 
 const DB_NAME = 'GromptDB';
 const HISTORY_STORE = 'history';

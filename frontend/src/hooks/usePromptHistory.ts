@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { HistoryItem } from '../types';
+import { HistoryItem } from '@/types';
 import { getHistory, saveHistory } from '../services/storageService';
 
 export const usePromptHistory = () => {

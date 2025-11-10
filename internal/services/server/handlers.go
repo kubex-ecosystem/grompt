@@ -58,6 +58,95 @@ type UsageInfo struct {
 
 var llmKeyMap map[string]string
 
+type providerDescriptor struct {
+	Key              string
+	DisplayName      string
+	DefaultModel     string
+	Models           []string
+	SupportsBYOK     bool
+	RequiresEndpoint bool
+}
+
+type providerSummary struct {
+	Name         string   `json:"name"`
+	DisplayName  string   `json:"display_name"`
+	Available    bool     `json:"available"`
+	Configured   bool     `json:"configured"`
+	Models       []string `json:"models"`
+	DefaultModel string   `json:"default_model,omitempty"`
+	Endpoint     string   `json:"endpoint,omitempty"`
+	Status       string   `json:"status"`
+	Mode         string   `json:"mode"`
+	SupportsBYOK bool     `json:"supports_byok"`
+}
+
+var providerCatalog = []providerDescriptor{
+	{
+		Key:          "openai",
+		DisplayName:  "OpenAI",
+		DefaultModel: "gpt-4o-mini",
+		Models: []string{
+			"gpt-4o",
+			"gpt-4o-mini",
+			"gpt-4-turbo",
+			"gpt-3.5-turbo",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "claude",
+		DisplayName:  "Anthropic Claude",
+		DefaultModel: "claude-3-5-sonnet-20241022",
+		Models: []string{
+			"claude-3-5-sonnet-20241022",
+			"claude-3-sonnet-20240229",
+			"claude-3-haiku-20240307",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "gemini",
+		DisplayName:  "Google Gemini",
+		DefaultModel: "gemini-2.0-flash",
+		Models: []string{
+			"gemini-2.0-flash",
+			"gemini-2.0-flash-exp",
+			"gemini-2.5-pro",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "deepseek",
+		DisplayName:  "DeepSeek",
+		DefaultModel: "deepseek-v3",
+		Models: []string{
+			"deepseek-v3",
+			"deepseek-chat",
+			"deepseek-reasoner",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:          "chatgpt",
+		DisplayName:  "ChatGPT (OpenAI)",
+		DefaultModel: "gpt-4o-mini",
+		Models: []string{
+			"gpt-4o-mini",
+			"gpt-4o",
+			"gpt-4.1-mini",
+		},
+		SupportsBYOK: true,
+	},
+	{
+		Key:              "ollama",
+		DisplayName:      "Ollama (Local)",
+		DefaultModel:     "llama3.2",
+		Models:           []string{"llama3.2", "phi3", "mistral"},
+		SupportsBYOK:     false,
+		RequiresEndpoint: true,
+	},
+}
+
 // generateDemoResponse creates a fallback demo response when no API keys are available
 func (h *Handlers) generateDemoResponse(prompt string, purpose string) string {
 	return fmt.Sprintf(`# 🎭 Demo Mode Response
@@ -73,12 +162,12 @@ Configure an API key using one of these methods:
 
 ### Option 1: Server Configuration (Recommended)
 Set environment variables before starting Grompt:
-` + "```bash" + `
+`+"```bash"+`
 export OPENAI_API_KEY=sk-...
 export CLAUDE_API_KEY=sk-ant-...
 export GEMINI_API_KEY=AIza...
 ./grompt start
-` + "```" + `
+`+"```"+`
 
 ### Option 2: BYOK (Bring Your Own Key)
 Use the 🔑 button in the interface to provide your API key per request.
@@ -294,28 +383,105 @@ func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
 		h.getLLMAPIKeyMap(h.config)
 	}
 
+	providerDetails, providerOrder, readyProviders := h.describeProviders()
+	demoMode := len(readyProviders) == 0
+	defaultProvider := "openai"
+	if len(readyProviders) > 0 {
+		defaultProvider = readyProviders[0]
+	} else if len(providerOrder) > 0 {
+		defaultProvider = providerOrder[0]
+	}
+
+	serverInfo := map[string]string{
+		"name":    "Grompt Server",
+		"version": it.AppVersion,
+		"port":    h.config.GetPort(),
+		"status":  "ready",
+	}
+	if demoMode {
+		serverInfo["status"] = "demo"
+	}
+
 	// Prepare response with both raw config and availability flags
 	config := h.config
 	response := map[string]interface{}{
-		"port":             "8080",
-		"openai_api_key":   config.GetAPIKey("openai"),
-		"deepseek_api_key": config.GetAPIKey("deepseek"),
-		"ollama_endpoint":  config.GetAPIKey("ollama"),
-		"claude_api_key":   config.GetAPIKey("claude"),
-		"gemini_api_key":   config.GetAPIKey("gemini"),
-		"chatgpt_api_key":  config.GetAPIKey("chatgpt"),
-		"debug":            false,
-		// Availability flags for frontend
-		"openai_available":   h.isAPIEnabled("openai"),
-		"deepseek_available": h.isAPIEnabled("deepseek"),
-		"ollama_available":   h.isAPIEnabled("ollama"),
-		"claude_available":   h.isAPIEnabled("claude"),
-		"gemini_available":   h.isAPIEnabled("gemini"),
-		"chatgpt_available":  h.isAPIEnabled("chatgpt"),
+		"server":              serverInfo,
+		"environment":         map[string]bool{"demo_mode": demoMode},
+		"providers":           providerDetails,
+		"available_providers": providerOrder,
+		"default_provider":    defaultProvider,
+		"port":                h.config.GetPort(),
+		"openai_api_key":      config.GetAPIKey("openai"),
+		"deepseek_api_key":    config.GetAPIKey("deepseek"),
+		"ollama_endpoint":     config.GetAPIEndpoint("ollama"),
+		"claude_api_key":      config.GetAPIKey("claude"),
+		"gemini_api_key":      config.GetAPIKey("gemini"),
+		"chatgpt_api_key":     config.GetAPIKey("chatgpt"),
+		"debug":               false,
+		// Availability flags for frontend (legacy)
+		"openai_available":   providerDetails["openai"].Available,
+		"deepseek_available": providerDetails["deepseek"].Available,
+		"ollama_available":   providerDetails["ollama"].Available,
+		"claude_available":   providerDetails["claude"].Available,
+		"gemini_available":   providerDetails["gemini"].Available,
+		"chatgpt_available":  providerDetails["chatgpt"].Available,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []string) {
+	providers := make(map[string]providerSummary, len(providerCatalog))
+	order := make([]string, 0, len(providerCatalog))
+	ready := make([]string, 0, len(providerCatalog))
+
+	for _, descriptor := range providerCatalog {
+		order = append(order, descriptor.Key)
+
+		var configured bool
+		var endpoint string
+		if descriptor.RequiresEndpoint {
+			endpoint = h.config.GetAPIEndpoint(descriptor.Key)
+			configured = strings.TrimSpace(endpoint) != ""
+		} else {
+			configured = strings.TrimSpace(h.config.GetAPIKey(descriptor.Key)) != ""
+		}
+
+		status := "needs_api_key"
+		mode := "byok"
+		available := configured
+
+		if configured {
+			status = "ready"
+			mode = "server"
+			ready = append(ready, descriptor.Key)
+		} else if descriptor.RequiresEndpoint {
+			status = "offline"
+			mode = "offline"
+		}
+
+		providers[descriptor.Key] = providerSummary{
+			Name:         descriptor.Key,
+			DisplayName:  descriptor.DisplayName,
+			Available:    available,
+			Configured:   configured,
+			Models:       descriptor.Models,
+			DefaultModel: descriptor.DefaultModel,
+			Endpoint:     endpoint,
+			Status:       status,
+			Mode:         mode,
+			SupportsBYOK: descriptor.SupportsBYOK,
+		}
+	}
+
+	if summary, ok := providers["claude"]; ok {
+		alias := summary
+		alias.Name = "anthropic"
+		providers["anthropic"] = alias
+	}
+
+	return providers, order, ready
 }
 
 func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
@@ -1110,22 +1276,22 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 	case "claude":
 		models = map[string]any{
 			"claude-3-5-sonnet-20241022": struct{}{},
-			"claude-3-5-haiku-20241022": struct{}{},
-			"claude-3-opus-20240229":    struct{}{},
-			"claude-3-sonnet-20240229":  struct{}{},
+			"claude-3-5-haiku-20241022":  struct{}{},
+			"claude-3-opus-20240229":     struct{}{},
+			"claude-3-sonnet-20240229":   struct{}{},
 			"claude-3-haiku-20240307":    struct{}{},
 		}
 
 	case "ollama":
 		models = map[string]any{
-			"llama3.2":   struct{}{},
-			"llama3.1":   struct{}{},
-			"codellama":  struct{}{},
-			"mistral":    struct{}{},
+			"llama3.2":    struct{}{},
+			"llama3.1":    struct{}{},
+			"codellama":   struct{}{},
+			"mistral":     struct{}{},
 			"neural-chat": struct{}{},
-			"vicuna":     struct{}{},
+			"vicuna":      struct{}{},
 			"wizardcoder": struct{}{},
-			"llama2":     struct{}{},
+			"llama2":      struct{}{},
 		}
 
 	default:

@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Language } from '../../../types';
+import { Language } from '@/types';
 import { LanguageContext } from '../../context/LanguageContext';
 import { useTranslations } from '../../i18n/useTranslations';
 

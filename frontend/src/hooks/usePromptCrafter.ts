@@ -2,6 +2,7 @@ import { GenerateRequest } from '@/services/api';
 import { useCallback, useEffect, useState } from 'react';
 import { DemoMode, FeatureKey } from '../config/demoMode';
 import onboardingSteps from '../constants/onboardingSteps';
+import { Idea } from '@/types';
 import { useGromptAPI } from './useGromptAPI';
 
 
@@ -19,13 +20,6 @@ const {
 
 })
 
-
-// Type definitions
-export interface Idea {
-  id: string;
-  text: string;
-  timestamp?: Date;
-}
 
 export type OutputType = 'prompt' | 'agent';
 export type AgentFramework = 'crewai' | 'autogen' | 'langchain' | 'semantic-kernel' | 'custom';

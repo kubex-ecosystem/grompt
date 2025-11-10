@@ -7,7 +7,7 @@ import { AlertCircle, Check, Eye, EyeOff, Key, Settings, TestTube, X } from 'luc
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { multiProviderService, type MultiProviderConfig } from '../../services/multiProviderService'
-import { AIProvider } from '../../types/types'
+import { AIProvider } from '@/types/types'
 
 export interface MultiProviderConfigProps {
   isOpen: boolean

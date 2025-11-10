@@ -12,7 +12,7 @@ Get started with **Grompt** in less than 60 seconds!
 ./grompt start
 ```
 
-Default address: **http://localhost:8080**
+Default address: **<http://localhost:8080>**
 
 ### 2. Open in Browser
 
@@ -77,7 +77,8 @@ grompt squad "Build a payment microservice with Stripe integration"
 ```
 
 Output:
-```
+
+```txt
 🤖 Recommended AI Squad:
 
 1. Backend Specialist (Claude 3.5 Sonnet)
@@ -104,7 +105,7 @@ Output:
 grompt start -p 5000
 ```
 
-Now access at **http://localhost:5000**
+Now access at **<http://localhost:5000>**
 
 ---
 
@@ -117,6 +118,7 @@ grompt gateway start
 ```
 
 Features:
+
 - Rate limiting per API key
 - Request metrics and logging
 - CORS support
@@ -131,7 +133,7 @@ Grompt exposes REST endpoints when running in server mode:
 ### Unified Endpoint (All Providers)
 
 ```bash
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-your-key-here" \
   -d '{
@@ -164,7 +166,7 @@ POST /api/ollama
 ### Check Configuration
 
 ```bash
-curl http://localhost:8080/api/config
+curl http://localhost:8080/api/v1/config
 ```
 
 Returns available providers and default settings.

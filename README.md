@@ -451,12 +451,12 @@ make clean
 
 ```bash
 # Configuration & Health
-GET  /api/config     # Available APIs and configuration
+GET  /api/v1/config     # Available APIs and configuration
 GET  /api/health     # Server health status
 GET  /api/models     # Available models per provider
 
 # Prompt Generation
-POST /api/unified    # Unified endpoint for all providers
+POST /api/v1/unified    # Unified endpoint for all providers
 POST /api/openai     # OpenAI specific endpoint
 POST /api/gemini     # Gemini specific endpoint
 POST /api/chatgpt    # ChatGPT specific endpoint
@@ -471,6 +471,7 @@ GET  /api/test       # Test API provider availability
 ### 🔑 **BYOK (Bring Your Own Key) Support**
 
 Grompt now supports **external API keys per request** via HTTP headers, enabling:
+
 - ✅ No server-side API key configuration required
 - ✅ Use your own keys without storing them on the server
 - ✅ Perfect for client applications and browser extensions
@@ -479,9 +480,10 @@ Grompt now supports **external API keys per request** via HTTP headers, enabling
 #### Usage Examples
 
 **Via cURL:**
+
 ```bash
 # Generic X-API-Key header (works with all providers)
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-API-Key: sk-your-openai-key-here" \
   -d '{
@@ -491,7 +493,7 @@ curl -X POST http://localhost:8080/api/unified \
   }'
 
 # Provider-specific header
-curl -X POST http://localhost:8080/api/unified \
+curl -X POST http://localhost:8080/api/v1/unified \
   -H "Content-Type: application/json" \
   -H "X-GEMINI-Key: AIza-your-gemini-key" \
   -d '{
@@ -502,8 +504,9 @@ curl -X POST http://localhost:8080/api/unified \
 ```
 
 **Via JavaScript/TypeScript:**
+
 ```typescript
-const response = await fetch('/api/unified', {
+const response = await fetch('/api/v1/unified', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -518,6 +521,7 @@ const response = await fetch('/api/unified', {
 ```
 
 **Supported Headers:**
+
 - `X-API-Key` - Generic header for any provider
 - `X-OPENAI-Key` - OpenAI specific
 - `X-CLAUDE-Key` - Anthropic Claude specific
