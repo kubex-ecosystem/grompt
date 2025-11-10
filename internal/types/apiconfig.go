@@ -24,7 +24,7 @@ func (a *apiConfig) IsDemoMode() bool { return false }
 func (a *apiConfig) Version() string { return "gateway-v1" }
 
 func (a *apiConfig) ListModels() ([]string, error) {
-	model := a.cfg.defaultModels[a.provider]
+	model := a.cfg.DefaultModels[a.provider]
 	if model == "" {
 		return []string{}, nil
 	}
@@ -37,7 +37,7 @@ func (a *apiConfig) GetCommonModels() []string {
 }
 
 func (a *apiConfig) Complete(prompt string, maxTokens int, model string) (string, error) {
-	if a == nil || a.cfg == nil || a.cfg.engine == nil {
+	if a == nil || a.cfg == nil || a.cfg.Engine == nil {
 		return "", errors.New("prompt engine not initialized")
 	}
 
@@ -48,7 +48,7 @@ func (a *apiConfig) Complete(prompt string, maxTokens int, model string) (string
 		vars["model"] = model
 	}
 
-	result, err := a.cfg.engine.InvokeProvider(context.Background(), a.provider, prompt, vars)
+	result, err := a.cfg.Engine.InvokeProvider(context.Background(), a.provider, prompt, vars)
 	if err != nil {
 		return "", err
 	}

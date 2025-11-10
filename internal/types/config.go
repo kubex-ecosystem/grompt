@@ -68,61 +68,61 @@ func NewServerConfig(
 	providerConfigPath string,
 ) interfaces.ServerConfig {
 	cfg := newServerConfig()
-	cfg.bindAddr = bindAddr
+	cfg.BindAddr = bindAddr
 	if port != "" {
-		cfg.port = port
+		cfg.Port = port
 	}
-	cfg.logger = logger
+	cfg.Logger = logger
 	if openAIKey != "" {
-		cfg.apiKeys["openai"] = openAIKey
+		cfg.APIKeys["openai"] = openAIKey
 	}
 	if claudeKey != "" {
-		cfg.apiKeys["claude"] = claudeKey
+		cfg.APIKeys["claude"] = claudeKey
 	}
 	if geminiKey != "" {
-		cfg.apiKeys["gemini"] = geminiKey
+		cfg.APIKeys["gemini"] = geminiKey
 	}
 	if deepSeekKey != "" {
-		cfg.apiKeys["deepseek"] = deepSeekKey
+		cfg.APIKeys["deepseek"] = deepSeekKey
 	}
 	if chatGPTKey != "" {
-		cfg.apiKeys["chatgpt"] = chatGPTKey
+		cfg.APIKeys["chatgpt"] = chatGPTKey
 	}
 	if ollamaEndpoint != "" {
-		cfg.endpoints["ollama"] = ollamaEndpoint
+		cfg.Endpoints["ollama"] = ollamaEndpoint
 	}
-	cfg.name = name
-	cfg.debug = debug
-	cfg.tempDir = tempDir
-	cfg.logFile = logFile
-	cfg.envFile = envFile
-	cfg.configFile = configFile
-	cfg.cwd = cwd // pragma: allowlist secret
+	cfg.Name = name
+	cfg.Debug = debug
+	cfg.TempDir = tempDir
+	cfg.LogFile = logFile
+	cfg.EnvFile = envFile
+	cfg.ConfigFile = configFile
+	cfg.Cwd = cwd // pragma: allowlist secret
 	for k, v := range apiKeys {
-		cfg.apiKeys[k] = v
+		cfg.APIKeys[k] = v
 	}
 	for k, v := range endpoints {
-		cfg.endpoints[k] = v
+		cfg.Endpoints[k] = v
 	}
 	for k, v := range defaultModels {
-		cfg.defaultModels[k] = v
+		cfg.DefaultModels[k] = v
 	}
 	for k, v := range providerTypes {
-		cfg.providerTypes[k] = v
+		cfg.ProviderTypes[k] = v
 	}
 	if defaultProvider != "" {
-		cfg.defaultProvider = defaultProvider
+		cfg.DefaultProvider = defaultProvider
 	}
 	if defaultTemperature >= 0 {
-		cfg.defaultTemperature = defaultTemperature
+		cfg.DefaultTemperature = defaultTemperature
 	}
 	if historyLimit > 0 {
-		cfg.historyLimit = historyLimit
+		cfg.HistoryLimit = historyLimit
 	}
 	if timeout > 0 {
-		cfg.timeout = timeout
+		cfg.Timeout = timeout
 	}
-	cfg.providerConfigPath = providerConfigPath
+	cfg.ProviderConfigPath = providerConfigPath
 
 	return cfg
 }
@@ -132,57 +132,57 @@ func NewServerConfig(
 var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama", "chatgpt", "groq"}
 
 type ServerConfigImpl struct {
-	name               string
-	debug              bool
-	logger             logz.Logger
-	bindAddr           string
-	port               string
-	tempDir            string
-	logFile           string
-	envFile           string
-	configFile        string
-	cwd               string
-	apiKeys            map[string]string
-	endpoints          map[string]string
-	defaultModels      map[string]string
-	providerTypes      map[string]string
-	defaultProvider    string
-	defaultTemperature float32
-	historyLimit       int
-	timeout            time.Duration
-	providerConfigPath string
+	Name               string
+	Debug              bool
+	Logger             logz.Logger
+	BindAddr           string
+	Port               string
+	TempDir            string
+	LogFile           string
+	EnvFile           string
+	ConfigFile        string
+	Cwd               string
+	APIKeys            map[string]string
+	Endpoints          map[string]string
+	DefaultModels      map[string]string
+	ProviderTypes      map[string]string
+	DefaultProvider    string
+	DefaultTemperature float32
+	HistoryLimit       int
+	Timeout            time.Duration
+	ProviderConfigPath string
 
-	engine interfaces.IEngine
-	mu     sync.RWMutex
+	Engine interfaces.IEngine
+	Mu     sync.RWMutex
 }
 
 func newServerConfig() *ServerConfigImpl {
 	cfg := &ServerConfigImpl{
-		port:               "8080",
-		apiKeys:            map[string]string{},
-		endpoints:          map[string]string{},
-		defaultModels:      map[string]string{},
-		providerTypes:      map[string]string{},
-		defaultProvider:    "openai",
-		defaultTemperature: 0.7,
-		historyLimit:       100,
-		timeout:            60 * time.Second,
+		Port:               "8080",
+		APIKeys:            map[string]string{},
+		Endpoints:          map[string]string{},
+		DefaultModels:      map[string]string{},
+		ProviderTypes:      map[string]string{},
+		DefaultProvider:    "openai",
+		DefaultTemperature: 0.7,
+		HistoryLimit:       100,
+		Timeout:            60 * time.Second,
 	}
 
-	cfg.providerTypes["openai"] = "openai"
-	cfg.providerTypes["claude"] = "anthropic"
-	cfg.providerTypes["gemini"] = "gemini"
-	cfg.providerTypes["groq"] = "groq"
+	cfg.ProviderTypes["openai"] = "openai"
+	cfg.ProviderTypes["claude"] = "anthropic"
+	cfg.ProviderTypes["gemini"] = "gemini"
+	cfg.ProviderTypes["groq"] = "groq"
 
-	cfg.defaultModels["openai"] = "gpt-4o-mini"
-	cfg.defaultModels["claude"] = "claude-3-5-sonnet-20241022"
-	cfg.defaultModels["gemini"] = "gemini-1.5-pro"
-	cfg.defaultModels["groq"] = "llama-3.1-70b-versatile"
+	cfg.DefaultModels["openai"] = "gpt-4o-mini"
+	cfg.DefaultModels["claude"] = "claude-3-5-sonnet-20241022"
+	cfg.DefaultModels["gemini"] = "gemini-1.5-pro"
+	cfg.DefaultModels["groq"] = "llama-3.1-70b-versatile"
 
-	cfg.endpoints["openai"] = "https://api.openai.com"
-	cfg.endpoints["claude"] = "https://api.anthropic.com"
-	cfg.endpoints["gemini"] = "https://generativelanguage.googleapis.com"
-	cfg.endpoints["groq"] = "https://api.groq.com"
+	cfg.Endpoints["openai"] = "https://api.openai.com"
+	cfg.Endpoints["claude"] = "https://api.anthropic.com"
+	cfg.Endpoints["gemini"] = "https://generativelanguage.googleapis.com"
+	cfg.Endpoints["groq"] = "https://api.groq.com"
 
 	return cfg
 }
@@ -202,32 +202,32 @@ func (c *ServerConfigImpl) GetLegacyAPIConfig(provider string) interfaces.Legacy
 }
 
 func (c *ServerConfigImpl) GetPort() string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.port
+	c.Mu.RLock()
+	defer c.Mu.RUnlock()
+	return c.Port
 }
 
 func (c *ServerConfigImpl) GetAPIKey(provider string) string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.apiKeys[strings.ToLower(provider)]
+	c.Mu.RLock()
+	defer c.Mu.RUnlock()
+	return c.APIKeys[strings.ToLower(provider)]
 }
 
 func (c *ServerConfigImpl) SetAPIKey(provider, key string) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.Mu.Lock()
+	defer c.Mu.Unlock()
 	if key == "" {
-		delete(c.apiKeys, strings.ToLower(provider))
+		delete(c.APIKeys, strings.ToLower(provider))
 		return nil
 	}
-	c.apiKeys[strings.ToLower(provider)] = key
+	c.APIKeys[strings.ToLower(provider)] = key
 	return nil
 }
 
 func (c *ServerConfigImpl) GetAPIEndpoint(provider string) string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.endpoints[strings.ToLower(provider)]
+	c.Mu.RLock()
+	defer c.Mu.RUnlock()
+	return c.Endpoints[strings.ToLower(provider)]
 }
 
 func (c *ServerConfigImpl) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
@@ -259,22 +259,22 @@ func (c *ServerConfigImpl) loadFromEnv() {
 	for _, provider := range legacyProviders {
 		if envKey := defaultEnvKey(provider); envKey != "" {
 			if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
-				c.apiKeys[provider] = value
+				c.APIKeys[provider] = value
 			}
 		}
 	}
 
 	if v := strings.TrimSpace(os.Getenv("GROMPT_DEFAULT_PROVIDER")); v != "" {
-		c.defaultProvider = strings.ToLower(v)
+		c.DefaultProvider = strings.ToLower(v)
 	}
 	if v := strings.TrimSpace(os.Getenv("GROMPT_HISTORY_LIMIT")); v != "" {
 		if parsed, err := parsePositiveInt(v); err == nil {
-			c.historyLimit = parsed
+			c.HistoryLimit = parsed
 		}
 	}
 	if v := strings.TrimSpace(os.Getenv("GROMPT_REQUEST_TIMEOUT")); v != "" {
 		if dur, err := time.ParseDuration(v); err == nil {
-			c.timeout = dur
+			c.Timeout = dur
 		}
 	}
 }
@@ -299,20 +299,20 @@ func (c *ServerConfigImpl) loadFromFile(path string) error {
 		return fmt.Errorf("unsupported config file extension: %s", filepath.Ext(path))
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.Mu.Lock()
+	defer c.Mu.Unlock()
 
 	if fileCfg.Port != "" {
-		c.port = fileCfg.Port
+		c.Port = fileCfg.Port
 	}
 	if fileCfg.DefaultProvider != "" {
-		c.defaultProvider = strings.ToLower(fileCfg.DefaultProvider)
+		c.DefaultProvider = strings.ToLower(fileCfg.DefaultProvider)
 	}
 	if fileCfg.HistoryLimit > 0 {
-		c.historyLimit = fileCfg.HistoryLimit
+		c.HistoryLimit = fileCfg.HistoryLimit
 	}
 	if fileCfg.TimeoutSec > 0 {
-		c.timeout = time.Duration(fileCfg.TimeoutSec) * time.Second
+		c.Timeout = time.Duration(fileCfg.TimeoutSec) * time.Second
 	}
 
 	mergeMap := func(dst map[string]string, src map[string]string) {
@@ -323,17 +323,17 @@ func (c *ServerConfigImpl) loadFromFile(path string) error {
 		}
 	}
 
-	mergeMap(c.apiKeys, fileCfg.APIKeys)
-	mergeMap(c.endpoints, fileCfg.Endpoints)
+	mergeMap(c.APIKeys, fileCfg.APIKeys)
+	mergeMap(c.Endpoints, fileCfg.Endpoints)
 
 	for provider, model := range fileCfg.Models {
 		if strings.TrimSpace(model) != "" {
-			c.defaultModels[strings.ToLower(provider)] = model
+			c.DefaultModels[strings.ToLower(provider)] = model
 		}
 	}
 
 	if fileCfg.ProviderConfigPath != "" {
-		c.providerConfigPath = fileCfg.ProviderConfigPath
+		c.ProviderConfigPath = fileCfg.ProviderConfigPath
 	}
 
 	return nil
@@ -341,31 +341,31 @@ func (c *ServerConfigImpl) loadFromFile(path string) error {
 
 func (c *ServerConfigImpl) registryConfig() interfaces.ServerConfig {
 	cfg := NewServerConfig(
-		c.bindAddr,
-		c.debug,
-		c.logger,
-		c.bindAddr,
-		c.port,
-		c.tempDir,
-		c.logFile,
-		c.envFile,
-		c.configFile,
-		c.cwd,
-		c.apiKeys["openai"],
-		c.apiKeys["claude"],
-		c.apiKeys["gemini"],
-		c.apiKeys["deepseek"],
-		c.apiKeys["chatgpt"],
-		c.endpoints["ollama"],
-		c.apiKeys,
-		c.endpoints,
-		c.defaultModels,
-		c.providerTypes,
-		c.defaultProvider,
-		c.defaultTemperature,
-		c.historyLimit,
-		c.timeout,
-		c.providerConfigPath,
+		c.BindAddr,
+		c.Debug,
+		c.Logger,
+		c.BindAddr,
+		c.Port,
+		c.TempDir,
+		c.LogFile,
+		c.EnvFile,
+		c.ConfigFile,
+		c.Cwd,
+		c.APIKeys["openai"],
+		c.APIKeys["claude"],
+		c.APIKeys["gemini"],
+		c.APIKeys["deepseek"],
+		c.APIKeys["chatgpt"],
+		c.Endpoints["ollama"],
+		c.APIKeys,
+		c.Endpoints,
+		c.DefaultModels,
+		c.ProviderTypes,
+		c.DefaultProvider,
+		c.DefaultTemperature,
+		c.HistoryLimit,
+		c.Timeout,
+		c.ProviderConfigPath,
 	)
 
 	return cfg

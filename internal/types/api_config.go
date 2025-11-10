@@ -415,30 +415,30 @@ func (c *Config) Validate() error {
 		c.Port = c.Defaults.Port
 	}
 	if c.BindAddr == "" {
-		c.Server.bindAddr = c.Defaults.Bind
+		c.Server.BindAddr = c.Defaults.Bind
 	} else {
-		c.Server.bindAddr = c.BindAddr
+		c.Server.BindAddr = c.BindAddr
 	}
-	if c.Server.name == "" {
-		c.Server.name = c.Defaults.Name
+	if c.Server.Name == "" {
+		c.Server.Name = c.Defaults.Name
 	}
-	if c.Server.envFile == "" {
-		c.Server.envFile = c.Defaults.EnvFile
+	if c.Server.EnvFile == "" {
+		c.Server.EnvFile = c.Defaults.EnvFile
 	}
-	if c.Server.debug {
+	if c.Server.Debug {
 		glgr.SetDebug(true)
 		glgr.Log("info", "Debug mode is enabled")
 	}else {
 		glgr.Log("info", "Debug mode is disabled")
 	}
 	var tmpDir string
-	if c.Server.logFile == "" {
-		c.Server.logFile = c.Defaults.LogFile
+	if c.Server.LogFile == "" {
+		c.Server.LogFile = c.Defaults.LogFile
 	}
-	if c.Server.tempDir == "" {
+	if c.Server.TempDir == "" {
 		tmpDir = c.Defaults.TempDir
 	} else {
-		tmpDir = c.Server.tempDir
+		tmpDir = c.Server.TempDir
 	}
 
 	if  _, err := os.Stat(tmpDir); os.IsNotExist(err) {
@@ -447,11 +447,11 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("failed to create temp dir for logs: %v", err)
 		}
 	}
-	if c.Server.logFile == "" {
+	if c.Server.LogFile == "" {
 		if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 			return fmt.Errorf("log directory does not exist: %s", tmpDir)
 		}
-		c.Server.logFile = tmpDir + "/grompt.log"
+		c.Server.LogFile = tmpDir + "/grompt.log"
 	}
 	if _, err := os.Stat(tmpDir + "/grompt.log"); os.IsNotExist(err) {
 		file, err := os.Create(tmpDir + "/grompt.log")
@@ -460,18 +460,18 @@ func (c *Config) Validate() error {
 		}
 		file.Close()
 	}
-	if c.Server.cwd == "" {
+	if c.Server.Cwd == "" {
 		var err error
-		c.Server.cwd, err = os.Getwd()
+		c.Server.Cwd, err = os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current working directory: %v", err)
 		}
 	}
 	var configFilePath string
-	if c.Server.configFile == "" {
-		configFilePath = filepath.Join(c.Server.cwd, "config", "development.yml")
+	if c.Server.ConfigFile == "" {
+		configFilePath = filepath.Join(c.Server.Cwd, "config", "development.yml")
 	} else {
-		configFilePath = c.Server.configFile
+		configFilePath = c.Server.ConfigFile
 	}
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		mapper := NewMapper(&c, configFilePath)
@@ -482,13 +482,13 @@ func (c *Config) Validate() error {
 		glgr.Log("info", fmt.Sprintf("Default config file created at: %s", configFilePath))
 	}
 
-	glgr.Log("info", fmt.Sprintf("Server name set to: %s", c.Server.name))
+	glgr.Log("info", fmt.Sprintf("Server name set to: %s", c.Server.Name))
 	glgr.Log("info", fmt.Sprintf("Using config file: %v", configFilePath))
 	glgr.Log("info", fmt.Sprintf("Bind address set to: %s", c.BindAddr))
-	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.envFile))
-	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.logFile))
+	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.EnvFile))
+	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.LogFile))
 	glgr.Log("info", fmt.Sprintf("Temporary directory set to: %s", tmpDir))
-	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.cwd))
+	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.Cwd))
 
 	return nil
 }
