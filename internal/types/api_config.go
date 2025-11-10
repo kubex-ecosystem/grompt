@@ -75,11 +75,11 @@ var (
 )
 
 type APIConfig struct {
-	APIKey     string
-	BaseURL    string
-	APIVersion    string
-	HTTPClient *http.Client
-	DemoMode   bool
+	APIKey     string `json:"api_key,omitempty" yaml:"api_key,omitempty" mapstructure:"api_key,omitempty"`
+	BaseURL    string `json:"base_url,omitempty" yaml:"base_url,omitempty" mapstructure:"base_url,omitempty"`
+	APIVersion    string `json:"api_version,omitempty" yaml:"api_version,omitempty" mapstructure:"api_version,omitempty"`
+	HTTPClient *http.Client `json:"-" yaml:"-" mapstructure:"-"`
+	DemoMode   bool  `json:"demo_mode,omitempty" yaml:"demo_mode,omitempty" mapstructure:"demo_mode,omitempty"`
 }
 
 type Config struct {

@@ -134,7 +134,7 @@ var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama
 type ServerConfigImpl struct {
 	Name               string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
 	Debug              bool   `json:"debug,omitempty" yaml:"debug,omitempty" mapstructure:"debug,omitempty"`
-	Logger             logz.Logger
+	Logger             logz.Logger `json:"-" yaml:"-" mapstructure:"-"`
 	BindAddr           string `json:"bind_addr,omitempty" yaml:"bind_addr,omitempty" mapstructure:"bind_addr,omitempty"`
 	Port               string `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
 	TempDir            string `json:"temp_dir,omitempty" yaml:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
@@ -152,8 +152,8 @@ type ServerConfigImpl struct {
 	Timeout            time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty" mapstructure:"timeout,omitempty"`
 	ProviderConfigPath string `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty" mapstructure:"provider_config_path,omitempty"`
 
-	Engine interfaces.IEngine
-	Mu     sync.RWMutex
+	Engine interfaces.IEngine `json:"-" yaml:"-" mapstructure:"-"`
+	Mu     sync.RWMutex 		 `json:"-" yaml:"-" mapstructure:"-"`
 }
 
 func newServerConfig() *ServerConfigImpl {
@@ -198,7 +198,7 @@ func (c *ServerConfigImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
 }
 
 func (c *ServerConfigImpl) GetLegacyAPIConfig(provider string) interfaces.LegacyAPIConfig {
-	return &apiConfig{provider: provider, cfg: c}
+	return &apiConfig{Provider: provider, APIServerConfig: c}
 }
 
 func (c *ServerConfigImpl) GetPort() string {

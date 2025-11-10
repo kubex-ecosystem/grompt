@@ -10,12 +10,12 @@ import (
 
 // ProviderImpl wraps the types.IAPIConfig to implement providers.Provider
 type ProviderImpl struct {
-	VName    string
-	VVersion string
-	VKeyEnv  string
-	VType    string
-	VAPI     interfaces.IAPIConfig
-	VConfig  interfaces.IConfig
+	VName    string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
+	VVersion string `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
+	VKeyEnv  string `json:"key_env,omitempty" yaml:"key_env,omitempty" mapstructure:"key_env,omitempty"`
+	VType    string `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
+	VAPI     interfaces.IAPIConfig `json:"api,omitempty" yaml:"api,omitempty" mapstructure:"api,omitempty"`
+	VConfig  interfaces.IConfig 	 `json:"config,omitempty" yaml:"config,omitempty" mapstructure:"config,omitempty"`
 }
 
 // Name returns the provider name
