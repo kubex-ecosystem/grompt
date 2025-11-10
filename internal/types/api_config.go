@@ -75,11 +75,11 @@ var (
 )
 
 type APIConfig struct {
-	apiKey     string
-	baseURL    string
-	version    string
-	httpClient *http.Client
-	demoMode   bool
+	APIKey     string
+	BaseURL    string
+	APIVersion    string
+	HTTPClient *http.Client
+	DemoMode   bool
 }
 
 type Config struct {

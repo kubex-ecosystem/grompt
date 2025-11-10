@@ -47,9 +47,9 @@ type ClaudeErrorResponse struct {
 func NewClaudeAPI(apiKey string) *ClaudeAPI {
 	return &ClaudeAPI{
 		APIConfig: &APIConfig{
-			apiKey:  apiKey,
-			baseURL: "https://api.openai.com/v1/chat/completions",
-			httpClient: &http.Client{
+			APIKey:  apiKey,
+			BaseURL: "https://api.openai.com/v1/chat/completions",
+			HTTPClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
 		},
@@ -57,7 +57,7 @@ func NewClaudeAPI(apiKey string) *ClaudeAPI {
 }
 
 func (o *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string, error) {
-	if o.apiKey == "" {
+	if o.APIKey == "" {
 		return "", fmt.Errorf("API key não configurada")
 	}
 
@@ -84,15 +84,15 @@ func (o *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string
 		return "", fmt.Errorf("erro ao serializar request: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", o.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", o.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("erro ao criar request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.APIKey)
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição: %v", err)
 	}
@@ -125,7 +125,7 @@ func (o *ClaudeAPI) Complete(prompt string, maxTokens int, model string) (string
 }
 
 func (o *ClaudeAPI) IsAvailable() bool {
-	if o.apiKey == "" {
+	if o.APIKey == "" {
 		return false
 	}
 
@@ -146,13 +146,13 @@ func (o *ClaudeAPI) IsAvailable() bool {
 		return false
 	}
 
-	req, err := http.NewRequest("POST", o.baseURL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", o.BaseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return false
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.APIKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
@@ -169,7 +169,7 @@ func (o *ClaudeAPI) IsAvailable() bool {
 
 // ListModels Listar modelos disponíveis
 func (o *ClaudeAPI) ListModels() (map[string]any, error) {
-	if o.apiKey == "" {
+	if o.APIKey == "" {
 		return nil, fmt.Errorf("API key não configurada")
 	}
 
@@ -179,9 +179,9 @@ func (o *ClaudeAPI) ListModels() (map[string]any, error) {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+o.apiKey)
+	req.Header.Set("Authorization", "Bearer "+o.APIKey)
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -227,11 +227,11 @@ func (o *ClaudeAPI) GetCommonModels() []string {
 }
 
 // Version returns the version of the API
-func (o *ClaudeAPI) Version() string { return o.version }
+func (o *ClaudeAPI) Version() string { return o.APIVersion }
 
 // IsDemoMode indicates if the API is in demo mode
-func (o *ClaudeAPI) IsDemoMode() bool { return o.demoMode }
+func (o *ClaudeAPI) IsDemoMode() bool { return o.DemoMode }
 
-func (o *ClaudeAPI) GetBaseURL() string { return o.baseURL }
+func (o *ClaudeAPI) GetBaseURL() string { return o.BaseURL }
 
-func (o *ClaudeAPI) GetAPIKey() string { return o.apiKey }
+func (o *ClaudeAPI) GetAPIKey() string { return o.APIKey }

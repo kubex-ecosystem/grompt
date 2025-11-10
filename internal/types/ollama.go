@@ -27,8 +27,8 @@ type OllamaResponse struct {
 func NewOllamaAPI(baseURL string) *OllamaAPI {
 	return &OllamaAPI{
 		APIConfig: &APIConfig{
-			baseURL: baseURL,
-			httpClient: &http.Client{
+			BaseURL: baseURL,
+			HTTPClient: &http.Client{
 				Timeout: 60 * time.Second,
 			},
 		},
@@ -36,7 +36,7 @@ func NewOllamaAPI(baseURL string) *OllamaAPI {
 }
 
 func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, error) {
-	endpoint := fmt.Sprintf("%s/api/generate", o.baseURL)
+	endpoint := fmt.Sprintf("%s/api/generate", o.BaseURL)
 
 	requestBody := OllamaRequest{
 		Model:  model,
@@ -56,7 +56,7 @@ func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, e
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := o.httpClient.Do(req)
+	resp, err := o.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("erro na requisição para Ollama: %v", err)
 	}
@@ -80,9 +80,9 @@ func (o *OllamaAPI) Complete(prompt string, stream int, model string) (string, e
 }
 
 func (o *OllamaAPI) IsAvailable() bool {
-	endpoint := fmt.Sprintf("%s/api/tags", o.baseURL)
+	endpoint := fmt.Sprintf("%s/api/tags", o.BaseURL)
 
-	resp, err := o.httpClient.Get(endpoint)
+	resp, err := o.HTTPClient.Get(endpoint)
 	if err != nil {
 		return false
 	}
@@ -101,9 +101,9 @@ func (o *OllamaAPI) GetCommonModels() []string {
 }
 
 func (o *OllamaAPI) ListModels() (map[string]any, error) {
-	endpoint := fmt.Sprintf("%s/api/models", o.baseURL)
+	endpoint := fmt.Sprintf("%s/api/models", o.BaseURL)
 
-	resp, err := o.httpClient.Get(endpoint)
+	resp, err := o.HTTPClient.Get(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("erro na requisição para Ollama: %v", err)
 	}
@@ -125,13 +125,13 @@ func (o *OllamaAPI) ListModels() (map[string]any, error) {
 	return models, nil
 }
 
-func (o *OllamaAPI) Version() string { return o.version }
+func (o *OllamaAPI) Version() string { return o.APIVersion }
 
-func (o *OllamaAPI) IsDemoMode() bool { return o.demoMode }
+func (o *OllamaAPI) IsDemoMode() bool { return o.DemoMode }
 
-func (o *OllamaAPI) GetAPIKey(provider string) string { return o.apiKey }
+func (o *OllamaAPI) GetAPIKey(provider string) string { return o.APIKey }
 
-func (o *OllamaAPI) GetBaseURL() string { return o.baseURL }
+func (o *OllamaAPI) GetBaseURL() string { return o.BaseURL }
 
 func (o *OllamaAPI) GetCapabilities() *interfaces.Capabilities {
 	models, err := o.ListModels()
