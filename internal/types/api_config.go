@@ -160,17 +160,20 @@ func NewConfig(
 		timeout,
 		providerConfigPath,
 	).(*ServerConfigImpl)
-	return &Config{
+	cfg := &Config{
 		Server:         server,
 		Logger:         logger,
 		BindAddr:       bindAddr,
 		Port:           port,
-		OpenAIAPIKey:   openAIKey,
-		DeepSeekAPIKey: deepSeekKey,
-		OllamaEndpoint: ollamaEndpoint,
-		ClaudeAPIKey:   claudeKey,
-		GeminiAPIKey:   geminiKey,
 	}
+	cfg.SetAPIKey("openai", openAIKey)
+	cfg.SetAPIKey("deepseek", deepSeekKey)
+	cfg.SetAPIKey("ollama", ollamaEndpoint)
+	cfg.SetAPIKey("claude", claudeKey)
+	cfg.SetAPIKey("gemini", geminiKey)
+	cfg.SetAPIKey("chatgpt", chatGPTKey)
+
+	return cfg
 }
 
 func (c *Config) GetAPIConfig(provider string) interfaces.IAPIConfig {
@@ -206,54 +209,71 @@ func (c *Config) GetPort() string {
 func (c *Config) GetAPIKey(provider string) string {
 	switch provider {
 	case "openai":
-		if c.OpenAIAPIKey == "" {
-			c.OpenAIAPIKey = kbx.GetEnvOrDefault("OPENAI_API_KEY", c.OpenAIAPIKey) // pragma: allowlist secret
+		if kbx.GetEnvOrDefault("OPENAI_API_KEY", c.OpenAIAPIKey) != "" {
+			return "OPENAI_API_KEY"
 		}
-		return c.OpenAIAPIKey
 	case "deepseek":
-		if c.DeepSeekAPIKey == "" {
-			c.DeepSeekAPIKey = kbx.GetEnvOrDefault("DEEPSEEK_API_KEY", c.DeepSeekAPIKey) // pragma: allowlist secret
+		if kbx.GetEnvOrDefault("DEEPSEEK_API_KEY", c.DeepSeekAPIKey) != "" {
+			return "DEEPSEEK_API_KEY"
 		}
-		return c.DeepSeekAPIKey
-	case "ollama":
-		if c.OllamaEndpoint == "" {
-			c.OllamaEndpoint = kbx.GetEnvOrDefault("OLLAMA_ENDPOINT", c.OllamaEndpoint) // pragma: allowlist secret
-		}
-		return c.OllamaEndpoint
 	case "claude":
-		if c.ClaudeAPIKey == "" {
-			c.ClaudeAPIKey = kbx.GetEnvOrDefault("CLAUDE_API_KEY", c.ClaudeAPIKey) // pragma: allowlist secret
+		if kbx.GetEnvOrDefault("CLAUDE_API_KEY", c.ClaudeAPIKey) != "" {
+			return "CLAUDE_API_KEY"
 		}
-		return c.ClaudeAPIKey
 	case "gemini":
-		if c.GeminiAPIKey == "" {
-			c.GeminiAPIKey = kbx.GetEnvOrDefault("GEMINI_API_KEY", c.GeminiAPIKey) // pragma: allowlist secret
+		if kbx.GetEnvOrDefault("GEMINI_API_KEY", c.GeminiAPIKey) != "" {
+			return "GEMINI_API_KEY"
 		}
-		return c.GeminiAPIKey
 	case "chatgpt":
-		if c.ChatGPTAPIKey == "" {
-			c.ChatGPTAPIKey = kbx.GetEnvOrDefault("CHATGPT_API_KEY", c.ChatGPTAPIKey) // pragma: allowlist secret
+		if kbx.GetEnvOrDefault("CHATGPT_API_KEY", c.ChatGPTAPIKey) != "" {
+			return "CHATGPT_API_KEY"
 		}
-		return c.ChatGPTAPIKey
-	default:
-		return ""
+	case "ollama":
+		if kbx.GetEnvOrDefault("OLLAMA_ENDPOINT", c.OllamaEndpoint) != "" {
+			return "OLLAMA_ENDPOINT"
+		}
 	}
+	return ""
 }
 
 func (c *Config) SetAPIKey(provider string, key string) error {
 	switch provider {
 	case "openai":
-		c.OpenAIAPIKey = key // pragma: allowlist secret
+		if err := os.Setenv("OPENAI_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+			c.OpenAIAPIKey = "OPENAI_API_KEY" // pragma: allowlist secret
+		}else {
+			c.OpenAIAPIKey = ""
+		}
 	case "deepseek":
-		c.DeepSeekAPIKey = key // pragma: allowlist secret
+		if err := os.Setenv("DEEPSEEK_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+			c.DeepSeekAPIKey = "DEEPSEEK_API_KEY" // pragma: allowlist secret
+		} else {
+			c.DeepSeekAPIKey = ""
+		}
 	case "ollama":
-		c.OllamaEndpoint = key // pragma: allowlist secret
+		if err := os.Setenv("OLLAMA_ENDPOINT", key); err == nil && key != "" { // pragma: allowlist secret
+			c.OllamaEndpoint = "OLLAMA_ENDPOINT" // pragma: allowlist secret
+		} else {
+			c.OllamaEndpoint = ""
+		}
 	case "claude":
-		c.ClaudeAPIKey = key // pragma: allowlist secret
+		if err := os.Setenv("CLAUDE_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+			c.ClaudeAPIKey = "CLAUDE_API_KEY" // pragma: allowlist secret
+		} else {
+			c.ClaudeAPIKey = ""
+		}
 	case "gemini":
-		c.GeminiAPIKey = key // pragma: allowlist secret
+		if err := os.Setenv("GEMINI_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+			c.GeminiAPIKey = "GEMINI_API_KEY" // pragma: allowlist secret
+		} else {
+			c.GeminiAPIKey = ""
+		}
 	case "chatgpt":
-		c.ChatGPTAPIKey = key // pragma: allowlist secret
+		if err := os.Setenv("CHATGPT_API_KEY", key); err == nil && key != "" { // pragma: allowlist secret
+			c.ChatGPTAPIKey = "CHATGPT_API_KEY" // pragma: allowlist secret
+		} else {
+			c.ChatGPTAPIKey = ""
+		}
 	default:
 		return fmt.Errorf("unknown provider: %s", provider)
 	}

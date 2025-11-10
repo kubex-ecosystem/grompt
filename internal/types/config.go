@@ -75,20 +75,19 @@ func NewServerConfig(
 	}
 	cfg.Logger = logger
 	if openAIKey != "" {
-		// cfg.APIKeys["openai"] = openAIKey
-		cfg.APIKeys["openai"] = "OPENAI_API_KEY"
+		cfg.SetAPIKey("openai", openAIKey)
 	}
 	if claudeKey != "" {
-		cfg.APIKeys["claude"] = "CLAUDE_API_KEY"
+		cfg.SetAPIKey("claude", claudeKey)
 	}
 	if geminiKey != "" {
-		cfg.APIKeys["gemini"] = "GEMINI_API_KEY"
+		cfg.SetAPIKey("gemini", geminiKey)
 	}
 	if deepSeekKey != "" {
-		cfg.APIKeys["deepseek"] = "DEEPSEEK_API_KEY"
+		cfg.SetAPIKey("deepseek", deepSeekKey)
 	}
 	if chatGPTKey != "" {
-		cfg.APIKeys["chatgpt"] = "CHATGPT_API_KEY"
+		cfg.SetAPIKey("chatgpt", chatGPTKey)
 	}
 	if ollamaEndpoint != "" {
 		cfg.Endpoints["ollama"] = ollamaEndpoint
@@ -101,7 +100,11 @@ func NewServerConfig(
 	cfg.ConfigFile = configFile
 	cfg.Cwd = cwd // pragma: allowlist secret
 	for k, v := range apiKeys {
-		cfg.APIKeys[k] = v
+		if strings.ToLower(k) == "ollama" && v != "" {
+			cfg.Endpoints["ollama"] = v
+		} else {
+			cfg.SetAPIKey(k, v)
+		}
 	}
 	for k, v := range endpoints {
 		cfg.Endpoints[k] = v
@@ -222,7 +225,21 @@ func (c *ServerConfigImpl) SetAPIKey(provider, key string) error {
 		delete(c.APIKeys, strings.ToLower(provider))
 		return nil
 	}
-	c.APIKeys[strings.ToLower(provider)] = key
+	envKey := strings.ToUpper(provider) + "_API_KEY"
+	if key != "" {
+		if kbx.GetEnvOrDefault(key, "") != "" {
+			key = kbx.GetEnvOrDefault(key, "")
+		}
+
+		if err := os.Setenv(envKey, key); err != nil {
+			return fmt.Errorf("failed to set environment variable %s: %w", envKey, err)
+		}
+	}
+	if kbx.GetEnvOrDefault(envKey, "") != "" {
+		c.APIKeys[strings.ToLower(provider)] = envKey
+	} else {
+		c.APIKeys[strings.ToLower(provider)] = key
+	}
 	return nil
 }
 
