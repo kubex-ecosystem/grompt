@@ -83,7 +83,7 @@ type APIConfig struct {
 }
 
 type Config struct {
-	Logger    l.Logger
+	Logger    l.Logger 										`yaml:"-" json:"-" mapstructure:"-"`
 	Server    *ServerConfigImpl              `yaml:"server,omitempty" json:"server,omitempty"`
 	Defaults  *kbx.InitArgs                  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
 	Providers map[string]interfaces.Provider `yaml:"providers,omitempty" json:"providers,omitempty"`
@@ -475,7 +475,7 @@ func (c *Config) Validate() error {
 	}
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		ConfigObj := c
-		mapper := NewMapper(ConfigObj, configFilePath)
+		mapper := NewMapperW(ConfigObj, configFilePath)
 		mapper.SerializeToFile(filepath.Ext(configFilePath)[1:])
 		// if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		// 	return fmt.Errorf("failed to create default config file: %v", err)

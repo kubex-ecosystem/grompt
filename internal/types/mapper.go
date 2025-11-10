@@ -35,6 +35,30 @@ func NewMapper[T any](object *T, filePath string) ci.IMapper[T] {
 	return &Mapper[T]{FilePath: filePath, Ptr: object}
 }
 
+func NewMapperW[T any](object T, filePath string) ci.IMapper[T] {
+	return &Mapper[T]{FilePath: filePath, Ptr: &object}
+}
+
+func NewMapperFromFile[T any](filePath string) ci.IMapper[T] {
+	var obj T
+	return &Mapper[T]{FilePath: filePath, Ptr: &obj}
+}
+
+func NewMapperFromFileW[T any](filePath string) ci.IMapper[T] {
+	var obj T
+	return &Mapper[T]{FilePath: filePath, Ptr: &obj}
+}
+
+func NewMapperFromObject[T any](object *T) ci.IMapper[T] {
+	return &Mapper[T]{Ptr: object}
+}
+
+func NewMapperFromObjectW[T any](object T) ci.IMapper[T] {
+	return &Mapper[T]{Ptr: &object}
+}
+
+// -------------------- Helpers --------------------
+
 func detectFormatByExt(path string) string {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".json":

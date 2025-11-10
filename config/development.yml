@@ -1,0 +1,54 @@
+server:
+    name: Kubex - GemX Grompt
+    bind_addr: 127.0.0.1
+    port: "8080"
+    log_file: /projects/kubex/grompt/cmd/config/logs/grompt.log
+    env_file: /projects/kubex/grompt/cmd/.env
+    cwd: /projects/kubex/grompt
+    endpoints:
+        claude: https://api.anthropic.com
+        gemini: https://generativelanguage.googleapis.com
+        groq: https://api.groq.com
+        ollama: http://localhost:11434
+        openai: https://api.openai.com
+    default_models:
+        claude: claude-3-5-sonnet-20241022
+        gemini: gemini-1.5-pro
+        groq: llama-3.1-70b-versatile
+        openai: gpt-4o-mini
+    provider_types:
+        claude: anthropic
+        gemini: gemini
+        groq: groq
+        openai: openai
+    default_provider: gemini
+    default_temperature: 0.3
+    history_limit: 5
+    timeout: 30s
+defaults:
+    config_file: /projects/kubex/grompt/cmd/config/development.yml
+    config_type: yaml
+    config_db_file: /projects/kubex/grompt/cmd/config/data/config.db
+    config_db_type: sqlite
+    env_file: /projects/kubex/grompt/cmd/.env
+    log_file: /projects/kubex/grompt/cmd/config/logs/grompt.log
+    name: Kubex - GemX Grompt
+    port: "8080"
+    bind: 0.0.0.0
+    address: localhost
+    pub_cert_key_path: /projects/kubex/grompt/cmd/config/keys/pubcert.pem
+    pub_key_path: /projects/kubex/grompt/cmd/config/keys/pubkey.pem
+    priv_key_path: /projects/kubex/grompt/cmd/config/keys/privkey.pem
+    cwd: /projects/kubex/grompt/cmd
+    temp_dir: /tmp
+    notification_timeout_seconds: 30
+    notification_provider: email
+bindaddr: 127.0.0.1
+port: "8080"
+openaiapikey: ""
+deepseekapikey: ""
+ollamaendpoint: http://localhost:11434
+claudeapikey: ""
+geminiapikey: ""
+chatgptapikey: ""
+debug: false
