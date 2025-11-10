@@ -111,24 +111,24 @@ func (s *Server) setupRoutes() {
 	// ------------------------------------------------------------------
 	// 1) Núcleo / Saúde / Configuração
 	s.router.HandleFunc("/api/v1/", func(w http.ResponseWriter, r *http.Request) { http.NotFound(w, r) })
-	s.GET("/api/v1/health", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleHealth(w, r) }))
-	s.GET("/api/v1/config", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleConfig(w, r) }))
-	s.POST("/api/v1/config", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleConfig(w, r) }))
-	s.GET("/api/v1/test", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleTest(w, r) }))
-	s.GET("/api/v1/models", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleModels(w, r) }))
+	s.GET("/api/v1/health", s.handlers.HandleHealth)
+	s.GET("/api/v1/config", s.handlers.HandleConfig)
+	s.POST("/api/v1/config", s.handlers.HandleConfig)
+	s.GET("/api/v1/test", s.handlers.HandleTest)
+	s.GET("/api/v1/models", s.handlers.HandleModels)
 
 	// 2) Provedores (diretos)
-	s.POST("/api/v1/openai", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleOpenAI(w, r) }))
-	s.POST("/api/v1/claude", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleClaude(w, r) }))
-	s.POST("/api/v1/gemini", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleGemini(w, r) }))
-	s.POST("/api/v1/deepseek", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleDeepSeek(w, r) }))
-	s.POST("/api/v1/chatgpt", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleChatGPT(w, r) }))
-	s.POST("/api/v1/ollama", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleOllama(w, r) }))
+	s.POST("/api/v1/openai", s.handlers.HandleOpenAI)
+	s.POST("/api/v1/claude", s.handlers.HandleClaude)
+	s.POST("/api/v1/gemini", s.handlers.HandleGemini)
+	s.POST("/api/v1/deepseek", s.handlers.HandleDeepSeek)
+	s.POST("/api/v1/chatgpt", s.handlers.HandleChatGPT)
+	s.POST("/api/v1/ollama", s.handlers.HandleOllama)
 
 	// 3) Geração Unificada e Atalhos
-	s.POST("/api/v1/unified", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleUnified(w, r) }))
-	s.POST("/api/v1/ask", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleAsk(w, r) }))
-	s.POST("/api/v1/squad", getGinHandlerFunc(func(w http.ResponseWriter, r *http.Request) { s.handlers.HandleSquad(w, r) }))
+	s.POST("/api/v1/unified", s.handlers.HandleUnified)
+	s.POST("/api/v1/ask", s.handlers.HandleAsk)
+	s.POST("/api/v1/squad", s.handlers.HandleSquad)
 
 	// 4) Agentes / Squad
 	// s.GET("/api/v1/agents", getGinHandlerFunc(s.handlers.HandleAgents))
@@ -287,14 +287,14 @@ cd ..</code></pre>
 	// Fallback API routes
 	// These routes handle API requests when the React frontend is not available.
 	// They provide basic functionality to ensure the server can still respond to API requests.
-	s.router.HandleFunc("/api/v1/models", s.handlers.HandleModels)
-	s.router.HandleFunc("/api/v1/claude", s.handlers.HandleClaude)
-	s.router.HandleFunc("/api/v1/ollama", s.handlers.HandleOllama)
-	s.router.HandleFunc("/api/v1/openai", s.handlers.HandleOpenAI)
-	s.router.HandleFunc("/api/v1/chatgpt", s.handlers.HandleChatGPT)
-	s.router.HandleFunc("/api/v1/gemini", s.handlers.HandleGemini)
-	s.router.HandleFunc("/api/v1/deepseek", s.handlers.HandleDeepSeek)
-	s.router.HandleFunc("/api/v1/unified", s.handlers.HandleUnified)
+	s.GET("/api/v1/models", s.handlers.HandleModels)
+	s.GET("/api/v1/claude", s.handlers.HandleClaude)
+	s.GET("/api/v1/ollama", s.handlers.HandleOllama)
+	s.GET("/api/v1/openai", s.handlers.HandleOpenAI)
+	s.GET("/api/v1/chatgpt", s.handlers.HandleChatGPT)
+	s.GET("/api/v1/gemini", s.handlers.HandleGemini)
+	s.GET("/api/v1/deepseek", s.handlers.HandleDeepSeek)
+	s.GET("/api/v1/unified", s.handlers.HandleUnified)
 	// s.router.HandleFunc("/api/v1/agents", s.handlers.HandleAgents)
 	// s.router.HandleFunc("/api/v1/agents/generate", s.handlers.HandleAgentsGenerate)
 	// s.router.HandleFunc("/api/v1/agents/", s.handlers.HandleAgent)
@@ -303,17 +303,17 @@ cd ..</code></pre>
 	// Config route
 	// This route returns the server's configuration, such as API keys and endpoints.
 	// It is useful for clients to know how to interact with the server's APIs.
-	s.router.HandleFunc("/api/v1/config", s.handlers.HandleConfig)
+	s.GET("/api/v1/config", s.handlers.HandleConfig)
 
 	// Test route
 	// This route is used to test the server's API functionality.
 	// It can be used to verify that the server is running and responding correctly.
-	s.router.HandleFunc("/api/v1/test", s.handlers.HandleTest)
+	s.GET("/api/v1/test", s.handlers.HandleTest)
 
 	// Health check route
 	// This route checks the health of the server and returns a simple JSON response.
 	// It is useful for monitoring and ensuring the server is running correctly.
-	s.router.HandleFunc("/api/v1/health", s.handlers.HandleHealth)
+	s.GET("/api/v1/health", s.handlers.HandleHealth)
 
 	// Log the fallback routes setup
 	gl.Log("warn","⚠️  Fallback routes: Unavailable React frontend, serving API endpoints only")

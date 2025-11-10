@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	ii "github.com/kubex-ecosystem/grompt/internal/interfaces"
 	it "github.com/kubex-ecosystem/grompt/internal/types"
 )
@@ -344,18 +345,18 @@ func (h *Handlers) getAPIConfigKey(provider string) string {
 	}
 }
 
-func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleConfig(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method == "POST" {
+	if c.Request.Method == "POST" {
 		// Handle POST request to update config
 		var updateReq map[string]interface{}
-		if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		if err := json.NewDecoder(c.Request.Body).Decode(&updateReq); err != nil {
+			http.Error(c.Writer, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
@@ -426,9 +427,8 @@ func (h *Handlers) HandleConfig(w http.ResponseWriter, r *http.Request) {
 		"gemini_available":   providerDetails["gemini"].Available,
 		"chatgpt_available":  providerDetails["chatgpt"].Available,
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []string) {
@@ -484,27 +484,27 @@ func (h *Handlers) describeProviders() (map[string]providerSummary, []string, []
 	return providers, order, ready
 }
 
-func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleClaude(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
 	// Validate input: must have either prompt or ideas
 	if req.Prompt == "" && len(req.Ideas) == 0 {
-		http.Error(w, "Either 'prompt' or 'ideas' must be provided", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Either 'prompt' or 'ideas' must be provided"})
 		return
 	}
 
@@ -515,18 +515,18 @@ func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Failed to generate prompt", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate prompt"})
 		return
 	}
 
 	if key := h.config.GetAPIKey("claude"); key == "" {
-		http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Claude API Key not configured"})
 		return
 	}
 
 	response, err := h.claudeAPI.Complete(prompt, req.MaxTokens, "")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in Claude API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Claude API: %v", err)})
 		return
 	}
 
@@ -536,25 +536,25 @@ func (h *Handlers) HandleClaude(w http.ResponseWriter, r *http.Request) {
 		Model:    "claude-3-5-sonnet-20241022",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
-func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleOpenAI(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -565,12 +565,12 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
 	if key := h.config.GetAPIKey("openai"); key == "" {
-		http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "OpenAI API Key not configured"})
 		return
 	}
 
@@ -582,7 +582,7 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.openaiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in OpenAI API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in OpenAI API: %v", err)})
 		return
 	}
 
@@ -592,25 +592,25 @@ func (h *Handlers) HandleOpenAI(w http.ResponseWriter, r *http.Request) {
 		Model:    model,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
-func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleDeepSeek(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -621,12 +621,12 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
 	if key := h.config.GetAPIKey("deepseek"); key == "" {
-		http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "DeepSeek API Key not configured"})
 		return
 	}
 
@@ -638,7 +638,7 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.deepseekAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in DeepSeek API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in DeepSeek API: %v", err)})
 		return
 	}
 
@@ -648,25 +648,25 @@ func (h *Handlers) HandleDeepSeek(w http.ResponseWriter, r *http.Request) {
 		Model:    model,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
-func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleGemini(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -677,12 +677,12 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
 	if key := h.config.GetAPIKey("gemini"); key == "" {
-		http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Gemini API Key not configured"})
 		return
 	}
 
@@ -694,7 +694,7 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.geminiAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in Gemini API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Gemini API: %v", err)})
 		return
 	}
 
@@ -704,25 +704,25 @@ func (h *Handlers) HandleGemini(w http.ResponseWriter, r *http.Request) {
 		Model:    model,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
-func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleChatGPT(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -733,12 +733,12 @@ func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
 	if key := h.config.GetAPIKey("chatgpt"); key == "" {
-		http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "ChatGPT API Key not configured"})
 		return
 	}
 
@@ -750,7 +750,7 @@ func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.chatGPTAPI.Complete(prompt, req.MaxTokens, model)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in ChatGPT API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in ChatGPT API: %v", err)})
 		return
 	}
 
@@ -760,25 +760,25 @@ func (h *Handlers) HandleChatGPT(w http.ResponseWriter, r *http.Request) {
 		Model:    model,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
-func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleOllama(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -789,7 +789,7 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
@@ -806,7 +806,7 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.ollamaAPI.Complete(model, maxTokens, prompt)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in Ollama API: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in Ollama API: %v", err)})
 		return
 	}
 
@@ -816,26 +816,26 @@ func (h *Handlers) HandleOllama(w http.ResponseWriter, r *http.Request) {
 		Model:    model,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
 // HandleUnified processes requests for multiple providers in a unified manner
-func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleUnified(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != "POST" {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
 	var req UnifiedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
@@ -846,21 +846,21 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		prompt = h.config.GetBaseGenerationPrompt(req.Ideas, req.Purpose, req.PurposeType, req.Lang, req.MaxTokens)
 	}
 	if prompt == "" {
-		http.Error(w, "Prompt is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
 		return
 	}
 
 	// Validate provider
 	if req.Provider == "" {
-		http.Error(w, "Provider not specified", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider not specified"})
 		return
 	}
 
 	// BYOK Support: Check for external API key in headers
 	// Supports both generic X-API-Key and provider-specific X-{PROVIDER}-Key headers
-	externalKey := r.Header.Get("X-API-Key")
+	externalKey := c.Request.Header.Get("X-API-Key")
 	if externalKey == "" {
-		externalKey = r.Header.Get("X-" + strings.ToUpper(req.Provider) + "-Key")
+		externalKey = c.Request.Header.Get("X-" + strings.ToUpper(req.Provider) + "-Key")
 	}
 
 	var response string
@@ -988,12 +988,12 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
 
 	default:
-		http.Error(w, "Unsupported provider: "+req.Provider, http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported provider: " + req.Provider})
 		return
 	}
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in %s API: %v", req.Provider, err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in %s API: %v", req.Provider, err)})
 		return
 	}
 
@@ -1004,8 +1004,8 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 		Mode:     mode, // Include mode in response
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
 // HandleAsk provides a simpler alias to ask a direct question to a provider.
@@ -1019,14 +1019,14 @@ func (h *Handlers) HandleUnified(w http.ResponseWriter, r *http.Request) {
 //	}
 //
 // Response JSON matches UnifiedResponse: { response, provider, model }
-func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleAsk(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != http.MethodPost {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
@@ -1038,12 +1038,12 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		Lang      string `json:"lang,omitempty"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 	if strings.TrimSpace(req.Question) == "" {
-		http.Error(w, "'question' is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "'question' is required"})
 		return
 	}
 
@@ -1067,7 +1067,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if provider == "" {
-			http.Error(w, "No AI provider configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "No AI provider configured"})
 			return
 		}
 	}
@@ -1075,7 +1075,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 	switch provider {
 	case "openai":
 		if h.config.GetAPIKey("openai") == "" {
-			http.Error(w, "OpenAI API Key not configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "OpenAI API Key not configured"})
 			return
 		}
 		if model == "" {
@@ -1084,7 +1084,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		response, err = h.openaiAPI.Complete(prompt, maxTokens, model)
 	case "claude":
 		if h.config.GetAPIKey("claude") == "" {
-			http.Error(w, "Claude API Key not configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Claude API Key not configured"})
 			return
 		}
 		if model == "" {
@@ -1093,7 +1093,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		response, err = h.claudeAPI.Complete(prompt, maxTokens, model)
 	case "deepseek":
 		if h.config.GetAPIKey("deepseek") == "" {
-			http.Error(w, "DeepSeek API Key not configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "DeepSeek API Key not configured"})
 			return
 		}
 		if model == "" {
@@ -1107,7 +1107,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		response, err = h.ollamaAPI.Complete(model, maxTokens, prompt)
 	case "gemini":
 		if h.config.GetAPIKey("gemini") == "" {
-			http.Error(w, "Gemini API Key not configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Gemini API Key not configured"})
 			return
 		}
 		if model == "" {
@@ -1116,7 +1116,7 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		response, err = h.geminiAPI.Complete(prompt, maxTokens, model)
 	case "chatgpt":
 		if h.config.GetAPIKey("chatgpt") == "" {
-			http.Error(w, "ChatGPT API Key not configured", http.StatusServiceUnavailable)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "ChatGPT API Key not configured"})
 			return
 		}
 		if model == "" {
@@ -1124,18 +1124,17 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 		}
 		response, err = h.chatGPTAPI.Complete(prompt, maxTokens, model)
 	default:
-		http.Error(w, "Unsupported provider: "+provider, http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported provider: " + provider})
 		return
 	}
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error in %s API: %v", provider, err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error in %s API: %v", provider, err)})
 		return
 	}
 
 	res := UnifiedResponse{Response: response, Provider: provider, Model: model}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	c.JSON(http.StatusOK, res)
 }
 
 // HandleSquad is a stable alias that generates a squad of agents from a description,
@@ -1143,13 +1142,13 @@ func (h *Handlers) HandleAsk(w http.ResponseWriter, r *http.Request) {
 // Request JSON:
 // { "description": "..." } or { "requirements": "..." }
 // Response JSON: { agents: [...], markdown: "..." }
-func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
-	if r.Method == "OPTIONS" {
+func (h *Handlers) HandleSquad(c *gin.Context) {
+	h.setCORSHeaders(c)
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if c.Request.Method != http.MethodPost {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Method not allowed"})
 		return
 	}
 
@@ -1157,8 +1156,8 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 		Description  string `json:"description"`
 		Requirements string `json:"requirements"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 	content := strings.TrimSpace(req.Requirements)
@@ -1166,7 +1165,7 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 		content = strings.TrimSpace(req.Description)
 	}
 	if content == "" {
-		http.Error(w, "'description' or 'requirements' is required", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "'description' or 'requirements' is required"})
 		return
 	}
 
@@ -1198,13 +1197,13 @@ func (h *Handlers) HandleSquad(w http.ResponseWriter, r *http.Request) {
 	// 	Markdown string        `json:"markdown"`
 	// }{Agents: sqAgents, Markdown: markdown}
 
-	w.Header().Set("Content-Type", "application/json")
+	c.Header("Content-Type", "application/json")
 	// json.NewEncoder(w).Encode(resp)
-	w.Write([]byte(`{"agents": [], "markdown": "Feature under development."}`))
+	c.JSON(http.StatusOK, gin.H{"agents": []string{}, "markdown": "Feature under development."})
 }
 
-func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func (h *Handlers) HandleHealth(c *gin.Context) {
+	c.Header("Content-Type", "application/json")
 
 	healthStatus := map[string]interface{}{
 		"status":    "ok",
@@ -1236,18 +1235,18 @@ func (h *Handlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	json.NewEncoder(w).Encode(healthStatus)
+	c.JSON(http.StatusOK, healthStatus)
 }
 
 // HandleModels retrieves available models for a specific provider or all providers
-func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleModels(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	provider := r.URL.Query().Get("provider")
+	provider := c.Query("provider")
 
 	var models map[string]any
 	var err error
@@ -1312,8 +1311,8 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(allModels)
+		c.Header("Content-Type", "application/json")
+		c.JSON(http.StatusOK, allModels)
 		return
 	}
 
@@ -1322,19 +1321,19 @@ func (h *Handlers) HandleModels(w http.ResponseWriter, r *http.Request) {
 		"models":   models,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, result)
 }
 
 // HandleTest checks the availability of the specified provider
-func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleTest(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
-	provider := r.URL.Query().Get("provider")
+	provider := c.Query("provider")
 
 	var available bool
 	var message string
@@ -1378,7 +1377,7 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 		}
 
 	default:
-		http.Error(w, "Provider not specified or invalid", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider not specified or invalid"})
 		return
 	}
 
@@ -1389,33 +1388,32 @@ func (h *Handlers) HandleTest(w http.ResponseWriter, r *http.Request) {
 		"timestamp": time.Now().Unix(),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	c.JSON(http.StatusOK, result)
 }
 
 // setCORSHeaders sets the CORS headers for the response.
-func (h *Handlers) setCORSHeaders(w http.ResponseWriter) {
+func (h *Handlers) setCORSHeaders(c *gin.Context) {
 	// CORS headers
 	// These headers allow cross-origin requests from any domain
 	// Adjust as necessary for your security requirements.
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	// BYOK Support: Allow custom API key headers
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key, X-OPENAI-Key, X-CLAUDE-Key, X-GEMINI-Key, X-DEEPSEEK-Key, X-CHATGPT-Key")
-	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
-	w.Header().Set("Referrer-Policy", "no-referrer")
-	w.Header().Set("X-Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
-	w.Header().Set("X-Content-Security-Policy-Report-Only", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
-	w.Header().Set("X-XSS-Protection", "1; mode=block")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("X-Frame-Options", "DENY")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key, X-OPENAI-Key, X-CLAUDE-Key, X-GEMINI-Key, X-DEEPSEEK-Key, X-CHATGPT-Key")
+	c.Writer.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
+	c.Writer.Header().Set("Referrer-Policy", "no-referrer")
+	c.Writer.Header().Set("X-Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
+	c.Writer.Header().Set("X-Content-Security-Policy-Report-Only", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.openai.com https://api.deepseek.com https://api.ollama.com; frame-ancestors 'none'")
+	c.Writer.Header().Set("X-XSS-Protection", "1; mode=block")
+	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
+	c.Writer.Header().Set("X-Frame-Options", "DENY")
 }
 
 // HandleVersion returns the current application version
-func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleVersion(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1429,15 +1427,14 @@ func (h *Handlers) HandleVersion(w http.ResponseWriter, r *http.Request) {
 		"name":    it.AppName,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(versionInfo)
+	c.JSON(http.StatusOK, versionInfo)
 }
 
 // HandleDocs returns the documentation URL
-func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleDocs(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1445,15 +1442,14 @@ func (h *Handlers) HandleDocs(w http.ResponseWriter, r *http.Request) {
 		"docs": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(docs)
+	c.JSON(http.StatusOK, docs)
 }
 
 // HandleSupport returns the support URL
-func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleSupport(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1461,15 +1457,14 @@ func (h *Handlers) HandleSupport(w http.ResponseWriter, r *http.Request) {
 		"support": "https://github.com/kubex-ecosystem/grompt/blob/main/README.md",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(supportInfo)
+	c.JSON(http.StatusOK, supportInfo)
 }
 
 // HandleAbout returns information about the application
-func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleAbout(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1481,15 +1476,14 @@ func (h *Handlers) HandleAbout(w http.ResponseWriter, r *http.Request) {
 		"license":     "MIT",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(aboutInfo)
+	c.JSON(http.StatusOK, aboutInfo)
 }
 
 // HandleStatus returns the current status of the application
-func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleStatus(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1499,15 +1493,14 @@ func (h *Handlers) HandleStatus(w http.ResponseWriter, r *http.Request) {
 		"version":   it.AppVersion,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(status)
+	c.JSON(http.StatusOK, status)
 }
 
 // HandleHelp returns the help URL or information
-func (h *Handlers) HandleHelp(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleHelp(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1515,15 +1508,14 @@ func (h *Handlers) HandleHelp(w http.ResponseWriter, r *http.Request) {
 		"help": "<HELP_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(helpInfo)
+	c.JSON(http.StatusOK, helpInfo)
 }
 
 // HandleFeedback returns the feedback URL
-func (h *Handlers) HandleFeedback(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleFeedback(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1531,15 +1523,14 @@ func (h *Handlers) HandleFeedback(w http.ResponseWriter, r *http.Request) {
 		"feedback": "<FEEDBACK_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(feedbackInfo)
+	c.JSON(http.StatusOK, feedbackInfo)
 }
 
 // HandleContact returns the contact URL
-func (h *Handlers) HandleContact(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleContact(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1547,15 +1538,14 @@ func (h *Handlers) HandleContact(w http.ResponseWriter, r *http.Request) {
 		"contact": "<CONTACT_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(contactInfo)
+	c.JSON(http.StatusOK, contactInfo)
 }
 
 // HandlePrivacy returns the privacy policy URL
-func (h *Handlers) HandlePrivacy(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandlePrivacy(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1563,15 +1553,14 @@ func (h *Handlers) HandlePrivacy(w http.ResponseWriter, r *http.Request) {
 		"privacy": "<PRIVACY_POLICY_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(privInfo)
+	c.JSON(http.StatusOK, privInfo)
 }
 
 // HandleTerms returns the terms of service URL
-func (h *Handlers) HandleTerms(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleTerms(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1579,15 +1568,14 @@ func (h *Handlers) HandleTerms(w http.ResponseWriter, r *http.Request) {
 		"terms": "<TERMS_OF_SERVICE_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(termsInfo)
+	c.JSON(http.StatusOK, termsInfo)
 }
 
 // HandleRateLimit returns rate limit information
-func (h *Handlers) HandleRateLimit(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleRateLimit(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1595,15 +1583,14 @@ func (h *Handlers) HandleRateLimit(w http.ResponseWriter, r *http.Request) {
 		"rate_limit": "<RATE_LIMIT_URL>",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(rateLimitInfo)
+	c.JSON(http.StatusOK, rateLimitInfo)
 }
 
 // HandleError returns a generic error message
-func (h *Handlers) HandleError(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleError(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1611,16 +1598,14 @@ func (h *Handlers) HandleError(w http.ResponseWriter, r *http.Request) {
 		"error": "An unexpected error occurred. Please try again later.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
-	json.NewEncoder(w).Encode(errorInfo)
+	c.JSON(http.StatusInternalServerError, errorInfo)
 }
 
 // HandleNotFound returns a 404 not found error
-func (h *Handlers) HandleNotFound(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleNotFound(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1628,16 +1613,14 @@ func (h *Handlers) HandleNotFound(w http.ResponseWriter, r *http.Request) {
 		"error": "Resource not found. Check the URL and try again.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-	json.NewEncoder(w).Encode(notFoundInfo)
+	c.JSON(http.StatusNotFound, notFoundInfo)
 }
 
 // HandleMethodNotAllowed returns a 405 method not allowed error_count
-func (h *Handlers) HandleMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleMethodNotAllowed(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1645,16 +1628,14 @@ func (h *Handlers) HandleMethodNotAllowed(w http.ResponseWriter, r *http.Request
 		"error": "Method not allowed. Check the API documentation.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	json.NewEncoder(w).Encode(methodNotAllowedInfo)
+	c.JSON(http.StatusMethodNotAllowed, methodNotAllowedInfo)
 }
 
 // HandleInternalServerError returns a 500 internal server error
-func (h *Handlers) HandleInternalServerError(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleInternalServerError(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1662,16 +1643,14 @@ func (h *Handlers) HandleInternalServerError(w http.ResponseWriter, r *http.Requ
 		"error": "An unexpected error occurred. Please try again later.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
-	json.NewEncoder(w).Encode(errorInfo)
+	c.JSON(http.StatusInternalServerError, errorInfo)
 }
 
-// HandleBadRequest returns a 400 bad request error_count
-func (h *Handlers) HandleBadRequest(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+// HandleBadRequest returns a 400 bad request error
+func (h *Handlers) HandleBadRequest(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1679,16 +1658,14 @@ func (h *Handlers) HandleBadRequest(w http.ResponseWriter, r *http.Request) {
 		"error": "Invalid request. Check the parameters and try again.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(badRequestInfo)
+	c.JSON(http.StatusBadRequest, badRequestInfo)
 }
 
 // HandleUnauthorized returns a 401 unauthorized error
-func (h *Handlers) HandleUnauthorized(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+func (h *Handlers) HandleUnauthorized(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1696,16 +1673,14 @@ func (h *Handlers) HandleUnauthorized(w http.ResponseWriter, r *http.Request) {
 		"error": "Unauthorized access. Check your credentials.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	json.NewEncoder(w).Encode(unauthorizedInfo)
+	c.JSON(http.StatusUnauthorized, unauthorizedInfo)
 }
 
-// HandleForbidden returns a 403 forbidden error_count
-func (h *Handlers) HandleForbidden(w http.ResponseWriter, r *http.Request) {
-	h.setCORSHeaders(w)
+// HandleForbidden returns a 403 forbidden error
+func (h *Handlers) HandleForbidden(c *gin.Context) {
+	h.setCORSHeaders(c)
 
-	if r.Method == "OPTIONS" {
+	if c.Request.Method == "OPTIONS" {
 		return
 	}
 
@@ -1713,7 +1688,5 @@ func (h *Handlers) HandleForbidden(w http.ResponseWriter, r *http.Request) {
 		"error": "Access forbidden. You don't have permission to access this resource.",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusForbidden)
-	json.NewEncoder(w).Encode(forbiddenInfo)
+	c.JSON(http.StatusForbidden, forbiddenInfo)
 }
