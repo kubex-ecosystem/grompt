@@ -8,8 +8,15 @@ import (
 
 	"github.com/kubex-ecosystem/grompt/internal/engine"
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
+	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	if initArgs == nil {
+		initArgs = &kbx.InitArgs{}
+	}
+}
 
 type Gateway struct {
 	engine *engine.Engine
@@ -80,8 +87,17 @@ func startGatewayServerCmd() *cobra.Command {
 		},
 	}
 
-	startCmd.Flags().StringVarP(&bindAddr, "bind", "b", "localhost", "Address to bind the gateway server to")
-	startCmd.Flags().StringVarP(&port, "port", "p", "9090", "Port to run the gateway server on")
+	startCmd.Flags().BoolVarP(&initArgs.Debug, "debug", "D", false, "Enable debug mode")
+	startCmd.Flags().StringVarP(&initArgs.Bind, "bind", "b", "localhost", "Address to bind the server to")
+	startCmd.Flags().StringVarP(&initArgs.Port, "port", "p", "8080", "Port to run the server on")
+	startCmd.Flags().StringVarP(&initArgs.ConfigFile, "config", "f", "", "Path to the config file")
+	startCmd.Flags().StringVarP(&initArgs.OpenAIKey, "openai-key", "o", "", "OpenAI API key")
+	startCmd.Flags().StringVarP(&initArgs.DeepSeekKey, "deepseek-key", "d", "", "DeepSeek API key")
+	startCmd.Flags().StringVarP(&initArgs.OllamaEndpoint, "ollama-endpoint", "e", "http://localhost:11434", "Ollama API endpoint")
+	startCmd.Flags().StringVarP(&initArgs.GeminiKey, "gemini-key", "g", "", "Gemini API key")
+	startCmd.Flags().StringVarP(&initArgs.ChatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
+	startCmd.Flags().StringVarP(&initArgs.ClaudeKey, "claude-key", "C", "", "Claude API key")
+	startCmd.Flags().BoolVarP(&initArgs.Background, "background", "B", false, "Run server in background")
 
 	return startCmd
 }

@@ -7,14 +7,15 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
 	"github.com/kubex-ecosystem/grompt/utils"
-	l "github.com/kubex-ecosystem/logz"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	l "github.com/kubex-ecosystem/logz/logger"
 )
 
 var (
@@ -63,11 +64,14 @@ func init() {
 	// }
 }
 
-var AppVersion = vs.GetVersion()
+var (
+	vSrv = vs.NewVersionService()
+	glgr   = l.LoggerG
+)
 
-const (
-	AppName     = "Grompt"
-	DefaultPort = "8080"
+var (
+	AppVersion = vSrv.GetVersion()
+	AppName    = vSrv.GetName()
 )
 
 type APIConfig struct {
@@ -97,7 +101,10 @@ type Config struct {
 
 func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey, chatGPTKey string, logger l.Logger) *Config {
 	if logger == nil {
-		logger = l.GetLogger("Grompt")
+		logger = l.LoggerG
+	}
+	if bindAddr == "" {
+		bindAddr = kbx.DefaultServerHost
 	}
 	return &Config{
 		Logger:         logger,
@@ -113,7 +120,7 @@ func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey
 
 func (c *Config) GetAPIConfig(provider string) interfaces.IAPIConfig {
 	if c == nil {
-		gl.Log("error", "Config is nil")
+		glgr.Log("error", "Config is nil")
 		return nil
 	}
 	switch provider {
@@ -136,7 +143,7 @@ func (c *Config) GetAPIConfig(provider string) interfaces.IAPIConfig {
 
 func (c *Config) GetPort() string {
 	if c.Port == "" {
-		return DefaultPort
+		return kbx.DefaultServerPort
 	}
 	return c.Port
 }
@@ -282,4 +289,146 @@ IMPORTANTE: Responda APENAS com o prompt estruturado em markdown, sem explica√ß√
 `
 
 	return engineeringPrompt
+}
+
+func (c *Config) Validate() error {
+	// Example validation: Ensure port is a valid number
+	if _, err := net.LookupPort("tcp", c.GetPort()); err != nil {
+		return fmt.Errorf("invalid port: %s", c.GetPort())
+	}
+
+	// Additional validations can be added here
+	if c.GetAPIKey("openai") == "" {
+		glgr.Log("warn", "OpenAI API key is not set")
+	}
+	if c.GetAPIKey("deepseek") == "" {
+		glgr.Log("warn", "DeepSeek API key is not set")
+	}
+	if c.GetAPIKey("ollama") == "" {
+		glgr.Log("warn", "Ollama API key is not set")
+	}
+	if c.GetAPIKey("claude") == "" {
+		glgr.Log("warn", "Claude API key is not set")
+	}
+	if c.GetAPIKey("gemini") == "" {
+		glgr.Log("warn", "Gemini API key is not set")
+	}
+	if c.GetAPIKey("chatgpt") == "" {
+		glgr.Log("warn", "ChatGPT API key is not set")
+	}
+	if c.Defaults == nil {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current working directory: %v", err)
+		}
+		c.Defaults = &kbx.InitArgs{
+			Address: "localhost",
+			Port:    "8080",
+			Name:    vs.NewVersionService().GetName(),
+			Pwd:     pwd,
+			TempDir: os.TempDir(),
+			EnvFile: filepath.Join(pwd, ".env"),
+			LogFile: filepath.Join(pwd, "config", "logs", "grompt.log"),
+			ConfigFile: filepath.Join(pwd, "config", "development.yml"),
+			ConfigType: "yaml",
+			Debug: 	false,
+			IsConfidential: false,
+			ReleaseMode: false,
+			Bind: "0.0.0.0",
+			NotificationTimeoutSeconds: 30,
+			NotificationProvider: "email",
+			ConfigDBType: "sqlite",
+			ConfigDBFile: filepath.Join(pwd, "config", "data", "config.db"),
+			PubKeyPath: filepath.Join(pwd, "config", "keys", "pubkey.pem"),
+			PrivKeyPath: filepath.Join(pwd, "config", "keys", "privkey.pem"),
+			PubCertKeyPath: filepath.Join(pwd, "config", "keys", "pubcert.pem"),
+		}
+	}
+	if c.Server == nil {
+		c.Server = &kbx.InitArgs{}
+	}
+	if c.Port == "" {
+		c.Port = c.Defaults.Port
+	}
+	if c.BindAddr == "" {
+		c.Server.Address = net.JoinHostPort(c.Defaults.Address, c.GetPort())
+	} else {
+		c.Server.Address = net.JoinHostPort(c.BindAddr, c.GetPort())
+	}
+	if c.Server.Name == "" {
+		c.Server.Name = c.Defaults.Name
+	}
+	if c.Server.EnvFile == "" {
+		c.Server.EnvFile = c.Defaults.EnvFile
+	}
+	if c.Server.Debug {
+		glgr.SetDebug(true)
+		glgr.Log("info", "Debug mode is enabled")
+	}else {
+		glgr.Log("info", "Debug mode is disabled")
+	}
+	var tmpDir string
+	if c.Server.LogFile != "" {
+		c.Server.LogFile = c.Defaults.LogFile
+	}
+	if c.Server.LogFile != "" {
+		tmpDir = filepath.Dir(c.Server.LogFile)
+	} else {
+		tmpDir = os.TempDir()
+	}
+	if  _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+		tmpDir, err = os.MkdirTemp("", "grompt-logs")
+		if err != nil {
+			return fmt.Errorf("failed to create temp dir for logs: %v", err)
+		}
+	}
+	if c.Server.LogFile == "" {
+		if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+			return fmt.Errorf("log directory does not exist: %s", tmpDir)
+		}
+		c.Server.LogFile = tmpDir + "/grompt.log"
+	}
+	if _, err := os.Stat(tmpDir + "/grompt.log"); os.IsNotExist(err) {
+		file, err := os.Create(tmpDir + "/grompt.log")
+		if err != nil {
+		return fmt.Errorf("failed to create log file: %v", err)
+		}
+		file.Close()
+	}
+	if c.Server.Pwd == "" {
+		var err error
+		c.Server.Pwd, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current working directory: %v", err)
+		}
+	}
+	var configFilePath string
+	if c.Server.ConfigFile == "" {
+		configFilePath = filepath.Join(c.Server.Pwd, "config", "development.yml")
+	} else {
+		configFilePath = c.Server.ConfigFile
+	}
+	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+		if _, err := os.Create(configFilePath); err != nil {
+			return fmt.Errorf("failed to create config file: %v", err)
+		}
+		glgr.Log("info", fmt.Sprintf("Config file not found. Created new config file at: %s", configFilePath))
+		// Write default config to the newly created file
+		mapper := NewMapper(&c, configFilePath)
+		mapper.SerializeToFile("yaml")
+		if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+			return fmt.Errorf("failed to create default config file: %v", err)
+		}
+		glgr.Log("info", fmt.Sprintf("Default config file created at: %s", configFilePath))
+	}
+
+	glgr.Log("info", fmt.Sprintf("Server name set to: %s", c.Server.Name))
+	glgr.Log("info", fmt.Sprintf("Using config file: %v", configFilePath))
+	glgr.Log("info", fmt.Sprintf("Bind address set to: %s", c.BindAddr))
+	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.EnvFile))
+	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.LogFile))
+	glgr.Log("info", fmt.Sprintf("Temporary directory set to: %s", tmpDir))
+	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.Pwd))
+
+	return nil
 }

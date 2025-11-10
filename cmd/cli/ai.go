@@ -13,8 +13,7 @@ import (
 	p "github.com/kubex-ecosystem/grompt/internal/providers"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
 	"github.com/kubex-ecosystem/grompt/utils"
-	l "github.com/kubex-ecosystem/logz"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	l "github.com/kubex-ecosystem/logz/logger"
 )
 
 // getProviderAPIKey returns the API key only for the matching provider
@@ -29,7 +28,7 @@ func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
 func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (i.IConfig, error) {
 	var cfg i.IConfig
 	var err error
-	logger := l.GetLogger("Grompt")
+	gl := l.LoggerG.GetLogger()
 
 	if configFile != "" {
 		cfg, err = loadConfigFile(configFile)
@@ -47,7 +46,7 @@ func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (i.IConfig
 			utils.GetEnvOr("CLAUDE_API_KEY", getProviderAPIKey("claude", provider, apiKey)),
 			utils.GetEnvOr("GEMINI_API_KEY", getProviderAPIKey("gemini", provider, apiKey)),
 			utils.GetEnvOr("CHATGPT_API_KEY", getProviderAPIKey("chatgpt", provider, apiKey)),
-			logger,
+			gl,
 		)
 	}
 
@@ -128,9 +127,9 @@ Examples:
   grompt ask --prompt "Explain REST APIs" --provider openai --model gpt-4
   grompt ask --prompt "Write a poem about code" --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			gl := l.LoggerG.GetLogger()
 			if debug {
-				l.GetLogger("Grompt")
-				gl.SetDebugMode(true)
+				gl.SetDebug(true)
 			}
 
 			if len(prompt) == 0 {
@@ -220,9 +219,9 @@ Examples:
   grompt generate --ideas "machine learning,python,beginners" --purpose-type "Educational" --lang "english"
   grompt generate --ideas "docker,kubernetes,deployment" --output prompt.md --provider claude`,
 		Run: func(cmd *cobra.Command, args []string) {
+			gl := l.LoggerG.GetLogger()
 			if debug {
-				l.GetLogger("Grompt")
-				gl.SetDebugMode(true)
+				gl.SetDebug(true)
 			}
 
 			if len(ideas) == 0 {
@@ -328,9 +327,9 @@ Examples:
   grompt chat --provider openai --model gpt-4
   grompt chat --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger := l.GetLogger("Grompt")
+			gl := l.LoggerG.GetLogger()
 			if debug {
-				gl.SetDebugMode(true)
+				gl.SetDebug(true)
 			}
 			var cfg i.IConfig
 			var err error
@@ -351,7 +350,7 @@ Examples:
 					utils.GetEnvOr("CLAUDE_API_KEY", apiKey),
 					utils.GetEnvOr("GEMINI_API_KEY", apiKey),
 					utils.GetEnvOr("CHATGPT_API_KEY", apiKey),
-					logger,
+					gl,
 				)
 			}
 

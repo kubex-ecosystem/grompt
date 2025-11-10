@@ -8,16 +8,22 @@ import (
 	"syscall"
 
 	"github.com/kubex-ecosystem/grompt/utils"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	l "github.com/kubex-ecosystem/logz/logger"
 	"gopkg.in/yaml.v3"
 
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	s "github.com/kubex-ecosystem/grompt/internal/services/server"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
-	l "github.com/kubex-ecosystem/logz"
 
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	if initArgs == nil {
+		initArgs = &kbx.InitArgs{}
+	}
+}
 
 func ServerCmdList() []*cobra.Command {
 	return []*cobra.Command{
@@ -26,17 +32,6 @@ func ServerCmdList() []*cobra.Command {
 }
 
 func startServer() *cobra.Command {
-	var debug, background bool
-	var configFilePath string
-	var bindAddr,
-		port,
-		openAIKey,
-		deepSeekKey,
-		ollamaEndpoint,
-		claudeKey,
-		geminiKey,
-		chatGPTKey string
-
 	var startCmd = &cobra.Command{
 		Use: "start",
 		Annotations: GetDescriptions([]string{
@@ -44,12 +39,12 @@ func startServer() *cobra.Command {
 			"This command initializes the Grompt server and starts waiting for help to build prompts.",
 		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
-			// logger := l.GetLogger("Grompt")
-			if debug {
-				gl.SetDebugMode(true)
+			gl := l.LoggerG
+			if initArgs.Debug {
+				gl.SetDebug(true)
 			}
 
-			if background {
+			if initArgs.Background {
 				execPath, err := os.Executable()
 				if err != nil {
 					gl.Log("fatal", fmt.Sprintf("❌ Erro ao obter caminho do executável: %v", err))
@@ -75,28 +70,36 @@ func startServer() *cobra.Command {
 			var cfg i.IConfig
 			var err error
 
-			if configFilePath != "" {
-				cfg, err = loadConfigFile(configFilePath)
+			if initArgs.ConfigFile != "" {
+				cfg, err = loadConfigFile(initArgs.ConfigFile)
 				if err != nil {
 					gl.Log("fatal", fmt.Sprintf("❌ Erro ao carregar arquivo de configuração: %v", err))
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
 				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", bindAddr),
-					utils.GetEnvOr("PORT", port),
-					utils.GetEnvOr("OPENAI_API_KEY", openAIKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", deepSeekKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", ollamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", claudeKey),
-					utils.GetEnvOr("GEMINI_API_KEY", geminiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", chatGPTKey),
-					gl.LoggerG,
+					utils.GetEnvOr("BIND_ADDR", initArgs.Bind),
+					utils.GetEnvOr("PORT", initArgs.Port),
+					utils.GetEnvOr("OPENAI_API_KEY", initArgs.OpenAIKey),
+					utils.GetEnvOr("DEEPSEEK_API_KEY", initArgs.DeepSeekKey),
+					utils.GetEnvOr("OLLAMA_ENDPOINT", initArgs.OllamaEndpoint),
+					utils.GetEnvOr("CLAUDE_API_KEY", initArgs.ClaudeKey),
+					utils.GetEnvOr("GEMINI_API_KEY", initArgs.GeminiKey),
+					utils.GetEnvOr("CHATGPT_API_KEY", initArgs.ChatGPTKey),
+					gl,
 				)
 			}
 
 			if cfg == nil {
 				gl.Log("fatal", "Configuração não carregada")
+			} else {
+				gl.Log("info", "Configuração carregada com sucesso")
+				// Validar configuração
+				gl.Log("info", "Validando configuração...")
+				if err := cfg.Validate(); err != nil {
+					gl.Log("fatal", fmt.Sprintf("❌ Configuração inválida: %v", err))
+				}
+				gl.Log("info", "Configuração validada com sucesso")
 			}
 
 			// Inicializar servidor
@@ -121,33 +124,22 @@ func startServer() *cobra.Command {
 		},
 	}
 
-	startCmd.Flags().BoolVarP(&debug, "debug", "D", false, "Enable debug mode")
-	startCmd.Flags().StringVarP(&bindAddr, "bind", "b", "localhost", "Address to bind the server to")
-	startCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to run the server on")
-	startCmd.Flags().StringVarP(&configFilePath, "config", "f", "", "Path to the config file")
-	startCmd.Flags().StringVarP(&openAIKey, "openai-key", "o", "", "OpenAI API key")
-	startCmd.Flags().StringVarP(&deepSeekKey, "deepseek-key", "d", "", "DeepSeek API key")
-	startCmd.Flags().StringVarP(&ollamaEndpoint, "ollama-endpoint", "e", "http://localhost:11434", "Ollama API endpoint")
-	startCmd.Flags().StringVarP(&geminiKey, "gemini-key", "g", "", "Gemini API key")
-	startCmd.Flags().StringVarP(&chatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
-	startCmd.Flags().StringVarP(&claudeKey, "claude-key", "C", "", "Claude API key")
-	startCmd.Flags().BoolVarP(&background, "background", "B", false, "Run server in background")
+	startCmd.Flags().BoolVarP(&initArgs.Debug, "debug", "D", false, "Enable debug mode")
+	startCmd.Flags().StringVarP(&initArgs.Bind, "bind", "b", "localhost", "Address to bind the server to")
+	startCmd.Flags().StringVarP(&initArgs.Port, "port", "p", "8080", "Port to run the server on")
+	startCmd.Flags().StringVarP(&initArgs.ConfigFile, "config", "f", "", "Path to the config file")
+	startCmd.Flags().StringVarP(&initArgs.OpenAIKey, "openai-key", "o", "", "OpenAI API key")
+	startCmd.Flags().StringVarP(&initArgs.DeepSeekKey, "deepseek-key", "d", "", "DeepSeek API key")
+	startCmd.Flags().StringVarP(&initArgs.OllamaEndpoint, "ollama-endpoint", "e", "http://localhost:11434", "Ollama API endpoint")
+	startCmd.Flags().StringVarP(&initArgs.GeminiKey, "gemini-key", "g", "", "Gemini API key")
+	startCmd.Flags().StringVarP(&initArgs.ChatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
+	startCmd.Flags().StringVarP(&initArgs.ClaudeKey, "claude-key", "C", "", "Claude API key")
+	startCmd.Flags().BoolVarP(&initArgs.Background, "background", "B", false, "Run server in background")
 
 	return startCmd
 }
 
 func startServerService() *cobra.Command {
-	var debug bool
-	var configFilePath string
-	var bindAddr,
-		port,
-		openAIKey,
-		deepSeekKey,
-		ollamaEndpoint,
-		claudeKey,
-		geminiKey,
-		chatGPTKey string
-
 	var startCmd = &cobra.Command{
 		Use: "start",
 		Annotations: GetDescriptions([]string{
@@ -155,32 +147,32 @@ func startServerService() *cobra.Command {
 			"This command initializes the Grompt server and starts waiting for help to build prompts.",
 		}, false),
 		Run: func(cmd *cobra.Command, args []string) {
-			lgr := l.GetLogger("Grompt")
+			gl := l.LoggerG
 
-			if debug {
-				gl.SetDebugMode(true)
+			if initArgs.Debug {
+				gl.SetDebug(true)
 			}
 
 			var cfg i.IConfig
 			var err error
 
-			if configFilePath != "" {
-				cfg, err = loadConfigFile(configFilePath)
+			if initArgs.ConfigFile != "" {
+				cfg, err = loadConfigFile(initArgs.ConfigFile)
 				if err != nil {
 					gl.Log("fatal", fmt.Sprintf("❌ Erro ao carregar arquivo de configuração: %v", err))
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
 				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", bindAddr),
-					utils.GetEnvOr("PORT", port),
-					utils.GetEnvOr("OPENAI_API_KEY", openAIKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", deepSeekKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", ollamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", claudeKey),
-					utils.GetEnvOr("GEMINI_API_KEY", geminiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", chatGPTKey),
-					lgr,
+					utils.GetEnvOr("BIND_ADDR", initArgs.Bind),
+					utils.GetEnvOr("PORT", initArgs.Port),
+					utils.GetEnvOr("OPENAI_API_KEY", initArgs.OpenAIKey),
+					utils.GetEnvOr("DEEPSEEK_API_KEY", initArgs.DeepSeekKey),
+					utils.GetEnvOr("OLLAMA_ENDPOINT", initArgs.OllamaEndpoint),
+					utils.GetEnvOr("CLAUDE_API_KEY", initArgs.ClaudeKey),
+					utils.GetEnvOr("GEMINI_API_KEY", initArgs.GeminiKey),
+					utils.GetEnvOr("CHATGPT_API_KEY", initArgs.ChatGPTKey),
+					gl,
 				)
 			}
 
@@ -210,16 +202,17 @@ func startServerService() *cobra.Command {
 		},
 	}
 
-	startCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
-	startCmd.Flags().StringVarP(&bindAddr, "bind", "b", "localhost", "Address to bind the server to")
-	startCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to run the server on")
-	startCmd.Flags().StringVarP(&configFilePath, "config", "c", "config.yaml", "Path to the config file")
-	startCmd.Flags().StringVarP(&openAIKey, "openai-key", "o", "", "OpenAI API key")
-	startCmd.Flags().StringVarP(&deepSeekKey, "deepseek-key", "d", "", "DeepSeek API key")
-	startCmd.Flags().StringVarP(&ollamaEndpoint, "ollama-endpoint", "e", "http://localhost:11434", "Ollama API endpoint")
-	startCmd.Flags().StringVarP(&claudeKey, "claude-key", "C", "", "Claude API key")
-	startCmd.Flags().StringVarP(&geminiKey, "gemini-key", "G", "", "Gemini API key")
-	startCmd.Flags().StringVarP(&chatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
+	startCmd.Flags().BoolVarP(&initArgs.Debug, "debug", "D", false, "Enable debug mode")
+	startCmd.Flags().StringVarP(&initArgs.Bind, "bind", "b", "localhost", "Address to bind the server to")
+	startCmd.Flags().StringVarP(&initArgs.Port, "port", "p", "8080", "Port to run the server on")
+	startCmd.Flags().StringVarP(&initArgs.ConfigFile, "config", "f", "", "Path to the config file")
+	startCmd.Flags().StringVarP(&initArgs.OpenAIKey, "openai-key", "o", "", "OpenAI API key")
+	startCmd.Flags().StringVarP(&initArgs.DeepSeekKey, "deepseek-key", "d", "", "DeepSeek API key")
+	startCmd.Flags().StringVarP(&initArgs.OllamaEndpoint, "ollama-endpoint", "e", "http://localhost:11434", "Ollama API endpoint")
+	startCmd.Flags().StringVarP(&initArgs.GeminiKey, "gemini-key", "g", "", "Gemini API key")
+	startCmd.Flags().StringVarP(&initArgs.ChatGPTKey, "chatgpt-key", "c", "", "ChatGPT API key")
+	startCmd.Flags().StringVarP(&initArgs.ClaudeKey, "claude-key", "C", "", "Claude API key")
+	startCmd.Flags().BoolVarP(&initArgs.Background, "background", "B", false, "Run server in background")
 
 	return startCmd
 }

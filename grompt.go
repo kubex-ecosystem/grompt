@@ -10,7 +10,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	itypes "github.com/kubex-ecosystem/grompt/internal/types"
 
-	logz "github.com/kubex-ecosystem/logz"
+	logz "github.com/kubex-ecosystem/logz/logger"
 )
 
 // Result represents the outcome of a processed prompt.

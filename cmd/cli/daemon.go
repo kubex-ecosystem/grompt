@@ -10,8 +10,15 @@ import (
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/internal/daemon"
+	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	if initArgs == nil {
+		initArgs = &kbx.InitArgs{}
+	}
+}
 
 var (
 	gobeURL             string
@@ -45,10 +52,10 @@ Examples:
 
 	// GoBE Integration flags
 	cmd.Flags().StringVar(&gobeURL, "gobe-url",
-		getEnvOrDefault("GOBE_URL", "http://localhost:3000"),
+		kbx.GetEnvOrDefault("GOBE_URL", "http://localhost:3000"),
 		"GoBE backend URL")
 	cmd.Flags().StringVar(&gobeAPIKey, "gobe-api-key",
-		os.Getenv("GOBE_API_KEY"),
+		kbx.GetEnvOrDefault("GOBE_API_KEY", ""),
 		"GoBE API key for authentication")
 
 	// Scheduling flags
@@ -152,11 +159,4 @@ func printDaemonInfo(config daemon.DaemonConfig) {
 	fmt.Println()
 	fmt.Println("✅ Daemon running... Press Ctrl+C to stop")
 	fmt.Println()
-}
-
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

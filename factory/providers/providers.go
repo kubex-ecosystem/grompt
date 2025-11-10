@@ -5,7 +5,7 @@ import (
 	eng "github.com/kubex-ecosystem/grompt/internal/engine"
 	tp "github.com/kubex-ecosystem/grompt/internal/types"
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
-	logz "github.com/kubex-ecosystem/logz"
+	logz "github.com/kubex-ecosystem/logz/logger"
 )
 
 type Provider = i.Provider

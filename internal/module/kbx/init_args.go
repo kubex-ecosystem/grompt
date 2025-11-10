@@ -31,25 +31,42 @@ var (
 )
 
 type InitArgs struct {
-	ConfigFile     string
-	ConfigType     string
-	ConfigDBFile   string
-	ConfigDBType   string
-	EnvFile        string
-	LogFile        string
-	Name           string
-	Debug          bool
-	ReleaseMode    bool
-	IsConfidential bool
-	Port           string
-	Bind           string
-	Address        string
-	PubCertKeyPath string
-	PubKeyPath     string
-	PrivKeyPath    string
-	Pwd            string
-	NotificationTimeoutSeconds int
-	NotificationProvider		any
+	ConfigFile     string `yaml:"config_file,omitempty" json:"config_file,omitempty" mapstructure:"config_file,omitempty"`
+	ConfigType     string `yaml:"config_type,omitempty" json:"config_type,omitempty" mapstructure:"config_type,omitempty"`
+	ConfigDBFile   string `yaml:"config_db_file,omitempty" json:"config_db_file,omitempty" mapstructure:"config_db_file,omitempty"`
+	ConfigDBType   string `yaml:"config_db_type,omitempty" json:"config_db_type,omitempty" mapstructure:"config_db_type,omitempty"`
+	EnvFile        string `yaml:"env_file,omitempty" json:"env_file,omitempty" mapstructure:"env_file,omitempty"`
+	LogFile        string `yaml:"log_file,omitempty" json:"log_file,omitempty" mapstructure:"log_file,omitempty"`
+	Name           string `yaml:"name,omitempty" json:"name,omitempty" mapstructure:"name,omitempty"`
+	Debug          bool   `yaml:"debug,omitempty" json:"debug,omitempty" mapstructure:"debug,omitempty"`
+	ReleaseMode    bool   `yaml:"release_mode,omitempty" json:"release_mode,omitempty" mapstructure:"release_mode,omitempty"`
+	IsConfidential bool   `yaml:"is_confidential,omitempty" json:"is_confidential,omitempty" mapstructure:"is_confidential,omitempty"`
+	Port           string `yaml:"port,omitempty" json:"port,omitempty" mapstructure:"port,omitempty"`
+	Bind           string `yaml:"bind,omitempty" json:"bind,omitempty" mapstructure:"bind,omitempty"`
+	Address        string `yaml:"address,omitempty" json:"address,omitempty" mapstructure:"address,omitempty"`
+	PubCertKeyPath string `yaml:"pub_cert_key_path,omitempty" json:"pub_cert_key_path,omitempty" mapstructure:"pub_cert_key_path,omitempty"`
+	PubKeyPath     string `yaml:"pub_key_path,omitempty" json:"pub_key_path,omitempty" mapstructure:"pub_key_path,omitempty"`
+	PrivKeyPath    string `yaml:"priv_key_path,omitempty" json:"priv_key_path,omitempty" mapstructure:"priv_key_path,omitempty"`
+	Pwd            string `yaml:"pwd,omitempty" json:"pwd,omitempty" mapstructure:"pwd,omitempty"`
+	TempDir       string `yaml:"temp_dir,omitempty" json:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
+	OpenAIKey 		string `yaml:"openai_key,omitempty" json:"openai_key,omitempty" mapstructure:"openai_key,omitempty"`
+	DeepSeekKey 	string `yaml:"deepseek_key,omitempty" json:"deepseek_key,omitempty" mapstructure:"deepseek_key,omitempty"`
+	OllamaEndpoint string `yaml:"ollama_endpoint,omitempty" json:"ollama_endpoint,omitempty" mapstructure:"ollama_endpoint,omitempty"`
+	GeminiKey 	string `yaml:"gemini_key,omitempty" json:"gemini_key,omitempty" mapstructure:"gemini_key,omitempty"`
+	ChatGPTKey 	string `yaml:"chatgpt_key,omitempty" json:"chatgpt_key,omitempty" mapstructure:"chatgpt_key,omitempty"`
+	ClaudeKey 	string `yaml:"claude_key,omitempty" json:"claude_key,omitempty" mapstructure:"claude_key,omitempty"`
+	Background 	bool   `yaml:"background,omitempty" json:"background,omitempty" mapstructure:"background,omitempty"`
+
+	// Extended configurations
+	NotificationTimeoutSeconds int `yaml:"notification_timeout_seconds,omitempty" json:"notification_timeout_seconds,omitempty" mapstructure:"notification_timeout_seconds,omitempty"`
+	NotificationProvider		any `yaml:"notification_provider,omitempty" json:"notification_provider,omitempty" mapstructure:"notification_provider,omitempty"`
+	OpenAIConfig				map[string]any `yaml:"openai_config,omitempty" json:"openai_config,omitempty" mapstructure:"openai_config,omitempty"`
+	ChatGPTConfig				map[string]any `yaml:"chatgpt_config,omitempty" json:"chatgpt_config,omitempty" mapstructure:"chatgpt_config,omitempty"`
+	ClaudeConfig				map[string]any `yaml:"claude_config,omitempty" json:"claude_config,omitempty" mapstructure:"claude_config,omitempty"`
+	AnthropicConfig			map[string]any `yaml:"anthropic_config,omitempty" json:"anthropic_config,omitempty" mapstructure:"anthropic_config,omitempty"`
+	DeepSeekConfig			map[string]any `yaml:"deep_seek_config,omitempty" json:"deep_seek_config,omitempty" mapstructure:"deep_seek_config,omitempty"`
+	GeminiConfig			map[string]any `yaml:"gemini_config,omitempty" json:"gemini_config,omitempty" mapstructure:"gemini_config,omitempty"`
+	OllamaConfig			map[string]any `yaml:"ollama_config,omitempty" json:"ollama_config,omitempty" mapstructure:"ollama_config,omitempty"`
 }
 
 func NewInitArgs(
@@ -69,6 +86,21 @@ func NewInitArgs(
 	pubCertKeyPath string,
 	pubKeyPath string,
 	pwd string,
+	openAIKey string,
+	deepSeekKey string,
+	ollamaEndpoint string,
+	geminiKey string,
+	chatGPTKey string,
+	claudeKey string,
+	background bool,
+
+	openAIConfig map[string]any,
+	chatGPTConfig map[string]any,
+	claudeConfig map[string]any,
+	anthropicConfig map[string]any,
+	deepSeekConfig map[string]any,
+	geminiConfig map[string]any,
+	ollamaConfig map[string]any,
 ) *InitArgs {
 	configFile = GetValueOrDefaultSimple(configFile, os.ExpandEnv(DefaultGoBEConfigPath))
 	configDBFile = GetValueOrDefaultSimple(configDBFile, "dbconfig.json")
@@ -79,6 +111,20 @@ func NewInitArgs(
 	)
 	port = GetValueOrDefaultSimple(port, "8088")
 	bind = GetValueOrDefaultSimple(bind, "0.0.0.0")
+	openAIKey = GetValueOrDefaultSimple(openAIKey, "")
+	deepSeekKey = GetValueOrDefaultSimple(deepSeekKey, "")
+	ollamaEndpoint = GetValueOrDefaultSimple(ollamaEndpoint, "http://localhost:11434")
+	geminiKey = GetValueOrDefaultSimple(geminiKey, "")
+	chatGPTKey = GetValueOrDefaultSimple(chatGPTKey, "")
+	claudeKey = GetValueOrDefaultSimple(claudeKey, "")
+
+	openAIConfig = GetValueOrDefaultSimple(openAIConfig, map[string]any{})
+	chatGPTConfig = GetValueOrDefaultSimple(chatGPTConfig, map[string]any{})
+	claudeConfig = GetValueOrDefaultSimple(claudeConfig, map[string]any{})
+	anthropicConfig = GetValueOrDefaultSimple(anthropicConfig, map[string]any{})
+	deepSeekConfig = GetValueOrDefaultSimple(deepSeekConfig, map[string]any{})
+	geminiConfig = GetValueOrDefaultSimple(geminiConfig, map[string]any{})
+	ollamaConfig = GetValueOrDefaultSimple(ollamaConfig, map[string]any{})
 
 	return &InitArgs{
 		ConfigFile:     configFile,
@@ -97,6 +143,21 @@ func NewInitArgs(
 		PubCertKeyPath: GetValueOrDefaultSimple(pubCertKeyPath, os.ExpandEnv(DefaultGoBEKeyPath)),
 		PubKeyPath:     GetValueOrDefaultSimple(pubKeyPath, os.ExpandEnv(DefaultGoBECertPath)),
 		Pwd:            GetValueOrDefaultSimple(pwd, ""),
+		TempDir:       os.TempDir(),
+		OpenAIKey: 		openAIKey,
+		DeepSeekKey: 	deepSeekKey,
+		OllamaEndpoint: ollamaEndpoint,
+		GeminiKey: 	    geminiKey,
+		ChatGPTKey: 	chatGPTKey,
+		ClaudeKey: 	    claudeKey,
+		Background: 	background,
+		OpenAIConfig:   openAIConfig,
+		ChatGPTConfig:  chatGPTConfig,
+		ClaudeConfig:   claudeConfig,
+		AnthropicConfig: anthropicConfig,
+		DeepSeekConfig: deepSeekConfig,
+		GeminiConfig:   geminiConfig,
+		OllamaConfig:   ollamaConfig,
 	}
 }
 

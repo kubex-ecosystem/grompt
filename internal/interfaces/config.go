@@ -8,6 +8,7 @@ type ServerConfig interface {
 	SetAPIKey(provider, key string) error
 	GetAPIEndpoint(provider string) string
 	GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string
+	Validate() error
 }
 
 type IConfig interface {
@@ -17,4 +18,5 @@ type IConfig interface {
 	SetAPIKey(provider string, key string) error
 	GetAPIEndpoint(provider string) string
 	GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string
+	Validate() error
 }

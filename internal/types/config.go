@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -313,16 +314,11 @@ func (c *configImpl) registryConfig() interfaces.ServerConfig {
 	return cfg
 }
 
-// injectTempEnv ensures registry constructors can continue to read API keys from env vars.
-// func (c *configImpl) injectTempEnv(provider, key string) string {
-// 	envKey := fmt.Sprintf("GROMPT_PROVIDER_%s_KEY", strings.ToUpper(provider))
-// 	_ = os.Setenv(envKey, key)
-// 	return envKey
-// }
 
-// func (c *configImpl) requestTimeout() time.Duration {
-// 	if c.timeout <= 0 {
-// 		return 60 * time.Second
-// 	}
-// 	return c.timeout
-// }
+func (c *configImpl) Validate() error {
+	// Example validation: Ensure port is a valid number
+	if _, err := net.LookupPort("tcp", c.GetPort()); err != nil {
+		return fmt.Errorf("invalid port: %s", c.GetPort())
+	}
+	return c.registryConfig().Validate()
+}

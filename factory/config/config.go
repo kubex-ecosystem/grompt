@@ -11,7 +11,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"gopkg.in/yaml.v3"
 
-	l "github.com/kubex-ecosystem/logz"
+	l "github.com/kubex-ecosystem/logz/logger"
 )
 
 type Config = interfaces.IConfig

@@ -1,12 +1,13 @@
 # Production Features Configuration
 production:
   # General Settings
-  logging_level: INFO
+  logging_level: info
   debug_mode: false
 
   # Server Configuration
   server:
-    addr: ":8080"
+    addr: "0.0.0.0:8080"
+    port: 8080
     read_timeout_sec: 15
     write_timeout_sec: 15
     idle_timeout_sec: 60
@@ -20,7 +21,7 @@ production:
 
     # Access Control Settings
     access_control:
-      enabled: true
+      enabled: false
       allowed_ips:
         - "0.0.0.0/0" # Allow all in dev
       denied_ips:
@@ -30,7 +31,7 @@ production:
 
     # Proxy Configuration
     proxy:
-      enabled: true
+      enabled: false
       trusted_proxies:
         - "0.0.0.0/0" # Allow all in dev
       use_x_forwarded_for: true
@@ -193,7 +194,7 @@ provider_production:
 # Security Settings
 security:
   enable_https: true
-  allowed_origins: ["https://kubex.world"]
+  allowed_origins: ["https://kubex.world"," https://www.kubex.world", "http://localhost:8080"]
   jwt_secret: "your_production_jwt_secret_here"
   api_keys:
     - "your_production_api_key_1"
@@ -222,8 +223,8 @@ monitoring:
   logging:
     # Local logging configuration
     enabled: true
-    level: INFO
-    format: json
+    level: info
+    format: text
     output: /var/log/gemx-grompt/production.log
 
     # Log rotation settings
@@ -240,8 +241,8 @@ monitoring:
     external_logging_api_key: null # API key for the external logging service
     external_logging_endpoint: null # Endpoint URL for the external logging service
     log_request_response: false # Set to true to log full requests and responses (may include sensitive data)
-    log_level: INFO # Log level for the external logging service
-    log_format: json # Format for the external logging service (e.g., "json", "text")
+    log_level: info # Log level for the external logging service
+    log_format: text # Format for the external logging service (e.g., "json", "text")
 
   # Alerting configuration
   alerting:
