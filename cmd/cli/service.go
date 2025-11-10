@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kubex-ecosystem/grompt/utils"
 	l "github.com/kubex-ecosystem/logz/logger"
 	"gopkg.in/yaml.v3"
 
@@ -77,17 +76,7 @@ func startServer() *cobra.Command {
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
-				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", initArgs.Bind),
-					utils.GetEnvOr("PORT", initArgs.Port),
-					utils.GetEnvOr("OPENAI_API_KEY", initArgs.OpenAIKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", initArgs.DeepSeekKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", initArgs.OllamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", initArgs.ClaudeKey),
-					utils.GetEnvOr("GEMINI_API_KEY", initArgs.GeminiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", initArgs.ChatGPTKey),
-					gl,
-				)
+				cfg = getDefaultConfig(initArgs)
 			}
 
 			if cfg == nil {
@@ -163,17 +152,7 @@ func startServerService() *cobra.Command {
 				}
 				gl.Log("info", "Arquivo de configuração carregado com sucesso")
 			} else {
-				cfg = t.NewConfig(
-					utils.GetEnvOr("BIND_ADDR", initArgs.Bind),
-					utils.GetEnvOr("PORT", initArgs.Port),
-					utils.GetEnvOr("OPENAI_API_KEY", initArgs.OpenAIKey),
-					utils.GetEnvOr("DEEPSEEK_API_KEY", initArgs.DeepSeekKey),
-					utils.GetEnvOr("OLLAMA_ENDPOINT", initArgs.OllamaEndpoint),
-					utils.GetEnvOr("CLAUDE_API_KEY", initArgs.ClaudeKey),
-					utils.GetEnvOr("GEMINI_API_KEY", initArgs.GeminiKey),
-					utils.GetEnvOr("CHATGPT_API_KEY", initArgs.ChatGPTKey),
-					gl,
-				)
+				cfg = getDefaultConfig(initArgs)
 			}
 
 			if cfg == nil {

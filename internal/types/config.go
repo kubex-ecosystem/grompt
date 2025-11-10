@@ -41,15 +41,31 @@ func DefaultConfig(configFilePath string) interfaces.ServerConfig {
 // NewConfig constructs a configuration using explicit parameters.
 
 func NewServerConfig(
-	bindAddr string,
-	port string,
-	openAIKey string,
-	deepSeekKey string,
-	ollamaEndpoint string,
-	claudeKey string,
-	geminiKey string,
-	chatGPTKey string,
-	logger logz.Logger,
+	name               string,
+	debug              bool,
+	logger             logz.Logger,
+	bindAddr           string,
+	port               string,
+	tempDir            string,
+	logFile           string,
+	envFile           string,
+	configFile        string,
+	pwd               string,
+	openAIKey         string,
+	claudeKey        string,
+	geminiKey        string,
+	deepSeekKey      string,
+	chatGPTKey      string,
+	ollamaEndpoint   string,
+	apiKeys            map[string]string,
+	endpoints          map[string]string,
+	defaultModels      map[string]string,
+	providerTypes      map[string]string,
+	defaultProvider    string,
+	defaultTemperature float32,
+	historyLimit       int,
+	timeout            time.Duration,
+	providerConfigPath string,
 ) interfaces.ServerConfig {
 	cfg := newServerConfig()
 	cfg.bindAddr = bindAddr
@@ -75,6 +91,39 @@ func NewServerConfig(
 	if ollamaEndpoint != "" {
 		cfg.endpoints["ollama"] = ollamaEndpoint
 	}
+	cfg.name = name
+	cfg.debug = debug
+	cfg.tempDir = tempDir
+	cfg.logFile = logFile
+	cfg.envFile = envFile
+	cfg.configFile = configFile
+	cfg.pwd = pwd // pragma: allowlist secret
+	for k, v := range apiKeys {
+		cfg.apiKeys[k] = v
+	}
+	for k, v := range endpoints {
+		cfg.endpoints[k] = v
+	}
+	for k, v := range defaultModels {
+		cfg.defaultModels[k] = v
+	}
+	for k, v := range providerTypes {
+		cfg.providerTypes[k] = v
+	}
+	if defaultProvider != "" {
+		cfg.defaultProvider = defaultProvider
+	}
+	if defaultTemperature >= 0 {
+		cfg.defaultTemperature = defaultTemperature
+	}
+	if historyLimit > 0 {
+		cfg.historyLimit = historyLimit
+	}
+	if timeout > 0 {
+		cfg.timeout = timeout
+	}
+	cfg.providerConfigPath = providerConfigPath
+
 	return cfg
 }
 
@@ -82,10 +131,17 @@ func NewServerConfig(
 
 var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama", "chatgpt", "groq"}
 
-type configImpl struct {
+type ServerConfigImpl struct {
+	name               string
+	debug              bool
 	logger             logz.Logger
 	bindAddr           string
 	port               string
+	tempDir            string
+	logFile           string
+	envFile           string
+	configFile        string
+	pwd               string
 	apiKeys            map[string]string
 	endpoints          map[string]string
 	defaultModels      map[string]string
@@ -100,8 +156,8 @@ type configImpl struct {
 	mu     sync.RWMutex
 }
 
-func newServerConfig() *configImpl {
-	cfg := &configImpl{
+func newServerConfig() *ServerConfigImpl {
+	cfg := &ServerConfigImpl{
 		port:               "8080",
 		apiKeys:            map[string]string{},
 		endpoints:          map[string]string{},
@@ -131,33 +187,33 @@ func newServerConfig() *configImpl {
 	return cfg
 }
 
-// func (c *configImpl) attachEngine(engine interfaces.IEngine) {
+// func (c *ServerConfigImpl) attachEngine(engine interfaces.IEngine) {
 // 	c.mu.Lock()
 // 	defer c.mu.Unlock()
 // 	c.engine = engine
 // }
 
-func (c *configImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
+func (c *ServerConfigImpl) GetAPIConfig(provider string) interfaces.IAPIConfig {
 	return c.registryConfig().GetAPIConfig(provider)
 }
 
-func (c *configImpl) GetLegacyAPIConfig(provider string) interfaces.LegacyAPIConfig {
+func (c *ServerConfigImpl) GetLegacyAPIConfig(provider string) interfaces.LegacyAPIConfig {
 	return &apiConfig{provider: provider, cfg: c}
 }
 
-func (c *configImpl) GetPort() string {
+func (c *ServerConfigImpl) GetPort() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.port
 }
 
-func (c *configImpl) GetAPIKey(provider string) string {
+func (c *ServerConfigImpl) GetAPIKey(provider string) string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.apiKeys[strings.ToLower(provider)]
 }
 
-func (c *configImpl) SetAPIKey(provider, key string) error {
+func (c *ServerConfigImpl) SetAPIKey(provider, key string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if key == "" {
@@ -168,13 +224,13 @@ func (c *configImpl) SetAPIKey(provider, key string) error {
 	return nil
 }
 
-func (c *configImpl) GetAPIEndpoint(provider string) string {
+func (c *ServerConfigImpl) GetAPIEndpoint(provider string) string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.endpoints[strings.ToLower(provider)]
 }
 
-func (c *configImpl) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
+func (c *ServerConfigImpl) GetBaseGenerationPrompt(ideas []string, purpose, purposeType, lang string, maxLength int) string {
 	var builder strings.Builder
 	builder.WriteString("You are Kubex Grompt assistant.")
 	if purpose != "" {
@@ -199,7 +255,7 @@ func (c *configImpl) GetBaseGenerationPrompt(ideas []string, purpose, purposeTyp
 	return builder.String()
 }
 
-func (c *configImpl) loadFromEnv() {
+func (c *ServerConfigImpl) loadFromEnv() {
 	for _, provider := range legacyProviders {
 		if envKey := defaultEnvKey(provider); envKey != "" {
 			if value := strings.TrimSpace(os.Getenv(envKey)); value != "" {
@@ -223,7 +279,7 @@ func (c *configImpl) loadFromEnv() {
 	}
 }
 
-func (c *configImpl) loadFromFile(path string) error {
+func (c *ServerConfigImpl) loadFromFile(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -283,39 +339,39 @@ func (c *configImpl) loadFromFile(path string) error {
 	return nil
 }
 
-func (c *configImpl) registryConfig() interfaces.ServerConfig {
-	// cfg := Config{
-	// 	Providers: map[string]ProviderImpl{},
-	// }
-
-	// c.mu.RLock()
-	// defer c.mu.RUnlock()
-
-	// for name, apiKey := range c.apiKeys { // pragma: allowlist secret
-	// 	providerType := c.providerTypes[name]
-	// 	if providerType == "" {
-	// 		providerType = name
-	// 	}
-
-
-	// }
+func (c *ServerConfigImpl) registryConfig() interfaces.ServerConfig {
 	cfg := NewServerConfig(
 		c.bindAddr,
+		c.debug,
+		c.logger,
+		c.bindAddr,
 		c.port,
+		c.tempDir,
+		c.logFile,
+		c.envFile,
+		c.configFile,
+		c.pwd,
 		c.apiKeys["openai"],
-		c.apiKeys["deepseek"],
-		c.endpoints["ollama"],
 		c.apiKeys["claude"],
 		c.apiKeys["gemini"],
+		c.apiKeys["deepseek"],
 		c.apiKeys["chatgpt"],
-		c.logger,
+		c.endpoints["ollama"],
+		c.apiKeys,
+		c.endpoints,
+		c.defaultModels,
+		c.providerTypes,
+		c.defaultProvider,
+		c.defaultTemperature,
+		c.historyLimit,
+		c.timeout,
+		c.providerConfigPath,
 	)
 
 	return cfg
 }
 
-
-func (c *configImpl) Validate() error {
+func (c *ServerConfigImpl) Validate() error {
 	// Example validation: Ensure port is a valid number
 	if _, err := net.LookupPort("tcp", c.GetPort()); err != nil {
 		return fmt.Errorf("invalid port: %s", c.GetPort())

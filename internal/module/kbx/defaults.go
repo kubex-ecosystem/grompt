@@ -64,6 +64,11 @@ const (
 	DefaultServerHost = "0.0.0.0"
 )
 
+const (
+	DefaultLLMHistoryLimit = 5
+	DefaultProviderConfigPath = "$HOME/.kubex/providers"
+)
+
 type DBNameKey string
 
 const (

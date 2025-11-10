@@ -84,9 +84,9 @@ type APIConfig struct {
 
 type Config struct {
 	Logger    l.Logger
-	Server    *kbx.InitArgs                        `yaml:"server"`
-	Defaults  *kbx.InitArgs                        `yaml:"defaults"`
-	Providers map[string]interfaces.Provider `yaml:"providers"`
+	Server    *ServerConfigImpl              `yaml:"server,omitempty" json:"server,omitempty"`
+	Defaults  *kbx.InitArgs                  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
+	Providers map[string]interfaces.Provider `yaml:"providers,omitempty" json:"providers,omitempty"`
 
 	BindAddr       string `json:"bind_addr,omitempty" gorm:"default:'localhost'"`
 	Port           string `json:"port" gorm:"default:8080"`
@@ -99,14 +99,68 @@ type Config struct {
 	Debug          bool   `json:"debug" gorm:"default:false"`
 }
 
-func NewConfig(bindAddr, port, openAIKey, deepSeekKey, ollamaEndpoint, claudeKey, geminiKey, chatGPTKey string, logger l.Logger) *Config {
+func NewConfig(
+	name               string,
+	debug              bool,
+	logger             l.Logger,
+	bindAddr           string,
+	port               string,
+	tempDir            string,
+	logFile           string,
+	envFile           string,
+	configFile        string,
+	pwd               string,
+	openAIKey         string,
+	claudeKey        string,
+	geminiKey        string,
+	deepSeekKey      string,
+	chatGPTKey      string,
+	ollamaEndpoint   string,
+	apiKeys            map[string]string,
+	endpoints          map[string]string,
+	defaultModels      map[string]string,
+	providerTypes      map[string]string,
+	defaultProvider    string,
+	defaultTemperature float32,
+	historyLimit       int,
+	timeout            time.Duration,
+	providerConfigPath string,
+) *Config {
 	if logger == nil {
 		logger = l.LoggerG
 	}
 	if bindAddr == "" {
 		bindAddr = kbx.DefaultServerHost
 	}
+	server := NewServerConfig(
+		name,
+		debug,
+		logger,
+		bindAddr,
+		port,
+		tempDir,
+		logFile,
+		envFile,
+		configFile,
+		pwd,
+		openAIKey,
+		claudeKey,
+		geminiKey,
+		deepSeekKey,
+		chatGPTKey,
+		ollamaEndpoint,
+		apiKeys,
+		endpoints,
+		defaultModels,
+		providerTypes,
+		defaultProvider,
+		defaultTemperature,
+		historyLimit,
+		timeout,
+		providerConfigPath,
+	).(*ServerConfigImpl)
 	return &Config{
+		Server:         server,
 		Logger:         logger,
 		BindAddr:       bindAddr,
 		Port:           port,
@@ -345,48 +399,49 @@ func (c *Config) Validate() error {
 		}
 	}
 	if c.Server == nil {
-		c.Server = &kbx.InitArgs{}
+		c.Server = newServerConfig()
 	}
 	if c.Port == "" {
 		c.Port = c.Defaults.Port
 	}
 	if c.BindAddr == "" {
-		c.Server.Address = net.JoinHostPort(c.Defaults.Address, c.GetPort())
+		c.Server.bindAddr = c.Defaults.Bind
 	} else {
-		c.Server.Address = net.JoinHostPort(c.BindAddr, c.GetPort())
+		c.Server.bindAddr = c.BindAddr
 	}
-	if c.Server.Name == "" {
-		c.Server.Name = c.Defaults.Name
+	if c.Server.name == "" {
+		c.Server.name = c.Defaults.Name
 	}
-	if c.Server.EnvFile == "" {
-		c.Server.EnvFile = c.Defaults.EnvFile
+	if c.Server.envFile == "" {
+		c.Server.envFile = c.Defaults.EnvFile
 	}
-	if c.Server.Debug {
+	if c.Server.debug {
 		glgr.SetDebug(true)
 		glgr.Log("info", "Debug mode is enabled")
 	}else {
 		glgr.Log("info", "Debug mode is disabled")
 	}
 	var tmpDir string
-	if c.Server.LogFile != "" {
-		c.Server.LogFile = c.Defaults.LogFile
+	if c.Server.logFile == "" {
+		c.Server.logFile = c.Defaults.LogFile
 	}
-	if c.Server.LogFile != "" {
-		tmpDir = filepath.Dir(c.Server.LogFile)
+	if c.Server.tempDir == "" {
+		tmpDir = c.Defaults.TempDir
 	} else {
-		tmpDir = os.TempDir()
+		tmpDir = c.Server.tempDir
 	}
+
 	if  _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 		tmpDir, err = os.MkdirTemp("", "grompt-logs")
 		if err != nil {
 			return fmt.Errorf("failed to create temp dir for logs: %v", err)
 		}
 	}
-	if c.Server.LogFile == "" {
+	if c.Server.logFile == "" {
 		if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 			return fmt.Errorf("log directory does not exist: %s", tmpDir)
 		}
-		c.Server.LogFile = tmpDir + "/grompt.log"
+		c.Server.logFile = tmpDir + "/grompt.log"
 	}
 	if _, err := os.Stat(tmpDir + "/grompt.log"); os.IsNotExist(err) {
 		file, err := os.Create(tmpDir + "/grompt.log")
@@ -395,18 +450,18 @@ func (c *Config) Validate() error {
 		}
 		file.Close()
 	}
-	if c.Server.Pwd == "" {
+	if c.Server.pwd == "" {
 		var err error
-		c.Server.Pwd, err = os.Getwd()
+		c.Server.pwd, err = os.Getwd()
 		if err != nil {
 			return fmt.Errorf("failed to get current working directory: %v", err)
 		}
 	}
 	var configFilePath string
-	if c.Server.ConfigFile == "" {
-		configFilePath = filepath.Join(c.Server.Pwd, "config", "development.yml")
+	if c.Server.configFile == "" {
+		configFilePath = filepath.Join(c.Server.pwd, "config", "development.yml")
 	} else {
-		configFilePath = c.Server.ConfigFile
+		configFilePath = c.Server.configFile
 	}
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		if _, err := os.Create(configFilePath); err != nil {
@@ -422,13 +477,13 @@ func (c *Config) Validate() error {
 		glgr.Log("info", fmt.Sprintf("Default config file created at: %s", configFilePath))
 	}
 
-	glgr.Log("info", fmt.Sprintf("Server name set to: %s", c.Server.Name))
+	glgr.Log("info", fmt.Sprintf("Server name set to: %s", c.Server.name))
 	glgr.Log("info", fmt.Sprintf("Using config file: %v", configFilePath))
 	glgr.Log("info", fmt.Sprintf("Bind address set to: %s", c.BindAddr))
-	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.EnvFile))
-	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.LogFile))
+	glgr.Log("info", fmt.Sprintf("Environment set to: %s", c.Server.envFile))
+	glgr.Log("info", fmt.Sprintf("Log file set to: %s", c.Server.logFile))
 	glgr.Log("info", fmt.Sprintf("Temporary directory set to: %s", tmpDir))
-	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.Pwd))
+	glgr.Log("info", fmt.Sprintf("Current working directory set to: %s", c.Server.pwd))
 
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 
 type apiConfig struct {
 	provider string
-	cfg      *configImpl
+	cfg      *ServerConfigImpl
 }
 
 func (a *apiConfig) IsAvailable() bool {

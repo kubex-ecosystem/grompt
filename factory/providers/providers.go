@@ -2,9 +2,11 @@
 package providers
 
 import (
+	"time"
+
 	eng "github.com/kubex-ecosystem/grompt/internal/engine"
-	tp "github.com/kubex-ecosystem/grompt/internal/types"
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
+	tp "github.com/kubex-ecosystem/grompt/internal/types"
 	logz "github.com/kubex-ecosystem/logz/logger"
 )
 
@@ -16,26 +18,58 @@ type Pricing = i.Pricing
 
 // Initialize mirrors the legacy helper, wiring a prompt engine and returning the available providers.
 func Initialize(
-	port string,
-	bindAddr string,
-	openAIKey string,
-	deepSeekKey string,
-	ollamaEndpoint string,
-	claudeKey string,
-	geminiKey string,
-	chatgptKey string,
-	logger logz.Logger,
+	name               string,
+	debug              bool,
+	logger             logz.Logger,
+	bindAddr           string,
+	port               string,
+	tempDir            string,
+	logFile           string,
+	envFile           string,
+	configFile        string,
+	pwd               string,
+	openAIKey         string,
+	claudeKey        string,
+	geminiKey        string,
+	deepSeekKey      string,
+	chatGPTKey      string,
+	ollamaEndpoint   string,
+	apiKeys            map[string]string,
+	endpoints          map[string]string,
+	defaultModels      map[string]string,
+	providerTypes      map[string]string,
+	defaultProvider    string,
+	defaultTemperature float32,
+	historyLimit       int,
+	timeout            time.Duration,
+	providerConfigPath string,
 ) []Provider {
 	cfg := tp.NewConfig(
+		name,
+		debug,
+		logger,
 		bindAddr,
 		port,
+		tempDir,
+		logFile,
+		envFile,
+		configFile,
+		pwd,
 		openAIKey,
-		deepSeekKey,
-		ollamaEndpoint,
 		claudeKey,
 		geminiKey,
-		chatgptKey,
-		logger,
+		deepSeekKey,
+		chatGPTKey,
+		ollamaEndpoint,
+		apiKeys,
+		endpoints,
+		defaultModels,
+		providerTypes,
+		defaultProvider,
+		defaultTemperature,
+		historyLimit,
+		timeout,
+		providerConfigPath,
 	)
 
 	e := eng.NewEngine(cfg)
