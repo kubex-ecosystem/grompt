@@ -8,7 +8,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/time v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
