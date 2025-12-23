@@ -1,5 +1,5 @@
 export type Theme = 'light' | 'dark';
-export type Language = 'en' | 'es' | 'zh' | 'pt';
+export type Language = 'en' | 'pt';
 
 export interface Idea {
   id: string;

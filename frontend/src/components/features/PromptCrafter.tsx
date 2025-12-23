@@ -231,7 +231,8 @@ const i18n: Record<string, Record<string, string>> = {
 const useTranslations = () => {
   const { language } = useContext(LanguageContext);
   const t = (key: string, params?: Record<string, string>): string => {
-    let translation = i18n[language][key] || i18n['en'][key] || key;
+    const localeStrings = i18n[language] || i18n['en'];
+    let translation = localeStrings[key] || i18n['en'][key] || key;
     if (params) {
       Object.keys(params).forEach(paramKey => {
         translation = translation.replace(`{${paramKey}}`, params[paramKey]);

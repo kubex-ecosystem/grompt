@@ -79,31 +79,29 @@ func (s *Server) Start() error {
 	// Configurar roteamento
 	s.setupRoutes()
 
-	url := fmt.Sprintf("http://localhost:%s", s.config.Port)
-
-	gl.Log("info", "🌐 Gateway started: %s\n", url)
-	gl.Log("info", "📁 Serving embedded React application\n")
-	gl.Log("info", "🔧 Available APIs:\n")
-	gl.Log("info", "   • /api/v1/config - Configuration\n")
-	gl.Log("info", "   • /api/v1/models - Available Models\n")
-	gl.Log("info", "   • /api/v1/test - API Test\n")
-	gl.Log("info", "   • /api/v1/unified - Unified API\n")
-	gl.Log("info", "   • /api/v1/openai - OpenAI API\n")
-	gl.Log("info", "   • /api/v1/deepseek - DeepSeek API\n")
-	gl.Log("info", "   • /api/v1/claude - Claude API\n")
-	gl.Log("info", "   • /api/v1/gemini - Gemini API\n")
-	gl.Log("info", "   • /api/v1/chatgpt - ChatGPT API\n")
-	gl.Log("info", "   • /api/v1/ollama - Ollama Local\n")
-	gl.Log("info", "   • /api/v1/health - Server Status\n")
-	gl.Log("info", "💡 Press Ctrl+C to stop\n\n")
+	gl.Infof("Gateway started: http://localhost:%s", s.config.Port)
+	gl.Info("📁 Serving embedded React application")
+	gl.Info("🔧 Available APIs:")
+	gl.Info("   • /api/v1/config - Configuration")
+	gl.Info("   • /api/v1/models - Available Models")
+	gl.Info("   • /api/v1/test - API Test")
+	gl.Info("   • /api/v1/unified - Unified API")
+	gl.Info("   • /api/v1/openai - OpenAI API")
+	gl.Info("   • /api/v1/deepseek - DeepSeek API")
+	gl.Info("   • /api/v1/claude - Claude API")
+	gl.Info("   • /api/v1/gemini - Gemini API")
+	gl.Info("   • /api/v1/chatgpt - ChatGPT API")
+	gl.Info("   • /api/v1/ollama - Ollama Local")
+	gl.Info("   • /api/v1/health - Server Status")
+	gl.Info("💡 Press Ctrl+C to stop")
 
 	// Detecta se há a página aberta em algum lugar
 
 	// Abrir navegador após delay
-	go func() {
+	go func(url string) {
 		time.Sleep(1 * time.Second)
 		openBrowser(url)
-	}()
+	}("http://localhost:" + s.config.Port)
 
 	return http.ListenAndServe(
 		net.JoinHostPort(s.config.BindAddr, s.config.Port),

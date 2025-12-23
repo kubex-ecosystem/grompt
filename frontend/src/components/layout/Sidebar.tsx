@@ -1,5 +1,6 @@
 import { Bot, LayoutDashboard, LucideIcon, MessageCircle, NotebookPen, Sparkles, Wand2, Workflow } from 'lucide-react';
 import React from 'react';
+import { useTranslations } from '../../i18n/useTranslations';
 
 export type SidebarSection = {
   id: string;
@@ -27,11 +28,13 @@ const defaultIcons: Record<string, LucideIcon> = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionChange, onClose, collapsed = false }) => {
+  const { t } = useTranslations();
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-3 py-5 lg:hidden">
         <h2 className="text-base font-semibold tracking-wide text-[#0f172a] dark:text-[#e5f2f2]">
-          Workspace
+          {t('sidebarTitle')}
         </h2>
         <button
           type="button"
@@ -45,10 +48,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
       </div>
 
       <div className={`hidden px-6 pt-8 pb-5 ${collapsed ? 'lg:hidden' : 'lg:block'}`}>
-        <p className="text-xs uppercase tracking-[0.4em] text-[#94a3b8] dark:text-[#475569]">Kubex Suite</p>
-        <h1 className="mt-3 text-2xl font-orbitron font-semibold text-[#111827] dark:text-[#f5f3ff]">Grompt Hub</h1>
+        <p className="text-xs uppercase tracking-[0.4em] text-[#94a3b8] dark:text-[#475569]">{t('sidebarSuiteLabel')}</p>
+        <h1 className="mt-3 text-2xl font-orbitron font-semibold text-[#111827] dark:text-[#f5f3ff]">{t('sidebarHubTitle')}</h1>
         <p className="mt-2 text-sm text-[#475569] dark:text-[#94a3b8]">
-          Navigate through AI-assisted modules tailored for prompt engineering, ideation, and delivery.
+          {t('sidebarDescription')}
         </p>
       </div>
 
@@ -128,8 +131,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSection, onSectionCha
       </nav>
 
       <div className={`hidden border-t border-[#e2e8f0] px-6 py-5 text-xs text-[#64748b] dark:border-[#13263a] dark:text-[#94a3b8] ${collapsed ? 'lg:hidden' : 'lg:block'}`}>
-        <p>Build better prompts with Kubex governance.</p>
-        <p className="mt-1">Lightweight, portable, and embeddable.</p>
+        <p>{t('sidebarFooterLineOne')}</p>
+        <p className="mt-1">{t('sidebarFooterLineTwo')}</p>
       </div>
     </div>
   );

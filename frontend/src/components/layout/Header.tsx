@@ -2,6 +2,7 @@ import { Menu, Moon, Sun } from 'lucide-react';
 import React from 'react';
 import { Theme } from '@/types';
 import LanguageSelector from './LanguageSelector';
+import { useTranslations } from '../../i18n/useTranslations';
 
 interface HeaderProps {
   theme: Theme;
@@ -11,6 +12,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onToggleSidebar, collapsed = false }) => {
+  const { t } = useTranslations();
+
   return (
     <div className="flex items-center justify-between px-4 py-4">
       <div className="flex items-center gap-3">
@@ -25,10 +28,10 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onToggleSidebar, 
         {!collapsed && (
           <div className="hidden sm:flex flex-col">
             <h2 className="text-sm font-semibold text-[#111827] dark:text-[#e5f2f2]">
-              Grompt Workspace
+              {t('headerTitle')}
             </h2>
             <p className="text-xs text-[#64748b] dark:text-[#94a3b8]">
-              AI-powered prompt engineering
+              {t('headerTagline')}
             </p>
           </div>
         )}

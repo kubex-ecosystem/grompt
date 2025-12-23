@@ -9,13 +9,17 @@ export const useLanguage = () => {
     try {
       const savedLang = localStorage.getItem('language') as Language | null;
       const browserLang = navigator.language.split('-')[0] as Language;
-      const initialLang = savedLang || (['en', 'es', 'zh', 'pt'].includes(browserLang) ? browserLang : 'en');
+      const preferredLang = savedLang && ['en', 'pt'].includes(savedLang) ? savedLang : null;
+      if (savedLang && !preferredLang) {
+        localStorage.removeItem('language');
+      }
+      const initialLang = preferredLang || (['en', 'pt'].includes(browserLang) ? browserLang : 'en');
       setLanguage(initialLang);
     } catch (error) {
         console.warn('Could not access localStorage to get language. Using default.', error);
         // Fallback to browser language if localStorage is not available
         const browserLang = navigator.language.split('-')[0] as Language;
-        setLanguage((['en', 'es', 'zh', 'pt'].includes(browserLang) ? browserLang : 'en'));
+        setLanguage((['en', 'pt'].includes(browserLang) ? browserLang : 'en'));
     }
   }, []);
 
@@ -28,7 +32,8 @@ export const useLanguage = () => {
   }, [language]);
 
   const t = (key: string, params?: Record<string, string>): string => {
-    let translation = translations[language][key] || translations.en[key] || key;
+    const localeStrings = translations[language] || translations.en;
+    let translation = localeStrings[key] || translations.en[key] || key;
     if (params) {
       Object.keys(params).forEach(paramKey => {
         translation = translation.replace(`{${paramKey}}`, params[paramKey]);

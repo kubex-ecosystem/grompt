@@ -5,8 +5,9 @@ const Footer: React.FC = () => {
   const { t } = useTranslations();
 
   return (
-    <footer className="space-y-3 py-8 text-center text-xs text-[#64748b] dark:text-[#94a3b8]">
-      <div className="flex justify-center items-center gap-6 text-xs">
+    <footer className="py-8 text-xs text-[#64748b] dark:text-[#94a3b8]">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-6 text-xs">
         {/* <a
           href="https://kubex.world"
           target="_blank"
@@ -39,13 +40,14 @@ const Footer: React.FC = () => {
         >
           Security
         </a> */}
-      </div>
-      <div>
-        <p>{t('poweredBy')}</p>
-        <p className="mt-1 font-orbitron tracking-wider">{t('motto')}</p>
-      </div>
-      <div className="text-[10px] opacity-70">
-        <p>Grompt v2.0 • Made with ❤️ in Brasil • Open Source • No Lock-in</p>
+        </div>
+        <div className="text-left md:text-center">
+          <p>{t('poweredBy')}</p>
+          <p className="mt-1 font-orbitron tracking-wider">{t('motto')}</p>
+        </div>
+        <div className="text-left text-[10px] opacity-70 md:text-right">
+          <p>Grompt v2.0 • Made with ❤️ in Brasil • Open Source</p>
+        </div>
       </div>
     </footer>
   );

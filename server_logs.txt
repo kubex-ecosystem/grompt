@@ -1,0 +1,46 @@
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Arquivo de configuração carregado com sucesso]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Configuração carregada com sucesso]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Validando configuração...]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [OpenAI API key is not set]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [DeepSeek API key is not set]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [Claude API key is not set]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [Gemini API key is not set]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [ChatGPT API key is not set]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Debug mode is disabled]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Server name set to: Kubex - GemX Grompt]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Using config file: ./config/production.yml]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Bind address set to: ]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Environment set to: /projects/kubex/grompt/.env]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Log file set to: /projects/kubex/grompt/config/logs/grompt.log]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Temporary directory set to: /tmp]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Current working directory set to: /projects/kubex/grompt]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Configuração validada com sucesso]
+[ProductionMiddleware] Initialized with enterprise features:
+  ✅ Rate Limiting: 100 capacity, 10/sec refill
+  ✅ Circuit Breaker: 5 max failures, 60s reset timeout
+  ✅ Health Checks: every 30s
+  ✅ Retry Logic: 3 max retries with exponential backoff
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [⚠️  API runtime desabilitado: %v]
+[2025-12-23 08:37:35] [[33mwarn[0m] ⚠️  [⚠️  Gateway runtime desabilitado: %v]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [Gateway started: http://localhost:8080]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [📁 Serving embedded React application]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [🔧 Available APIs:]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/config - Configuration]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/models - Available Models]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/test - API Test]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/unified - Unified API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/openai - OpenAI API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/deepseek - DeepSeek API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/claude - Claude API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/gemini - Gemini API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/chatgpt - ChatGPT API]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/ollama - Ollama Local]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [   • /api/v1/health - Server Status]
+[2025-12-23 08:37:35] [[32minfo[0m] ℹ️  [💡 Press Ctrl+C to stop]
+[GIN] 2025/12/23 - 11:37:37 | 200 |    1.972762ms |             ::1 | GET      "/"
+[GIN] 2025/12/23 - 11:37:37 | 200 |     460.198µs |             ::1 | GET      "/assets/vendor-ChtzOUez.js"
+[GIN] 2025/12/23 - 11:37:37 | 200 |      26.441µs |             ::1 | GET      "/assets/main-tn0RQdqM.css"
+[GIN] 2025/12/23 - 11:37:37 | 200 |     781.452µs |             ::1 | GET      "/assets/main-BVCe77pQ.js"
+[GIN] 2025/12/23 - 11:37:37 | 404 |      33.029µs |             ::1 | GET      "/api/v1/config"
+[GIN] 2025/12/23 - 11:37:37 | 200 |     183.662µs |             ::1 | GET      "/manifest.json"
+[GIN] 2025/12/23 - 11:37:37 | 404 |      24.337µs |             ::1 | GET      "/icons/icon-192x192.png"
