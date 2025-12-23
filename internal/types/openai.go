@@ -22,26 +22,26 @@ type OpenAIRequest struct {
 }
 
 type OpenAIAPIRequest struct {
-	Model       string    `json:"model"`
+	Model       string               `json:"model"`
 	Messages    []interfaces.Message `json:"messages"`
-	MaxTokens   int       `json:"max_tokens"`
-	Temperature float64   `json:"temperature"`
-	Stream      bool      `json:"stream"`
+	MaxTokens   int                  `json:"max_tokens"`
+	Temperature float64              `json:"temperature"`
+	Stream      bool                 `json:"stream"`
 }
 
 type OpenAIAPIResponse struct {
-	ID      string   `json:"id"`
-	Object  string   `json:"object"`
-	Created int64    `json:"created"`
-	Model   string   `json:"model"`
-	Choices []Choice `json:"choices"`
-	Usage   interfaces.Usage    `json:"usage"`
+	ID      string           `json:"id"`
+	Object  string           `json:"object"`
+	Created int64            `json:"created"`
+	Model   string           `json:"model"`
+	Choices []Choice         `json:"choices"`
+	Usage   interfaces.Usage `json:"usage"`
 }
 
 type Choice struct {
-	Index        int     `json:"index"`
+	Index        int                `json:"index"`
 	Message      interfaces.Message `json:"message"`
-	FinishReason string  `json:"finish_reason"`
+	FinishReason string             `json:"finish_reason"`
 }
 
 type OpenAIErrorResponse struct {

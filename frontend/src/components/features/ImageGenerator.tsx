@@ -1,16 +1,19 @@
+import { Theme } from '@/types';
 import { Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslations } from '../../i18n/useTranslations';
 import Card from '../ui/Card';
 
 interface ImageGeneratorProps {
-  onCraftPrompt?: (payload: { subject: string; mood: string; style: string; details: string }, apiKey?: string) => Promise<string>;
+  onCraftPrompt?: (payload: { subject: string; mood: string; style: string; details: string; }, apiKey?: string) => Promise<string>;
+  theme: Theme;
+  isApiKeyMissing: boolean;
 }
 
 const moods = ['Vibrante', 'Minimalista', 'Futurista', 'Orgânico'];
 const styles = ['Ilustração digital', 'Fotorrealista', 'Flat design', 'Isométrico'];
 
-const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt }) => {
+const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onCraftPrompt, theme, isApiKeyMissing }) => {
   const { t } = useTranslations();
   const [subject, setSubject] = useState('');
   const [mood, setMood] = useState(moods[0]);

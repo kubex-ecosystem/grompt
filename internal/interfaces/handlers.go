@@ -1,7 +1,7 @@
 package interfaces
 
 type Handlers struct {
-	Config      IConfig
+	Config IConfig
 	// Gateway     Server
 	ClaudeAPI   IAPIConfig
 	OpenaiAPI   IAPIConfig

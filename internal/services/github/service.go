@@ -894,18 +894,18 @@ type GitHubReview struct {
 
 // GitHubRepository represents a GitHub repository
 type GitHubRepository struct {
-	ID            int       `json:"id"`
-	Name          string    `json:"name"`
-	FullName      string    `json:"full_name"`
+	ID            int        `json:"id"`
+	Name          string     `json:"name"`
+	FullName      string     `json:"full_name"`
 	Owner         GitHubUser `json:"owner"`
-	Private       bool      `json:"private"`
-	HTMLURL       string    `json:"html_url"`
-	Description   string    `json:"description"`
-	Language      string    `json:"language"`
-	DefaultBranch string    `json:"default_branch"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-	PushedAt      time.Time `json:"pushed_at"`
+	Private       bool       `json:"private"`
+	HTMLURL       string     `json:"html_url"`
+	Description   string     `json:"description"`
+	Language      string     `json:"language"`
+	DefaultBranch string     `json:"default_branch"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	PushedAt      time.Time  `json:"pushed_at"`
 }
 
 // GitHubUser represents a GitHub user
@@ -924,7 +924,7 @@ type GitHubMergeResult struct {
 
 // GitHubCommitStatus represents commit status information
 type GitHubCommitStatus struct {
-	State    string                 `json:"state"`
+	State    string                  `json:"state"`
 	Statuses []GitHubStatusCheckItem `json:"statuses"`
 }
 

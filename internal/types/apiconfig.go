@@ -8,8 +8,8 @@ import (
 // ---------- API config implementation ----------
 
 type apiConfig struct {
-	Provider string 											 `json:"provider,omitempty" yaml:"provider,omitempty" mapstructure:"provider,omitempty"`
-	APIServerConfig      *ServerConfigImpl `json:"-" yaml:"-" mapstructure:"-"`
+	Provider        string            `json:"provider,omitempty" yaml:"provider,omitempty" mapstructure:"provider,omitempty"`
+	APIServerConfig *ServerConfigImpl `json:"-" yaml:"-" mapstructure:"-"`
 }
 
 func (a *apiConfig) IsAvailable() bool {

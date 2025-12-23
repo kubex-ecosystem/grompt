@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
 )
 
 type GeminiAPI struct{ *APIConfig }
@@ -251,7 +251,6 @@ func (g *GeminiAPI) GetBaseURL() string {
 func (g *GeminiAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilities {
 	return defaultCapabilities("gemini", "")
 }
-
 
 func (g *GeminiAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
 	// Implementar funcionalidade de chat se necessário

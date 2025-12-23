@@ -7,7 +7,7 @@ import (
 	eng "github.com/kubex-ecosystem/grompt/internal/engine"
 	i "github.com/kubex-ecosystem/grompt/internal/interfaces"
 	tp "github.com/kubex-ecosystem/grompt/internal/types"
-	logz "github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
 )
 
 type Provider = i.Provider
@@ -18,36 +18,36 @@ type Pricing = i.Pricing
 
 // Initialize mirrors the legacy helper, wiring a prompt engine and returning the available providers.
 func Initialize(
-	name               string,
-	debug              bool,
-	logger             logz.Logger,
-	bindAddr           string,
-	port               string,
-	tempDir            string,
-	logFile           string,
-	envFile           string,
-	configFile        string,
-	cwd               string,
-	openAIKey         string,
-	claudeKey        string,
-	geminiKey        string,
-	deepSeekKey      string,
-	chatGPTKey      string,
-	ollamaEndpoint   string,
-	apiKeys            map[string]string,
-	endpoints          map[string]string,
-	defaultModels      map[string]string,
-	providerTypes      map[string]string,
-	defaultProvider    string,
+	name string,
+	debug bool,
+	// logger gl.LogzLogger,
+	bindAddr string,
+	port string,
+	tempDir string,
+	logFile string,
+	envFile string,
+	configFile string,
+	cwd string,
+	openAIKey string,
+	claudeKey string,
+	geminiKey string,
+	deepSeekKey string,
+	chatGPTKey string,
+	ollamaEndpoint string,
+	apiKeys map[string]string,
+	endpoints map[string]string,
+	defaultModels map[string]string,
+	providerTypes map[string]string,
+	defaultProvider string,
 	defaultTemperature float32,
-	historyLimit       int,
-	timeout            time.Duration,
+	historyLimit int,
+	timeout time.Duration,
 	providerConfigPath string,
 ) []Provider {
 	cfg := tp.NewConfig(
 		name,
 		debug,
-		logger,
+		gl.GetLoggerZ(""),
 		bindAddr,
 		port,
 		tempDir,

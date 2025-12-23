@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Language, Theme } from './types';
-import { LanguageContext } from './context/LanguageContext';
-import Layout from './components/layout/Layout';
-import Header from './components/layout/Header';
-import Sidebar, { SidebarSection } from './components/layout/Sidebar';
-import Footer from './components/layout/Footer';
-import Welcome from './components/features/Welcome';
-import PromptCrafter from './components/features/PromptCrafter';
 import AgentsGenerator from './components/features/AgentsGenerator';
 import ChatInterface from './components/features/ChatInterface';
-import ContentSummarizer from './components/features/ContentSummarizer';
 import CodeGenerator from './components/features/CodeGenerator';
+import ContentSummarizer from './components/features/ContentSummarizer';
 import ImageGenerator from './components/features/ImageGenerator';
+import PromptCrafter from './components/features/PromptCrafter';
+import Welcome from './components/features/Welcome';
+import Footer from './components/layout/Footer';
+import Header from './components/layout/Header';
+import Layout from './components/layout/Layout';
+import Sidebar, { SidebarSection } from './components/layout/Sidebar';
+import { LanguageContext } from './context/LanguageContext';
 import { configService } from './services/configService';
+import { Language, Theme } from './types';
 
 // Translation strings
 const translations: Record<Language, Record<string, string>> = {
@@ -171,15 +171,15 @@ const App: React.FC = () => {
       case 'prompt':
         return <PromptCrafter theme={theme} isApiKeyMissing={demoMode} />;
       case 'agents':
-        return <AgentsGenerator theme={theme} />;
+        return <AgentsGenerator theme={theme} isApiKeyMissing={demoMode} />;
       case 'chat':
-        return <ChatInterface theme={theme} />;
+        return <ChatInterface theme={theme} isApiKeyMissing={demoMode} />;
       case 'summarizer':
-        return <ContentSummarizer theme={theme} />;
+        return <ContentSummarizer theme={theme} isApiKeyMissing={demoMode} />;
       case 'code':
-        return <CodeGenerator theme={theme} />;
+        return <CodeGenerator theme={theme} isApiKeyMissing={demoMode} />;
       case 'images':
-        return <ImageGenerator theme={theme} />;
+        return <ImageGenerator theme={theme} isApiKeyMissing={demoMode} />;
       default:
         return <Welcome onGetStarted={() => setActiveSection('prompt')} />;
     }

@@ -14,7 +14,8 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
-	l "github.com/kubex-ecosystem/logz/logger"
+	"github.com/kubex-ecosystem/logz"
+	l "github.com/kubex-ecosystem/logz"
 )
 
 var (
@@ -65,7 +66,7 @@ func init() {
 
 var (
 	vSrv = vs.NewVersionService()
-	glgr   = l.LoggerG
+	glgr = l.GetLoggerZ("api_config")
 )
 
 var (
@@ -74,15 +75,15 @@ var (
 )
 
 type APIConfig struct {
-	APIKey     string `json:"api_key,omitempty" yaml:"api_key,omitempty" mapstructure:"api_key,omitempty"`
-	BaseURL    string `json:"base_url,omitempty" yaml:"base_url,omitempty" mapstructure:"base_url,omitempty"`
-	APIVersion    string `json:"api_version,omitempty" yaml:"api_version,omitempty" mapstructure:"api_version,omitempty"`
+	APIKey     string       `json:"api_key,omitempty" yaml:"api_key,omitempty" mapstructure:"api_key,omitempty"`
+	BaseURL    string       `json:"base_url,omitempty" yaml:"base_url,omitempty" mapstructure:"base_url,omitempty"`
+	APIVersion string       `json:"api_version,omitempty" yaml:"api_version,omitempty" mapstructure:"api_version,omitempty"`
 	HTTPClient *http.Client `json:"-" yaml:"-" mapstructure:"-"`
-	DemoMode   bool  `json:"demo_mode,omitempty" yaml:"demo_mode,omitempty" mapstructure:"demo_mode,omitempty"`
+	DemoMode   bool         `json:"demo_mode,omitempty" yaml:"demo_mode,omitempty" mapstructure:"demo_mode,omitempty"`
 }
 
 type Config struct {
-	Logger    l.Logger 										`yaml:"-" json:"-" mapstructure:"-"`
+	Logger    *logz.LoggerZ                  `yaml:"-" json:"-" mapstructure:"-"`
 	Server    *ServerConfigImpl              `yaml:"server,omitempty" json:"server,omitempty"`
 	Defaults  *kbx.InitArgs                  `yaml:"defaults,omitempty" json:"defaults,omitempty"`
 	Providers map[string]interfaces.Provider `yaml:"providers,omitempty" json:"providers,omitempty"`
@@ -96,40 +97,40 @@ type Config struct {
 	GeminiAPIKey   string `json:"gemini_api_key,omitempty" gorm:"default:''"`
 	ChatGPTAPIKey  string `json:"chatgpt_api_key,omitempty" gorm:"default:''"`
 	Debug          bool   `json:"debug" gorm:"default:false"`
-	EnableCORS		 bool   `json:"enable_cors" gorm:"default:false"`
+	EnableCORS     bool   `json:"enable_cors" gorm:"default:false"`
 }
 
 func NewConfig(
-	name               string,
-	debug              bool,
-	logger             l.Logger,
-	bindAddr           string,
-	port               string,
-	tempDir            string,
-	logFile           string,
-	envFile           string,
-	configFile        string,
-	cwd               string,
-	openAIKey         string,
-	claudeKey        string,
-	geminiKey        string,
-	deepSeekKey      string,
-	chatGPTKey      string,
-	ollamaEndpoint   string,
-	apiKeys            map[string]string,
-	endpoints          map[string]string,
-	defaultModels      map[string]string,
-	providerTypes      map[string]string,
-	defaultProvider    string,
+	name string,
+	debug bool,
+	logger *logz.LoggerZ,
+	bindAddr string,
+	port string,
+	tempDir string,
+	logFile string,
+	envFile string,
+	configFile string,
+	cwd string,
+	openAIKey string,
+	claudeKey string,
+	geminiKey string,
+	deepSeekKey string,
+	chatGPTKey string,
+	ollamaEndpoint string,
+	apiKeys map[string]string,
+	endpoints map[string]string,
+	defaultModels map[string]string,
+	providerTypes map[string]string,
+	defaultProvider string,
 	defaultTemperature float32,
-	historyLimit       int,
-	timeout            time.Duration,
+	historyLimit int,
+	timeout time.Duration,
 	providerConfigPath string,
 ) *Config {
 	if logger != nil {
 		glgr = logger
-	} else{
-		glgr = l.LoggerG.GetLogger()
+	} else {
+		glgr = l.GetLoggerZ("api_config")
 	}
 	if bindAddr == "" {
 		bindAddr = kbx.DefaultServerHost
@@ -162,10 +163,10 @@ func NewConfig(
 		providerConfigPath,
 	).(*ServerConfigImpl)
 	cfg := &Config{
-		Server:         server,
-		Logger:         logger,
-		BindAddr:       bindAddr,
-		Port:           port,
+		Server:   server,
+		Logger:   logger,
+		BindAddr: bindAddr,
+		Port:     port,
 	}
 	cfg.SetAPIKey("openai", openAIKey)
 	cfg.SetAPIKey("deepseek", deepSeekKey)
@@ -397,7 +398,7 @@ func (c *Config) Validate() error {
 		if c.Logger != nil {
 			glgr = c.Logger
 		} else {
-			glgr = l.LoggerG.GetLogger()
+			glgr = l.GetLoggerZ("api_config")
 			c.Logger = glgr
 		}
 	}
@@ -431,26 +432,26 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("failed to get current working directory: %v", err)
 		}
 		c.Defaults = &kbx.InitArgs{
-			Address: "localhost",
-			Port:    "8080",
-			Name:    vs.NewVersionService().GetName(),
-			Cwd:     cwd,
-			TempDir: os.TempDir(),
-			EnvFile: filepath.Join(cwd, ".env"),
-			LogFile: filepath.Join(cwd, "config", "logs", "grompt.log"),
-			ConfigFile: filepath.Join(cwd, "config", "development.yml"),
-			ConfigType: "yaml",
-			Debug: 	false,
-			IsConfidential: false,
-			ReleaseMode: false,
-			Bind: "0.0.0.0",
+			Address:                    "localhost",
+			Port:                       "8080",
+			Name:                       vs.NewVersionService().GetName(),
+			Cwd:                        cwd,
+			TempDir:                    os.TempDir(),
+			EnvFile:                    filepath.Join(cwd, ".env"),
+			LogFile:                    filepath.Join(cwd, "config", "logs", "grompt.log"),
+			ConfigFile:                 filepath.Join(cwd, "config", "development.yml"),
+			ConfigType:                 "yaml",
+			Debug:                      false,
+			IsConfidential:             false,
+			ReleaseMode:                false,
+			Bind:                       "0.0.0.0",
 			NotificationTimeoutSeconds: 30,
-			NotificationProvider: "email",
-			ConfigDBType: "sqlite",
-			ConfigDBFile: filepath.Join(cwd, "config", "data", "config.db"),
-			PubKeyPath: filepath.Join(cwd, "config", "keys", "pubkey.pem"),
-			PrivKeyPath: filepath.Join(cwd, "config", "keys", "privkey.pem"),
-			PubCertKeyPath: filepath.Join(cwd, "config", "keys", "pubcert.pem"),
+			NotificationProvider:       "email",
+			ConfigDBType:               "sqlite",
+			ConfigDBFile:               filepath.Join(cwd, "config", "data", "config.db"),
+			PubKeyPath:                 filepath.Join(cwd, "config", "keys", "pubkey.pem"),
+			PrivKeyPath:                filepath.Join(cwd, "config", "keys", "privkey.pem"),
+			PubCertKeyPath:             filepath.Join(cwd, "config", "keys", "pubcert.pem"),
 		}
 	}
 	if c.Server == nil {
@@ -471,9 +472,9 @@ func (c *Config) Validate() error {
 		c.Server.EnvFile = c.Defaults.EnvFile
 	}
 	if c.Server.Debug {
-		glgr.SetDebug(true)
+		glgr.SetDebugMode(true)
 		glgr.Log("info", "Debug mode is enabled")
-	}else {
+	} else {
 		glgr.Log("info", "Debug mode is disabled")
 	}
 	var tmpDir string
@@ -486,7 +487,7 @@ func (c *Config) Validate() error {
 		tmpDir = c.Server.TempDir
 	}
 
-	if  _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 		tmpDir, err = os.MkdirTemp("", "grompt-logs")
 		if err != nil {
 			return fmt.Errorf("failed to create temp dir for logs: %v", err)
@@ -501,7 +502,7 @@ func (c *Config) Validate() error {
 	if _, err := os.Stat(tmpDir + "/grompt.log"); os.IsNotExist(err) {
 		file, err := os.Create(tmpDir + "/grompt.log")
 		if err != nil {
-		return fmt.Errorf("failed to create log file: %v", err)
+			return fmt.Errorf("failed to create log file: %v", err)
 		}
 		file.Close()
 	}

@@ -10,16 +10,16 @@ import (
 // SimpleMetrics provides basic metrics collection without external dependencies
 type SimpleMetrics struct {
 	// Counters
-	requestsTotal      map[string]int64
-	tokensGenerated    map[string]int64
-	generationErrors   map[string]int64
-	proxyRequests      map[string]int64
+	requestsTotal    map[string]int64
+	tokensGenerated  map[string]int64
+	generationErrors map[string]int64
+	proxyRequests    map[string]int64
 
 	// Cost tracking
-	estimatedCostUSD   map[string]float64
+	estimatedCostUSD map[string]float64
 
 	// Performance tracking
-	latencies          map[string][]time.Duration
+	latencies map[string][]time.Duration
 
 	mutex sync.RWMutex
 }
@@ -138,10 +138,10 @@ func (m *SimpleMetrics) GetSummary() map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"total_requests":      totalRequests,
-		"total_tokens":        totalTokens,
-		"total_cost_usd":      totalCost,
-		"total_errors":        totalErrors,
+		"total_requests":       totalRequests,
+		"total_tokens":         totalTokens,
+		"total_cost_usd":       totalCost,
+		"total_errors":         totalErrors,
 		"requests_by_endpoint": m.requestsTotal,
 		"tokens_by_provider":   m.tokensGenerated,
 		"cost_by_provider":     m.estimatedCostUSD,

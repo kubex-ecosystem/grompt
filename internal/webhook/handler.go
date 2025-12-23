@@ -33,7 +33,7 @@ type EventMetadata struct {
 // Handler processes webhook events and triggers meta-analysis
 type Handler struct {
 	eventQueue  EventQueue
-	grompt    GromptActor
+	grompt      GromptActor
 	recommender RecommenderActor
 	executor    ExecutorActor
 }
@@ -168,7 +168,7 @@ type ExecutionMetadata struct {
 func NewHandler(queue EventQueue, grompt GromptActor, recommender RecommenderActor, executor ExecutorActor) *Handler {
 	return &Handler{
 		eventQueue:  queue,
-		grompt:    grompt,
+		grompt:      grompt,
 		recommender: recommender,
 		executor:    executor,
 	}

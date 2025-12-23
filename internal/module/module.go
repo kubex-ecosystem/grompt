@@ -3,8 +3,8 @@ package module
 
 import (
 	cc "github.com/kubex-ecosystem/grompt/cmd/cli"
-	gl "github.com/kubex-ecosystem/logz/logger"
 	vs "github.com/kubex-ecosystem/grompt/internal/module/version"
+	gl "github.com/kubex-ecosystem/logz"
 	"github.com/spf13/cobra"
 
 	"os"
@@ -46,7 +46,7 @@ func (m *Grompt) Execute() error {
 func (m *Grompt) Command() *cobra.Command {
 	// Initialize logger
 
-	gl.LoggerG.GetLogger().Log("debug", "Starting Grompt CLI...")
+	gl.Log("debug", "Starting Grompt CLI...")
 
 	var rtCmd = &cobra.Command{
 		Use:     m.Module(),
@@ -65,7 +65,6 @@ func (m *Grompt) Command() *cobra.Command {
 	rtCmd.AddCommand(vs.CliCommand())
 	rtCmd.AddCommand(cc.NewDaemonCommand())
 	rtCmd.AddCommand(cc.GatewayCmd())
-
 
 	// Set usage definitions for the command and its subcommands
 	setUsageDefinition(rtCmd)

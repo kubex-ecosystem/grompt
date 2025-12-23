@@ -15,8 +15,9 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	p "github.com/kubex-ecosystem/grompt/internal/providers"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
-	"github.com/kubex-ecosystem/grompt/utils"
-	l "github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
+
+	kbxGet "github.com/kubex-ecosystem/kbx/get"
 )
 
 // getProviderAPIKey returns the API key only for the matching provider
@@ -31,7 +32,6 @@ func getProviderAPIKey(targetProvider, currentProvider, apiKey string) string {
 func setupConfig(configFile, provider, apiKey, ollamaEndpoint string) (i.IConfig, error) {
 	var cfg i.IConfig
 	var err error
-	gl := l.LoggerG.GetLogger()
 
 	if configFile != "" {
 		cfg, err = loadConfigFile(configFile)
@@ -58,7 +58,7 @@ func setupProvider(cfg i.IConfig, provider, apiKey string) (i.IAPIConfig, string
 
 	providerObjInterface := p.NewProvider(
 		provider,
-		utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
+		kbxGet.EnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
 		"",
 		cfg,
 	)
@@ -120,9 +120,9 @@ Examples:
   grompt ask --prompt "Explain REST APIs" --provider openai --model gpt-4
   grompt ask --prompt "Write a poem about code" --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			gl := l.LoggerG.GetLogger()
+			gl := gl.GetLoggerZ("ai")
 			if debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 
 			if len(prompt) == 0 {
@@ -212,9 +212,9 @@ Examples:
   grompt generate --ideas "machine learning,python,beginners" --purpose-type "Educational" --lang "english"
   grompt generate --ideas "docker,kubernetes,deployment" --output prompt.md --provider claude`,
 		Run: func(cmd *cobra.Command, args []string) {
-			gl := l.LoggerG.GetLogger()
+			gl := gl.GetLoggerZ("ai")
 			if debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 
 			if len(ideas) == 0 {
@@ -320,9 +320,9 @@ Examples:
   grompt chat --provider openai --model gpt-4
   grompt chat --provider claude --max-tokens 500`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			gl := l.LoggerG.GetLogger()
+			gl := gl.GetLoggerZ("ai")
 			if debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 			var cfg i.IConfig
 			var err error
@@ -347,7 +347,7 @@ Examples:
 
 			providerObjInterface := p.NewProvider(
 				provider,
-				utils.GetEnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
+				kbxGet.EnvOr(fmt.Sprintf("%s_API_KEY", strings.ToUpper(provider)), ""),
 				"",
 				cfg,
 			)
@@ -478,7 +478,7 @@ func getDefaultConfig(initArgs *kbx.InitArgs) i.IConfig {
 	}
 
 	if initArgs.Debug {
-		l.LoggerG.GetLogger().SetDebug(true)
+		gl.GetLoggerZ("ai").SetDebugMode(true)
 	}
 	defaultTemperatureStr := kbx.GetEnvOrDefault("GROMPT_DEFAULT_TEMPERATURE", fmt.Sprintf("%f", kbx.DefaultLLMTemperature))
 	defaultTemperatureFloat, err := strconv.ParseFloat(defaultTemperatureStr, 32)
@@ -511,30 +511,30 @@ func getDefaultConfig(initArgs *kbx.InitArgs) i.IConfig {
 		}
 	}
 	cfg := t.NewConfig(
-		kbx.GetEnvOrDefault("GROMPT_SERVER_NAME",initArgs.Name),
-		kbx.GetValueOrDefaultSimple(kbx.GetEnvOrDefault("GROMPT_DEBUG",fmt.Sprintf("%t", initArgs.Debug)),"false") == "true",
-		l.LoggerG.GetLogger(),
-		kbx.GetEnvOrDefault("GROMPT_BIND_ADDR",initArgs.Bind),
-		kbx.GetEnvOrDefault("GROMPT_PORT",initArgs.Port),
-		kbx.GetEnvOrDefault("GROMPT_TEMP_DIR",initArgs.TempDir),
+		kbx.GetEnvOrDefault("GROMPT_SERVER_NAME", initArgs.Name),
+		kbx.GetValueOrDefaultSimple(kbx.GetEnvOrDefault("GROMPT_DEBUG", fmt.Sprintf("%t", initArgs.Debug)), "false") == "true",
+		gl.GetLoggerZ("ai"),
+		kbx.GetEnvOrDefault("GROMPT_BIND_ADDR", initArgs.Bind),
+		kbx.GetEnvOrDefault("GROMPT_PORT", initArgs.Port),
+		kbx.GetEnvOrDefault("GROMPT_TEMP_DIR", initArgs.TempDir),
 		kbx.GetEnvOrDefault("GROMPT_LOG_FILE", initArgs.LogFile),
 		kbx.GetEnvOrDefault("GROMPT_ENV_FILE", initArgs.EnvFile),
 		kbx.GetEnvOrDefault("GROMPT_CONFIG_FILE", initArgs.ConfigFile),
 		kbx.GetEnvOrDefault("GROMPT_PWD", cwd),
-		kbx.GetEnvOrDefault("OPENAI_API_KEY", getProviderAPIKey("openai",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.OpenAIKey))),
-		kbx.GetEnvOrDefault("CLAUDE_API_KEY", getProviderAPIKey("claude",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.ClaudeKey))),
-		kbx.GetEnvOrDefault("GEMINI_API_KEY", getProviderAPIKey("gemini",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.GeminiKey))),
-		kbx.GetEnvOrDefault("DEEPSEEK_API_KEY", getProviderAPIKey("deepseek",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.DeepSeekKey))),
-		kbx.GetEnvOrDefault("CHATGPT_API_KEY", getProviderAPIKey("chatgpt",kbx.DefaultLLMProvider,kbx.GetEnvOrDefault("GROMPT_API_KEY",initArgs.ChatGPTKey))),
+		kbx.GetEnvOrDefault("OPENAI_API_KEY", getProviderAPIKey("openai", kbx.DefaultLLMProvider, kbx.GetEnvOrDefault("GROMPT_API_KEY", initArgs.OpenAIKey))),
+		kbx.GetEnvOrDefault("CLAUDE_API_KEY", getProviderAPIKey("claude", kbx.DefaultLLMProvider, kbx.GetEnvOrDefault("GROMPT_API_KEY", initArgs.ClaudeKey))),
+		kbx.GetEnvOrDefault("GEMINI_API_KEY", getProviderAPIKey("gemini", kbx.DefaultLLMProvider, kbx.GetEnvOrDefault("GROMPT_API_KEY", initArgs.GeminiKey))),
+		kbx.GetEnvOrDefault("DEEPSEEK_API_KEY", getProviderAPIKey("deepseek", kbx.DefaultLLMProvider, kbx.GetEnvOrDefault("GROMPT_API_KEY", initArgs.DeepSeekKey))),
+		kbx.GetEnvOrDefault("CHATGPT_API_KEY", getProviderAPIKey("chatgpt", kbx.DefaultLLMProvider, kbx.GetEnvOrDefault("GROMPT_API_KEY", initArgs.ChatGPTKey))),
 		kbx.GetEnvOrDefault("OLLAMA_ENDPOINT", "http://localhost:11434"),
 		make(map[string]string),
 		make(map[string]string),
 		make(map[string]string),
 		make(map[string]string),
-		kbx.GetEnvOrDefault("DEFAULT_PROVIDER",kbx.DefaultLLMProvider),
+		kbx.GetEnvOrDefault("DEFAULT_PROVIDER", kbx.DefaultLLMProvider),
 		float32(defaultTemperature),
-defaultHistoryLimit,
-time.Duration(defaultTimeout * int(time.Millisecond)),
+		defaultHistoryLimit,
+		time.Duration(defaultTimeout*int(time.Millisecond)),
 		"",
 	)
 

@@ -133,7 +133,6 @@ func TestGetInstallationIDWithMockServer(t *testing.T) {
 	// Skip this test for now since it requires a real private key
 	t.Skip("Skipping test that requires real private key")
 
-
 }
 
 func TestParsePrivateKey(t *testing.T) {

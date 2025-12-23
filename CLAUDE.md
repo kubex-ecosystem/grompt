@@ -202,7 +202,7 @@ func NewPromptEngine(config Config) PromptEngine {
 Always use the centralized logger:
 
 ```go
-import gl "github.com/kubex-ecosystem/logz/logger"
+import gl "github.com/kubex-ecosystem/logz"
 
 gl.Log("info", "Starting server...")
 gl.Log("debug", "Processing request")

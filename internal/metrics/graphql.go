@@ -54,9 +54,9 @@ type GraphQLResponse struct {
 
 // GraphQLError represents a GraphQL error
 type GraphQLError struct {
-	Message   string      `json:"message"`
-	Locations []Location  `json:"locations,omitempty"`
-	Path      []string    `json:"path,omitempty"`
+	Message    string      `json:"message"`
+	Locations  []Location  `json:"locations,omitempty"`
+	Path       []string    `json:"path,omitempty"`
 	Extensions interface{} `json:"extensions,omitempty"`
 }
 
@@ -71,23 +71,23 @@ type Location struct {
 // RepositoryMetricsData represents comprehensive repository data from GraphQL
 type RepositoryMetricsData struct {
 	Repository struct {
-		Name              string    `json:"name"`
-		Owner             Owner     `json:"owner"`
-		CreatedAt         time.Time `json:"createdAt"`
-		UpdatedAt         time.Time `json:"updatedAt"`
-		PrimaryLanguage   Language  `json:"primaryLanguage"`
-		Languages         Languages `json:"languages"`
-		DefaultBranchRef  BranchRef `json:"defaultBranchRef"`
-		PullRequests      PullRequests `json:"pullRequests"`
-		Issues            Issues    `json:"issues"`
-		Releases          Releases  `json:"releases"`
-		Deployments       Deployments `json:"deployments"`
-		Collaborators     Collaborators `json:"collaborators"`
-		CommitComments    CommitComments `json:"commitComments"`
-		DiskUsage         int       `json:"diskUsage"`
-		ForkCount         int       `json:"forkCount"`
-		StargazerCount    int       `json:"stargazerCount"`
-		WatcherCount      int       `json:"watchers"`
+		Name             string         `json:"name"`
+		Owner            Owner          `json:"owner"`
+		CreatedAt        time.Time      `json:"createdAt"`
+		UpdatedAt        time.Time      `json:"updatedAt"`
+		PrimaryLanguage  Language       `json:"primaryLanguage"`
+		Languages        Languages      `json:"languages"`
+		DefaultBranchRef BranchRef      `json:"defaultBranchRef"`
+		PullRequests     PullRequests   `json:"pullRequests"`
+		Issues           Issues         `json:"issues"`
+		Releases         Releases       `json:"releases"`
+		Deployments      Deployments    `json:"deployments"`
+		Collaborators    Collaborators  `json:"collaborators"`
+		CommitComments   CommitComments `json:"commitComments"`
+		DiskUsage        int            `json:"diskUsage"`
+		ForkCount        int            `json:"forkCount"`
+		StargazerCount   int            `json:"stargazerCount"`
+		WatcherCount     int            `json:"watchers"`
 	} `json:"repository"`
 }
 
@@ -104,7 +104,7 @@ type Language struct {
 }
 
 type Languages struct {
-	TotalSize int `json:"totalSize"`
+	TotalSize int            `json:"totalSize"`
 	Edges     []LanguageEdge `json:"edges"`
 }
 
@@ -119,24 +119,24 @@ type BranchRef struct {
 }
 
 type Target struct {
-	Oid     string    `json:"oid"`
-	History History   `json:"history"`
+	Oid     string  `json:"oid"`
+	History History `json:"history"`
 }
 
 type History struct {
-	TotalCount int     `json:"totalCount"`
+	TotalCount int             `json:"totalCount"`
 	Nodes      []GraphQLCommit `json:"nodes"`
 }
 
 type GraphQLCommit struct {
-	Oid             string    `json:"oid"`
-	Message         string    `json:"message"`
-	CommittedDate   time.Time `json:"committedDate"`
-	Author          GitActor  `json:"author"`
-	Committer       GitActor  `json:"committer"`
-	Additions       int       `json:"additions"`
-	Deletions       int       `json:"deletions"`
-	ChangedFiles    int       `json:"changedFiles"`
+	Oid                    string                `json:"oid"`
+	Message                string                `json:"message"`
+	CommittedDate          time.Time             `json:"committedDate"`
+	Author                 GitActor              `json:"author"`
+	Committer              GitActor              `json:"committer"`
+	Additions              int                   `json:"additions"`
+	Deletions              int                   `json:"deletions"`
+	ChangedFiles           int                   `json:"changedFiles"`
 	AssociatedPullRequests PullRequestConnection `json:"associatedPullRequests"`
 }
 
@@ -154,32 +154,32 @@ type User struct {
 }
 
 type PullRequests struct {
-	TotalCount int                   `json:"totalCount"`
-	Nodes      []GraphQLPullRequest         `json:"nodes"`
+	TotalCount int                  `json:"totalCount"`
+	Nodes      []GraphQLPullRequest `json:"nodes"`
 }
 
 type GraphQLPullRequest struct {
-	Number        int       `json:"number"`
-	Title         string    `json:"title"`
-	State         string    `json:"state"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	MergedAt      *time.Time `json:"mergedAt"`
-	ClosedAt      *time.Time `json:"closedAt"`
-	Author        User      `json:"author"`
-	Mergeable     string    `json:"mergeable"`
-	Additions     int       `json:"additions"`
-	Deletions     int       `json:"deletions"`
-	ChangedFiles  int       `json:"changedFiles"`
-	Reviews       Reviews   `json:"reviews"`
-	Comments      Comments  `json:"comments"`
-	Commits       PullRequestCommits `json:"commits"`
-	Labels        Labels    `json:"labels"`
-	Assignees     Assignees `json:"assignees"`
+	Number       int                `json:"number"`
+	Title        string             `json:"title"`
+	State        string             `json:"state"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	UpdatedAt    time.Time          `json:"updatedAt"`
+	MergedAt     *time.Time         `json:"mergedAt"`
+	ClosedAt     *time.Time         `json:"closedAt"`
+	Author       User               `json:"author"`
+	Mergeable    string             `json:"mergeable"`
+	Additions    int                `json:"additions"`
+	Deletions    int                `json:"deletions"`
+	ChangedFiles int                `json:"changedFiles"`
+	Reviews      Reviews            `json:"reviews"`
+	Comments     Comments           `json:"comments"`
+	Commits      PullRequestCommits `json:"commits"`
+	Labels       Labels             `json:"labels"`
+	Assignees    Assignees          `json:"assignees"`
 }
 
 type PullRequestConnection struct {
-	TotalCount int           `json:"totalCount"`
+	TotalCount int                  `json:"totalCount"`
 	Nodes      []GraphQLPullRequest `json:"nodes"`
 }
 
@@ -206,7 +206,7 @@ type Comment struct {
 }
 
 type PullRequestCommits struct {
-	TotalCount int      `json:"totalCount"`
+	TotalCount int             `json:"totalCount"`
 	Nodes      []GraphQLCommit `json:"nodes"`
 }
 
@@ -227,21 +227,21 @@ type Assignees struct {
 }
 
 type Issues struct {
-	TotalCount int     `json:"totalCount"`
+	TotalCount int            `json:"totalCount"`
 	Nodes      []GraphQLIssue `json:"nodes"`
 }
 
 type GraphQLIssue struct {
-	Number    int       `json:"number"`
-	Title     string    `json:"title"`
-	State     string    `json:"state"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	Number    int        `json:"number"`
+	Title     string     `json:"title"`
+	State     string     `json:"state"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 	ClosedAt  *time.Time `json:"closedAt"`
-	Author    User      `json:"author"`
-	Labels    Labels    `json:"labels"`
-	Assignees Assignees `json:"assignees"`
-	Comments  Comments  `json:"comments"`
+	Author    User       `json:"author"`
+	Labels    Labels     `json:"labels"`
+	Assignees Assignees  `json:"assignees"`
+	Comments  Comments   `json:"comments"`
 }
 
 type Releases struct {
@@ -260,19 +260,19 @@ type Release struct {
 }
 
 type Deployments struct {
-	TotalCount int          `json:"totalCount"`
+	TotalCount int                 `json:"totalCount"`
 	Nodes      []GraphQLDeployment `json:"nodes"`
 }
 
 type GraphQLDeployment struct {
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	Environment   string    `json:"environment"`
-	State         string    `json:"state"`
-	Description   string    `json:"description"`
-	Creator       User      `json:"creator"`
-	Ref           Reference `json:"ref"`
-	Statuses      DeploymentStatuses `json:"statuses"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	Environment string             `json:"environment"`
+	State       string             `json:"state"`
+	Description string             `json:"description"`
+	Creator     User               `json:"creator"`
+	Ref         Reference          `json:"ref"`
+	Statuses    DeploymentStatuses `json:"statuses"`
 }
 
 type Reference struct {

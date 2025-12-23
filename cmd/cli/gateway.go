@@ -11,8 +11,9 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	"github.com/kubex-ecosystem/grompt/internal/types"
-	l "github.com/kubex-ecosystem/logz/logger"
 	"github.com/spf13/cobra"
+
+	gl "github.com/kubex-ecosystem/logz"
 )
 
 func init() {
@@ -83,9 +84,9 @@ func startGatewayServerCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start the gateway server",
 		Run: func(cmd *cobra.Command, args []string) {
-			gl := l.LoggerG.GetLogger()
+			gl := gl.GetLoggerZ("gateway")
 			if initArgs.Debug {
-				gl.SetDebug(true)
+				gl.SetDebugMode(true)
 			}
 			gl.Log("info", "Starting gateway server...")
 

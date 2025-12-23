@@ -10,7 +10,6 @@ func GetDescriptions(descriptionArg []string, hideBanner bool) map[string]string
 	return info.GetDescriptions(descriptionArg, hideBanner)
 }
 
-
 var initArgs *kbx.InitArgs
 
 func init() {

@@ -17,14 +17,14 @@ type Provider interface {
 
 // ChatRequest represents a chat completion request
 type ChatRequest struct {
-	Headers  map[string]string `json:"-"`
-	Provider string            `json:"provider"`
-	Model    string            `json:"model"`
-	PromptTemplate string          `json:"prompt_template"`
-	Messages []Message         `json:"messages"`
-	Temp     float32           `json:"temperature"`
-	Stream   bool              `json:"stream"`
-	Meta     map[string]any    `json:"meta"`
+	Headers        map[string]string `json:"-"`
+	Provider       string            `json:"provider"`
+	Model          string            `json:"model"`
+	PromptTemplate string            `json:"prompt_template"`
+	Messages       []Message         `json:"messages"`
+	Temp           float32           `json:"temperature"`
+	Stream         bool              `json:"stream"`
+	Meta           map[string]any    `json:"meta"`
 }
 
 // Message represents a single chat message
@@ -46,20 +46,20 @@ type Usage struct {
 
 // ChatChunk represents a streaming response chunk
 type ChatChunk struct {
-	Content  string    `json:"content,omitempty"`
-	Done     bool      `json:"done"`
-	Usage    *Usage    `json:"usage,omitempty"`
-	Error    string    `json:"error,omitempty"`
+	Content string `json:"content,omitempty"`
+	Done    bool   `json:"done"`
+	Usage   *Usage `json:"usage,omitempty"`
+	Error   string `json:"error,omitempty"`
 	// ToolCall *ToolCall `json:"toolCall,omitempty"`
 }
 
 // Capabilities describes what a provider can do
 type Capabilities struct {
-	MaxTokens         int      `json:"max_tokens"`
-	SupportsBatch     bool     `json:"supports_batch"`
-	SupportsStreaming bool     `json:"supports_streaming"`
+	MaxTokens         int            `json:"max_tokens"`
+	SupportsBatch     bool           `json:"supports_batch"`
+	SupportsStreaming bool           `json:"supports_streaming"`
 	Models            map[string]any `json:"models"`
-	Pricing           *Pricing `json:"pricing,omitempty"`
+	Pricing           *Pricing       `json:"pricing,omitempty"`
 }
 
 // Pricing information for the provider

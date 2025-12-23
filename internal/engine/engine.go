@@ -24,7 +24,7 @@ func NewEngine(config interfaces.IConfig) interfaces.IEngine {
 	engine := &Engine{
 		providers: make([]interfaces.Provider, 0),
 		templates: templates.NewManager("./templates"), // Default templates path
-		history:   interfaces.NewHistoryStore(100),    // Default history limit
+		history:   interfaces.NewHistoryStore(100),     // Default history limit
 		config:    config,
 	}
 
@@ -252,8 +252,8 @@ func (e *Engine) InvokeProvider(ctx context.Context, providerName, prompt string
 	// result := response
 
 	result := &interfaces.Result{
-		ID:        generateID(),
-		Prompt:    processedPrompt,
+		ID:     generateID(),
+		Prompt: processedPrompt,
 		// Response:  response,
 		Provider:  provider.Name(),
 		Variables: vars,

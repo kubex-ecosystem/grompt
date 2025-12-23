@@ -72,7 +72,17 @@ build_frontend() {
           rm -rf "${_ROOT_DIR}/internal/services/server/build"
       fi
 
-      mv './dist' "${_ROOT_DIR}/internal/services/server/build" || {
+      if [[ -d "${_ROOT_DIR}/internal/grompt/embedded/guiweb" ]]; then
+          log notice "Removing old build directory..."
+          rm -rf "${_ROOT_DIR}/internal/grompt/embedded/guiweb"
+      fi
+
+      mv './dist' "${_ROOT_DIR}/internal/grompt/embedded/guiweb" || {
+          log fatal "Failed to move build directory to grompt/embedded/guiweb." true
+          exit 1
+      }
+
+      ln -sf "${_ROOT_DIR}/internal/grompt/embedded/guiweb" "${_ROOT_DIR}/internal/services/server/build" || {
           log fatal "Failed to move build directory to server." true
           exit 1
       }

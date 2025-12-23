@@ -1,9 +1,12 @@
 import { Loader2, NotebookPen, Wand2 } from 'lucide-react';
 import React, { useState } from 'react';
 import Card from '../ui/Card';
+import { Theme } from '@/types';
 
 interface ContentSummarizerProps {
   onSummarize?: (input: string, tone: string, maxWords: number, apiKey?: string) => Promise<string>;
+  theme: Theme;
+  isApiKeyMissing: boolean;
 }
 
 const tonePresets = [
@@ -12,7 +15,7 @@ const tonePresets = [
   { id: 'casual', label: 'Casual' },
 ];
 
-const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize }) => {
+const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize, theme, isApiKeyMissing }) => {
   const [input, setInput] = useState('');
   const [tone, setTone] = useState('executive');
   const [maxWords, setMaxWords] = useState(220);
@@ -64,11 +67,10 @@ const ContentSummarizer: React.FC<ContentSummarizerProps> = ({ onSummarize }) =>
                   key={preset.id}
                   type="button"
                   onClick={() => setTone(preset.id)}
-                  className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                    tone === preset.id
-                      ? 'border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]'
-                      : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                  }`}
+                  className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${tone === preset.id
+                    ? 'border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]'
+                    : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
+                    }`}
                 >
                   {preset.label}
                 </button>

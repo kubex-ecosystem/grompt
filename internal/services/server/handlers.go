@@ -192,11 +192,6 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	} else {
 		hndr.Config = cfg
 	}
-	// var err error
-	// hndr.Gateway, err = gateway.NewServer(cfg)
-	// if err != nil {
-	// 	return nil
-	// }
 
 	llmKeyMap = hndr.GetLLMAPIKeyMap(cfg)
 	hndr.ClaudeAPI = it.NewClaudeAPI(llmKeyMap["claude"])
@@ -209,9 +204,8 @@ func NewHandlers(cfg ii.IConfig) *Handlers {
 	return hndr
 }
 
-func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Bloqueia chamadas para /api/*
+func (h *Handlers) HandleRoot(buildFS fs.FS, w http.ResponseWriter, r *http.Request) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		p := strings.TrimPrefix(r.URL.Path, "/")
 
 		// 🧼 normaliza caminho e bloqueia traversal
@@ -220,12 +214,33 @@ func (h *Handlers) HandleRoot(buildFS fs.FS) http.HandlerFunc {
 			p = "index.html"
 		}
 
-		if strings.Contains(p, "..") || !fs.ValidPath(p) {
-			http.Error(w, "bad path", http.StatusBadRequest)
+		// Ignora requests para /api/
+		if strings.HasPrefix(p, "api/") {
+			c.Next()
 			return
 		}
 
-		if strings.Contains(p, "v1") && r.Method != http.MethodGet {
+		// Ignora requests para arquivos que não existem
+		if !fs.ValidPath(p) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+			return
+		}
+
+		// Valida caminho
+		if strings.Contains(p, "..") || !fs.ValidPath(p) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad path"})
+			return
+		}
+
+		// Pass through API requests
+		h.HandleStatic(buildFS, p, w, r)(c)
+	}
+}
+
+func (h *Handlers) HandleStatic(buildFS fs.FS, p string, w http.ResponseWriter, r *http.Request) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Define headers de caching
+		if strings.HasSuffix(p, ".html") || strings.HasSuffix(p, ".js") || strings.HasSuffix(p, ".css") || strings.HasSuffix(p, ".json") {
 			// Define headers para evitar caching durante desenvolvimento
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
 			w.Header().Set("Pragma", "no-cache")

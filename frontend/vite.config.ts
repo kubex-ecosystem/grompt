@@ -34,9 +34,15 @@ export default defineConfig(({ mode }) => {
     cacheDir: 'node_modules/.vite',
     mode: mode,
     define: {
+      'process.env.NODE_ENV': JSON.stringify(mode),
+      'process.env.PORT': JSON.stringify(env.VITE_PORT || env.PORT || "8080"),
+      'process.env.BASE_URL': JSON.stringify(env.VITE_BASE_URL || env.BASE_URL || "http://localhost:8080"),
+      'process.env.DEMO_MODE': JSON.stringify(env.VITE_DEMO_MODE || env.DEMO_MODE || "false"),
+      'process.env.API_URL': JSON.stringify(env.VITE_API_URL || env.API_URL || "http://localhost:8080/api/v1"),
       'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || ""),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || ""),
       'process.env.GITHUB_PAT': JSON.stringify(env.VITE_GITHUB_PAT || env.GITHUB_PAT || ""),
+      'process.env.GITHUB_TOKEN': JSON.stringify(env.VITE_GITHUB_TOKEN || env.GITHUB_TOKEN || ""),
       'process.env.JIRA_API_TOKEN': JSON.stringify(env.VITE_JIRA_API_TOKEN || env.JIRA_API_TOKEN || ""),
       'process.env.JIRA_INSTANCE_URL': JSON.stringify(env.VITE_JIRA_INSTANCE_URL || env.JIRA_INSTANCE_URL || ""),
       'process.env.JIRA_USER_EMAIL': JSON.stringify(env.VITE_JIRA_USER_EMAIL || env.JIRA_USER_EMAIL || "")
@@ -50,7 +56,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         external: [
           'buffer', 'stream', 'util', 'events', 'http', 'https', 'url', 'zlib', 'crypto',
-          './src/components/layout/Footer'
+          './src/components/layout/Footer', "@/config/DemoMode", "@/constants/onboardingSteps"
         ],
         input: {
           main: path.resolve(__dirname, 'index.html'),
@@ -65,7 +71,7 @@ export default defineConfig(({ mode }) => {
           plugins: [
             {
               name: 'watch-external',
-              handleHotUpdate({ file, server }: { file: string; server: any }) {
+              handleHotUpdate({ file, server }: { file: string; server: any; }) {
                 if (file.endsWith('shared/config.json')) {
                   server.ws.send({ type: 'full-reload' });
                 }
@@ -122,10 +128,9 @@ export default defineConfig(({ mode }) => {
           ]
 
         },
-        external: ["@/config/DemoMode", "@/constants/onboardingSteps"]
       },
       outDir: 'dist',
-      sourcemap: false,
+      sourcemap: (mode !== 'production' ? 'inline' : false),
       chunkSizeWarningLimit: 900,
     },
     css: {

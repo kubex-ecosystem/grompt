@@ -274,28 +274,28 @@ func TestGitHubHandler_DetermineAnalysisConfig(t *testing.T) {
 	handler := &GitHubHandler{}
 
 	tests := []struct {
-		name              string
-		eventType         string
-		payload           map[string]interface{}
-		expectedAnalysis  []string
-		expectedPriority  string
-		expectedLatency   string
+		name             string
+		eventType        string
+		payload          map[string]interface{}
+		expectedAnalysis []string
+		expectedPriority string
+		expectedLatency  string
 	}{
 		{
-			name:              "push event",
-			eventType:         "push",
-			payload:           map[string]interface{}{},
-			expectedAnalysis:  []string{"chi", "incremental_dora", "ai"},
-			expectedPriority:  "normal",
-			expectedLatency:   "minutes",
+			name:             "push event",
+			eventType:        "push",
+			payload:          map[string]interface{}{},
+			expectedAnalysis: []string{"chi", "incremental_dora", "ai"},
+			expectedPriority: "normal",
+			expectedLatency:  "minutes",
 		},
 		{
-			name:              "pull request merged",
-			eventType:         "pull_request_merged",
-			payload:           map[string]interface{}{},
-			expectedAnalysis:  []string{"dora", "chi", "ai"},
-			expectedPriority:  "high",
-			expectedLatency:   "minutes",
+			name:             "pull request merged",
+			eventType:        "pull_request_merged",
+			payload:          map[string]interface{}{},
+			expectedAnalysis: []string{"dora", "chi", "ai"},
+			expectedPriority: "high",
+			expectedLatency:  "minutes",
 		},
 		{
 			name:      "deployment failure",
@@ -322,12 +322,12 @@ func TestGitHubHandler_DetermineAnalysisConfig(t *testing.T) {
 			expectedLatency:  "instant",
 		},
 		{
-			name:              "release",
-			eventType:         "release",
-			payload:           map[string]interface{}{},
-			expectedAnalysis:  []string{"dora", "chi", "ai", "executive"},
-			expectedPriority:  "high",
-			expectedLatency:   "minutes",
+			name:             "release",
+			eventType:        "release",
+			payload:          map[string]interface{}{},
+			expectedAnalysis: []string{"dora", "chi", "ai", "executive"},
+			expectedPriority: "high",
+			expectedLatency:  "minutes",
 		},
 	}
 
@@ -370,11 +370,11 @@ func TestGitHubHandler_GetWebhookInfo(t *testing.T) {
 	info := handler.GetWebhookInfo(req)
 
 	expected := map[string]string{
-		"event":         "push",
-		"delivery":      "test-delivery",
-		"signature":     "sha256=test",
-		"user_agent":    "GitHub-Hookshot/test",
-		"content_type":  "application/json",
+		"event":          "push",
+		"delivery":       "test-delivery",
+		"signature":      "sha256=test",
+		"user_agent":     "GitHub-Hookshot/test",
+		"content_type":   "application/json",
 		"github_hook_id": "123",
 	}
 

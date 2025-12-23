@@ -10,12 +10,12 @@ import (
 
 // ProviderImpl wraps the types.IAPIConfig to implement providers.Provider
 type ProviderImpl struct {
-	VName    string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
-	VVersion string `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
-	VKeyEnv  string `json:"key_env,omitempty" yaml:"key_env,omitempty" mapstructure:"key_env,omitempty"`
-	VType    string `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
+	VName    string                `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
+	VVersion string                `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version,omitempty"`
+	VKeyEnv  string                `json:"key_env,omitempty" yaml:"key_env,omitempty" mapstructure:"key_env,omitempty"`
+	VType    string                `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
 	VAPI     interfaces.IAPIConfig `json:"api,omitempty" yaml:"api,omitempty" mapstructure:"api,omitempty"`
-	VConfig  interfaces.IConfig 	 `json:"config,omitempty" yaml:"config,omitempty" mapstructure:"config,omitempty"`
+	VConfig  interfaces.IConfig    `json:"config,omitempty" yaml:"config,omitempty" mapstructure:"config,omitempty"`
 }
 
 // Name returns the provider name
@@ -123,7 +123,6 @@ func (cp *ProviderImpl) Notify(ctx context.Context, event interfaces.Notificatio
 	return fmt.Errorf("provider does not support notifications")
 }
 
-
 func getMaxTokensForProvider(name string) int {
 	switch name {
 	case "openai":
@@ -145,33 +144,33 @@ func getPricingForProvider(name string) *interfaces.Pricing {
 	switch name {
 	case "openai":
 		return &interfaces.Pricing{
-			InputCostPer1K: 		 0.03,
-			OutputCostPer1K: 		 0.06,
-			Currency: 				"USD",
+			InputCostPer1K:  0.03,
+			OutputCostPer1K: 0.06,
+			Currency:        "USD",
 		}
 	case "claude":
 		return &interfaces.Pricing{
-			InputCostPer1K: 		 0.015,
-			OutputCostPer1K: 		 0.03,
-			Currency: 				"USD",
+			InputCostPer1K:  0.015,
+			OutputCostPer1K: 0.03,
+			Currency:        "USD",
 		}
 	case "gemini":
 		return &interfaces.Pricing{
-			InputCostPer1K: 		 0.02,
-			OutputCostPer1K: 		 0.04,
-			Currency: 				"USD",
+			InputCostPer1K:  0.02,
+			OutputCostPer1K: 0.04,
+			Currency:        "USD",
 		}
 	case "deepseek":
 		return &interfaces.Pricing{
-			InputCostPer1K: 		 0.01,
-			OutputCostPer1K: 		 0.02,
-			Currency: 				"USD",
+			InputCostPer1K:  0.01,
+			OutputCostPer1K: 0.02,
+			Currency:        "USD",
 		}
 	case "ollama":
 		return &interfaces.Pricing{
-			InputCostPer1K: 		 0.0,
-			OutputCostPer1K: 		 0.0,
-			Currency: 				"USD",
+			InputCostPer1K:  0.0,
+			OutputCostPer1K: 0.0,
+			Currency:        "USD",
 		}
 	default:
 		return nil

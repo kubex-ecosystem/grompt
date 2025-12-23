@@ -12,25 +12,25 @@ import (
 
 // MetricsCache provides caching functionality for calculated metrics
 type MetricsCache struct {
-	store     map[string]*CacheEntry
-	mu        sync.RWMutex
+	store      map[string]*CacheEntry
+	mu         sync.RWMutex
 	defaultTTL time.Duration
-	maxSize   int
-	stats     CacheStats
+	maxSize    int
+	stats      CacheStats
 }
 
 // CacheEntry represents a cached metrics entry
 type CacheEntry struct {
-	Key        string      `json:"key"`
-	Data       interface{} `json:"data"`
-	CachedAt   time.Time   `json:"cached_at"`
-	ExpiresAt  time.Time   `json:"expires_at"`
-	TTL        time.Duration `json:"ttl"`
-	AccessCount int        `json:"access_count"`
-	LastAccessed time.Time `json:"last_accessed"`
-	DataSize    int        `json:"data_size"`
-	ComputeTime time.Duration `json:"compute_time"`
-	Tags       []string   `json:"tags"`
+	Key          string        `json:"key"`
+	Data         interface{}   `json:"data"`
+	CachedAt     time.Time     `json:"cached_at"`
+	ExpiresAt    time.Time     `json:"expires_at"`
+	TTL          time.Duration `json:"ttl"`
+	AccessCount  int           `json:"access_count"`
+	LastAccessed time.Time     `json:"last_accessed"`
+	DataSize     int           `json:"data_size"`
+	ComputeTime  time.Duration `json:"compute_time"`
+	Tags         []string      `json:"tags"`
 }
 
 // CacheStats tracks cache performance metrics
@@ -47,12 +47,12 @@ type CacheStats struct {
 
 // CacheConfig configures the metrics cache
 type CacheConfig struct {
-	DefaultTTL       time.Duration            `json:"default_ttl"`
-	MaxSize          int                      `json:"max_size"`
-	CleanupInterval  time.Duration            `json:"cleanup_interval"`
-	MetricTypeTTLs   map[string]time.Duration `json:"metric_type_ttls"`
-	EnableStats      bool                     `json:"enable_stats"`
-	PersistentCache  bool                     `json:"persistent_cache"`
+	DefaultTTL      time.Duration            `json:"default_ttl"`
+	MaxSize         int                      `json:"max_size"`
+	CleanupInterval time.Duration            `json:"cleanup_interval"`
+	MetricTypeTTLs  map[string]time.Duration `json:"metric_type_ttls"`
+	EnableStats     bool                     `json:"enable_stats"`
+	PersistentCache bool                     `json:"persistent_cache"`
 }
 
 // NewMetricsCache creates a new metrics cache
@@ -85,10 +85,10 @@ func NewMetricsCache(config CacheConfig) *MetricsCache {
 // GenerateCacheKey generates a cache key for metrics request
 func (mc *MetricsCache) GenerateCacheKey(metricType string, request MetricsRequest) string {
 	keyData := struct {
-		Type        string        `json:"type"`
-		Repository  string        `json:"repository"`
-		TimeRange   TimeRange     `json:"time_range"`
-		Granularity string        `json:"granularity"`
+		Type        string    `json:"type"`
+		Repository  string    `json:"repository"`
+		TimeRange   TimeRange `json:"time_range"`
+		Granularity string    `json:"granularity"`
 	}{
 		Type:        metricType,
 		Repository:  fmt.Sprintf("%s/%s", request.Repository.Owner, request.Repository.Name),

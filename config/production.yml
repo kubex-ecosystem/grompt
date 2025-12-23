@@ -1,8 +1,8 @@
 # Production Features Configuration
 production:
   # General Settings
-  logging_level: info
-  debug_mode: false
+  # logging_level: info
+  # debug_mode: false
 
   # Server Configuration
   server:
@@ -194,7 +194,8 @@ provider_production:
 # Security Settings
 security:
   enable_https: true
-  allowed_origins: ["https://kubex.world"," https://www.kubex.world", "http://localhost:8080"]
+  allowed_origins:
+    ["https://kubex.world", " https://www.kubex.world", "http://localhost:8080"]
   jwt_secret: "your_production_jwt_secret_here"
   api_keys:
     - "your_production_api_key_1"
@@ -220,29 +221,29 @@ monitoring:
     admin_password: securepassword
 
   # Logging configuration
-  logging:
-    # Local logging configuration
-    enabled: true
-    level: info
-    format: text
-    output: /var/log/gemx-grompt/production.log
+  # logging:
+  #   # Local logging configuration
+  #   enabled: true
+  #   level: info
+  #   format: text
+  #   output: /var/log/gemx-grompt/production.log
 
-    # Log rotation settings
-    rotation:
-      max_size_mb: 100
-      max_backups: 7
-      max_age_days: 30
-      enable_compression: true
-      compression_level: 5
-      retention_days: 30
+  #   # Log rotation settings
+  #   rotation:
+  #     max_size_mb: 100
+  #     max_backups: 7
+  #     max_age_days: 30
+  #     enable_compression: true
+  #     compression_level: 5
+  #     retention_days: 30
 
-    # External logging service configuration
-    external_logging_service: null # e.g., "loggly", "splunk", or null
-    external_logging_api_key: null # API key for the external logging service
-    external_logging_endpoint: null # Endpoint URL for the external logging service
-    log_request_response: false # Set to true to log full requests and responses (may include sensitive data)
-    log_level: info # Log level for the external logging service
-    log_format: text # Format for the external logging service (e.g., "json", "text")
+  #   # External logging service configuration
+  #   external_logging_service: null # e.g., "loggly", "splunk", or null
+  #   external_logging_api_key: null # API key for the external logging service
+  #   external_logging_endpoint: null # Endpoint URL for the external logging service
+  #   log_request_response: false # Set to true to log full requests and responses (may include sensitive data)
+  #   log_level: info # Log level for the external logging service
+  #   log_format: text # Format for the external logging service (e.g., "json", "text")
 
   # Alerting configuration
   alerting:

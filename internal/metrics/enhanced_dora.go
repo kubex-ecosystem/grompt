@@ -13,24 +13,24 @@ import (
 
 // EnhancedDORACalculator calculates DORA metrics with advanced features
 type EnhancedDORACalculator struct {
-	githubClient GitHubClient
+	githubClient  GitHubClient
 	graphqlClient *GraphQLClient
-	cache        *CacheMiddleware
-	timeUtils    *TimeUtils
-	config       DORAConfig
+	cache         *CacheMiddleware
+	timeUtils     *TimeUtils
+	config        DORAConfig
 }
 
 // DORAConfig configures the enhanced DORA calculator
 type DORAConfig struct {
-	DefaultTimezone       string        `json:"default_timezone"`
-	BusinessHoursStart    int           `json:"business_hours_start"`    // 9 AM
-	BusinessHoursEnd      int           `json:"business_hours_end"`      // 5 PM
-	ExcludeWeekends       bool          `json:"exclude_weekends"`
-	IncidentThresholdHours float64      `json:"incident_threshold_hours"` // Time before considering it an incident
-	EnableGraphQL         bool          `json:"enable_graphql"`
-	CacheEnabled          bool          `json:"cache_enabled"`
-	DefaultCacheTTL       time.Duration `json:"default_cache_ttl"`
-	MaxDataPoints         int           `json:"max_data_points"`
+	DefaultTimezone        string        `json:"default_timezone"`
+	BusinessHoursStart     int           `json:"business_hours_start"` // 9 AM
+	BusinessHoursEnd       int           `json:"business_hours_end"`   // 5 PM
+	ExcludeWeekends        bool          `json:"exclude_weekends"`
+	IncidentThresholdHours float64       `json:"incident_threshold_hours"` // Time before considering it an incident
+	EnableGraphQL          bool          `json:"enable_graphql"`
+	CacheEnabled           bool          `json:"cache_enabled"`
+	DefaultCacheTTL        time.Duration `json:"default_cache_ttl"`
+	MaxDataPoints          int           `json:"max_data_points"`
 }
 
 // NewEnhancedDORACalculator creates a new enhanced DORA calculator
@@ -142,19 +142,19 @@ func (edc *EnhancedDORACalculator) calculateInternal(ctx context.Context, reques
 			Period:                  int(timeRange.Duration().Hours() / 24),
 			CalculatedAt:            time.Now(),
 		},
-		TimeRange:              timeRange,
-		Granularity:            request.Granularity,
-		Timezone:               timeRange.Timezone,
-		IncidentCount:          incidentCount,
-		FailedDeployments:      failedDeployments,
-		TotalDeployments:       len(deployments),
-		MeanLeadTimeHours:      edc.calculateMeanLeadTime(pullRequests),
-		MedianLeadTimeHours:    edc.calculateMedianLeadTime(pullRequests),
-		TimeSeries:             timeSeries,
-		IncidentBreakdown:      incidentBreakdown,
-		DeploymentTrends:       deploymentTrends,
-		Confidence:             confidence,
-		DataQuality:            dataQuality,
+		TimeRange:           timeRange,
+		Granularity:         request.Granularity,
+		Timezone:            timeRange.Timezone,
+		IncidentCount:       incidentCount,
+		FailedDeployments:   failedDeployments,
+		TotalDeployments:    len(deployments),
+		MeanLeadTimeHours:   edc.calculateMeanLeadTime(pullRequests),
+		MedianLeadTimeHours: edc.calculateMedianLeadTime(pullRequests),
+		TimeSeries:          timeSeries,
+		IncidentBreakdown:   incidentBreakdown,
+		DeploymentTrends:    deploymentTrends,
+		Confidence:          confidence,
+		DataQuality:         dataQuality,
 		CacheInfo: CacheInfo{
 			CacheHit:      false,
 			ComputeTimeMs: time.Since(start).Milliseconds(),
@@ -649,17 +649,17 @@ func (edc *EnhancedDORACalculator) convertGraphQLPullRequests(graphqlPRs []Graph
 	var pullRequests []PullRequest
 	for _, gpr := range graphqlPRs {
 		pr := PullRequest{
-			Number:        gpr.Number,
-			Title:         gpr.Title,
-			State:         gpr.State,
-			CreatedAt:     gpr.CreatedAt,
-			UpdatedAt:     gpr.UpdatedAt,
-			MergedAt:      gpr.MergedAt,
-			ClosedAt:      gpr.ClosedAt,
-			Commits:       gpr.Commits.TotalCount,
-			Additions:     gpr.Additions,
-			Deletions:     gpr.Deletions,
-			ChangedFiles:  gpr.ChangedFiles,
+			Number:       gpr.Number,
+			Title:        gpr.Title,
+			State:        gpr.State,
+			CreatedAt:    gpr.CreatedAt,
+			UpdatedAt:    gpr.UpdatedAt,
+			MergedAt:     gpr.MergedAt,
+			ClosedAt:     gpr.ClosedAt,
+			Commits:      gpr.Commits.TotalCount,
+			Additions:    gpr.Additions,
+			Deletions:    gpr.Deletions,
+			ChangedFiles: gpr.ChangedFiles,
 		}
 
 		// Get first review time if available

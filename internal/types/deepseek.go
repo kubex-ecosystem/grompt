@@ -21,20 +21,20 @@ type DeepSeekRequest struct {
 }
 
 type DeepSeekAPIRequest struct {
-	Model       string    `json:"model"`
+	Model       string               `json:"model"`
 	Messages    []interfaces.Message `json:"messages"`
-	MaxTokens   int       `json:"max_tokens"`
-	Temperature float64   `json:"temperature"`
-	Stream      bool      `json:"stream"`
+	MaxTokens   int                  `json:"max_tokens"`
+	Temperature float64              `json:"temperature"`
+	Stream      bool                 `json:"stream"`
 }
 
 type DeepSeekAPIResponse struct {
-	ID      string   `json:"id"`
-	Object  string   `json:"object"`
-	Created int64    `json:"created"`
-	Model   string   `json:"model"`
-	Choices []Choice `json:"choices"`
-	Usage   interfaces.Usage    `json:"usage"`
+	ID      string           `json:"id"`
+	Object  string           `json:"object"`
+	Created int64            `json:"created"`
+	Model   string           `json:"model"`
+	Choices []Choice         `json:"choices"`
+	Usage   interfaces.Usage `json:"usage"`
 }
 
 type DeepSeekErrorResponse struct {
@@ -236,7 +236,6 @@ func (o *DeepSeekAPI) IsDemoMode() bool { return o.DemoMode }
 func (o *DeepSeekAPI) GetBaseURL() string { return o.BaseURL }
 
 func (o *DeepSeekAPI) GetAPIKey() string { return o.APIKey }
-
 
 func (o *DeepSeekAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
 	// Implementar funcionalidade de chat se necessário

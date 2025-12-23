@@ -27,8 +27,6 @@ type LegacyFileConfigImpl struct {
 	ProviderConfigPath string            `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty"`
 }
 
-
-
 // DefaultConfig rebuilds a legacy-compatible configuration.
 func DefaultConfig(configFilePath string) interfaces.IConfig {
 	cfg := newServerConfig()
@@ -42,30 +40,30 @@ func DefaultConfig(configFilePath string) interfaces.IConfig {
 // NewConfig constructs a configuration using explicit parameters.
 
 func NewServerConfig(
-	name               string,
-	debug              bool,
-	logger             logz.Logger,
-	bindAddr           string,
-	port               string,
-	tempDir            string,
-	logFile           string,
-	envFile           string,
-	configFile        string,
-	cwd               string,
-	openAIKey         string,
-	claudeKey        string,
-	geminiKey        string,
-	deepSeekKey      string,
-	chatGPTKey      string,
-	ollamaEndpoint   string,
-	apiKeys            map[string]string,
-	endpoints          map[string]string,
-	defaultModels      map[string]string,
-	providerTypes      map[string]string,
-	defaultProvider    string,
+	name string,
+	debug bool,
+	logger *logz.LoggerZ,
+	bindAddr string,
+	port string,
+	tempDir string,
+	logFile string,
+	envFile string,
+	configFile string,
+	cwd string,
+	openAIKey string,
+	claudeKey string,
+	geminiKey string,
+	deepSeekKey string,
+	chatGPTKey string,
+	ollamaEndpoint string,
+	apiKeys map[string]string,
+	endpoints map[string]string,
+	defaultModels map[string]string,
+	providerTypes map[string]string,
+	defaultProvider string,
 	defaultTemperature float32,
-	historyLimit       int,
-	timeout            time.Duration,
+	historyLimit int,
+	timeout time.Duration,
 	providerConfigPath string,
 ) interfaces.IConfig {
 	cfg := newServerConfig()
@@ -137,29 +135,29 @@ func NewServerConfig(
 var legacyProviders = []string{"openai", "claude", "gemini", "deepseek", "ollama", "chatgpt", "groq"}
 
 type ServerConfigImpl struct {
-	Name               string `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
-	Debug              bool   `json:"debug,omitempty" yaml:"debug,omitempty" mapstructure:"debug,omitempty"`
-	EnableCORS				bool   `json:"enable_cors,omitempty" yaml:"enable_cors,omitempty" mapstructure:"enable_cors,omitempty"`
-	Logger             logz.Logger `json:"-" yaml:"-" mapstructure:"-"`
-	BindAddr           string `json:"bind_addr,omitempty" yaml:"bind_addr,omitempty" mapstructure:"bind_addr,omitempty"`
-	Port               string `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
-	TempDir            string `json:"temp_dir,omitempty" yaml:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
-	LogFile            string `json:"log_file,omitempty" yaml:"log_file,omitempty" mapstructure:"log_file,omitempty"`
-	EnvFile            string `json:"env_file,omitempty" yaml:"env_file,omitempty" mapstructure:"env_file,omitempty"`
-	ConfigFile         string `json:"config_file,omitempty" yaml:"config_file,omitempty" mapstructure:"config_file,omitempty"`
-	Cwd                string `json:"cwd,omitempty" yaml:"cwd,omitempty" mapstructure:"cwd,omitempty"`
+	Name               string            `json:"name,omitempty" yaml:"name,omitempty" mapstructure:"name,omitempty"`
+	Debug              bool              `json:"debug,omitempty" yaml:"debug,omitempty" mapstructure:"debug,omitempty"`
+	EnableCORS         bool              `json:"enable_cors,omitempty" yaml:"enable_cors,omitempty" mapstructure:"enable_cors,omitempty"`
+	Logger             *logz.LoggerZ     `json:"-" yaml:"-" mapstructure:"-"`
+	BindAddr           string            `json:"bind_addr,omitempty" yaml:"bind_addr,omitempty" mapstructure:"bind_addr,omitempty"`
+	Port               string            `json:"port,omitempty" yaml:"port,omitempty" mapstructure:"port,omitempty"`
+	TempDir            string            `json:"temp_dir,omitempty" yaml:"temp_dir,omitempty" mapstructure:"temp_dir,omitempty"`
+	LogFile            string            `json:"log_file,omitempty" yaml:"log_file,omitempty" mapstructure:"log_file,omitempty"`
+	EnvFile            string            `json:"env_file,omitempty" yaml:"env_file,omitempty" mapstructure:"env_file,omitempty"`
+	ConfigFile         string            `json:"config_file,omitempty" yaml:"config_file,omitempty" mapstructure:"config_file,omitempty"`
+	Cwd                string            `json:"cwd,omitempty" yaml:"cwd,omitempty" mapstructure:"cwd,omitempty"`
 	APIKeys            map[string]string `json:"api_keys,omitempty" yaml:"api_keys,omitempty" mapstructure:"api_keys,omitempty"`
 	Endpoints          map[string]string `json:"endpoints,omitempty" yaml:"endpoints,omitempty" mapstructure:"endpoints,omitempty"`
 	DefaultModels      map[string]string `json:"default_models,omitempty" yaml:"default_models,omitempty" mapstructure:"default_models,omitempty"`
 	ProviderTypes      map[string]string `json:"provider_types,omitempty" yaml:"provider_types,omitempty" mapstructure:"provider_types,omitempty"`
-	DefaultProvider    string `json:"default_provider,omitempty" yaml:"default_provider,omitempty" mapstructure:"default_provider,omitempty"`
-	DefaultTemperature float32 `json:"default_temperature,omitempty" yaml:"default_temperature,omitempty" mapstructure:"default_temperature,omitempty"`
-	HistoryLimit       int    `json:"history_limit,omitempty" yaml:"history_limit,omitempty" mapstructure:"history_limit,omitempty"`
-	Timeout            time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty" mapstructure:"timeout,omitempty"`
-	ProviderConfigPath string `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty" mapstructure:"provider_config_path,omitempty"`
+	DefaultProvider    string            `json:"default_provider,omitempty" yaml:"default_provider,omitempty" mapstructure:"default_provider,omitempty"`
+	DefaultTemperature float32           `json:"default_temperature,omitempty" yaml:"default_temperature,omitempty" mapstructure:"default_temperature,omitempty"`
+	HistoryLimit       int               `json:"history_limit,omitempty" yaml:"history_limit,omitempty" mapstructure:"history_limit,omitempty"`
+	Timeout            time.Duration     `json:"timeout,omitempty" yaml:"timeout,omitempty" mapstructure:"timeout,omitempty"`
+	ProviderConfigPath string            `json:"provider_config_path,omitempty" yaml:"provider_config_path,omitempty" mapstructure:"provider_config_path,omitempty"`
 
 	Engine interfaces.IEngine `json:"-" yaml:"-" mapstructure:"-"`
-	Mu     sync.RWMutex 		 `json:"-" yaml:"-" mapstructure:"-"`
+	Mu     sync.RWMutex       `json:"-" yaml:"-" mapstructure:"-"`
 }
 
 func newServerConfig() *ServerConfigImpl {
@@ -417,17 +415,17 @@ func (c *ServerConfigImpl) GetConfigFilePath() string {
 
 func (c *ServerConfigImpl) GetConfigArgs() kbx.InitArgs {
 	return kbx.InitArgs{
-		Debug:            c.Debug,
-		Bind:             c.BindAddr,
-		Port:             c.Port,
-		TempDir:          c.TempDir,
-		LogFile:          c.LogFile,
-		EnvFile:          c.EnvFile,
-		ConfigFile:       c.ConfigFile,
-		Cwd:              c.Cwd,
-		DefaultProvider:  c.DefaultProvider,
-		HistorySize:      c.HistoryLimit,
-		Timeout:          c.Timeout,
+		Debug:              c.Debug,
+		Bind:               c.BindAddr,
+		Port:               c.Port,
+		TempDir:            c.TempDir,
+		LogFile:            c.LogFile,
+		EnvFile:            c.EnvFile,
+		ConfigFile:         c.ConfigFile,
+		Cwd:                c.Cwd,
+		DefaultProvider:    c.DefaultProvider,
+		HistorySize:        c.HistoryLimit,
+		Timeout:            c.Timeout,
 		ProviderConfigPath: c.ProviderConfigPath,
 	}
 }

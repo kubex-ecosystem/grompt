@@ -4,6 +4,7 @@ package server
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"mime"
 	"net"
 	"net/http"
@@ -21,7 +22,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/grompt"
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	t "github.com/kubex-ecosystem/grompt/internal/types"
-	gl "github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
 )
 
 var reactApp = grompt.NewGUIGrompt()
@@ -29,8 +30,8 @@ var reactApp = grompt.NewGUIGrompt()
 type Server struct {
 	*gateway.ServerImpl
 	apiRouter *gin.RouterGroup
-	config   *t.Config
-	handlers *Handlers
+	config    *t.Config
+	handlers  *Handlers
 }
 
 type ReactApp struct {
@@ -68,9 +69,9 @@ func NewServer(cfg interfaces.IConfig) *Server {
 	}
 
 	return &Server{
-		ServerImpl:   server,
-		config:    baseCfg,
-		handlers:  NewHandlers(cfg),
+		ServerImpl: server,
+		config:     baseCfg,
+		handlers:   NewHandlers(cfg),
 	}
 }
 
@@ -110,26 +111,24 @@ func (s *Server) Start() error {
 	)
 }
 
-func getGinHandlerFunc(f http.HandlerFunc) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		f(c.Writer, c.Request)
-	}
-}
-
 func (s *Server) setupRoutes() {
-	// Register API routes first (must be before NoRoute)
+	// 1) Rotas da API
 	s.setupAPIRoutes()
-	s.setupGatewayRoutes()
-	s.mountAPIRouter()
 
-	// Static routes with NoRoute must be last
+	// 2) Rotas do Gateway (Providers dinâmicos)
+	s.setupGatewayRoutes()
+
+	// 3) Rotas estáticas (React App)
 	s.setupStaticRoutes()
+
+	// 4) Montar roteador da API (separado)
+	s.ServerImpl.RegisterRoutes()
 }
 
 func (s *Server) setupStaticRoutes() {
 	buildFS, err := fs.Sub(reactApp.GetWebFS(), "embedded/guiweb")
 	if err != nil {
-		gl.LoggerG.GetLogger().Log("warn", fmt.Sprintf("⚠️ build embed não encontrado: %v", err))
+		gl.Log("warn", fmt.Sprintf("⚠️ build embed não encontrado: %v", err))
 		_ = s.setupFallbackRoutes()
 		return
 	}
@@ -145,24 +144,90 @@ func (s *Server) setupStaticRoutes() {
 }
 
 func (s *Server) setupAPIRoutes() {
-	s.ServerImpl.Router().GET("/api/v1/health", s.handlers.HandleHealth)
-	s.ServerImpl.Router().GET("/api/v1/config", s.handlers.HandleConfig)
-	s.ServerImpl.Router().POST("/api/v1/config", s.handlers.HandleConfig)
-	s.ServerImpl.Router().GET("/api/v1/test", s.handlers.HandleTest)
-	s.ServerImpl.Router().GET("/api/v1/models", s.handlers.HandleModels)
+	apiRouter := gin.IRouter(s.ServerImpl.GetRouter().Group("/api/v1"))
+
+	// Mapeamento de rotas para registro individual (se necessário)
+	routeMap := make(map[string]struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	})
+
+	// 1) Rotas básicas
+	routeMap["api-v1-health-Get"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/health", http.MethodGet, s.handlers.HandleHealth}
+	routeMap["api-v1-config-Get"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/config", http.MethodGet, s.handlers.HandleConfig}
+	routeMap["api-v1-config-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/config", http.MethodPost, s.handlers.HandleConfig}
+	routeMap["api-v1-test-Get"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/test", http.MethodGet, s.handlers.HandleTest}
+	routeMap["api-v1-models-Get"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/models", http.MethodGet, s.handlers.HandleModels}
 
 	// 2) Provedores (diretos)
-	s.ServerImpl.Router().POST("/api/v1/openai", s.handlers.HandleOpenAI)
-	s.ServerImpl.Router().POST("/api/v1/claude", s.handlers.HandleClaude)
-	s.ServerImpl.Router().POST("/api/v1/gemini", s.handlers.HandleGemini)
-	s.ServerImpl.Router().POST("/api/v1/deepseek", s.handlers.HandleDeepSeek)
-	s.ServerImpl.Router().POST("/api/v1/chatgpt", s.handlers.HandleChatGPT)
-	s.ServerImpl.Router().POST("/api/v1/ollama", s.handlers.HandleOllama)
+	routeMap["api-v1-openai-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/openai", http.MethodPost, s.handlers.HandleOpenAI}
+	routeMap["api-v1-claude-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/claude", http.MethodPost, s.handlers.HandleClaude}
+	routeMap["api-v1-gemini-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/gemini", http.MethodPost, s.handlers.HandleGemini}
+	routeMap["api-v1-deepseek-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/deepseek", http.MethodPost, s.handlers.HandleDeepSeek}
+	routeMap["api-v1-chatgpt-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/chatgpt", http.MethodPost, s.handlers.HandleChatGPT}
+	routeMap["api-v1-ollama-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/ollama", http.MethodPost, s.handlers.HandleOllama}
 
 	// 3) Geração Unificada e Atalhos
-	s.ServerImpl.Router().POST("/api/v1/unified", s.handlers.HandleUnified)
-	s.ServerImpl.Router().POST("/api/v1/ask", s.handlers.HandleAsk)
-	s.ServerImpl.Router().POST("/api/v1/squad", s.handlers.HandleSquad)
+	routeMap["api-v1-unified-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/unified", http.MethodPost, s.handlers.HandleUnified}
+	routeMap["api-v1-ask-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/ask", http.MethodPost, s.handlers.HandleAsk}
+	routeMap["api-v1-squad-Post"] = struct {
+		Path    string
+		Method  string
+		Handler gin.HandlerFunc
+	}{"/api/v1/squad", http.MethodPost, s.handlers.HandleSquad}
 
 	// 4) Agentes / Squad
 	// s.GET("/api/v1/agents", getGinHandlerFunc(s.handlers.HandleAgents))
@@ -173,10 +238,22 @@ func (s *Server) setupAPIRoutes() {
 	// s.DELETE("/api/v1/agents/", getGinHandlerFunc(s.handlers.HandleAgent))
 	// s.GET("/api/v1/agents.md", getGinHandlerFunc(s.handlers.HandleAgentsMarkdown))
 
-	// Página de teste para WASM
-	s.ServerImpl.Router().GET(
-		"/wasm-test.html",
-		gin.WrapH(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 5) Registrar rotas no roteador da API
+	for _, route := range routeMap {
+		switch route.Method {
+		case http.MethodGet:
+			apiRouter.GET(route.Path, route.Handler)
+		case http.MethodPost:
+			apiRouter.POST(route.Path, route.Handler)
+		case http.MethodPut:
+			apiRouter.PUT(route.Path, route.Handler)
+		case http.MethodDelete:
+			apiRouter.DELETE(route.Path, route.Handler)
+		}
+	}
+
+	// 6) Rotas de teste / WASM
+	s.ServerImpl.Router().GET("/wasm-test", gin.WrapH(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetStaticHeaders(w, "wasm-test.html")
 		w.Write([]byte(`<!DOCTYPE html>
 <html lang="en">
@@ -188,165 +265,54 @@ func (s *Server) setupAPIRoutes() {
 import init, { parse } from '/wasm/lookatni_wasm.js';
 init('/wasm/lookatni_wasm_bg.wasm').then(() => {
   console.log('WASM init OK');
-  console.log('parse("Hello") =>', parse("Hello"));
-}).catch(e => console.error('WASM init FAIL', e));
+	const result = parse("LookAtni is awesome!");
+	console.log('WASM parse result:', result);
+});
 </script>
 </body>
-</html>`,
-		))
-	})),
-	)
-}
+</html>`))
+	})))
 
-func (s *Server) mountAPIRouter() {
-	router := s.ServerImpl.GetRouter()
-	s.apiRouter = router.Group("/api/v1", s.handlers.setCORSHeaders)
-}
-
-func (s *Server) setupGatewayRoutes() {
-	reg, err := registry.FromRuntimeConfig(s.config)
+	registry, err := registry.FromRuntimeConfig(s.config)
 	if err != nil {
-		gl.Log("warn", "⚠️  Gateway runtime desabilitado: %v", err)
+		gl.Log("warn", "⚠️  API runtime desabilitado: %v", err)
 		return
 	}
+	gatewayRouter := routes.NewGatewayRoutes(registry, middleware.NewProductionMiddleware(middleware.DefaultProductionConfig()))
 
-	prodCfg := middleware.DefaultProductionConfig()
-	prodMiddleware := middleware.NewProductionMiddleware(prodCfg)
-	for _, providerName := range reg.ListProviders() {
-		prodMiddleware.RegisterProvider(providerName)
-	}
+	gatewayRouter.Register(apiRouter)
 
-	// Register gateway routes on main router (not apiRouter)
-	// This allows routes like /healthz to be at root level
-	mainRouter := s.ServerImpl.GetRouter()
-	routes.NewGatewayRoutes(reg, prodMiddleware).Register(mainRouter.Group(""))
+	s.apiRouter = apiRouter.(*gin.RouterGroup)
 }
 
 func openBrowser(url string) {
 	var err error
+
 	switch runtime.GOOS {
 	case "linux":
 		err = exec.Command("xdg-open", url).Start()
 	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		err = exec.Command("cmd", "/c", "start", "", url).Start()
 	case "darwin":
 		err = exec.Command("open", url).Start()
-	default:
-		gl.Log("info", "🌐 Open your browser at: %s\n", url)
-		return
 	}
 
 	if err != nil {
-		gl.Log("warn", "⚠️  Error opening browser: %v\n", err)
-		gl.Log("info", "🌐 Open your browser at: %s\n", url)
+		log.Printf("Failed to open browser: %v", err)
 	}
 }
 
+func (s *Server) setupGatewayRoutes() {
+	registry, err := registry.FromRuntimeConfig(s.config)
+	if err != nil {
+		gl.Log("warn", "⚠️  Gateway runtime desabilitado: %v", err)
+		return
+	}
+	gatewayRouter := routes.NewGatewayRoutes(registry, middleware.NewProductionMiddleware(middleware.DefaultProductionConfig()))
+	gatewayRouter.Register(s.ServerImpl.GetRouter())
+}
+
 func (s *Server) setupFallbackRoutes() error {
-	// Fallback route for when the React frontend is not found
-	// This route serves a simple HTML page explaining that the React frontend is not available
-	// It provides instructions on how to build the React app and recompile the Go server.
-	s.ServerImpl.Router().GET(
-		"/",
-		gin.WrapH(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/v1/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		html := `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Crafter - Setup Necessário</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #ffffff;
-        }
-        .container {
-            background: #2d2d2d;
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #404040;
-        }
-        h1 { color: #60a5fa; margin-bottom: 20px; }
-        h2 { color: #34d399; margin-top: 30px; }
-        pre {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            border: 1px solid #404040;
-        }
-        code { color: #fbbf24; }
-        .warning {
-            background: #451a03;
-            border: 1px solid #f59e0b;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .step {
-            background: #1e3a8a;
-            border: 1px solid #3b82f6;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚀 Prompt Crafter</h1>
-
-        <div class="warning">
-            <strong>⚠️ Frontend React não encontrado!</strong><br>
-            O servidor Go está rodando, mas o frontend React não foi embarcado no binário.
-        </div>
-
-        <h2>🔧 Como corrigir:</h2>
-
-        <div class="step">
-            <strong>Passo 1:</strong> Build do Frontend React
-            <pre><code>cd frontend
-npm install
-npm run build
-cd ..</code></pre>
-        </div>
-
-        <div class="step">
-            <strong>Passo 2:</strong> Recompilar Go com Frontend Embarcado
-            <pre><code>go build -o prompt-crafter .</code></pre>
-        </div>
-
-        <div class="step">
-            <strong>Passo 3:</strong> Executar Novamente
-            <pre><code>./prompt-crafter</code></pre>
-        </div>
-
-        <h2>📚 Ou use o Makefile:</h2>
-        <pre><code>make build-all</code></pre>
-
-        <h2>🔗 APIs Disponíveis:</h2>
-        <ul>
-            <li><a href="/api/v1/health" style="color: #60a5fa;">/api/v1/health</a> - Status do servidor</li>
-            <li><a href="/api/v1/config" style="color: #60a5fa;">/api/v1/config</a> - Configuração das APIs</li>
-        </ul>
-
-        <p><strong>💡 Dica:</strong> Este servidor Go está funcionando corretamente. Você só precisa buildar e embarca o frontend React!</p>
-    </div>
-</body>
-</html>`
-		w.Write([]byte(html))
-	})),
-	)
 
 	// Fallback API routes
 	// These routes handle API requests when the React frontend is not available.
@@ -368,6 +334,11 @@ cd ..</code></pre>
 	// This route returns the server's configuration, such as API keys and endpoints.
 	// It is useful for clients to know how to interact with the server's APIs.
 	s.apiRouter.GET("/api/v1/config", s.handlers.HandleConfig)
+
+	// Config route (fallback path)
+	// This route is an alternative path to access the server's configuration.
+	// It serves the same purpose as the /api/v1/config route.
+	s.apiRouter.GET("/api/config", s.handlers.HandleConfig)
 
 	// Test route
 	// This route is used to test the server's API functionality.

@@ -145,10 +145,10 @@ func (m *MetricsAPI) handleDORATrends(w http.ResponseWriter, r *http.Request) {
 
 	// Return only the trends data
 	response := map[string]interface{}{
-		"deployment_trends": metrics.DeploymentTrends,
+		"deployment_trends":  metrics.DeploymentTrends,
 		"incident_breakdown": metrics.IncidentBreakdown,
-		"time_range":       metrics.TimeRange,
-		"cache_info":       metrics.CacheInfo,
+		"time_range":         metrics.TimeRange,
+		"cache_info":         metrics.CacheInfo,
 	}
 
 	m.writeJSONResponse(w, response)
@@ -226,10 +226,10 @@ func (m *MetricsAPI) handleCHIHotspots(w http.ResponseWriter, r *http.Request) {
 
 	// Return complexity hotspots
 	response := map[string]interface{}{
-		"complexity_hotspots": []interface{}{}, // Would be populated by enhanced calculator
+		"complexity_hotspots":  []interface{}{}, // Would be populated by enhanced calculator
 		"technical_debt_items": []interface{}{}, // Would be populated by enhanced calculator
-		"repository": request.Repository,
-		"generated_at": time.Now(),
+		"repository":           request.Repository,
+		"generated_at":         time.Now(),
 	}
 
 	m.writeJSONResponse(w, response)
@@ -293,22 +293,22 @@ func (m *MetricsAPI) handleAIToolsBreakdown(w http.ResponseWriter, r *http.Reque
 	response := map[string]interface{}{
 		"ai_tools_breakdown": []interface{}{
 			map[string]interface{}{
-				"tool_name": "github_copilot",
-				"usage_hours": 120.5,
+				"tool_name":       "github_copilot",
+				"usage_hours":     120.5,
 				"acceptance_rate": 0.75,
 				"lines_generated": 5420,
-				"lines_accepted": 4065,
+				"lines_accepted":  4065,
 			},
 			map[string]interface{}{
-				"tool_name": "chatgpt",
-				"usage_hours": 45.2,
+				"tool_name":       "chatgpt",
+				"usage_hours":     45.2,
 				"acceptance_rate": 0.85,
 				"lines_generated": 1230,
-				"lines_accepted": 1045,
+				"lines_accepted":  1045,
 			},
 		},
-		"repository": request.Repository,
-		"time_range": request.TimeRange,
+		"repository":   request.Repository,
+		"time_range":   request.TimeRange,
 		"generated_at": time.Now(),
 	}
 
@@ -347,28 +347,28 @@ func (m *MetricsAPI) handleAggregatedMetrics(w http.ResponseWriter, r *http.Requ
 	response := map[string]interface{}{
 		"aggregated_metrics": map[string]interface{}{
 			"dora": map[string]interface{}{
-				"mean_lead_time_p95_hours": 24.5,
+				"mean_lead_time_p95_hours":           24.5,
 				"mean_deployment_frequency_per_week": 3.2,
-				"mean_change_fail_rate_pct": 8.5,
-				"mean_mttr_hours": 2.1,
-				"total_deployments": 156,
-				"total_incidents": 12,
+				"mean_change_fail_rate_pct":          8.5,
+				"mean_mttr_hours":                    2.1,
+				"total_deployments":                  156,
+				"total_incidents":                    12,
 			},
 			"chi": map[string]interface{}{
-				"mean_chi_score": 78,
-				"mean_duplication_pct": 12.3,
-				"mean_test_coverage_pct": 82.1,
+				"mean_chi_score":             78,
+				"mean_duplication_pct":       12.3,
+				"mean_test_coverage_pct":     82.1,
 				"total_technical_debt_hours": 234.5,
 			},
 			"ai": map[string]interface{}{
-				"mean_hir": 0.75,
-				"mean_aac": 0.68,
-				"mean_tph": 4.2,
+				"mean_hir":                   0.75,
+				"mean_aac":                   0.68,
+				"mean_tph":                   4.2,
 				"organizational_ai_adoption": 0.82,
 			},
 		},
 		"repositories": repositories,
-		"time_range": timeRange,
+		"time_range":   timeRange,
 		"generated_at": time.Now(),
 	}
 
@@ -391,19 +391,19 @@ func (m *MetricsAPI) handleOrganizationMetrics(w http.ResponseWriter, r *http.Re
 	response := map[string]interface{}{
 		"organization": organization,
 		"organizational_health": map[string]interface{}{
-			"delivery_maturity": "high",
+			"delivery_maturity":    "high",
 			"code_health_maturity": "medium",
 			"ai_adoption_maturity": "high",
 			"dev_experience_score": 7.8,
-			"innovation_index": 0.75,
-			"scaling_readiness": 0.82,
+			"innovation_index":     0.75,
+			"scaling_readiness":    0.82,
 		},
 		"summary": map[string]interface{}{
-			"total_repositories": 45,
-			"active_repositories": 32,
-			"average_chi_score": 76,
+			"total_repositories":           45,
+			"active_repositories":          32,
+			"average_chi_score":            76,
 			"average_deployment_frequency": 2.8,
-			"organizational_ai_adoption": 0.84,
+			"organizational_ai_adoption":   0.84,
 		},
 		"generated_at": time.Now(),
 	}
@@ -455,7 +455,7 @@ func (m *MetricsAPI) handleCacheInvalidate(w http.ResponseWriter, r *http.Reques
 
 	response := map[string]interface{}{
 		"invalidated_entries": invalidated,
-		"timestamp": time.Now(),
+		"timestamp":           time.Now(),
 	}
 
 	m.writeJSONResponse(w, response)
@@ -470,13 +470,13 @@ func (m *MetricsAPI) handleMetricsHealth(w http.ResponseWriter, r *http.Request)
 	}
 
 	health := map[string]interface{}{
-		"status": "healthy",
+		"status":    "healthy",
 		"timestamp": time.Now(),
 		"services": map[string]interface{}{
 			"dora_calculator": m.doraCalculator != nil,
-			"chi_calculator": m.chiCalculator != nil,
-			"ai_calculator": m.aiCalculator != nil,
-			"cache": m.cache != nil,
+			"chi_calculator":  m.chiCalculator != nil,
+			"ai_calculator":   m.aiCalculator != nil,
+			"cache":           m.cache != nil,
 		},
 		"version": "1.0.0",
 	}
@@ -491,20 +491,20 @@ func (m *MetricsAPI) handleMetricsInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info := map[string]interface{}{
-		"supported_metrics": []string{"dora", "chi", "ai", "aggregated"},
+		"supported_metrics":       []string{"dora", "chi", "ai", "aggregated"},
 		"supported_granularities": []string{"hour", "day", "week", "month", "quarter", "year"},
-		"supported_timezones": m.timeUtils.GetCommonTimezones(),
-		"api_version": "v1",
+		"supported_timezones":     m.timeUtils.GetCommonTimezones(),
+		"api_version":             "v1",
 		"features": map[string]interface{}{
-			"caching": m.cache != nil,
-			"timezones": true,
+			"caching":     m.cache != nil,
+			"timezones":   true,
 			"aggregation": true,
 			"time_series": true,
 		},
 		"limits": map[string]interface{}{
 			"max_time_range_days": 365,
-			"max_repositories": 100,
-			"max_data_points": 1000,
+			"max_repositories":    100,
+			"max_data_points":     1000,
 		},
 	}
 

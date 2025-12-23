@@ -217,7 +217,7 @@ func (r *Registry) GetCapabilities(ctx context.Context) *interfaces.Capabilities
 		MaxTokens:         0,
 		SupportsBatch:     false,
 		SupportsStreaming: false,
-		Models: map[string]any{},
+		Models:            map[string]any{},
 	}
 
 	for _, provider := range r.providers {

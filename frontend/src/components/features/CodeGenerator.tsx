@@ -1,3 +1,4 @@
+import { Theme } from '@/types';
 import { Braces, ClipboardCheck, ClipboardCopy, Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import Card from '../ui/Card';
@@ -9,11 +10,13 @@ interface CodeGeneratorProps {
     constraints: string[];
     extras: string;
   }, apiKey?: string) => Promise<string>;
+  theme: Theme;
+  isApiKeyMissing: boolean;
 }
 
 const stacks = ['Go + Fiber', 'TypeScript + React', 'Python + FastAPI', 'Rust + Axum'];
 
-const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate }) => {
+const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate, theme, isApiKeyMissing }) => {
   const [stack, setStack] = useState(stacks[0]);
   const [goal, setGoal] = useState('');
   const [constraints, setConstraints] = useState<string[]>([]);
@@ -75,11 +78,10 @@ const CodeGenerator: React.FC<CodeGeneratorProps> = ({ onGenerate }) => {
                   key={option}
                   type="button"
                   onClick={() => setStack(option)}
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                    stack === option
-                      ? 'border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]'
-                      : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                  }`}
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${stack === option
+                    ? 'border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card dark:border-[#06b6d4] dark:bg-[#06b6d4] dark:text-[#0a1523]'
+                    : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
+                    }`}
                 >
                   {option}
                 </button>

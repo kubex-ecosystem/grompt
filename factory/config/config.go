@@ -11,7 +11,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/module/kbx"
 	providersPkg "github.com/kubex-ecosystem/grompt/internal/providers"
 	"github.com/kubex-ecosystem/grompt/internal/types"
-	l "github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,30 +19,30 @@ type Config = interfaces.IConfig
 
 // NewConfig reconstructs a legacy configuration using the updated engine internals.
 func NewConfig(
-	name               string,
-	debug              bool,
-	logger             l.Logger,
-	bindAddr           string,
-	port               string,
-	tempDir            string,
-	logFile           string,
-	envFile           string,
-	configFile        string,
-	cwd               string,
-	openAIKey         string,
-	claudeKey        string,
-	geminiKey        string,
-	deepSeekKey      string,
-	chatGPTKey      string,
-	ollamaEndpoint   string,
-	apiKeys            map[string]string,
-	endpoints          map[string]string,
-	defaultModels      map[string]string,
-	providerTypes      map[string]string,
-	defaultProvider    string,
+	name string,
+	debug bool,
+	logger *gl.LoggerZ,
+	bindAddr string,
+	port string,
+	tempDir string,
+	logFile string,
+	envFile string,
+	configFile string,
+	cwd string,
+	openAIKey string,
+	claudeKey string,
+	geminiKey string,
+	deepSeekKey string,
+	chatGPTKey string,
+	ollamaEndpoint string,
+	apiKeys map[string]string,
+	endpoints map[string]string,
+	defaultModels map[string]string,
+	providerTypes map[string]string,
+	defaultProvider string,
 	defaultTemperature float32,
-	historyLimit       int,
-	timeout            time.Duration,
+	historyLimit int,
+	timeout time.Duration,
 	providerConfigPath string,
 ) interfaces.IConfig {
 	return types.NewConfig(
@@ -121,7 +121,7 @@ func NewProvider(name, apiKey, version string) providersPkg.Provider {
 	cfg := types.NewConfig(
 		defaultCfg.Defaults.Name,
 		defaultCfg.Defaults.Debug,
-		l.LoggerG,
+		gl.GetLoggerZ("provider_"+name),
 		defaultCfg.Defaults.Bind,
 		defaultCfg.Defaults.Port,
 		defaultCfg.Defaults.TempDir,

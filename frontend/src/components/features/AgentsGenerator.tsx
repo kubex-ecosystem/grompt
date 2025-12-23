@@ -1,3 +1,4 @@
+import type { AgentsGenerationResult, Idea, StoredAgent, Theme } from '@/types';
 import {
   BadgeCheck,
   ClipboardCheck,
@@ -8,17 +9,15 @@ import {
   Plus,
   RefreshCcw,
   Save,
-  Settings,
   Sparkles,
   Trash2,
-  X,
+  X
 } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import type { AgentsGenerationResult, Idea, StoredAgent } from '@/types';
 import { LanguageContext } from '../../context/LanguageContext';
-import { configService, type ProviderInfo } from '../../services/configService';
 import { agentsService } from '../../services/agentsService';
+import { configService, type ProviderInfo } from '../../services/configService';
 import Card from '../ui/Card';
 
 type AgentFramework = 'crewai' | 'autogen' | 'langchain' | 'semantic-kernel' | 'custom';
@@ -31,7 +30,7 @@ type BlueprintEntry = {
   result: AgentsGenerationResult;
 };
 
-const frameworks: { value: AgentFramework; label: string; description: string }[] = [
+const frameworks: { value: AgentFramework; label: string; description: string; }[] = [
   { value: 'crewai', label: 'CrewAI', description: 'Orquestra squads multi-agentes focados em produtividade.' },
   { value: 'autogen', label: 'AutoGen', description: 'Fluxos cooperativos entre agentes conversacionais.' },
   { value: 'langchain', label: 'LangChain', description: 'Tooling maduro com LangGraph e integrações robustas.' },
@@ -52,7 +51,7 @@ const toolCatalog: string[] = [
   'docker_manager',
 ];
 
-const mcpCatalog: { name: string; desc: string }[] = [
+const mcpCatalog: { name: string; desc: string; }[] = [
   { name: 'filesystem', desc: '📁 Filesystem' },
   { name: 'database', desc: '🗄️ Database' },
   { name: 'web-scraper', desc: '🕷️ Web Scraper' },
@@ -332,7 +331,12 @@ const i18n: Record<string, Record<string, string>> = {
 
 const purposes: PurposeKey[] = ['automation', 'analysis', 'support', 'research', 'delivery', 'other'];
 
-const AgentsGenerator: React.FC = () => {
+interface AgentsGeneratorProps {
+  theme: Theme;
+  isApiKeyMissing: boolean;
+}
+
+const AgentsGenerator: React.FC<AgentsGeneratorProps> = ({ theme, isApiKeyMissing }) => {
   const { language } = useContext(LanguageContext);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [currentIdea, setCurrentIdea] = useState('');
@@ -359,7 +363,7 @@ const AgentsGenerator: React.FC = () => {
   const [copiedRequirements, setCopiedRequirements] = useState(false);
   const [copiedAgentsTable, setCopiedAgentsTable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<{ variant: 'success' | 'error'; message: string } | null>(null);
+  const [saveStatus, setSaveStatus] = useState<{ variant: 'success' | 'error'; message: string; } | null>(null);
   const t = useCallback(
     (key: string) => i18n[language]?.[key] ?? i18n.en[key] ?? key,
     [language],
@@ -763,11 +767,10 @@ const AgentsGenerator: React.FC = () => {
                     type="button"
                     key={item}
                     onClick={() => setPurpose(item)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      purpose === item
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${purpose === item
                         ? 'border-[#06b6d4] bg-[#06b6d4] text-white dark:border-[#38cde4] dark:bg-[#38cde4] dark:text-[#0a1523]'
                         : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                    }`}
+                      }`}
                   >
                     {t(`purpose_${item}`)}
                   </button>
@@ -793,11 +796,10 @@ const AgentsGenerator: React.FC = () => {
                     type="button"
                     key={framework.value}
                     onClick={() => setAgentFramework(framework.value)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                      agentFramework === framework.value
+                    className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${agentFramework === framework.value
                         ? 'border-[#06b6d4] bg-[#06b6d4]/10 text-[#0f172a] shadow-soft-card dark:border-[#38cde4] dark:bg-[#38cde4]/20 dark:text-[#e5f2f2]'
                         : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                    }`}
+                      }`}
                   >
                     <span className="block font-semibold">{framework.label}</span>
                     <span className="text-xs text-[#64748b] dark:text-[#94a3b8]">{framework.description}</span>
@@ -836,11 +838,10 @@ const AgentsGenerator: React.FC = () => {
                     type="button"
                     key={tool}
                     onClick={() => toggleTool(tool)}
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      agentTools.includes(tool)
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${agentTools.includes(tool)
                         ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-400/70 dark:bg-emerald-400/10 dark:text-emerald-200'
                         : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                    }`}
+                      }`}
                   >
                     {tool}
                   </button>
@@ -858,11 +859,10 @@ const AgentsGenerator: React.FC = () => {
                     type="button"
                     key={server.name}
                     onClick={() => toggleMcp(server.name)}
-                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                      mcpServers.includes(server.name)
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${mcpServers.includes(server.name)
                         ? 'border-[#7c4dff] bg-[#7c4dff]/10 text-[#4c1d95] dark:border-[#7c4dff]/70 dark:bg-[#7c4dff]/20 dark:text-[#e0d7ff]'
                         : 'border-slate-200 bg-white text-[#475569] hover:border-[#bae6fd] dark:border-[#13263a] dark:bg-[#0a1523] dark:text-[#94a3b8]'
-                    }`}
+                      }`}
                     title={server.desc}
                   >
                     {server.desc}

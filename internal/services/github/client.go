@@ -16,10 +16,10 @@ import (
 
 // Client provides a unified GitHub API client
 type Client struct {
-	config       *Config
-	httpClient   *http.Client
-	auth         *AuthProvider
-	rateLimit    *rate.Limiter
+	config         *Config
+	httpClient     *http.Client
+	auth           *AuthProvider
+	rateLimit      *rate.Limiter
 	circuitBreaker *CircuitBreaker
 
 	// Cache

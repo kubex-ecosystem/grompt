@@ -11,7 +11,7 @@ import (
 	"github.com/kubex-ecosystem/grompt/internal/interfaces"
 	itypes "github.com/kubex-ecosystem/grompt/internal/types"
 
-	logz "github.com/kubex-ecosystem/logz/logger"
+	logz "github.com/kubex-ecosystem/logz"
 )
 
 // Result represents the outcome of a processed prompt.
@@ -51,30 +51,30 @@ func DefaultConfig(configFilePath string) interfaces.IConfig {
 
 // NewConfig constructs a configuration using explicit parameters.
 func NewConfig(
-	name               string,
-	debug              bool,
-	logger             logz.Logger,
-	bindAddr           string,
-	port               string,
-	tempDir            string,
-	logFile           string,
-	envFile           string,
-	configFile        string,
-	cwd               string,
-	openAIKey         string,
-	claudeKey        string,
-	geminiKey        string,
-	deepSeekKey      string,
-	chatGPTKey      string,
-	ollamaEndpoint   string,
-	apiKeys            map[string]string,
-	endpoints          map[string]string,
-	defaultModels      map[string]string,
-	providerTypes      map[string]string,
-	defaultProvider    string,
+	name string,
+	debug bool,
+	logger *logz.LoggerZ,
+	bindAddr string,
+	port string,
+	tempDir string,
+	logFile string,
+	envFile string,
+	configFile string,
+	cwd string,
+	openAIKey string,
+	claudeKey string,
+	geminiKey string,
+	deepSeekKey string,
+	chatGPTKey string,
+	ollamaEndpoint string,
+	apiKeys map[string]string,
+	endpoints map[string]string,
+	defaultModels map[string]string,
+	providerTypes map[string]string,
+	defaultProvider string,
 	defaultTemperature float32,
-	historyLimit       int,
-	timeout            time.Duration,
+	historyLimit int,
+	timeout time.Duration,
 	providerConfigPath string,
 ) interfaces.IConfig {
 	return itypes.NewConfig(

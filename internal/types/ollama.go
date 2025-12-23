@@ -139,23 +139,22 @@ func (o *OllamaAPI) GetCapabilities(ctx context.Context) *interfaces.Capabilitie
 	if err != nil || len(models) == 0 {
 		return &interfaces.Capabilities{
 			SupportsStreaming: false,
-			MaxTokens: 2048,
+			MaxTokens:         2048,
 		}
 	}
-  capabilities := &interfaces.Capabilities{
+	capabilities := &interfaces.Capabilities{
 		SupportsStreaming: false,
-		MaxTokens: 2048,
-		Models: models,
-		SupportsBatch: false,
+		MaxTokens:         2048,
+		Models:            models,
+		SupportsBatch:     false,
 		Pricing: &interfaces.Pricing{
-			InputCostPer1K: 0.0,
+			InputCostPer1K:  0.0,
 			OutputCostPer1K: 0.0,
-			Currency: "USD",
+			Currency:        "USD",
 		},
 	}
 	return capabilities
 }
-
 
 func (o *OllamaAPI) Chat(ctx context.Context, req interfaces.ChatRequest) (<-chan interfaces.ChatChunk, error) {
 	// Implementar funcionalidade de chat se necessário

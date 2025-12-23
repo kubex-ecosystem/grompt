@@ -86,7 +86,7 @@ func (tu *TimeUtils) GetPeriodBoundaries(baseTime time.Time, granularity string,
 			if weekday == 0 { // Sunday
 				weekday = 7
 			}
-			end = end.AddDate(0, 0, -(weekday-1)) // Move to Monday
+			end = end.AddDate(0, 0, -(weekday - 1)) // Move to Monday
 			end = time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, loc)
 			start = end.AddDate(0, 0, -7)
 

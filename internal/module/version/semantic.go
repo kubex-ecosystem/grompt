@@ -12,11 +12,10 @@ import (
 	"time"
 
 	manifest "github.com/kubex-ecosystem/grompt/internal/module/info"
-	"github.com/kubex-ecosystem/logz/logger"
+	gl "github.com/kubex-ecosystem/logz"
 	"github.com/spf13/cobra"
 )
 
-var gl = logger.LoggerG.GetLogger()
 var (
 	info manifest.Manifest
 	vrs  Service

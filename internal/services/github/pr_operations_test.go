@@ -187,9 +187,9 @@ func TestService_UpdatePR(t *testing.T) {
 			errorContains: "invalid state",
 		},
 		{
-			name:     "no fields to update",
-			prNumber: 123,
-			request:  UpdatePRRequest{},
+			name:          "no fields to update",
+			prNumber:      123,
+			request:       UpdatePRRequest{},
 			expectError:   true,
 			errorContains: "no fields to update",
 		},
@@ -343,8 +343,8 @@ func TestService_MergePR(t *testing.T) {
 				if strings.Contains(r.URL.Path, "/merge") && r.Method == "PUT" {
 					w.WriteHeader(200)
 					response := GitHubMergeResult{
-						SHA:    "abc123",
-						Merged: true,
+						SHA:     "abc123",
+						Merged:  true,
 						Message: "Pull Request successfully merged",
 					}
 					json.NewEncoder(w).Encode(response)

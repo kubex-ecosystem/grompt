@@ -65,7 +65,7 @@ const DEMO_PROVIDERS: ProviderInfo[] = [
   {
     name: 'anthropic',
     display_name: 'Anthropic Claude',
-    available: false,
+    available: true,
     configured: false,
     models: ['claude-3-5-sonnet-20241022'],
     default_model: 'claude-3-5-sonnet-20241022',

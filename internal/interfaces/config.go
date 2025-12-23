@@ -2,7 +2,6 @@ package interfaces
 
 import "github.com/kubex-ecosystem/grompt/internal/module/kbx"
 
-
 type IConfig interface {
 	GetAPIConfig(provider string) IAPIConfig
 	GetPort() string

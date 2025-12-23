@@ -65,7 +65,7 @@ const (
 )
 
 const (
-	DefaultLLMHistoryLimit = 5
+	DefaultLLMHistoryLimit    = 5
 	DefaultProviderConfigPath = "$HOME/.kubex/providers"
 )
 

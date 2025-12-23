@@ -333,11 +333,11 @@ func (gh *GitHubHandler) extractCheckSuiteConclusion(payload map[string]interfac
 // GetWebhookInfo returns information about webhook delivery for debugging
 func (gh *GitHubHandler) GetWebhookInfo(r *http.Request) map[string]string {
 	return map[string]string{
-		"event":         r.Header.Get("X-GitHub-Event"),
-		"delivery":      r.Header.Get("X-GitHub-Delivery"),
-		"signature":     r.Header.Get("X-Hub-Signature-256"),
-		"user_agent":    r.Header.Get("User-Agent"),
-		"content_type":  r.Header.Get("Content-Type"),
+		"event":          r.Header.Get("X-GitHub-Event"),
+		"delivery":       r.Header.Get("X-GitHub-Delivery"),
+		"signature":      r.Header.Get("X-Hub-Signature-256"),
+		"user_agent":     r.Header.Get("User-Agent"),
+		"content_type":   r.Header.Get("Content-Type"),
 		"github_hook_id": r.Header.Get("X-GitHub-Hook-ID"),
 	}
 }

@@ -1,3 +1,4 @@
+import { Theme } from '@/types';
 import { Loader2, Send, Sparkles, User } from 'lucide-react';
 import React, { FormEvent, useMemo, useState } from 'react';
 import Card from '../ui/Card';
@@ -13,18 +14,19 @@ interface ChatMessage {
 }
 
 interface ChatInterfaceProps {
-  onSend?: (messages: ChatMessage[], input: string, apiKey?: string) => Promise<{ content: string; provider?: string } | null>;
+  onSend?: (messages: ChatMessage[], input: string, apiKey?: string) => Promise<{ content: string; provider?: string; } | null>;
+  theme: Theme;
+  isApiKeyMissing: boolean;
 }
 
-const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
+const ChatBubble: React.FC<{ message: ChatMessage; }> = ({ message }) => {
   const isUser = message.role === 'user';
   return (
     <div
-      className={`max-w-2xl rounded-2xl border px-4 py-3 text-sm shadow-sm transition ${
-        isUser
-          ? 'ml-auto border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card'
-          : 'mr-auto border-slate-200/80 bg-white text-[#475569] dark:border-[#13263a]/80 dark:bg-[#0a1523]/80 dark:text-[#e5f2f2]'
-      }`}
+      className={`max-w-2xl rounded-2xl border px-4 py-3 text-sm shadow-sm transition ${isUser
+        ? 'ml-auto border-[#06b6d4] bg-[#06b6d4] text-white shadow-soft-card'
+        : 'mr-auto border-slate-200/80 bg-white text-[#475569] dark:border-[#13263a]/80 dark:bg-[#0a1523]/80 dark:text-[#e5f2f2]'
+        }`}
     >
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-[#94a3b8] dark:text-[#64748b]">
@@ -45,7 +47,7 @@ const ChatBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   );
 };
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSend, theme, isApiKeyMissing }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
